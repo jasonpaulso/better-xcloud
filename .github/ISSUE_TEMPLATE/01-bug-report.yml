@@ -4,28 +4,10 @@ title: "[Bug] "
 labels:
   - bug
 body:
-  - type: checkboxes
-    id: checklist
+  - type: markdown
     attributes:
-      label: Checklist
-      options:
-        - label: I will only use English in my report.
-          required: true
-        - label: I have used the search function for [**open and closed issues**](https://github.com/redphx/better-xcloud/issues?q=is%3Aissue) to see if someone else has already submitted the same bug report.
-          required: true
-        - label: I will describe the problem with as much detail as possible.
-          required: true
-  - type: checkboxes
-    id: questions
-    attributes:
-      label: Questions
-      options:
-        - label: xCloud officially supports my country/region.
-          required: false
-        - label: "The bug doesn't happen when I disable Better xCloud script."
-          required: false
-        - label: "The bug didn't happen in previous Better xCloud version (name which one)."
-          required: false
+      value: |
+        Please fill out the following information to help us resolve the issue.
   - type: dropdown
     id: device_type
     attributes:
@@ -40,28 +22,40 @@ body:
       multiple: false
     validations:
       required: true
-  - type: input
-    id: device_name
-    attributes:
-      label: "Device"
-      description: "Name of the device"
-      placeholder: "e.g., Google Pixel 8"
-    validations:
-      required: true
-  - type: input
+  - type: dropdown
     id: os
     attributes:
       label: "Operating System"
       description: "Which operating system is it running?"
-      placeholder: "e.g., Android 14"
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS/iPadOS
+        - Other
+      multiple: false
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: "Browser"
+      description: "Which browser are you using?"
+      options:
+        - Chrome/Edge/Chromium
+        - Kiwi Browser
+        - Safari
+        - Other
+      multiple: false
     validations:
       required: true
   - type: input
     id: browser_version
     attributes:
-      label: "Android app/Browser Version"
-      description: "What is the name and version of the browser/Android app?"
-      placeholder: "e.g., Chrome 124.0, Android app 0.15.0"
+      label: "Browser Version"
+      description: "What is the version of the browser?"
+      placeholder: "e.g., 122.0"
     validations:
       required: true
   - type: input
@@ -72,20 +66,12 @@ body:
       placeholder: "e.g., 3.5.0"
     validations:
       required: true
-  - type: input
-    id: game_list
-    attributes:
-      label: "Game list"
-      description: "Name the game(s) where you saw this bug"
-      placeholder: "e.g., Halo"
-    validations:
-      required: false
   - type: textarea
-    id: reproduction
+    id: repro
     attributes:
       label: "Reproduction Steps"
       description: |
-        How did you trigger this bug?
+        How did you trigger this bug? Please provide screenshot/video if possible.
       placeholder: |
         Example:
         1. Open game X
@@ -93,11 +79,3 @@ body:
         3. Error
     validations:
       required: true
-  - type: textarea
-    id: media
-    attributes:
-      label: "Screenshot/video"
-      description: |
-        Please provide screenshot/video if possible.
-    validations:
-      required: false
