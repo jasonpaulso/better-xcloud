@@ -400,7 +400,6 @@ function main() {
     StreamBadges.setupEvents();
     StreamStats.setupEvents();
     EmulatedMkbHandler.setupEvents();
-
     Patcher.init();
 
     disablePwa();

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      5.7.3
+// @version      0
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -139,7 +139,7 @@ function deepClone(obj) {
     return {};
   return JSON.parse(JSON.stringify(obj));
 }
-var SCRIPT_VERSION = "5.7.3", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "0", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
   supportedRegion: !0,
@@ -3448,13 +3448,13 @@ class TouchController {
     const layout = layoutData.layouts[layoutId] || layoutData.layouts[layoutData.default_layout];
     if (!layout)
       return;
-    let msg, html11 = !1;
+    let msg, html = !1;
     if (layout.author) {
       const author = `<b>${escapeHtml(layout.author)}</b>`;
-      msg = t("touch-control-layout-by", { name: author }), html11 = !0;
+      msg = t("touch-control-layout-by", { name: author }), html = !0;
     } else
       msg = t("touch-control-layout");
-    layoutChanged && Toast.show(msg, layout.name, { html: html11 }), window.setTimeout(() => {
+    layoutChanged && Toast.show(msg, layout.name, { html }), window.setTimeout(() => {
       window.BX_EXPOSED.shouldShowSensorControls = JSON.stringify(layout).includes("gyroscope"), window.BX_EXPOSED.touchLayoutManager.changeLayoutForScope({
         type: "showLayout",
         scope: xboxTitleId,
@@ -5551,6 +5551,7 @@ class EmulatedMkbHandler extends MkbHandler {
     gamepad.timestamp = performance.now();
   };
   #pressButton = (buttonIndex, pressed) => {
+    console.log(`[Log] 🚌 ~ EmulatedMkbHandler ~ buttonIndex, pressed: – ${buttonIndex} – ${pressed}`);
     const virtualGamepad = this.#getVirtualGamepad();
     if (buttonIndex >= 100) {
       let [valueArr, axisIndex] = this.#STICK_MAP[buttonIndex];
@@ -5571,6 +5572,8 @@ class EmulatedMkbHandler extends MkbHandler {
   };
   #onKeyboardEvent = (e) => {
     const isKeyDown = e.type === "keydown";
+    if (e.code === "F1")
+      this.toggleAwayMode();
     if (e.code === "F8") {
       if (!isKeyDown)
         e.preventDefault(), this.toggle();
@@ -5710,8 +5713,8 @@ class EmulatedMkbHandler extends MkbHandler {
         label: t("edit"),
         onClick: (e) => {
           e.preventDefault(), e.stopPropagation();
-          const dialog2 = SettingsNavigationDialog.getInstance();
-          dialog2.focusTab("mkb"), NavigationDialogManager.getInstance().show(dialog2);
+          const dialog = SettingsNavigationDialog.getInstance();
+          dialog.focusTab("mkb"), NavigationDialogManager.getInstance().show(dialog);
         }
       }))));
     if (!this.#$message.isConnected)
@@ -5731,6 +5734,27 @@ class EmulatedMkbHandler extends MkbHandler {
   };
   #onPointerLockExited = () => {
     this.#mouseDataProvider?.stop();
+  };
+  #initializeButtonLoop() {
+    const buttonSequence = [
+      { buttonIndex: 11, isKeyDown: !0 },
+      { buttonIndex: 11, isKeyDown: !1 }
+    ];
+    this.#startButtonEmulationLoop(buttonSequence, 500);
+  }
+  #startButtonEmulationLoop(sequence, interval) {
+    let currentIndex = 0;
+    const loop = () => {
+      const { buttonIndex, isKeyDown } = sequence[currentIndex];
+      this.#pressButton(buttonIndex, isKeyDown), console.log(`[Log] 🚌 ~ EmulatedMkbHandler ~ buttonIndex, isKeyDown: – ${buttonIndex} – ${isKeyDown}`), currentIndex = (currentIndex + 1) % sequence.length, setTimeout(loop, interval);
+    };
+    loop();
+  }
+  toggleAwayMode = () => {
+    if (this.#enabled = !this.#enabled, this.#enabled)
+      this.start(), this.#initializeButtonLoop(), Toast.show("Away Mode", this.#enabled ? "Enabled" : "Disabled");
+    else
+      this.stop();
   };
   handleEvent(event) {
     switch (event.type) {
@@ -5752,7 +5776,9 @@ class EmulatedMkbHandler extends MkbHandler {
     else
       document.addEventListener("pointerlockchange", this.#onPointerLockChange), document.addEventListener("pointerlockerror", this.#onPointerLockError);
     if (this.#initMessage(), this.#$message?.classList.add("bx-gone"), AppInterface)
-      Toast.show(t("press-key-to-toggle-mkb", { key: "<b>F8</b>" }), t("virtual-controller"), { html: !0 }), this.waitForMouseData(!1);
+      Toast.show(t("press-key-to-toggle-mkb", { key: "<b>F8</b>" }), t("virtual-controller"), {
+        html: !0
+      }), this.waitForMouseData(!1);
     else
       this.waitForMouseData(!0);
   };
@@ -6327,10 +6353,10 @@ class RemotePlay {
         Authorization: `Bearer ${RemotePlay.XHOME_TOKEN}`
       }
     };
-    for (let region2 of RemotePlay.#REGIONS) {
+    for (let region of RemotePlay.#REGIONS) {
       try {
-        const request = new Request(`${region2.baseUri}/v6/servers/home?mr=50`, options), json = await (await fetch(request)).json();
-        RemotePlay.#CONSOLES = json.results, STATES.remotePlay.server = region2.baseUri, callback();
+        const request = new Request(`${region.baseUri}/v6/servers/home?mr=50`, options), json = await (await fetch(request)).json();
+        RemotePlay.#CONSOLES = json.results, STATES.remotePlay.server = region.baseUri, callback();
       } catch (e) {
       }
       if (RemotePlay.#CONSOLES)
@@ -6590,8 +6616,8 @@ class StreamBadges {
   #cachedDoms = {};
   #interval;
   #REFRESH_INTERVAL = 3000;
-  setRegion(region3) {
-    this.#region = region3;
+  setRegion(region) {
+    this.#region = region;
   }
   #renderBadge(name, value, color) {
     let $badge;
@@ -6795,17 +6821,17 @@ class XcloudInterceptor {
       WestUS: "🇺🇸",
       WestUS2: "🇺🇸"
     }, serverRegex = /\/\/(\w+)\./;
-    for (let region4 of obj.offeringSettings.regions) {
-      const regionName = region4.name;
-      let shortName = region4.name;
-      if (region4.isDefault)
-        STATES.selectedRegion = Object.assign({}, region4);
-      let match = serverRegex.exec(region4.baseUri);
+    for (let region of obj.offeringSettings.regions) {
+      const regionName = region.name;
+      let shortName = region.name;
+      if (region.isDefault)
+        STATES.selectedRegion = Object.assign({}, region);
+      let match = serverRegex.exec(region.baseUri);
       if (match) {
         if (shortName = match[1], serverEmojis[regionName])
           shortName = serverEmojis[regionName] + " " + shortName;
       }
-      region4.shortName = shortName.toUpperCase(), STATES.serverRegions[region4.name] = Object.assign({}, region4);
+      region.shortName = shortName.toUpperCase(), STATES.serverRegions[region.name] = Object.assign({}, region);
     }
     BxEvent.dispatch(window, BxEvent.XCLOUD_SERVERS_READY);
     const preferredRegion = getPreferredServerRegion();
@@ -6819,8 +6845,8 @@ class XcloudInterceptor {
     const PREF_STREAM_TARGET_RESOLUTION = getPref("stream_target_resolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("stream_preferred_locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url);
     let badgeRegion = parsedUrl.host.split(".", 1)[0];
     for (let regionName in STATES.serverRegions) {
-      const region4 = STATES.serverRegions[regionName];
-      if (parsedUrl.origin == region4.baseUri) {
+      const region = STATES.serverRegions[regionName];
+      if (parsedUrl.origin == region.baseUri) {
         badgeRegion = regionName;
         break;
       }
@@ -7646,7 +7672,7 @@ function patchPointerLockApi() {
       return pointerLockElement;
     }
   }), HTMLElement.prototype.requestPointerLock = function() {
-    pointerLockElement = document.documentElement, window.dispatchEvent(new Event(BxEvent.POINTER_LOCK_REQUESTED));
+    return pointerLockElement = document.documentElement, window.dispatchEvent(new Event(BxEvent.POINTER_LOCK_REQUESTED)), Promise.resolve();
   }, Document.prototype.exitPointerLock = function() {
     pointerLockElement = null, window.dispatchEvent(new Event(BxEvent.POINTER_LOCK_EXITED));
   };
@@ -7958,6 +7984,17 @@ class GuideMenu {
         }, { once: !0 }), window.BX_EXPOSED.dialogRoutes.closeAll();
       }
     }),
+    awayMode: createButton({
+      icon: BxIcon.VIRTUAL_CONTROLLER,
+      label: "Away Mode",
+      title: "Away Mode",
+      style: 96,
+      onClick: (e) => {
+        if (STATES.isPlaying)
+          confirm("Do you want to toggle Away Mode?") && EmulatedMkbHandler.getInstance().toggleAwayMode();
+        window.BX_EXPOSED.dialogRoutes.closeAll();
+      }
+    }),
     closeApp: AppInterface && createButton({
       icon: BxIcon.POWER,
       label: t("close-app"),
@@ -8007,7 +8044,8 @@ class GuideMenu {
       [
         GuideMenu.#BUTTONS.backToHome,
         GuideMenu.#BUTTONS.reloadPage,
-        GuideMenu.#BUTTONS.closeApp
+        GuideMenu.#BUTTONS.closeApp,
+        GuideMenu.#BUTTONS.awayMode
       ]
     ];
     for (let $button of buttons) {
@@ -8460,7 +8498,7 @@ if (window.location.pathname.includes("/auth/msa")) {
 BxLogger.info("readyState", document.readyState);
 if (BX_FLAGS.SafariWorkaround && document.readyState !== "loading") {
   window.stop();
-  const css2 = '.bx-reload-overlay{position:fixed;top:0;bottom:0;left:0;right:0;display:flex;align-items:center;background:rgba(0,0,0,0.8);z-index:9999;color:#fff;text-align:center;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem}.bx-reload-overlay *:focus{outline:none !important}.bx-reload-overlay > div{margin:0 auto}.bx-reload-overlay a{text-decoration:none;display:inline-block;background:#107c10;color:#fff;border-radius:4px;padding:6px}', isSafari = UserAgent.isSafari();
+  const css = '.bx-reload-overlay{position:fixed;top:0;bottom:0;left:0;right:0;display:flex;align-items:center;background:rgba(0,0,0,0.8);z-index:9999;color:#fff;text-align:center;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem}.bx-reload-overlay *:focus{outline:none !important}.bx-reload-overlay > div{margin:0 auto}.bx-reload-overlay a{text-decoration:none;display:inline-block;background:#107c10;color:#fff;border-radius:4px;padding:6px}', isSafari = UserAgent.isSafari();
   let $secondaryAction;
   if (isSafari)
     $secondaryAction = CE("p", {}, t("settings-reloading"));
