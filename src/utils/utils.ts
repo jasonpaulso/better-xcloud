@@ -20,9 +20,9 @@ export function checkForUpdate() {
   const lastCheck = getPref(PrefKey.LAST_UPDATE_CHECK)
   const now = Math.round(+new Date() / 1000)
 
-  if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
-    return
-  }
+  //   if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
+  //     return
+  //   }
 
   // Start checking
   setPref(PrefKey.LAST_UPDATE_CHECK, now)
@@ -30,8 +30,11 @@ export function checkForUpdate() {
   fetch('https://api.github.com/repos/jasonpaulso/better-xcloud/releases/latest')
     .then((response) => response.json())
     .then((json) => {
+      console.log('json', json)
       // Store the latest version
-      setPref(PrefKey.LATEST_VERSION, json.tag_name.substring(1))
+      console.log('Latest version: ', json.tag_name)
+      console.log('Current version: ', SCRIPT_VERSION)
+      setPref(PrefKey.LATEST_VERSION, json.tag_name)
       setPref(PrefKey.CURRENT_VERSION, SCRIPT_VERSION)
     })
 
