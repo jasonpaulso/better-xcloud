@@ -27,6 +27,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
             tag_name: "v1.0.${{ github.run_number }}"
-            files: ./dist/better-xcloud.user.js
+            files: |
+                ./dist/better-xcloud.user.js
+                ./dist/better-xcloud.meta.js
+            
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
