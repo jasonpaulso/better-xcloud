@@ -18,18 +18,18 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
       - uses: oven-sh/setup-bun@v2
         with:
-              bun-version: latest
+          bun-version: latest
       - run: bun install
-      - run: bun ./build.ts --version "v1.0.${{ github.run_number }}"
+      - run: bun ./build.ts --version "1.0.${{ github.run_number }}"
       - name: Test
         run: ls ./dist
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-            tag_name: "v1.0.${{ github.run_number }}"
-            files: |
-                ./dist/better-xcloud.user.js
-                ./dist/better-xcloud.meta.js
-            
+          tag_name: '1.0.${{ github.run_number }}'
+          files: |
+            ./dist/better-xcloud.user.js
+            ./dist/better-xcloud.meta.js
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
