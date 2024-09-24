@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Better xCloud
-// @namespace    https://github.com/redphx
+// @name         Better xCloud - Away Mode Version
+// @namespace    https://github.com/jasonpaulso/better-xcloud
 // @version      [[VERSION]]
 // ==/UserScript==

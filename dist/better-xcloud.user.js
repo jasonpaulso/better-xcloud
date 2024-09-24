@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Better xCloud
-// @namespace    https://github.com/redphx
-// @version      0
+// @name         Better xCloud - Away Mode Version
+// @namespace    https://github.com/jasonpaulso/better-xcloud
+// @version      0.1
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -9,8 +9,8 @@
 // @match        https://www.xbox.com/*/auth/msa?*loggedIn*
 // @run-at       document-start
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/redphx/better-xcloud/typescript/dist/better-xcloud.meta.js
-// @downloadURL  https://github.com/redphx/better-xcloud/releases/latest/download/better-xcloud.user.js
+// @updateURL    https://raw.githubusercontent.com/jasonpaulso/better-xcloud/refs/heads/typescript/dist/better-xcloud.meta.js
+// @downloadURL  https://raw.githubusercontent.com/jasonpaulso/better-xcloud/refs/heads/typescript/dist/better-xcloud.user.js
 // ==/UserScript==
 "use strict";
 class BxLogger {
@@ -139,7 +139,7 @@ function deepClone(obj) {
     return {};
   return JSON.parse(JSON.stringify(obj));
 }
-var SCRIPT_VERSION = "0", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "0.1", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
   supportedRegion: !0,
@@ -5746,7 +5746,8 @@ class EmulatedMkbHandler extends MkbHandler {
     let currentIndex = 0;
     const loop = () => {
       const { buttonIndex, isKeyDown } = sequence[currentIndex];
-      this.#pressButton(buttonIndex, isKeyDown), console.log(`[Log] 🚌 ~ EmulatedMkbHandler ~ buttonIndex, isKeyDown: – ${buttonIndex} – ${isKeyDown}`), currentIndex = (currentIndex + 1) % sequence.length, setTimeout(loop, interval);
+      if (this.#pressButton(buttonIndex, isKeyDown), console.log(`[Log] 🚌 ~ EmulatedMkbHandler ~ buttonIndex, isKeyDown: – ${buttonIndex} – ${isKeyDown}`), currentIndex = (currentIndex + 1) % sequence.length, this.#enabled)
+        setTimeout(loop, interval);
     };
     loop();
   }

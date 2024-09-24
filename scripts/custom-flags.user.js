@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name         Better xCloud - Custom flags
-// @namespace    https://github.com/redphx
+// @name         Better xCloud - Away Mode Version
+// @namespace    https://github.com/jasonpaulso/better-xcloud
 // @version      1.0.0
 // @description  Customize Better xCloud script
 // @author       redphx
@@ -9,7 +9,7 @@
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
-'use strict';
+'use strict'
 
 /*
 Make sure this script is being loaded before the Better xCloud script.
@@ -21,9 +21,10 @@ How to:
 */
 
 // Change this to `false` if you want to temporary disable the script
-const enabled = true;
+const enabled = true
 
-enabled && (window.BX_FLAGS = {
+enabled &&
+  (window.BX_FLAGS = {
     /*
     Add titleId of the game(s) you want to add here.
     Keep in mind: this method only works with some games.
@@ -36,6 +37,5 @@ enabled && (window.BX_FLAGS = {
                 "9PMQDM08SNK9",
             ],
     */
-    ForceNativeMkbTitles: [
-    ],
-});
+    ForceNativeMkbTitles: [],
+  })
