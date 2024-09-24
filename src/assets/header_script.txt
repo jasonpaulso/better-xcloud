@@ -3,7 +3,7 @@
 // @namespace    https://github.com/jasonpaulso/better-xcloud
 // @version      [[VERSION]]
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
-// @author       redphx
+// @author       jasonpaulso
 // @license      MIT
 // @match        https://www.xbox.com/*/play*
 // @match        https://www.xbox.com/*/auth/msa?*loggedIn*
