@@ -20,4 +20,4 @@ jobs:
         with:
               bun-version: latest
       - run: bun install
-      - run: bun run build.ts --version 0.1.1 --no-stdin
+      - run: bun ./build.ts
