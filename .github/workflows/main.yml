@@ -16,10 +16,6 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
-      # - name: Build
-      #   run: echo ${{ github.sha }} > Release.txt
-      # - name: Test
-      #   run: cat Release.txt
       - uses: oven-sh/setup-bun@v2
         with:
               bun-version: latest
@@ -27,11 +23,10 @@ jobs:
       - run: bun ./build.ts --version "v1.0.${{ github.run_number }}"
       - name: Test
         run: ls ./dist
-        # run: cat .dist/better-xcloud.user.js
-      # - name: Create GitHub Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #       tag_name: "v1.0.${{ github.run_number }}"
-      #       files: Release.txt
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+            tag_name: "v1.0.${{ github.run_number }}"
+            files: ./dist/better-xcloud.user.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
