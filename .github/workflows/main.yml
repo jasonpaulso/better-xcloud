@@ -26,7 +26,8 @@ jobs:
       - run: bun install
       - run: bun ./build.ts --version "v1.0.${{ github.run_number }}"
       - name: Test
-        run: cat .dist/better-xcloud.user.js
+      - run: ls
+        # run: cat .dist/better-xcloud.user.js
       # - name: Create GitHub Release
       #   uses: softprops/action-gh-release@v2
       #   with:
