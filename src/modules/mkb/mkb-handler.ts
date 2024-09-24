@@ -608,8 +608,12 @@ export class EmulatedMkbHandler extends MkbHandler {
     loop()
   }
 
-  toggleAwayMode = () => {
-    this.#enabled = !this.#enabled
+  toggleAwayMode = (force?: boolean) => {
+    if (typeof force !== 'undefined') {
+      this.#enabled = force
+    } else {
+      this.#enabled = !this.#enabled
+    }
     if (this.#enabled) {
       this.start()
       this.#initializeButtonLoop()
