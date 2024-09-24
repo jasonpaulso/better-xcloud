@@ -152,6 +152,7 @@ function onKeyPress(data: any) {
 }
 
 main();
-process.stdin.setRawMode(true);
-process.stdin.resume();
-process.stdin.on('data', onKeyPress);
+
+// process.stdin.setRawMode(true);
+// process.stdin.resume();
+// process.stdin.on('data', onKeyPress);
