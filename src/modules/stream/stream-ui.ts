@@ -6,7 +6,6 @@ import { t } from '@utils/translation.ts'
 import { StreamBadges } from './stream-badges.ts'
 import { StreamStats } from './stream-stats.ts'
 import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
-import { MkbHandler } from '../mkb/base-mkb-handler.ts'
 import { EmulatedMkbHandler } from '../mkb/mkb-handler.ts'
 
 export class StreamUiHandler {
@@ -242,15 +241,36 @@ export class StreamUiHandler {
       StreamUiHandler.$btnStreamStats = $btnStreamStats
     }
 
+    // create away mode button
+    let $btnAwayMode = StreamUiHandler.$btnAwayMode
+    if (typeof $btnAwayMode === 'undefined') {
+      $btnAwayMode = StreamUiHandler.cloneStreamHudButton(
+        $orgButton,
+        'Away Mode',
+        BxIcon.VIRTUAL_CONTROLLER
+      )
+      $btnAwayMode?.addEventListener('click', (e) => {
+        hideGripHandle()
+        e.preventDefault()
+
+        // Show Away Mode dialog
+        // SettingsNavigationDialog.getInstance().showAwayMode()
+        EmulatedMkbHandler.getInstance().toggleAwayMode()
+      })
+
+      StreamUiHandler.$btnAwayMode = $btnAwayMode
+    }
+
     const $btnParent = $orgButton.parentElement!
 
-    if ($btnStreamSettings && $btnStreamStats) {
+    if ($btnStreamSettings && $btnStreamStats && $btnAwayMode) {
       const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
       $btnStreamStats.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
 
       // Insert buttons after Stream Settings button
       $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild)
       $btnParent.insertBefore($btnStreamSettings, $btnStreamStats)
+      $btnParent.insertBefore($btnAwayMode, $btnStreamSettings)
     }
 
     // Move the Dots button to the beginning

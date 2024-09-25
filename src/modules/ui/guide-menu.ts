@@ -5,7 +5,6 @@ import { t } from '@/utils/translation'
 import { SettingsNavigationDialog } from './dialog/settings-dialog'
 import { TrueAchievements } from '@/utils/true-achievements'
 import { BxIcon } from '@/utils/bx-icon'
-import { EmulatedMkbHandler } from '../mkb/mkb-handler'
 
 export enum GuideMenuTab {
   HOME = 'home',
@@ -27,19 +26,6 @@ export class GuideMenu {
         )
 
         // Close all xCloud's dialogs
-        window.BX_EXPOSED.dialogRoutes.closeAll()
-      },
-    }),
-
-    awayMode: createButton({
-      icon: BxIcon.VIRTUAL_CONTROLLER,
-      label: 'Away Mode',
-      title: 'Away Mode',
-      style: 64 | 32,
-      onClick: (e) => {
-        if (STATES.isPlaying)
-          confirm('Do you want to toggle Away Mode?') &&
-            EmulatedMkbHandler.getInstance().toggleAwayMode()
         window.BX_EXPOSED.dialogRoutes.closeAll()
       },
     }),
@@ -108,12 +94,7 @@ export class GuideMenu {
 
     const buttons = [
       GuideMenu.#BUTTONS.scriptSettings,
-      [
-        GuideMenu.#BUTTONS.backToHome,
-        GuideMenu.#BUTTONS.reloadPage,
-        GuideMenu.#BUTTONS.closeApp,
-        GuideMenu.#BUTTONS.awayMode,
-      ],
+      [GuideMenu.#BUTTONS.backToHome, GuideMenu.#BUTTONS.reloadPage, GuideMenu.#BUTTONS.closeApp],
     ]
 
     for (const $button of buttons) {

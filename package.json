@@ -8,6 +8,9 @@
   "bin": {
     "build": "build.ts"
   },
+  "scripts": {
+    "watch": "tsc -w & bun ./build.ts --version x.x.x"
+  },
   "devDependencies": {
     "@types/bun": "^1.1.8",
     "@types/node": "^22.5.2",

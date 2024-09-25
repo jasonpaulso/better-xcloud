@@ -520,7 +520,19 @@ export class EmulatedMkbHandler extends MkbHandler {
             }),
 
             createButton({
+              label: 'Away',
+              onClick: (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+
+                this.toggleAwayMode()
+                this.waitForMouseData(false)
+              },
+            }),
+
+            createButton({
               label: t('edit'),
+              style: ButtonStyle.GHOST,
               onClick: (e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -563,21 +575,9 @@ export class EmulatedMkbHandler extends MkbHandler {
   }
 
   #initializeButtonLoop() {
-    // Define the button indices you want to simulate (e.g., left and right movement)
-    // 1 = "b" button
-    // 11 = crouch ("right stick" press)
-    // 13 = d-pad down (e.g., move down)
-    // 200 = right stick up (e.g., move up)
-    // 0 = "a" button
     const buttonSequence = [
-      { buttonIndex: 11, isKeyDown: true }, // Button press (e.g., move crouch)
-      { buttonIndex: 11, isKeyDown: false }, // Button release (e.g., stop crouch)
-      //   { buttonIndex: 13, isKeyDown: true }, // Button press (e.g., move down)
-      //   { buttonIndex: 13, isKeyDown: false }, // Button release (e.g., stop moving down)
-      //   { buttonIndex: 200, isKeyDown: true }, // Button press (e.g., move up)
-      //   { buttonIndex: 200, isKeyDown: false }, // Button release (e.g., stop moving up)
-      //     { buttonIndex: 0, isKeyDown: true }, // Button press (e.g., jump)
-      //     { buttonIndex: 0, isKeyDown: false }, // Button release (e.g., stop jumping
+      { buttonIndex: 1, isKeyDown: true }, // Button press (e.g., press "b")
+      { buttonIndex: 1, isKeyDown: false }, // Button release (e.g., stop pressing "b")
     ]
 
     // Start the emulation loop
@@ -608,17 +608,26 @@ export class EmulatedMkbHandler extends MkbHandler {
     loop()
   }
 
+  #awayEnabled = false
+
   toggleAwayMode = (force?: boolean) => {
     if (typeof force !== 'undefined') {
-      this.#enabled = force
+      this.#awayEnabled = force
     } else {
-      this.#enabled = !this.#enabled
+      this.#awayEnabled = !this.#awayEnabled
     }
-    if (this.#enabled) {
-      this.start()
+    if (this.#awayEnabled) {
+      this.startAwayMode()
+      // deactivate mouse observer
+      this.#mouseDataProvider?.stop()
       this.#initializeButtonLoop()
-      Toast.show('Away Mode', this.#enabled ? 'Enabled' : 'Disabled')
-    } else this.stop()
+      Toast.show('Away Mode', 'Enabled')
+    } else {
+      this.stop()
+      // activate mouse observer
+      this.#mouseDataProvider?.start()
+      Toast.show('Away Mode', 'Disabled')
+    }
   }
 
   handleEvent(event: Event) {
@@ -726,6 +735,36 @@ export class EmulatedMkbHandler extends MkbHandler {
     window.BX_EXPOSED.stopTakRendering = true
 
     Toast.show(t('virtual-controller'), t('enabled'), { instant: true })
+  }
+
+  startAwayMode = () => {
+    if (!this.#enabled) {
+      this.#enabled = true
+      // Toast.show('Away Mode', 'Enabled')
+    }
+
+    this.#isPolling = true
+    this.#escKeyDownTime = -1
+
+    this.#resetGamepad()
+    window.navigator.getGamepads = this.#patchedGetGamepads
+
+    this.waitForMouseData(false)
+
+    this.#mouseDataProvider?.start()
+
+    // Dispatch "gamepadconnected" event
+    const virtualGamepad = this.#getVirtualGamepad()
+    virtualGamepad.connected = true
+    virtualGamepad.timestamp = performance.now()
+
+    BxEvent.dispatch(window, 'gamepadconnected', {
+      gamepad: virtualGamepad,
+    })
+
+    window.BX_EXPOSED.stopTakRendering = true
+
+    // Toast.show('Away Mode', 'Disabled')
   }
 
   stop = () => {

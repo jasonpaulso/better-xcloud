@@ -20,9 +20,9 @@ export function checkForUpdate() {
   const lastCheck = getPref(PrefKey.LAST_UPDATE_CHECK)
   const now = Math.round(+new Date() / 1000)
 
-  //   if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
-  //     return
-  //   }
+  if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
+    return
+  }
 
   // Start checking
   setPref(PrefKey.LAST_UPDATE_CHECK, now)
