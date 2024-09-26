@@ -574,38 +574,60 @@ export class EmulatedMkbHandler extends MkbHandler {
     this.#mouseDataProvider?.stop()
   }
 
-  #initializeButtonLoop() {
-    const buttonSequence = [
-      { buttonIndex: 1, isKeyDown: true }, // Button press (e.g., press "b")
-      { buttonIndex: 1, isKeyDown: false }, // Button release (e.g., stop pressing "b")
-    ]
+  async #processButtonSequence(sequence: number[]): Promise<void> {
+    while (this.#enabled) {
+      // Process the main sequence
+      for (const buttonIndex of sequence) {
+        // Press the button
+        this.#pressButton(buttonIndex, true)
 
-    // Start the emulation loop
-    this.#startButtonEmulationLoop(buttonSequence, 500) // Adjust interval as needed (500ms here)
-  }
+        // Wait for a short duration (e.g., 500ms)
+        await new Promise((resolve) => setTimeout(resolve, 500))
 
-  #startButtonEmulationLoop(sequence: string | any[], interval: number | undefined) {
-    let currentIndex = 0
+        // Release the button
+        this.#pressButton(buttonIndex, false)
 
-    const loop = () => {
-      const { buttonIndex, isKeyDown } = sequence[currentIndex]
-      this.#pressButton(buttonIndex, isKeyDown)
+        // Wait for another short duration before the next button
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
 
-      console.log(
-        `[Log] 🚌 ~ EmulatedMkbHandler ~ buttonIndex, isKeyDown: – ${buttonIndex} – ${isKeyDown}`
-      )
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // Move to the next button action in the sequence
-      currentIndex = (currentIndex + 1) % sequence.length
+      this.#pressButton(3, true)
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      this.#pressButton(3, false)
+      await new Promise((resolve) => setTimeout(resolve, 50))
 
-      // Repeat the loop after the specified interval
-      if (this.#enabled) {
-        setTimeout(loop, interval)
+      // Perform the single button press for 5 minutes
+      const startTime = Date.now()
+      const fiveMinutes = 5 * 60 * 1000 // 5 minutes in milliseconds
+
+      while (Date.now() - startTime < fiveMinutes && this.#enabled) {
+        this.#pressButton(203, true)
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        this.#pressButton(203, false)
+        await new Promise((resolve) => setTimeout(resolve, 5))
       }
     }
+  }
+  #initializeButtonLoop() {
+    // Define the sequence of button presses
+    const buttonSequence = [12, 13, 200, 0] // Example sequence
 
-    // Start the loop
-    loop()
+    // Start the emulation loop
+    this.#processButtonSequence(buttonSequence)
+  }
+
+  startButtonEmulation() {
+    if (!this.#enabled) {
+      this.#enabled = true
+      this.#initializeButtonLoop()
+    }
+  }
+
+  stopButtonEmulation() {
+    this.#enabled = false
+    // The loop will stop at the next iteration
   }
 
   #awayEnabled = false
@@ -619,13 +641,11 @@ export class EmulatedMkbHandler extends MkbHandler {
     if (this.#awayEnabled) {
       this.startAwayMode()
       // deactivate mouse observer
-      this.#mouseDataProvider?.stop()
+      this.#onPointerLockExited()
       this.#initializeButtonLoop()
       Toast.show('Away Mode', 'Enabled')
     } else {
       this.stop()
-      // activate mouse observer
-      this.#mouseDataProvider?.start()
       Toast.show('Away Mode', 'Disabled')
     }
   }
