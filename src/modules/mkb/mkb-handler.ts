@@ -575,40 +575,21 @@ export class EmulatedMkbHandler extends MkbHandler {
   }
 
   async #processButtonSequence(sequence: number[]): Promise<void> {
-    while (this.#enabled) {
-      // Process the main sequence
-      for (const buttonIndex of sequence) {
-        // Press the button
-        this.#pressButton(buttonIndex, true)
+    setInterval(async () => {
+      await this.#buttonLoop()
+    }, 60000)
+    await this.#buttonLoop()
+  }
 
-        // Wait for a short duration (e.g., 500ms)
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
-        // Release the button
-        this.#pressButton(buttonIndex, false)
-
-        // Wait for another short duration before the next button
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      this.#pressButton(3, true)
-      await new Promise((resolve) => setTimeout(resolve, 50))
-      this.#pressButton(3, false)
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      // Perform the single button press for 5 minutes
-      const startTime = Date.now()
-      const fiveMinutes = 5 * 60 * 1000 // 5 minutes in milliseconds
-
-      while (Date.now() - startTime < fiveMinutes && this.#enabled) {
-        this.#pressButton(203, true)
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        this.#pressButton(203, false)
-        await new Promise((resolve) => setTimeout(resolve, 5))
-      }
-    }
+  #buttonLoop = async () => {
+    //press "b" button
+    this.#pressButton(1, true)
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+    this.#pressButton(1, false)
+    //press d-pad right
+    this.#pressButton(15, true)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    this.#pressButton(15, false)
   }
   #initializeButtonLoop() {
     // Define the sequence of button presses
@@ -785,6 +766,15 @@ export class EmulatedMkbHandler extends MkbHandler {
     window.BX_EXPOSED.stopTakRendering = true
 
     // Toast.show('Away Mode', 'Disabled')
+  }
+
+  // display a message while the user is in away mode using document.append
+
+  displayAwayModeMessage() {
+    const awayModeMessage = document.createElement('div')
+    awayModeMessage.classList.add('away-mode-message')
+    awayModeMessage.textContent = 'Away Mode Enabled'
+    document.body.appendChild(awayModeMessage)
   }
 
   stop = () => {
