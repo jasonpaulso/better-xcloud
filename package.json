@@ -12,17 +12,14 @@
     "watch": "tsc -w & bun ./build.ts --version x.x.x"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.8",
-    "@types/node": "^22.5.2",
-    "@types/stylus": "^0.48.42",
-    "eslint": "^9.9.1",
-    "eslint-plugin-compat": "^6.0.0",
+    "@types/bun": "^1.1.9",
+    "@types/node": "^22.5.5",
+    "@types/stylus": "^0.48.43",
+    "eslint": "^9.10.0",
+    "eslint-plugin-compat": "^6.0.1",
     "stylus": "^0.63.0"
   },
   "peerDependencies": {
-    "typescript": "^5.5.4"
-  },
-  "dependencies": {
     "typescript": "^5.6.2"
   }
 }
