@@ -54,7 +54,7 @@ const LOG_TAG = 'Patcher';
 const PATCHES = {
     // Disable ApplicationInsights.track() function
     disableAiTrack(str: string) {
-        const text = '.track=function(';
+        let text = '.track=function(';
         const index = str.indexOf(text);
         if (index < 0) {
             return false;
@@ -69,7 +69,7 @@ const PATCHES = {
 
     // Set disableTelemetry() to true
     disableTelemetry(str: string) {
-        const text = '.disableTelemetry=function(){return!1}';
+        let text = '.disableTelemetry=function(){return!1}';
         if (!str.includes(text)) {
             return false;
         }
@@ -78,7 +78,7 @@ const PATCHES = {
     },
 
     disableTelemetryProvider(str: string) {
-        const text = 'this.enableLightweightTelemetry=!';
+        let text = 'this.enableLightweightTelemetry=!';
         if (!str.includes(text)) {
             return false;
         }
@@ -99,7 +99,7 @@ const PATCHES = {
 
     // Disable IndexDB logging
     disableIndexDbLogging(str: string) {
-        const text = ',this.logsDb=new';
+        let text = ',this.logsDb=new';
         if (!str.includes(text)) {
             return false;
         }
@@ -111,7 +111,7 @@ const PATCHES = {
 
     // Set custom website layout
     websiteLayout(str: string) {
-        const text = '?"tv":"default"';
+        let text = '?"tv":"default"';
         if (!str.includes(text)) {
             return false;
         }
@@ -131,7 +131,7 @@ const PATCHES = {
     },
 
     remotePlayKeepAlive(str: string) {
-        const text = 'onServerDisconnectMessage(e){';
+        let text = 'onServerDisconnectMessage(e){';
         if (!str.includes(text)) {
             return false;
         }
@@ -143,7 +143,7 @@ const PATCHES = {
 
     // Enable Remote Play feature
     remotePlayConnectMode(str: string) {
-        const text = 'connectMode:"cloud-connect",';
+        let text = 'connectMode:"cloud-connect",';
         if (!str.includes(text)) {
             return false;
         }
@@ -151,25 +151,44 @@ const PATCHES = {
         return str.replace(text, codeRemotePlayEnable);
     },
 
-    // Disable achievement toast in Remote Play
+    // Remote Play: Disable achievement toast
     remotePlayDisableAchievementToast(str: string) {
-        const text = '.AchievementUnlock:{';
+        let text = '.AchievementUnlock:{';
         if (!str.includes(text)) {
             return false;
         }
 
-        const newCode = `
-if (!!window.BX_REMOTE_PLAY_CONFIG) {
-    return;
-}
-`;
-
+        const newCode = `if (!!window.BX_REMOTE_PLAY_CONFIG) return;`;
         return str.replace(text, text + newCode);
     },
 
+    // Remote Play: Prevent adding "Fortnite" to the "Jump back in" list
+    remotePlayRecentlyUsedTitleIds(str: string) {
+        let text = '(e.data.recentlyUsedTitleIds)){';
+        if (!str.includes(text)) {
+            return false;
+        }
+
+        const newCode = `if (window.BX_REMOTE_PLAY_CONFIG) return;`;
+        return str.replace(text, text + newCode);
+    },
+
+    // Remote Play: change web page's title
+    /*
+    remotePlayWebTitle(str: string) {
+        let text = '"undefined"!==typeof e&&document.title!==e';
+        if (!str.includes(text)) {
+            return false;
+        }
+
+        const newCode = `if (window.BX_REMOTE_PLAY_CONFIG) { e = "${t('remote-play')} - ${t('better-xcloud')}"; }`;
+        return str.replace(text, newCode + text);
+    },
+    */
+
     // Block WebRTC stats collector
     blockWebRtcStatsCollector(str: string) {
-        const text = 'this.shouldCollectStats=!0';
+        let text = 'this.shouldCollectStats=!0';
         if (!str.includes(text)) {
             return false;
         }
@@ -210,7 +229,7 @@ if (!!window.BX_REMOTE_PLAY_CONFIG) {
     },
 
     enableXcloudLogger(str: string) {
-        const text = 'this.telemetryProvider=e}log(e,t,r){';
+        let text = 'this.telemetryProvider=e}log(e,t,r){';
         if (!str.includes(text)) {
             return false;
         }
@@ -226,7 +245,7 @@ logFunc(logTag, '//', logMessage);
     },
 
     enableConsoleLogging(str: string) {
-        const text = 'static isConsoleLoggingAllowed(){';
+        let text = 'static isConsoleLoggingAllowed(){';
         if (!str.includes(text)) {
             return false;
         }
@@ -237,7 +256,7 @@ logFunc(logTag, '//', logMessage);
 
     // Control controller vibration
     playVibration(str: string) {
-        const text = '}playVibration(e){';
+        let text = '}playVibration(e){';
         if (!str.includes(text)) {
             return false;
         }
@@ -278,7 +297,7 @@ logFunc(logTag, '//', logMessage);
     },
 
     patchUpdateInputConfigurationAsync(str: string) {
-        const text = 'async updateInputConfigurationAsync(e){';
+        let text = 'async updateInputConfigurationAsync(e){';
         if (!str.includes(text)) {
             return false;
         }
@@ -291,7 +310,7 @@ logFunc(logTag, '//', logMessage);
 
     // Add patches that are only needed when start playing
     loadingEndingChunks(str: string) {
-        const text = '"FamilySagaManager"';
+        let text = '"FamilySagaManager"';
         if (!str.includes(text)) {
             return false;
         }
@@ -316,7 +335,7 @@ logFunc(logTag, '//', logMessage);
     },
 
     exposeTouchLayoutManager(str: string) {
-        const text = 'this._perScopeLayoutsStream=new';
+        let text = 'this._perScopeLayoutsStream=new';
         if (!str.includes(text)) {
             return false;
         }
@@ -363,7 +382,7 @@ if (window.BX_EXPOSED.stopTakRendering) {
     },
 
     supportLocalCoOp(str: string) {
-        const text = 'this.gamepadMappingsToSend=[],';
+        let text = 'this.gamepadMappingsToSend=[],';
         if (!str.includes(text)) {
             return false;
         }
@@ -375,7 +394,7 @@ if (window.BX_EXPOSED.stopTakRendering) {
     },
 
     forceFortniteConsole(str: string) {
-        const text = 'sendTouchInputEnabledMessage(e){';
+        let text = 'sendTouchInputEnabledMessage(e){';
         if (!str.includes(text)) {
             return false;
         }
@@ -387,7 +406,7 @@ if (window.BX_EXPOSED.stopTakRendering) {
     },
 
     disableTakRenderer(str: string) {
-        const text = 'const{TakRenderer:';
+        let text = 'const{TakRenderer:';
         if (!str.includes(text)) {
             return false;
         }
@@ -427,7 +446,7 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
     },
 
     streamCombineSources(str: string) {
-        const text = 'this.useCombinedAudioVideoStream=!!this.deviceInformation.isTizen';
+        let text = 'this.useCombinedAudioVideoStream=!!this.deviceInformation.isTizen';
         if (!str.includes(text)) {
             return false;
         }
@@ -437,7 +456,7 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
     },
 
     patchStreamHud(str: string) {
-        const text = 'let{onCollapse';
+        let text = 'let{onCollapse';
         if (!str.includes(text)) {
             return false;
         }
@@ -459,7 +478,7 @@ e.guideUI = null;
     },
 
     broadcastPollingMode(str: string) {
-        const text = '.setPollingMode=e=>{';
+        let text = '.setPollingMode=e=>{';
         if (!str.includes(text)) {
             return false;
         }
@@ -483,7 +502,7 @@ BxEvent.dispatch(window, BxEvent.XCLOUD_POLLING_MODE_CHANGED, {mode: e.toLowerCa
     },
 
     patchXcloudTitleInfo(str: string) {
-        const text = 'async cloudConnect';
+        let text = 'async cloudConnect';
         let index = str.indexOf(text);
         if (index < 0) {
             return false;
@@ -505,7 +524,7 @@ BxLogger.info('patchXcloudTitleInfo', ${titleInfoVar});
     },
 
     patchRemotePlayMkb(str: string) {
-        const text = 'async homeConsoleConnect';
+        let text = 'async homeConsoleConnect';
         let index = str.indexOf(text);
         if (index < 0) {
             return false;
@@ -533,7 +552,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
     },
 
     patchAudioMediaStream(str: string) {
-        const text = '.srcObject=this.audioMediaStream,';
+        let text = '.srcObject=this.audioMediaStream,';
         if (!str.includes(text)) {
             return false;
         }
@@ -545,7 +564,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
     },
 
     patchCombinedAudioVideoMediaStream(str: string) {
-        const text = '.srcObject=this.combinedAudioVideoStream';
+        let text = '.srcObject=this.combinedAudioVideoStream';
         if (!str.includes(text)) {
             return false;
         }
@@ -556,7 +575,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
     },
 
     patchTouchControlDefaultOpacity(str: string) {
-        const text = 'opacityMultiplier:1';
+        let text = 'opacityMultiplier:1';
         if (!str.includes(text)) {
             return false;
         }
@@ -568,7 +587,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
     },
 
     patchShowSensorControls(str: string) {
-        const text = '{shouldShowSensorControls:';
+        let text = '{shouldShowSensorControls:';
         if (!str.includes(text)) {
             return false;
         }
@@ -581,7 +600,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
 
     /*
     exposeEventTarget(str: string) {
-        const text ='this._eventTarget=new EventTarget';
+        let text ='this._eventTarget=new EventTarget';
         if (!str.includes(text)) {
             return false;
         }
@@ -598,7 +617,7 @@ window.dispatchEvent(new Event('${BxEvent.STREAM_EVENT_TARGET_READY}'))
 
     // Class with: connectAsync(), doConnectAsync(), setPlayClient()
     exposeStreamSession(str: string) {
-        const text =',this._connectionType=';
+        let text =',this._connectionType=';
         if (!str.includes(text)) {
             return false;
         }
@@ -612,7 +631,7 @@ true` + text;
     },
 
     skipFeedbackDialog(str: string) {
-        const text = '&&this.shouldTransitionToFeedback(';
+        let text = '&&this.shouldTransitionToFeedback(';
         if (!str.includes(text)) {
             return false;
         }
@@ -622,7 +641,7 @@ true` + text;
     },
 
     enableNativeMkb(str: string) {
-        const text = 'e.mouseSupported&&e.keyboardSupported&&e.fullscreenSupported;';
+        let text = 'e.mouseSupported&&e.keyboardSupported&&e.fullscreenSupported;';
         if ((!str.includes(text))) {
             return false;
         }
@@ -632,7 +651,7 @@ true` + text;
     },
 
     patchMouseAndKeyboardEnabled(str: string) {
-        const text = 'get mouseAndKeyboardEnabled(){';
+        let text = 'get mouseAndKeyboardEnabled(){';
         if (!str.includes(text)) {
             return false;
         }
@@ -642,7 +661,7 @@ true` + text;
     },
 
     exposeInputSink(str: string) {
-        const text = 'this.controlChannel=null,this.inputChannel=null';
+        let text = 'this.controlChannel=null,this.inputChannel=null';
         if (!str.includes(text)) {
             return false;
         }
@@ -654,7 +673,7 @@ true` + text;
     },
 
     disableNativeRequestPointerLock(str: string) {
-        const text = 'async requestPointerLock(){';
+        let text = 'async requestPointerLock(){';
         if (!str.includes(text)) {
             return false;
         }
@@ -665,7 +684,7 @@ true` + text;
 
     // Fix crashing when RequestInfo.origin is empty
     patchRequestInfoCrash(str: string) {
-        const text = 'if(!e)throw new Error("RequestInfo.origin is falsy");';
+        let text = 'if(!e)throw new Error("RequestInfo.origin is falsy");';
         if (!str.includes(text)) {
             return false;
         }
@@ -675,7 +694,7 @@ true` + text;
     },
 
     exposeDialogRoutes(str: string) {
-        const text = 'return{goBack:function(){';
+        let text = 'return{goBack:function(){';
         if (!str.includes(text)) {
             return false;
         }
@@ -830,7 +849,7 @@ if (e && e.id) {
 
     // Override Storage.getSettings()
     overrideStorageGetSettings(str: string) {
-        const text = '}getSetting(e){';
+        let text = '}getSetting(e){';
         if (!str.includes(text)) {
             return false;
         }
@@ -894,7 +913,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
     },
 
     detectBrowserRouterReady(str: string) {
-        const text = 'BrowserRouter:()=>';
+        let text = 'BrowserRouter:()=>';
         if (!str.includes(text)) {
             return false;
         }
@@ -984,6 +1003,7 @@ let PATCH_ORDERS: PatchArray = [
         'remotePlayKeepAlive',
         'remotePlayDirectConnectUrl',
         'remotePlayDisableAchievementToast',
+        'remotePlayRecentlyUsedTitleIds',
         STATES.userAgent.capabilities.touch && 'patchUpdateInputConfigurationAsync',
     ] : []),
 

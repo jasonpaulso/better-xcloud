@@ -1,4 +1,3 @@
-import { RemotePlay } from "@/modules/remote-play";
 import { TouchController } from "@/modules/touch-controller";
 import { BxEvent } from "./bx-event";
 import { SupportedInputType } from "./bx-exposed";
@@ -8,9 +7,50 @@ import { patchIceCandidates } from "./network";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref, StreamResolution, StreamTouchController } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
+import { RemotePlayManager } from "@/modules/remote-play-manager";
 
 export class XhomeInterceptor {
     static #consoleAddrs: RemotePlayConsoleAddresses = {};
+
+    private static readonly BASE_DEVICE_INFO = {
+        appInfo: {
+            env: {
+                clientAppId: window.location.host,
+                clientAppType: 'browser',
+                clientAppVersion: '24.17.36',
+                clientSdkVersion: '10.1.14',
+                httpEnvironment: 'prod',
+                sdkInstallId: '',
+            },
+        },
+
+        dev: {
+            displayInfo: {
+                dimensions: {
+                    widthInPixels: 1920,
+                    heightInPixels: 1080,
+                },
+                pixelDensity: {
+                    dpiX: 1,
+                    dpiY: 1,
+                },
+            },
+            hw: {
+                make: 'Microsoft',
+                model: 'unknown',
+                sdktype: 'web',
+            },
+            os: {
+                name: 'windows',
+                ver: '22631.2715',
+                platform: 'desktop',
+            },
+            browser: {
+                browserName: 'chrome',
+                browserVersion: '125.0',
+            },
+        },
+    };
 
     static async #handleLogin(request: Request) {
         try {
@@ -42,7 +82,7 @@ export class XhomeInterceptor {
 
         const processPorts = (port: number): number[] => {
             const ports = new Set<number>();
-            ports.add(port);
+            port && ports.add(port);
             ports.add(9002);
 
             return Array.from(ports);
@@ -111,7 +151,7 @@ export class XhomeInterceptor {
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }
-        headers.authorization = `Bearer ${RemotePlay.XCLOUD_TOKEN}`;
+        headers.authorization = `Bearer ${RemotePlayManager.getInstance().xcloudToken}`;
 
         const index = request.url.indexOf('.xboxlive.com');
         request = new Request('https://wus.core.gssv-play-prod' + request.url.substring(index), {
@@ -146,10 +186,10 @@ export class XhomeInterceptor {
             headers[pair[0]] = pair[1];
         }
         // Add xHome token to headers
-        headers.authorization = `Bearer ${RemotePlay.XHOME_TOKEN}`;
+        headers.authorization = `Bearer ${RemotePlayManager.getInstance().xhomeToken}`;
 
         // Patch resolution
-        const deviceInfo = RemotePlay.BASE_DEVICE_INFO;
+        const deviceInfo = XhomeInterceptor.BASE_DEVICE_INFO;
         if (getPref(PrefKey.REMOTE_PLAY_RESOLUTION) === StreamResolution.DIM_720P) {
             deviceInfo.dev.os.name = 'android';
         }

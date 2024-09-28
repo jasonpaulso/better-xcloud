@@ -16,7 +16,7 @@ import { MouseCursorHider } from "@modules/mkb/mouse-cursor-hider";
 import { TouchController } from "@modules/touch-controller";
 import { checkForUpdate, disablePwa, productTitleToSlug } from "@utils/utils";
 import { Patcher } from "@modules/patcher";
-import { RemotePlay } from "@modules/remote-play";
+import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { onHistoryChanged, patchHistoryMethod } from "@utils/history";
 import { VibrationManager } from "@modules/vibration-manager";
 import { overridePreloadState } from "@utils/preload-state";
@@ -67,8 +67,10 @@ if (BX_FLAGS.SafariWorkaround && document.readyState !== 'loading') {
     // Stop loading
     window.stop();
 
-    // Show the reloading overlay
-    const css = compressCss(`
+    // We need to set it to an empty string first to work around Bun's bug
+    // https://github.com/oven-sh/bun/issues/12067
+    let css = '';
+    css += compressCss(`
 .bx-reload-overlay {
     position: fixed;
     top: 0;
@@ -115,6 +117,7 @@ if (BX_FLAGS.SafariWorkaround && document.readyState !== 'loading') {
         }, '🤓 ' + t('how-to-fix'));
     }
 
+    // Show the reloading overlay
     const $fragment = document.createDocumentFragment();
     $fragment.appendChild(CE('style', {}, css));
     $fragment.appendChild(CE('div',{
@@ -157,7 +160,7 @@ document.addEventListener('readystatechange', e => {
 
     if (STATES.isSignedIn) {
         // Preload Remote Play
-        getPref(PrefKey.REMOTE_PLAY_ENABLED) && RemotePlay.preload();
+        getPref(PrefKey.REMOTE_PLAY_ENABLED) && RemotePlayManager.getInstance().initialize();
     } else {
         // Show Settings button in the header when not signed in
         window.setTimeout(HeaderSection.watchHeader, 2000);
@@ -412,7 +415,7 @@ function main() {
 
     // Preload Remote Play
     if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
-        RemotePlay.detect();
+        RemotePlayManager.detect();
     }
 
     if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
