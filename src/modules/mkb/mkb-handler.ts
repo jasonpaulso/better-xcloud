@@ -25,7 +25,35 @@ const PointerToMouseButton = {
   2: 2,
   4: 1,
 }
-
+const morseCode: { [key: string]: string } = {
+  A: '.-',
+  B: '-...',
+  C: '-.-.',
+  D: '-..',
+  E: '.',
+  F: '..-.',
+  G: '--.',
+  H: '....',
+  I: '..',
+  J: '.---',
+  K: '-.-',
+  L: '.-..',
+  M: '--',
+  N: '-.',
+  O: '---',
+  P: '.--.',
+  Q: '--.-',
+  R: '.-.',
+  S: '...',
+  T: '-',
+  U: '..-',
+  V: '...-',
+  W: '.--',
+  X: '-..-',
+  Y: '-.--',
+  Z: '--..',
+  ' ': ' ',
+}
 class WebSocketMouseDataProvider extends MouseDataProvider {
   #pointerClient: PointerClient | undefined
   #connected = false
@@ -574,29 +602,45 @@ export class EmulatedMkbHandler extends MkbHandler {
     this.#mouseDataProvider?.stop()
   }
 
-  async #processButtonSequence(sequence: number[]): Promise<void> {
-    setInterval(async () => {
-      await this.#buttonLoop()
-    }, 60000)
-    await this.#buttonLoop()
+  textToMorse(text: string): string {
+    return text
+      .toUpperCase()
+      .split('')
+      .map((char) => morseCode[char] || '')
+      .join(' ')
   }
 
-  #buttonLoop = async () => {
-    //press "b" button
-    this.#pressButton(1, true)
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    this.#pressButton(1, false)
-    //press d-pad right
-    this.#pressButton(15, true)
-    await new Promise((resolve) => setTimeout(resolve, 50))
-    this.#pressButton(15, false)
+  async pressBButtonMorse(morseSequence: string) {
+    const pressDuration = 3000 // 3 seconds
+    const pauseBetweenElements = 1000 // 1 second pause between elements
+    const pauseBetweenLetters = 3000 // 3 seconds pause between letters
+
+    for (const char of morseSequence) {
+      switch (char) {
+        case '.':
+        case '-':
+          // Press the button for 3 seconds
+          this.#pressButton(1, true)
+          await new Promise((resolve) => setTimeout(resolve, pressDuration))
+          this.#pressButton(1, false)
+          // Pause between elements
+          await new Promise((resolve) => setTimeout(resolve, pauseBetweenElements))
+          break
+        case ' ':
+          // Pause between letters
+          await new Promise((resolve) => setTimeout(resolve, pauseBetweenLetters))
+          break
+      }
+    }
   }
+
+  async #processButtonSequence(text: string): Promise<void> {
+    const morseSequence = this.textToMorse(text)
+    await this.pressBButtonMorse(morseSequence)
+  }
+
   #initializeButtonLoop() {
-    // Define the sequence of button presses
-    const buttonSequence = [12, 13, 200, 0] // Example sequence
-
-    // Start the emulation loop
-    this.#processButtonSequence(buttonSequence)
+    this.#processButtonSequence('AFK')
   }
 
   startButtonEmulation() {
