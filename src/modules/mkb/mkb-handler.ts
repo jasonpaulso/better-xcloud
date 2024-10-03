@@ -25,35 +25,14 @@ const PointerToMouseButton = {
   2: 2,
   4: 1,
 }
-const morseCode: { [key: string]: string } = {
-  A: '.-',
-  B: '-...',
-  C: '-.-.',
-  D: '-..',
-  E: '.',
-  F: '..-.',
-  G: '--.',
-  H: '....',
-  I: '..',
-  J: '.---',
-  K: '-.-',
-  L: '.-..',
-  M: '--',
-  N: '-.',
-  O: '---',
-  P: '.--.',
-  Q: '--.-',
-  R: '.-.',
-  S: '...',
-  T: '-',
-  U: '..-',
-  V: '...-',
-  W: '.--',
-  X: '-..-',
-  Y: '-.--',
-  Z: '--..',
-  ' ': ' ',
+
+const BUTTON_CODES = {
+  LEFT_STICK_RIGHT: 203,
+  LEFT_STICK_LEFT: 202,
+  X: 2,
+  DPAD_RIGHT: 15,
 }
+
 class WebSocketMouseDataProvider extends MouseDataProvider {
   #pointerClient: PointerClient | undefined
   #connected = false
@@ -602,57 +581,35 @@ export class EmulatedMkbHandler extends MkbHandler {
     this.#mouseDataProvider?.stop()
   }
 
-  textToMorse(text: string): string {
-    return text
-      .toUpperCase()
-      .split('')
-      .map((char) => morseCode[char] || '')
-      .join(' ')
+  async #pressButtonWithRandomDelay(buttonCode: number, maxDelay: number) {
+    this.#pressButton(buttonCode, true)
+    await this.#randomDelay(maxDelay)
+    this.#pressButton(buttonCode, false)
   }
 
-  async pressBButtonMorse(morseSequence: string) {
-    const pressDuration = 3000 // 3 seconds
-    const pauseBetweenElements = 1000 // 1 second pause between elements
-    const pauseBetweenLetters = 3000 // 3 seconds pause between letters
+  #randomDelay(maxMs: number): Promise<void> {
+    const delay = Math.random() * maxMs
+    return new Promise((resolve) => setTimeout(resolve, delay))
+  }
 
-    for (const char of morseSequence) {
-      switch (char) {
-        case '.':
-        case '-':
-          // Press the button for 3 seconds
-          this.#pressButton(1, true)
-          await new Promise((resolve) => setTimeout(resolve, pressDuration))
-          this.#pressButton(1, false)
-          // Pause between elements
-          await new Promise((resolve) => setTimeout(resolve, pauseBetweenElements))
-          break
-        case ' ':
-          // Pause between letters
-          await new Promise((resolve) => setTimeout(resolve, pauseBetweenLetters))
-          break
+  async #buttonLoop(iterations = Infinity) {
+    try {
+      for (let i = 0; i < iterations; i++) {
+        await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_RIGHT, 1000)
+        await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_LEFT, 1000)
+
+        await this.#pressButtonWithRandomDelay(BUTTON_CODES.DPAD_RIGHT, 50)
+        await this.#pressButtonWithRandomDelay(BUTTON_CODES.X, 50)
+
+        await this.#randomDelay(60000)
       }
+    } catch (error) {
+      console.error('Error in button loop:', error)
     }
   }
 
-  async #processButtonSequence(text: string): Promise<void> {
-    const morseSequence = this.textToMorse(text)
-    await this.pressBButtonMorse(morseSequence)
-  }
-
-  #initializeButtonLoop() {
-    this.#processButtonSequence('AFK')
-  }
-
-  startButtonEmulation() {
-    if (!this.#enabled) {
-      this.#enabled = true
-      this.#initializeButtonLoop()
-    }
-  }
-
-  stopButtonEmulation() {
-    this.#enabled = false
-    // The loop will stop at the next iteration
+  startButtonLoop() {
+    this.#buttonLoop().catch((error) => console.error('Button loop error:', error))
   }
 
   #awayEnabled = false
@@ -667,10 +624,11 @@ export class EmulatedMkbHandler extends MkbHandler {
       this.startAwayMode()
       // deactivate mouse observer
       this.#onPointerLockExited()
-      this.#initializeButtonLoop()
+      this.startButtonLoop()
       Toast.show('Away Mode', 'Enabled')
     } else {
       this.stop()
+
       Toast.show('Away Mode', 'Disabled')
     }
   }
