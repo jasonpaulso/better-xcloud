@@ -21,7 +21,6 @@ import iconTouchControlDisable from "@assets/svg/touch-control-disable.svg" with
 import iconTouchControlEnable from "@assets/svg/touch-control-enable.svg" with { type: "text" };
 import iconTrash from "@assets/svg/trash.svg" with { type: "text" };
 import iconVirtualController from "@assets/svg/virtual-controller.svg" with { type: "text" };
-import iconAFK from "@assets/svg/virtual-controller.svg" with { type: "text" };
 // Game Bar
 import iconCaretLeft from "@assets/svg/caret-left.svg" with { type: "text" };
 import iconCaretRight from "@assets/svg/caret-right.svg" with { type: "text" };
@@ -60,8 +59,6 @@ export const BxIcon = {
     VIRTUAL_CONTROLLER: iconVirtualController,
 
     REMOTE_PLAY: iconRemotePlay,
-
-    AFK: iconAFK,
 
     // Game Bar
     CARET_LEFT: iconCaretLeft,
