@@ -5,11 +5,25 @@
       "type": "typescript",
       "tsconfig": "tsconfig.json",
       "option": "watch",
-      "problemMatcher": [
-        "$tsc-watch"
-      ],
+      "problemMatcher": ["$tsc-watch"],
       "group": "build",
       "label": "tsc: watch - tsconfig.json"
+    },
+    {
+      "type": "typescript",
+      "tsconfig": "tsconfig.json",
+      "problemMatcher": ["$tsc"],
+      "group": "build",
+      "label": "tsc: build - tsconfig.json"
+    },
+    {
+      "type": "shell",
+      "command": "npm run build-dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "label": "build: run"
     }
   ]
 }

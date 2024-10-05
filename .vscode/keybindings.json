@@ -1,0 +1,4 @@
+{
+  "key": "cmd+s",
+  "command": "workbench.action.tasks.build"
+}
