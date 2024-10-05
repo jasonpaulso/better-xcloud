@@ -29,8 +29,10 @@ const PointerToMouseButton = {
 const BUTTON_CODES = {
   LEFT_STICK_RIGHT: 203,
   LEFT_STICK_LEFT: 202,
+  RIGHT_STICK_PRESS: 11,
   X: 2,
   DPAD_RIGHT: 15,
+  TAB: 8,
 }
 
 class WebSocketMouseDataProvider extends MouseDataProvider {
@@ -527,17 +529,6 @@ export class EmulatedMkbHandler extends MkbHandler {
             }),
 
             createButton({
-              label: 'Away',
-              onClick: (e) => {
-                e.preventDefault()
-                e.stopPropagation()
-
-                this.toggleAwayMode()
-                this.waitForMouseData(false)
-              },
-            }),
-
-            createButton({
               label: t('edit'),
               style: ButtonStyle.GHOST,
               onClick: (e) => {
@@ -592,27 +583,146 @@ export class EmulatedMkbHandler extends MkbHandler {
     return new Promise((resolve) => setTimeout(resolve, delay))
   }
 
-  async #buttonLoop(iterations = Infinity) {
-    try {
-      for (let i = 0; i < iterations; i++) {
-        await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_RIGHT, 1000)
-        await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_LEFT, 1000)
+  #medicMode: boolean = false
+  #medicLoopRunning: boolean = false
 
-        await this.#pressButtonWithRandomDelay(BUTTON_CODES.DPAD_RIGHT, 50)
-        await this.#pressButtonWithRandomDelay(BUTTON_CODES.X, 50)
+  async toggleButtonLoopHeal() {
+    console.log('Medic button loop toggled')
+    this.#medicMode = !this.#medicMode
 
-        await this.#randomDelay(60000)
+    if (this.#enabled) {
+      console.log('Button loop started')
+      this.#medicLoopRunning = true
+      try {
+        while (this.#medicLoopRunning) {
+          this.#pressButton(BUTTON_CODES.DPAD_RIGHT, true)
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          this.#pressButton(BUTTON_CODES.DPAD_RIGHT, false)
+          await new Promise((resolve) => setTimeout(resolve, 10000))
+          // Check if we should stop the loop
+          if (!this.#medicMode || !this.#enabled) {
+            this.#medicLoopRunning = false
+          }
+        }
+      } catch (error) {
+        console.error('Error in button loop:', error)
+      } finally {
+        console.log('Button loop stopped')
+        this.#medicLoopRunning = false
       }
-    } catch (error) {
-      console.error('Error in button loop:', error)
+    } else {
+      console.log('Button loop stopped')
+      this.#medicLoopRunning = false
     }
   }
 
-  startButtonLoop() {
-    this.#buttonLoop().catch((error) => console.error('Button loop error:', error))
+  #pivotMode: boolean = false
+  #pivotLoopRunning: boolean = false
+
+  async toggleButtonLoopPivot() {
+    console.log('Button loop toggled')
+    this.#pivotMode = !this.#pivotMode
+
+    if (this.#enabled) {
+      console.log('Pivot loop started')
+      this.#pivotLoopRunning = true
+      try {
+        while (this.#pivotLoopRunning) {
+          await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_RIGHT, 1000)
+          await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_LEFT, 1000)
+          await this.#pressButtonWithRandomDelay(BUTTON_CODES.X, 50)
+
+          await this.#randomDelay(60000)
+
+          // Check if we should stop the loop
+          if (!this.#pivotMode || !this.#enabled) {
+            this.#pivotLoopRunning = false
+          }
+        }
+      } catch (error) {
+        console.error('Error in button loop:', error)
+      } finally {
+        console.log('Button loop stopped')
+        this.#pivotLoopRunning = false
+      }
+    } else {
+      console.log('Button loop stopped')
+      this.#pivotLoopRunning = false
+    }
+  }
+
+  #crouchMode: boolean = false
+  #crouchLoopRunning: boolean = false
+
+  async toggleButtonLoopCrouch() {
+    console.log('Button loop toggled')
+    this.#crouchMode = !this.#crouchMode
+
+    if (this.#enabled) {
+      console.log('Button loop started')
+      this.#crouchLoopRunning = true
+      try {
+        while (this.#crouchLoopRunning) {
+          await this.#pressButtonWithRandomDelay(BUTTON_CODES.RIGHT_STICK_PRESS, 1000)
+
+          await this.#randomDelay(5000)
+
+          // Check if we should stop the loop
+          if (!this.#crouchMode || !this.#enabled) {
+            this.#crouchLoopRunning = false
+          }
+        }
+      } catch (error) {
+        console.error('Error in button loop:', error)
+      } finally {
+        console.log('Button loop stopped')
+        this.#crouchLoopRunning = false
+      }
+    } else {
+      console.log('Button loop stopped')
+      this.#crouchLoopRunning = false
+    }
+  }
+
+  #defaultAwayMode: boolean = false
+  #defaultAwayLoopRunning: boolean = false
+
+  async toggleDefaultAwayMode() {
+    console.log('Button loop toggled')
+    this.#defaultAwayMode = !this.#defaultAwayMode
+
+    if (this.#enabled) {
+      console.log('Button loop started')
+      this.#defaultAwayLoopRunning = true
+      try {
+        while (this.#defaultAwayLoopRunning) {
+          this.#pressButton(BUTTON_CODES.TAB, true)
+
+          await new Promise((resolve) => setTimeout(resolve, 500))
+
+          this.#pressButton(BUTTON_CODES.TAB, false)
+
+          await new Promise((resolve) => setTimeout(resolve, 60000 * 3))
+
+          // Check if we should stop the loop
+          if (!this.#defaultAwayMode || !this.#enabled) {
+            this.#defaultAwayLoopRunning = false
+          }
+        }
+      } catch (error) {
+        console.error('Error in button loop:', error)
+      } finally {
+        console.log('Button loop stopped')
+        this.#defaultAwayLoopRunning = false
+      }
+    } else {
+      console.log('Button loop stopped')
+      this.#defaultAwayLoopRunning = false
+    }
   }
 
   #awayEnabled = false
+  awayIsEnabled = () => this.#awayEnabled
 
   toggleAwayMode = (force?: boolean) => {
     if (typeof force !== 'undefined') {
@@ -624,7 +734,7 @@ export class EmulatedMkbHandler extends MkbHandler {
       this.startAwayMode()
       // deactivate mouse observer
       this.#onPointerLockExited()
-      this.startButtonLoop()
+
       Toast.show('Away Mode', 'Enabled')
     } else {
       this.stop()
@@ -771,13 +881,6 @@ export class EmulatedMkbHandler extends MkbHandler {
   }
 
   // display a message while the user is in away mode using document.append
-
-  displayAwayModeMessage() {
-    const awayModeMessage = document.createElement('div')
-    awayModeMessage.classList.add('away-mode-message')
-    awayModeMessage.textContent = 'Away Mode Enabled'
-    document.body.appendChild(awayModeMessage)
-  }
 
   stop = () => {
     this.#enabled = false
