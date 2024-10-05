@@ -243,16 +243,16 @@ class PipBoyCore extends HTMLElement {
     this.powerSwitch!.addEventListener('click', () => this.togglePower())
 
     medicButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleButtonLoopHeal()
+      EmulatedMkbHandler.getInstance().toggleAwayMode('heal')
     )
     pivotButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleButtonLoopPivot()
+      EmulatedMkbHandler.getInstance().toggleAwayMode('pivot')
     )
     crouchButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleButtonLoopCrouch()
+      EmulatedMkbHandler.getInstance().toggleAwayMode('crouch')
     )
     viewButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleDefaultAwayMode()
+      EmulatedMkbHandler.getInstance().toggleAwayMode('awayMode')
     )
 
     this.buttons!.forEach((button) => {
@@ -270,7 +270,7 @@ class PipBoyCore extends HTMLElement {
       this.activeButtons.clear()
       this.buttons!.forEach((btn) => btn.classList.remove('active'))
     }
-    EmulatedMkbHandler.getInstance().toggleAwayMode()
+    EmulatedMkbHandler.getInstance().toggleAway()
     this.updateScreen()
   }
 
@@ -284,7 +284,6 @@ class PipBoyCore extends HTMLElement {
       }
       this.updateScreen()
     }
-    console.log('🚌 ~ PipBoyCore ~ toggleButton ~ button.classList:', button.classList)
   }
 
   private updateScreen(): void {
