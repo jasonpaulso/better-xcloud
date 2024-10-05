@@ -40,6 +40,7 @@ import { SettingsNavigationDialog } from "./modules/ui/dialog/settings-dialog";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
+import { PipBoy } from "./modules/pipboy/pipboy";
 
 
 // Handle login page
@@ -233,6 +234,10 @@ window.addEventListener(BxEvent.STREAM_PLAYING, e => {
         gameBar.enable();
         gameBar.showBar();
     }
+
+    const pipboy = PipBoy.getInstance();
+    pipboy.render();
+    
 
     const $video = (e as any).$video as HTMLVideoElement;
     Screenshot.updateCanvasSize($video.videoWidth, $video.videoHeight);
