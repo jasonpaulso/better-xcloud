@@ -784,7 +784,7 @@ export class EmulatedMkbHandler extends MkbHandler {
     [key: string]: { actionInterval: number; pauseDuration: number; action: () => Promise<void> }
   } = {
     heal: {
-      actionInterval: 30000,
+      actionInterval: 5000,
       pauseDuration: 0,
       action: async () => {
         this.#pressButton(BUTTON_CODES.DPAD_RIGHT, true)
