@@ -797,6 +797,7 @@ export class EmulatedMkbHandler extends MkbHandler {
       pauseDuration: 60000,
       action: async () => {
         await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_RIGHT, 1000)
+        await this.#delay(500)
         await this.#pressButtonWithRandomDelay(BUTTON_CODES.LEFT_STICK_LEFT, 1000)
         await this.#pressButtonWithRandomDelay(BUTTON_CODES.X, 50)
       },
