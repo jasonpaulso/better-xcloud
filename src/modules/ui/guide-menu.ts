@@ -1,10 +1,12 @@
-import { BxEvent } from '@/utils/bx-event'
-import { AppInterface, STATES } from '@/utils/global'
-import { createButton, ButtonStyle, CE } from '@/utils/html'
-import { t } from '@/utils/translation'
-import { SettingsNavigationDialog } from './dialog/settings-dialog'
-import { TrueAchievements } from '@/utils/true-achievements'
-import { BxIcon } from '@/utils/bx-icon'
+import { isFullVersion } from "@macros/build" with {type: "macro"};
+
+import { BxEvent } from "@/utils/bx-event";
+import { AppInterface, STATES } from "@/utils/global";
+import { createButton, ButtonStyle, CE } from "@/utils/html";
+import { t } from "@/utils/translation";
+import { SettingsNavigationDialog } from "./dialog/settings-dialog";
+import { TrueAchievements } from "@/utils/true-achievements";
+import { BxIcon } from "@/utils/bx-icon";
 
 export enum GuideMenuTab {
   HOME = 'home',
@@ -25,10 +27,10 @@ export class GuideMenu {
           { once: true }
         )
 
-        // Close all xCloud's dialogs
-        window.BX_EXPOSED.dialogRoutes.closeAll()
-      },
-    }),
+                // Close all xCloud's dialogs
+                GuideMenu.#closeGuideMenu();
+            },
+        }),
 
     closeApp:
       AppInterface &&
@@ -58,10 +60,10 @@ export class GuideMenu {
           window.location.reload()
         }
 
-        // Close all xCloud's dialogs
-        window.BX_EXPOSED.dialogRoutes.closeAll()
-      },
-    }),
+                // Close all xCloud's dialogs
+                GuideMenu.#closeGuideMenu();
+            },
+        }),
 
     backToHome: createButton({
       icon: BxIcon.HOME,
@@ -72,16 +74,27 @@ export class GuideMenu {
         confirm(t('back-to-home-confirm')) &&
           (window.location.href = window.location.href.substring(0, 31))
 
-        // Close all xCloud's dialogs
-        window.BX_EXPOSED.dialogRoutes.closeAll()
-      },
-      attributes: {
-        'data-state': 'playing',
-      },
-    }),
-  }
+                // Close all xCloud's dialogs
+                GuideMenu.#closeGuideMenu();
+            },
+            attributes: {
+                'data-state': 'playing',
+            },
+        }),
+    }
 
-  static #$renderedButtons: HTMLElement
+    static #$renderedButtons: HTMLElement;
+
+    static #closeGuideMenu() {
+        if (window.BX_EXPOSED.dialogRoutes) {
+            window.BX_EXPOSED.dialogRoutes.closeAll();
+            return;
+        }
+
+        // Use alternative method for Lite version
+        const $btnClose = document.querySelector('#gamepass-dialog-root button[class^=Header-module__closeButton]') as HTMLElement;
+        $btnClose && $btnClose.click();
+    }
 
   static #renderButtons() {
     if (GuideMenu.#$renderedButtons) {
@@ -117,13 +130,13 @@ export class GuideMenu {
     return $div
   }
 
-  static #injectHome($root: HTMLElement, isPlaying = false) {
-    const $achievementsProgress = $root.querySelector(
-      'button[class*=AchievementsButton-module__progressBarContainer]'
-    )
-    if ($achievementsProgress) {
-      TrueAchievements.injectAchievementsProgress($achievementsProgress as HTMLElement)
-    }
+    static #injectHome($root: HTMLElement, isPlaying = false) {
+        if (isFullVersion()) {
+            const $achievementsProgress = $root.querySelector('button[class*=AchievementsButton-module__progressBarContainer]');
+            if ($achievementsProgress) {
+                TrueAchievements.injectAchievementsProgress($achievementsProgress as HTMLElement);
+            }
+        }
 
     // Find the element to add buttons to
     let $target: HTMLElement | null = null
@@ -169,10 +182,10 @@ export class GuideMenu {
   static observe($addedElm: HTMLElement) {
     const className = $addedElm.className
 
-    if (className.includes('AchievementsButton-module__progressBarContainer')) {
-      TrueAchievements.injectAchievementsProgress($addedElm)
-      return
-    }
+        if (isFullVersion() && className.includes('AchievementsButton-module__progressBarContainer')) {
+            TrueAchievements.injectAchievementsProgress($addedElm);
+            return;
+        }
 
     if (
       !className.startsWith('NavigationAnimation') &&
@@ -182,12 +195,14 @@ export class GuideMenu {
       return
     }
 
-    // Achievement Details page
-    const $achievDetailPage = $addedElm.querySelector('div[class*=AchievementDetailPage]')
-    if ($achievDetailPage) {
-      TrueAchievements.injectAchievementDetailPage($achievDetailPage as HTMLElement)
-      return
-    }
+        // Achievement Details page
+        if (isFullVersion()) {
+            const $achievDetailPage = $addedElm.querySelector('div[class*=AchievementDetailPage]');
+            if ($achievDetailPage) {
+                TrueAchievements.injectAchievementDetailPage($achievDetailPage as HTMLElement);
+                return;
+            }
+        }
 
     // Find navigation bar
     const $selectedTab = $addedElm.querySelector(

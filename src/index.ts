@@ -1,3 +1,5 @@
+import { compressCss, isFullVersion } from "@macros/build" with {type: "macro"};
+
 import "@utils/global";
 import { BxEvent } from "@utils/bx-event";
 import { BX_FLAGS } from "@utils/bx-flags";
@@ -35,12 +37,11 @@ import { ProductDetailsPage } from "./modules/ui/product-details";
 import { NavigationDialogManager } from "./modules/ui/dialog/navigation-dialog";
 import { PrefKey } from "./enums/pref-keys";
 import { getPref, StreamTouchController } from "./utils/settings-storages/global-settings-storage";
-import { compressCss } from "@macros/build" with {type: "macro"};
 import { SettingsNavigationDialog } from "./modules/ui/dialog/settings-dialog";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
-import { PipBoy } from "./modules/pipboy/pipboy";
+import { StreamStatsCollector } from "./utils/stream-stats-collector";import { PipBoy } from "./modules/pipboy/pipboy";
 
 
 // Handle login page
@@ -64,7 +65,7 @@ if (window.location.pathname.includes('/auth/msa')) {
 
 BxLogger.info('readyState', document.readyState);
 
-if (BX_FLAGS.SafariWorkaround && document.readyState !== 'loading') {
+if (isFullVersion() && BX_FLAGS.SafariWorkaround && document.readyState !== 'loading') {
     // Stop loading
     window.stop();
 
@@ -193,8 +194,11 @@ window.addEventListener(BxEvent.XCLOUD_SERVERS_UNAVAILABLE, e => {
     window.setTimeout(HeaderSection.watchHeader, 2000);
 
     // Open Settings dialog on Unsupported page
-    SettingsNavigationDialog.getInstance().show();
-});
+    const $unsupportedPage = document.querySelector('div[class^=UnsupportedMarketPage-module__container]') as HTMLElement;
+    if ($unsupportedPage) {
+        SettingsNavigationDialog.getInstance().show();
+    }
+}, {once: true});
 
 window.addEventListener(BxEvent.XCLOUD_SERVERS_READY, e => {
     STATES.isSignedIn = true;
@@ -228,7 +232,7 @@ window.addEventListener(BxEvent.STREAM_PLAYING, e => {
     STATES.isPlaying = true;
     StreamUiHandler.observe();
 
-    if (getPref(PrefKey.GAME_BAR_POSITION) !== 'off') {
+    if (isFullVersion() && getPref(PrefKey.GAME_BAR_POSITION) !== 'off') {
         const gameBar = GameBar.getInstance();
         gameBar.reset();
         gameBar.enable();
@@ -239,8 +243,10 @@ window.addEventListener(BxEvent.STREAM_PLAYING, e => {
     pipboy.render();
     
 
-    const $video = (e as any).$video as HTMLVideoElement;
-    Screenshot.updateCanvasSize($video.videoWidth, $video.videoHeight);
+    if (isFullVersion()) {
+        const $video = (e as any).$video as HTMLVideoElement;
+        Screenshot.updateCanvasSize($video.videoWidth, $video.videoHeight);
+    }
 
     updateVideoPlayer();
 });
@@ -293,9 +299,11 @@ function unload() {
         return;
     }
 
-    // Stop MKB listeners
-    EmulatedMkbHandler.getInstance().destroy();
-    NativeMkbHandler.getInstance().destroy();
+    if (isFullVersion()) {
+        // Stop MKB listeners
+        EmulatedMkbHandler.getInstance().destroy();
+        NativeMkbHandler.getInstance().destroy();
+    }
 
     // Destroy StreamPlayer
     STATES.currentStream.streamPlayer?.destroy();
@@ -308,9 +316,11 @@ function unload() {
     NavigationDialogManager.getInstance().hide();
     StreamStats.getInstance().onStoppedPlaying();
 
-    MouseCursorHider.stop();
-    TouchController.reset();
-    GameBar.getInstance().disable();
+    if (isFullVersion()) {
+        MouseCursorHider.stop();
+        TouchController.reset();
+        GameBar.getInstance().disable();
+    }
 }
 
 window.addEventListener(BxEvent.STREAM_STOPPED, unload);
@@ -318,7 +328,7 @@ window.addEventListener('pagehide', e => {
     BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
 });
 
-window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
+isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
     Screenshot.takeScreenshot();
 });
 
@@ -373,7 +383,9 @@ function waitForRootDialog() {
 
 
 function main() {
-    waitForRootDialog();
+    if (getPref(PrefKey.GAME_MSFS2020_FORCE_NATIVE_MKB)) {
+        BX_FLAGS.ForceNativeMkbTitles.push('9PMQDM08SNK9');
+    }
 
     // Monkey patches
     patchRtcPeerConnection();
@@ -381,7 +393,7 @@ function main() {
     interceptHttpRequests();
     patchVideoApi();
     patchCanvasContext();
-    AppInterface && patchPointerLockApi();
+    isFullVersion() && AppInterface && patchPointerLockApi();
 
     getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL) && patchAudioContext();
 
@@ -390,51 +402,58 @@ function main() {
         disableAdobeAudienceManager();
     }
 
-    STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
-    overridePreloadState();
-
-    VibrationManager.initialSetup();
-
-    // Check for Update
-    BX_FLAGS.CheckForUpdate && checkForUpdate();
+    waitForRootDialog();
 
     // Setup UI
     addCss();
     Toast.setup();
-    (getPref(PrefKey.GAME_BAR_POSITION) !== 'off') && GameBar.getInstance();
-    Screenshot.setup();
 
     GuideMenu.addEventListeners();
+    StreamStatsCollector.setupEvents();
     StreamBadges.setupEvents();
     StreamStats.setupEvents();
-    EmulatedMkbHandler.setupEvents();
-    Patcher.init();
 
-    disablePwa();
+    if (isFullVersion()) {
+        (getPref(PrefKey.GAME_BAR_POSITION) !== 'off') && GameBar.getInstance();
+        Screenshot.setup();
+
+        STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
+        overridePreloadState();
+
+        VibrationManager.initialSetup();
+
+        // Check for Update
+        BX_FLAGS.CheckForUpdate && checkForUpdate();
+
+        Patcher.init();
+        disablePwa();
+
+        // Preload Remote Play
+        if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
+            RemotePlayManager.detect();
+        }
+
+        if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
+            TouchController.setup();
+        }
+
+        // Start PointerProviderServer
+        if (getPref(PrefKey.MKB_ENABLED) && AppInterface) {
+            STATES.pointerServerPort = AppInterface.startPointerServer() || 9269;
+            BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString());
+        }
+
+        // Show wait time in game card
+        getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup();
+
+        EmulatedMkbHandler.setupEvents();
+    }
 
     // Show a toast when connecting/disconecting controller
     if (getPref(PrefKey.CONTROLLER_SHOW_CONNECTION_STATUS)) {
         window.addEventListener('gamepadconnected', e => showGamepadToast(e.gamepad));
         window.addEventListener('gamepaddisconnected', e => showGamepadToast(e.gamepad));
     }
-
-    // Preload Remote Play
-    if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
-        RemotePlayManager.detect();
-    }
-
-    if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
-        TouchController.setup();
-    }
-
-    // Start PointerProviderServer
-    if (getPref(PrefKey.MKB_ENABLED) && AppInterface) {
-        STATES.pointerServerPort = AppInterface.startPointerServer() || 9269;
-        BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString());
-    }
-
-    // Show wait time in game card
-    getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup();
 }
 
 main();

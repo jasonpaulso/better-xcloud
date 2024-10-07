@@ -176,12 +176,6 @@ export class StreamUiHandler {
   }
 
   private static handleSystemMenu($streamHud: HTMLElement) {
-    // Grip handle
-    const $gripHandle = $streamHud.querySelector('button[class^=GripHandle]') as HTMLElement
-    if (!$gripHandle) {
-      return
-    }
-
     // Get the last button
     const $orgButton = $streamHud.querySelector('div[class^=HUDButton]') as HTMLElement
     if (!$orgButton) {
@@ -189,14 +183,16 @@ export class StreamUiHandler {
     }
 
     const hideGripHandle = () => {
-      if (!$gripHandle) {
-        return
+      // Grip handle
+      const $gripHandle = document.querySelector(
+        '#StreamHud button[class^=GripHandle]'
+      ) as HTMLElement
+      if ($gripHandle && $gripHandle.ariaExpanded === 'true') {
+        $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
+        $gripHandle.click()
+        $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
+        $gripHandle.click()
       }
-
-      $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
-      $gripHandle.click()
-      $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
-      $gripHandle.click()
     }
 
     // Create Stream Settings button
@@ -227,12 +223,12 @@ export class StreamUiHandler {
         t('stream-stats'),
         BxIcon.STREAM_STATS
       )
-      $btnStreamStats?.addEventListener('click', (e) => {
+      $btnStreamStats?.addEventListener('click', async (e) => {
         hideGripHandle()
         e.preventDefault()
 
         // Toggle Stream Stats
-        streamStats.toggle()
+        await streamStats.toggle()
 
         const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
         $btnStreamStats!.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
@@ -241,29 +237,9 @@ export class StreamUiHandler {
       StreamUiHandler.$btnStreamStats = $btnStreamStats
     }
 
-    // create away mode button
-    let $btnAwayMode = StreamUiHandler.$btnAwayMode
-    if (typeof $btnAwayMode === 'undefined') {
-      $btnAwayMode = StreamUiHandler.cloneStreamHudButton(
-        $orgButton,
-        'Away Mode',
-        BxIcon.VIRTUAL_CONTROLLER
-      )
-      $btnAwayMode?.addEventListener('click', (e) => {
-        hideGripHandle()
-        e.preventDefault()
-
-        // Show Away Mode dialog
-        // SettingsNavigationDialog.getInstance().showAwayMode()
-        EmulatedMkbHandler.getInstance().toggleAwayMode()
-      })
-
-      StreamUiHandler.$btnAwayMode = $btnAwayMode
-    }
-
     const $btnParent = $orgButton.parentElement!
 
-    if ($btnStreamSettings && $btnStreamStats && $btnAwayMode) {
+    if ($btnStreamSettings && $btnStreamStats) {
       const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
       $btnStreamStats.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
 

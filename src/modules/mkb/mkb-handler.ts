@@ -1,3 +1,5 @@
+import { isFullVersion } from '@macros/build' with {type: "macro"}
+
 import { MkbPreset } from './mkb-preset'
 import { GamepadKey, MkbPresetKey, GamepadStick, MouseMapTo, WheelCode } from '@enums/mkb'
 import { createButton, ButtonStyle, CE } from '@utils/html'
@@ -26,14 +28,7 @@ const PointerToMouseButton = {
   4: 1,
 }
 
-const BUTTON_CODES = {
-  LEFT_STICK_RIGHT: 203,
-  LEFT_STICK_LEFT: 202,
-  RIGHT_STICK_PRESS: 11,
-  X: 2,
-  DPAD_RIGHT: 15,
-  TAB: 8,
-}
+export const VIRTUAL_GAMEPAD_ID = 'Xbox 360 Controller'
 
 class WebSocketMouseDataProvider extends MouseDataProvider {
   #pointerClient: PointerClient | undefined
@@ -144,10 +139,8 @@ export class EmulatedMkbHandler extends MkbHandler {
   static readonly DEFAULT_DEADZONE_COUNTERWEIGHT = 0.01
   static readonly MAXIMUM_STICK_RANGE = 1.1
 
-  static VIRTUAL_GAMEPAD_ID = 'Xbox 360 Controller'
-
   #VIRTUAL_GAMEPAD = {
-    id: EmulatedMkbHandler.VIRTUAL_GAMEPAD_ID,
+    id: VIRTUAL_GAMEPAD_ID,
     index: 3,
     connected: false,
     hapticActuators: null,
@@ -279,11 +272,6 @@ export class EmulatedMkbHandler extends MkbHandler {
 
   #onKeyboardEvent = (e: KeyboardEvent) => {
     const isKeyDown = e.type === 'keydown'
-
-    // // Toggle Away Mode
-    // if (e.code === 'F1') {
-    //   this.toggleAwayMode()
-    // }
 
     // Toggle MKB feature
     if (e.code === 'F8') {
@@ -528,7 +516,6 @@ export class EmulatedMkbHandler extends MkbHandler {
 
             createButton({
               label: t('edit'),
-              style: ButtonStyle.GHOST,
               onClick: (e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -567,6 +554,7 @@ export class EmulatedMkbHandler extends MkbHandler {
   }
 
   #onPointerLockExited = () => {
+    BxLogger.info('AwayModeHandler', 'Pointer lock exited')
     this.#mouseDataProvider?.stop()
   }
 
@@ -647,45 +635,11 @@ export class EmulatedMkbHandler extends MkbHandler {
     window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.#onPollingModeChanged)
   }
 
-  start = (away?: boolean) => {
+  start = () => {
     if (!this.#enabled) {
       this.#enabled = true
-      if (!away) {
-        Toast.show(t('virtual-controller'), t('enabled'), { instant: true })
-      }
-    }
-
-    this.#isPolling = true
-    this.#escKeyDownTime = -1
-
-    this.#resetGamepad()
-    window.navigator.getGamepads = this.#patchedGetGamepads
-
-    this.waitForMouseData(false)
-
-    this.#mouseDataProvider?.start()
-
-    // Dispatch "gamepadconnected" event
-    const virtualGamepad = this.#getVirtualGamepad()
-    virtualGamepad.connected = true
-    virtualGamepad.timestamp = performance.now()
-
-    BxEvent.dispatch(window, 'gamepadconnected', {
-      gamepad: virtualGamepad,
-    })
-
-    window.BX_EXPOSED.stopTakRendering = true
-
-    if (!away) {
       Toast.show(t('virtual-controller'), t('enabled'), { instant: true })
     }
-  }
-
-  startAwayMode = () => {
-    if (!this.#enabled) {
-      this.#enabled = true
-      // Toast.show('Away Mode', 'Enabled')
-    }
 
     this.#isPolling = true
     this.#escKeyDownTime = -1
@@ -708,10 +662,8 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     window.BX_EXPOSED.stopTakRendering = true
 
-    // Toast.show('Away Mode', 'Disabled')
+    Toast.show(t('virtual-controller'), t('enabled'), { instant: true })
   }
-
-  // display a message while the user is in away mode using document.append
 
   stop = () => {
     this.#enabled = false
@@ -740,20 +692,115 @@ export class EmulatedMkbHandler extends MkbHandler {
   }
 
   static setupEvents() {
-    window.addEventListener(BxEvent.STREAM_PLAYING, () => {
-      if (STATES.currentStream.titleInfo?.details.hasMkbSupport) {
-        // Enable native MKB in Android app
-        if (AppInterface && getPref(PrefKey.NATIVE_MKB_ENABLED) === 'on') {
-          AppInterface && NativeMkbHandler.getInstance().init()
+    isFullVersion() &&
+      window.addEventListener(BxEvent.STREAM_PLAYING, () => {
+        if (STATES.currentStream.titleInfo?.details.hasMkbSupport) {
+          // Enable native MKB in Android app
+          if (AppInterface && getPref(PrefKey.NATIVE_MKB_ENABLED) === 'on') {
+            AppInterface && NativeMkbHandler.getInstance().init()
+          }
+        } else if (getPref(PrefKey.MKB_ENABLED) && (AppInterface || !UserAgent.isMobile())) {
+          BxLogger.info(LOG_TAG, 'Emulate MKB')
+          EmulatedMkbHandler.getInstance().init()
         }
-      } else if (getPref(PrefKey.MKB_ENABLED) && (AppInterface || !UserAgent.isMobile())) {
-        BxLogger.info(LOG_TAG, 'Emulate MKB')
-        EmulatedMkbHandler.getInstance().init()
+      })
+  }
+
+  #awayEnabled = false
+
+  toggleAway = () => {
+    const LOG_TAG = 'AwayModeHandler'
+    const EVENT_TAG = 'away-mode'
+    this.#awayEnabled = !this.#awayEnabled
+    
+    window.addEventListener(EVENT_TAG, (e) => {
+      BxLogger.info(LOG_TAG, e)
+    })
+
+    if (this.#awayEnabled) {
+      this.start()
+
+      Toast.show('Away Mode', 'Enabled', { instant: true })
+
+      
+    } else {
+      this.stop()
+
+      Toast.show('Away Mode', 'Disabled', { instant: true })
+
+    }
+    BxEvent.dispatch(window, EVENT_TAG, { enabled: this.#awayEnabled })
+    this.pressButton(10, true)
+    this.pressButton(10, false)
+  }
+
+  pressButton = (buttonIndex: GamepadKey, pressed: boolean) => {
+    this.#pressButton(buttonIndex, pressed)
+  }
+}
+
+
+// const AwayModeHandler = ( ) =>{
+//   const mkbHandler = EmulatedMkbHandler.getInstance()
+//   mkbHandler.start()
+//   mkbHandler.pressButton(10, true)
+//   mkbHandler.pressButton(10, false)
+// }
+
+// document.addEventListener('keydown', (e) => {
+//   if (e.key === 'F10') {
+//     AwayModeHandler()
+//   }
+// })
+
+// extensions
+
+
+const BUTTON_CODES = {
+  LEFT_STICK_RIGHT: 203,
+  LEFT_STICK_LEFT: 202,
+  RIGHT_STICK_PRESS: 11,
+  X: 2,
+  DPAD_RIGHT: 15,
+  TAB: 8,
+}
+export class AwayModeHandler {
+  static #instance: AwayModeHandler;
+  #enabled = false;
+  #mkbHandler = EmulatedMkbHandler.getInstance();
+  #pressButton = this.#mkbHandler.pressButton.bind(this.#mkbHandler);
+
+  static getInstance() {
+    if (!this.#instance) {
+      this.#instance = new AwayModeHandler();
+    }
+    return this.#instance;
+  }
+
+  toggle = () => {
+    this.#enabled = !this.#enabled
+    if (this.#enabled) {
+      this.#mkbHandler.start()
+      Toast.show('Away Mode', 'Enabled', { instant: true })
+    } else {
+      this.#mkbHandler.stop()
+      Toast.show('Away Mode', 'Disabled', { instant: true })
+    }
+  }
+
+  setupEvents() {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'F10') {
+        this.toggle()
+        this.#pressButton(10, true)
+        this.#pressButton(10, false)
       }
     })
   }
 
-  // away mode methods
+  init = () => {
+    this.setupEvents()
+  }
 
   async #pressButtonWithRandomDelay(buttonCode: number, maxDelay: number) {
     this.#pressButton(buttonCode, true)
@@ -865,30 +912,5 @@ export class EmulatedMkbHandler extends MkbHandler {
   // Single function to toggle away modes
   toggleAwayMode(mode: 'heal' | 'pivot' | 'crouch' | 'awayMode') {
     this.toggleButtonLoop(mode)
-  }
-
-  #awayEnabled = false
-  awayIsEnabled = () => this.#awayEnabled
-
-  toggleAway = (force?: boolean) => {
-    if (typeof force !== 'undefined') {
-      this.#awayEnabled = force
-    } else {
-      this.#awayEnabled = !this.#awayEnabled
-    }
-    if (this.#awayEnabled) {
-      this.startAwayMode()
-      this.#onPointerLockExited()
-
-      Toast.show('Away Mode', 'Enabled', { instant: true })
-
-      BxLogger.info('AwayModeHandler', 'Away mode enabled')
-    } else {
-      this.stop()
-
-      Toast.show('Away Mode', 'Disabled', { instant: true })
-
-      BxLogger.info('AwayModeHandler', 'Away mode disabled')
-    }
   }
 }

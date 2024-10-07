@@ -1,3 +1,5 @@
+import { isFullVersion } from "@macros/build" with {type: "macro"};
+
 import { ControllerShortcut } from "@/modules/controller-shortcut";
 import { BxEvent } from "@utils/bx-event";
 import { deepClone, STATES } from "@utils/global";
@@ -20,7 +22,7 @@ export type SupportedInputTypeValue = (typeof SupportedInputType)[keyof typeof S
 export const BxExposed = {
     getTitleInfo: () => STATES.currentStream.titleInfo,
 
-    modifyTitleInfo: (titleInfo: XcloudTitleInfo): XcloudTitleInfo => {
+    modifyTitleInfo: isFullVersion() && function(titleInfo: XcloudTitleInfo): XcloudTitleInfo {
         // Clone the object since the original is read-only
         titleInfo = deepClone(titleInfo);
 
@@ -110,8 +112,8 @@ export const BxExposed = {
         }
     },
 
-    handleControllerShortcut: ControllerShortcut.handle,
-    resetControllerShortcut: ControllerShortcut.reset,
+    handleControllerShortcut: isFullVersion() && ControllerShortcut.handle,
+    resetControllerShortcut: isFullVersion() && ControllerShortcut.reset,
 
     overrideSettings: {
         'Tv_settings': {
