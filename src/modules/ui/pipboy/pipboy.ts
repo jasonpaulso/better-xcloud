@@ -1,4 +1,4 @@
-import { EmulatedMkbHandler } from '../mkb/mkb-handler'
+import { AwayModeHandler } from '../../away-mode/away-mode-handler'
 
 const css = (strings: TemplateStringsArray, ...values: any[]) =>
   String.raw({ raw: strings }, ...values)
@@ -110,6 +110,14 @@ class PipBoyCore extends HTMLElement {
       transition: all 0.3s ease;
       outline: none;
       width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 4rem;
+      padding: 0.6rem;
+    `,
+    '.btn svg': css`
+      height: 100%;
     `,
     '.btn:hover': css`
       background-color: #2a2a2a;
@@ -204,7 +212,7 @@ class PipBoyCore extends HTMLElement {
         <div class="buttons">
           <button class="btn" data-screen="MEDIC" data-action="medic" disabled>MEDIC</button>
           <button class="btn" data-screen="PIVOT" data-action="pivot" disabled>PIVOT</button>
-          <button class="btn" data-screen="CROUCH" data-action="crouch" disabled>CROUCH</button>
+          <button class="btn" data-screen="COFFEE" data-action="coffee" disabled>COFFEE</button>
           <button class="btn" data-screen="VIEW" data-action="view" disabled>VIEW</button>
         </div>
        </div>
@@ -228,7 +236,10 @@ class PipBoyCore extends HTMLElement {
     const pivotButton = Array.from(this.buttons!).find((btn) => btn.dataset.action === 'pivot')
 
     // find crouch button by dataset
-    const crouchButton = Array.from(this.buttons!).find((btn) => btn.dataset.action === 'crouch')
+    const coffeeButton = Array.from(this.buttons!).find((btn) => btn.dataset.action === 'coffee')
+    if (coffeeButton) {
+      coffeeButton.innerHTML = svg
+    }
 
     // find view button by dataset
     const viewButton = Array.from(this.buttons!).find((btn) => btn.dataset.action === 'view')
@@ -243,16 +254,16 @@ class PipBoyCore extends HTMLElement {
     this.powerSwitch!.addEventListener('click', () => this.togglePower())
 
     medicButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleAwayMode('heal')
+      AwayModeHandler.getInstance().toggleAwayMode('heal')
     )
     pivotButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleAwayMode('pivot')
+      AwayModeHandler.getInstance().toggleAwayMode('pivot')
     )
-    crouchButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleAwayMode('crouch')
+    coffeeButton?.addEventListener('click', () =>
+      AwayModeHandler.getInstance().toggleAwayMode('coffee')
     )
     viewButton?.addEventListener('click', () =>
-      EmulatedMkbHandler.getInstance().toggleAwayMode('awayMode')
+      AwayModeHandler.getInstance().toggleAwayMode('awayMode')
     )
 
     this.buttons!.forEach((button) => {
@@ -270,7 +281,7 @@ class PipBoyCore extends HTMLElement {
       this.activeButtons.clear()
       this.buttons!.forEach((btn) => btn.classList.remove('active'))
     }
-    EmulatedMkbHandler.getInstance().toggleAway()
+    AwayModeHandler.getInstance().toggle()
     this.updateScreen()
   }
 
@@ -310,3 +321,8 @@ class PipBoyCore extends HTMLElement {
 }
 
 customElements.define('pip-boy-core', PipBoyCore)
+
+// define an svg icon
+const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 51.67 88.98"><script xmlns=""/><defs><style>.cls-1{fill:#f5cb5b;fill-rule:evenodd;}.cls-2{fill:none;stroke:#231f20;stroke-linecap:square;stroke-miterlimit:6.29;stroke-width:1.5px;}</style></defs><path class="cls-1" d="M5,79Q.91,61.58,1,50.37l.21-4.83-.11-1q0-4.2,5.24-7.24A26.39,26.39,0,0,1,18.2,34.33l-1.57,2.72L9,38.73q-4.08,1.68-4.08,4.09T9,46.91a27.88,27.88,0,0,0,10.49,1.78,26.74,26.74,0,0,0,10.27-1.78q4.19-1.57,4.19-4.09t-4.19-4.09l-5.45-1.47.1-.1,1.68-1.36.1-.21.42-.53,5.66,2.2q5.35,3,5.35,7.24l-.11,1,.21,4.83v1.78a12.88,12.88,0,0,1,5.77-2.31l3.67.32L49.22,52a10.44,10.44,0,0,1,1.89,7.45l-2,7.75a47.59,47.59,0,0,1-5.35,10.17L42.31,79.3A8.17,8.17,0,0,1,38.11,81l-4.4-.73-.31-.11-1.26,4.2a20.35,20.35,0,0,1-12.79,4.29A20.77,20.77,0,0,1,6.46,84.33L5,79M45.87,65.46,47.44,60a8.34,8.34,0,0,0-.94-5.24l-.84-1.05L44,53.62a9.88,9.88,0,0,0-4.08,1.57l-2,2-.52.42a154,154,0,0,1-2.94,18l.21.21,1,.94a1.23,1.23,0,0,0,1,.42,3.55,3.55,0,0,0,3-.94l1.67-1.89,4.51-8.91" transform="translate(-0.26 -0.4)"/><path class="cls-2" d="M5,79Q.91,61.58,1,50.37l.21-4.83-.11-1q0-4.2,5.24-7.24A26.39,26.39,0,0,1,18.2,34.33l-1.57,2.72L9,38.73q-4.08,1.68-4.08,4.09T9,46.91a27.88,27.88,0,0,0,10.49,1.78,26.74,26.74,0,0,0,10.27-1.78q4.19-1.57,4.19-4.09t-4.19-4.09l-5.45-1.47.1-.1,1.68-1.36.1-.21.42-.53,5.66,2.2q5.35,3,5.35,7.24l-.11,1,.21,4.83v1.78a12.88,12.88,0,0,1,5.77-2.31l3.67.32L49.22,52a10.44,10.44,0,0,1,1.89,7.45l-2,7.75a47.59,47.59,0,0,1-5.35,10.17L42.31,79.3A8.17,8.17,0,0,1,38.11,81l-4.4-.73-.31-.11-1.26,4.2a20.35,20.35,0,0,1-12.79,4.29A20.77,20.77,0,0,1,6.46,84.33L5,79M45.87,65.46,47.44,60a8.34,8.34,0,0,0-.94-5.24l-.84-1.05L44,53.62a9.88,9.88,0,0,0-4.08,1.57l-2,2-.52.42a154,154,0,0,1-2.94,18l.21.21,1,.94a1.23,1.23,0,0,0,1,.42,3.55,3.55,0,0,0,3-.94l1.67-1.89,4.51-8.91" transform="translate(-0.26 -0.4)"/><path class="cls-1" d="M21.45,7.18,19,11.06,18,14.94l.73,2.72,1.47,3.67,2.93,3.57,1.47,3.46a9,9,0,0,1-1.05,6.7l-4.08,4.82L16.94,42.3l-1.26.21.95-1.58,3-6.39A15.62,15.62,0,0,0,20.29,29q-.2-2.4-3.77-7.65c-2.23-3.14-3.25-5.69-3-7.65a9.37,9.37,0,0,1,1.78-4.3,24.63,24.63,0,0,1,9.44-8l.42.84L21.87,6.87l-.42.31" transform="translate(-0.26 -0.4)"/><path class="cls-2" d="M21.45,7.18,19,11.06,18,14.94l.73,2.72,1.47,3.67,2.93,3.57,1.47,3.46a9,9,0,0,1-1.05,6.7l-4.08,4.82L16.94,42.3l-1.26.21.95-1.58,3-6.39A15.62,15.62,0,0,0,20.29,29q-.2-2.4-3.77-7.65c-2.23-3.14-3.25-5.69-3-7.65a9.37,9.37,0,0,1,1.78-4.3,24.63,24.63,0,0,1,9.44-8l.42.84L21.87,6.87Z" transform="translate(-0.26 -0.4)"/></svg>
+`

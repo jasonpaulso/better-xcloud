@@ -6,7 +6,6 @@ import { t } from '@utils/translation.ts'
 import { StreamBadges } from './stream-badges.ts'
 import { StreamStats } from './stream-stats.ts'
 import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
-import { EmulatedMkbHandler } from '../mkb/mkb-handler.ts'
 
 export class StreamUiHandler {
   private static $btnStreamSettings: HTMLElement | null | undefined
@@ -14,7 +13,6 @@ export class StreamUiHandler {
   private static $btnRefresh: HTMLElement | null | undefined
   private static $btnHome: HTMLElement | null | undefined
   private static observer: MutationObserver | undefined
-  private static $btnAwayMode: HTMLElement | null | undefined
 
   private static cloneStreamHudButton(
     $btnOrg: HTMLElement,
@@ -146,26 +144,10 @@ export class StreamUiHandler {
       )
     }
 
-    let $btnAwayMode = StreamUiHandler.$btnAwayMode
-
-    if (typeof $btnAwayMode === 'undefined') {
-      $btnAwayMode = StreamUiHandler.cloneCloseButton(
-        $btnCloseHud,
-        BxIcon.CONTROLLER,
-        'bx-stream-controller-button',
-        () => {
-          // Show Away Mode dialog
-          //   SettingsNavigationDialog.getInstance().showAwayMode()
-          EmulatedMkbHandler.getInstance().toggleAwayMode()
-        }
-      )
-    }
-
     // Add to website
-    if ($btnRefresh && $btnHome && $btnAwayMode) {
+    if ($btnRefresh && $btnHome) {
       $btnCloseHud.insertAdjacentElement('afterend', $btnRefresh)
       $btnRefresh.insertAdjacentElement('afterend', $btnHome)
-      $btnCloseHud.insertAdjacentElement('afterend', $btnAwayMode)
     }
 
     // Render stream badges
@@ -246,7 +228,6 @@ export class StreamUiHandler {
       // Insert buttons after Stream Settings button
       $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild)
       $btnParent.insertBefore($btnStreamSettings, $btnStreamStats)
-      $btnParent.insertBefore($btnAwayMode, $btnStreamSettings)
     }
 
     // Move the Dots button to the beginning
