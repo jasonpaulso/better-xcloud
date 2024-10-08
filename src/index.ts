@@ -8,7 +8,8 @@ import { t } from "@utils/translation";
 import { interceptHttpRequests } from "@utils/network";
 import { CE } from "@utils/html";
 import { showGamepadToast } from "@utils/gamepad";
-import { EmulatedMkbHandler } from "@modules/mkb/mkb-handler";
+import {  EmulatedMkbHandler } from "@modules/mkb/mkb-handler";
+import { AwayModeHandler } from "@modules/away-mode/away-mode-handler";
 import { StreamBadges } from "@modules/stream/stream-badges";
 import { StreamStats } from "@modules/stream/stream-stats";
 import { addCss, preloadFonts } from "@utils/css";
@@ -41,7 +42,7 @@ import { SettingsNavigationDialog } from "./modules/ui/dialog/settings-dialog";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
-import { StreamStatsCollector } from "./utils/stream-stats-collector";import { PipBoy } from "./modules/pipboy/pipboy";
+import { StreamStatsCollector } from "./utils/stream-stats-collector";import { PipBoy } from "./modules/ui/pipboy/pipboy";
 
 
 // Handle login page
@@ -315,6 +316,7 @@ function unload() {
 
     NavigationDialogManager.getInstance().hide();
     StreamStats.getInstance().onStoppedPlaying();
+    AwayModeHandler.getInstance().destroy();
 
     if (isFullVersion()) {
         MouseCursorHider.stop();
