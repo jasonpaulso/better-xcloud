@@ -695,4 +695,7 @@ export class EmulatedMkbHandler extends MkbHandler {
     pressButton = this.#pressButton;
     onPointerLockExited = this.#onPointerLockExited;
     hideMessage = () => this.#$message?.classList.add('bx-gone');
+    patchedGetGamepads = this.#patchedGetGamepads;
+    getVirtualGamepad = this.#getVirtualGamepad;
+    
 }

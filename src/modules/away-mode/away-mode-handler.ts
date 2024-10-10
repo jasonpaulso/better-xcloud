@@ -22,12 +22,13 @@ export const HEAL_MODE_INTERVALS = [5000, 10000, 15000, 20000, 30000, 60000]
  */
 export class AwayModeHandler {
   static #instance: AwayModeHandler
+  #windowFocused = true
   #enabled = false
   #mkbHandler = EmulatedMkbHandler.getInstance()
   #pressButton = this.#mkbHandler.pressButton.bind(this.#mkbHandler)
   #onPointerLockExited = this.#mkbHandler.onPointerLockExited.bind(this.#mkbHandler)
-  #nativeGetGamepads = window.navigator.getGamepads.bind(window.navigator)
-  #patchedGetGamepads = () => {
+
+  #removeGamepads = () => {
     return []
   }
   init = () => {
@@ -231,6 +232,11 @@ export class AwayModeHandler {
     this.toggleButtonLoop(mode)
   }
 
+  toggleGamepads() {
+    window.navigator.getGamepads = () =>
+      !this.#windowFocused ? [] : EmulatedMkbHandler.getInstance().patchedGetGamepads()
+  }
+
   setupEventListeners() {
     window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_MODE, (e) => {
       e.preventDefault()
@@ -244,29 +250,23 @@ export class AwayModeHandler {
       this.toggle()
     })
 
-    // ✅ Check if window has focus EVERY 1.5 seconds
-    function checkWindowFocused() {
+    const checkWindowFocused = () => {
       if (document.hasFocus()) {
-        console.log('✅ window has focus')
         BxEvent.dispatch(window, 'window-focused')
       } else {
-        console.log('⛔️ window does NOT have focus')
         BxEvent.dispatch(window, 'window-blurred')
-        // AwayModeHandler.getInstance().toggle(true)
       }
     }
 
     setInterval(checkWindowFocused, 200) // 👉️ check if focused every
 
     window.addEventListener('window-blurred', () => {
-      // AwayModeHandler.getInstance().toggle(true)
-      window.navigator.getGamepads = () => this.#patchedGetGamepads()
-      // AwayModeHandler.getInstance().toggleButtonLoop('awayMode')
+      window.navigator.getGamepads = () => this.#removeGamepads()
+      BxLogger.info('AwayModeHandler', 'Window blurred')
     })
     window.addEventListener('window-focused', () => {
-      // AwayModeHandler.getInstance().toggle(false)
-      window.navigator.getGamepads = () => this.#nativeGetGamepads()
-      // AwayModeHandler.getInstance().toggleButtonLoop('awayMode')
+      window.navigator.getGamepads = () => EmulatedMkbHandler.getInstance().patchedGetGamepads()
+      BxLogger.info('AwayModeHandler', 'Window focused')
     })
   }
 }
