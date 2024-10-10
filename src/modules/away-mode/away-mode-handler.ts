@@ -3,6 +3,7 @@ import { Toast } from '@/utils/toast'
 import { EmulatedMkbHandler } from '../mkb/mkb-handler'
 import { GamepadKey } from '@/enums/mkb'
 import { BxEvent } from '@/utils/bx-event'
+import { SoundShortcut } from '../shortcuts/shortcut-sound'
 
 export type AwayModes = 'heal' | 'pivot' | 'crouch' | 'awayMode' | 'coffee' | 'vats' | 'custom'
 
@@ -260,12 +261,18 @@ export class AwayModeHandler {
 
     setInterval(checkWindowFocused, 200) // 👉️ check if focused every
 
-    window.addEventListener('window-blurred', () => {
+    window.addEventListener('blur', () => {
       window.navigator.getGamepads = () => this.#removeGamepads()
+      SoundShortcut.mute(true)
       BxLogger.info('AwayModeHandler', 'Window blurred')
     })
-    window.addEventListener('window-focused', () => {
+
+    window.addEventListener('focus', () => {
       window.navigator.getGamepads = () => EmulatedMkbHandler.getInstance().patchedGetGamepads()
+      const prefVolume = SoundShortcut.getPrefVolume()
+      if (prefVolume > 0) {
+        SoundShortcut.unmute()
+      }
       BxLogger.info('AwayModeHandler', 'Window focused')
     })
   }
