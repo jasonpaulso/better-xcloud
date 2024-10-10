@@ -2,15 +2,37 @@ import { BxLogger } from '@/utils/bx-logger'
 import { Toast } from '@/utils/toast'
 import { EmulatedMkbHandler } from '../mkb/mkb-handler'
 import { GamepadKey } from '@/enums/mkb'
+import { BxEvent } from '@/utils/bx-event'
 
-type AwayModes = 'heal' | 'pivot' | 'crouch' | 'awayMode' | 'coffee'
+export type AwayModes = 'heal' | 'pivot' | 'crouch' | 'awayMode' | 'coffee' | 'vats' | 'custom'
 
+export const AWAY_MODE_EVENTS = {
+  TOGGLE_AWAY: 'away-mode-toggle',
+  TOGGLE_MODE: 'away-mode-toggle-mode',
+}
+
+const AwayModeButtonIndexKey = {
+  HEAL: GamepadKey.RIGHT,
+} as const
+
+export const HEAL_MODE_INTERVALS = [5000, 10000, 15000, 20000, 30000, 60000]
+/**
+ * @class AwayModeHandler
+ * @description Handles the away mode functionality
+ */
 export class AwayModeHandler {
   static #instance: AwayModeHandler
   #enabled = false
   #mkbHandler = EmulatedMkbHandler.getInstance()
   #pressButton = this.#mkbHandler.pressButton.bind(this.#mkbHandler)
   #onPointerLockExited = this.#mkbHandler.onPointerLockExited.bind(this.#mkbHandler)
+  #nativeGetGamepads = window.navigator.getGamepads.bind(window.navigator)
+  #patchedGetGamepads = () => {
+    return []
+  }
+  init = () => {
+    this.setupEventListeners()
+  }
 
   static getInstance() {
     if (!this.#instance) {
@@ -19,17 +41,17 @@ export class AwayModeHandler {
     return this.#instance
   }
 
-  toggle = () => {
-    this.#enabled = !this.#enabled
+  toggle = (force?: boolean) => {
+    this.#enabled = Boolean(force) || !this.#enabled
     if (this.#enabled) {
       this.#mkbHandler.start()
       this.#onPointerLockExited()
-      Toast.show('Away Mode', 'Enabled', { instant: true })
     } else {
+      this.stopRunningLoops()
       this.#mkbHandler.stop()
-      Toast.show('Away Mode', 'Disabled', { instant: true })
       this.#mkbHandler.hideMessage()
     }
+    Toast.show('Away Mode', this.#enabled ? 'Activated' : 'Deactivated', { instant: true })
   }
 
   destroy = () => {
@@ -53,6 +75,9 @@ export class AwayModeHandler {
     pivot: false,
     crouch: false,
     awayMode: false,
+    coffee: false,
+    vats: false,
+    custom: false,
   }
 
   #loopIntervals: { [key: string]: number | null } = {
@@ -60,13 +85,16 @@ export class AwayModeHandler {
     pivot: null,
     crouch: null,
     awayMode: null,
+    coffee: null,
+    vats: null,
+    custom: null,
   }
 
   #loopConfigs: {
     [key: string]: { actionInterval: number; pauseDuration: number; action: () => Promise<void> }
   } = {
     heal: {
-      actionInterval: 1000,
+      actionInterval: 5000,
       pauseDuration: 0,
       action: async () => {
         this.#pressButton(GamepadKey.RIGHT, true)
@@ -76,12 +104,19 @@ export class AwayModeHandler {
     },
     pivot: {
       actionInterval: 1000,
-      pauseDuration: 60000,
+      pauseDuration: 15000,
       action: async () => {
         await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 1000)
+        BxLogger.info('AwayModeHandler', 'Pivoting right')
         await this.#delay(500)
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 1000)
-        await this.#pressButtonWithRandomDelay(GamepadKey.X, 50)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 1000)
+        BxLogger.info('AwayModeHandler', 'Pivoting left')
+        await this.#delay(500)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_UP, 500)
+        BxLogger.info('AwayModeHandler', 'Pivoting up')
+        await this.#delay(500)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_DOWN, 500)
+        BxLogger.info('AwayModeHandler', 'Pivoting down')
       },
     },
     crouch: {
@@ -100,21 +135,47 @@ export class AwayModeHandler {
         this.#pressButton(GamepadKey.SELECT, false)
       },
     },
-    coffee: {
-      actionInterval: 10000,
+    vats: {
+      actionInterval: 5000,
       pauseDuration: 0,
       action: async () => {
-        this.#pressButton(GamepadKey.UP, true)
+        this.#pressButton(GamepadKey.LB, true)
         await this.#delay(500)
-        this.#pressButton(GamepadKey.UP, false)
-        this.#pressButton(GamepadKey.RS_DOWN, true)
-        await this.#delay(500)
-        this.#pressButton(GamepadKey.RS_DOWN, false)
-        this.#pressButton(GamepadKey.A, true)
-        await this.#delay(500)
-        this.#pressButton(GamepadKey.A, false)
+        this.#pressButton(GamepadKey.LB, false)
+        this.#pressButton(GamepadKey.RT, true)
+        await this.#delay(1000)
+        this.#pressButton(GamepadKey.RT, false)
+        this.#pressButtonWithRandomDelay(GamepadKey.RIGHT, 60000)
       },
     },
+  }
+
+  generateCustomLoopConfig(
+    actionInterval: number,
+    pauseDuration: number,
+    action: () => Promise<void>
+  ) {
+    return {
+      actionInterval,
+      pauseDuration,
+      action,
+    }
+  }
+
+  toggleCustomLoop(mode: string, config: any) {
+    this.#loopConfigs[mode] = config
+    this.toggleButtonLoop(mode as AwayModes)
+  }
+
+  toggleCustomHealLoop(interval: number) {
+    this.toggleCustomLoop(
+      'custom',
+      this.generateCustomLoopConfig(interval, 0, async () => {
+        this.#pressButton(AwayModeButtonIndexKey.HEAL, true)
+        await this.#delay(500)
+        this.#pressButton(AwayModeButtonIndexKey.HEAL, false)
+      })
+    )
   }
 
   #delay(ms: number): Promise<void> {
@@ -159,8 +220,53 @@ export class AwayModeHandler {
     }
   }
 
+  private stopRunningLoops() {
+    for (const mode in this.#loopModes) {
+      if (this.#loopModes[mode]) this.stopButtonLoop(mode)
+    }
+  }
+
   // Single function to toggle away modes
   toggleAwayMode(mode: AwayModes) {
     this.toggleButtonLoop(mode)
+  }
+
+  setupEventListeners() {
+    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_MODE, (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const pipboyButtonEvent = (e as any).action
+      this.toggleAwayMode(pipboyButtonEvent)
+    })
+    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_AWAY, (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      this.toggle()
+    })
+
+    // ✅ Check if window has focus EVERY 1.5 seconds
+    function checkWindowFocused() {
+      if (document.hasFocus()) {
+        console.log('✅ window has focus')
+        BxEvent.dispatch(window, 'window-focused')
+      } else {
+        console.log('⛔️ window does NOT have focus')
+        BxEvent.dispatch(window, 'window-blurred')
+        // AwayModeHandler.getInstance().toggle(true)
+      }
+    }
+
+    setInterval(checkWindowFocused, 200) // 👉️ check if focused every
+
+    window.addEventListener('window-blurred', () => {
+      // AwayModeHandler.getInstance().toggle(true)
+      window.navigator.getGamepads = () => this.#patchedGetGamepads()
+      // AwayModeHandler.getInstance().toggleButtonLoop('awayMode')
+    })
+    window.addEventListener('window-focused', () => {
+      // AwayModeHandler.getInstance().toggle(false)
+      window.navigator.getGamepads = () => this.#nativeGetGamepads()
+      // AwayModeHandler.getInstance().toggleButtonLoop('awayMode')
+    })
   }
 }
