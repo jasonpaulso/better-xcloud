@@ -262,7 +262,7 @@ export class AwayModeHandler {
     setInterval(checkWindowFocused, 200) // 👉️ check if focused every
 
     window.addEventListener('blur', () => {
-      window.navigator.getGamepads = () => this.#removeGamepads()
+      window.navigator.getGamepads = () => EmulatedMkbHandler.getInstance().getVirtualGamepads()
       SoundShortcut.mute(true)
       BxLogger.info('AwayModeHandler', 'Window blurred')
     })

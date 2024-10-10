@@ -696,6 +696,12 @@ export class EmulatedMkbHandler extends MkbHandler {
     onPointerLockExited = this.#onPointerLockExited;
     hideMessage = () => this.#$message?.classList.add('bx-gone');
     patchedGetGamepads = this.#patchedGetGamepads;
-    getVirtualGamepad = this.#getVirtualGamepad;
+
+    getVirtualGamepads = () => {
+        const gamepads: (Gamepad | null)[] = [];
+        (gamepads as any)[this.#VIRTUAL_GAMEPAD.index] = this.#VIRTUAL_GAMEPAD;
+
+        return gamepads;
+    }
     
 }
