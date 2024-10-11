@@ -99,6 +99,7 @@ export class AwayModeHandler {
       actionInterval: 2000,
       pauseDuration: 0,
       action: async () => {
+        Toast.show('Away Mode', 'Healing', { instant: true })
         this.#pressButton(GamepadKey.RIGHT, true)
         await this.#delay(500)
         this.#pressButton(GamepadKey.RIGHT, false)
