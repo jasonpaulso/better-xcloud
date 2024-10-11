@@ -96,7 +96,7 @@ export class AwayModeHandler {
     [key: string]: { actionInterval: number; pauseDuration: number; action: () => Promise<void> }
   } = {
     heal: {
-      actionInterval: 5000,
+      actionInterval: 2000,
       pauseDuration: 0,
       action: async () => {
         this.#pressButton(GamepadKey.RIGHT, true)
