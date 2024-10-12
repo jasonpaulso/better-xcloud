@@ -96,7 +96,7 @@ export class AwayModeHandler {
     [key: string]: { actionInterval: number; pauseDuration: number; action: () => Promise<void> }
   } = {
     heal: {
-      actionInterval: 2000,
+      actionInterval: 1000,
       pauseDuration: 0,
       action: async () => {
         Toast.show('Away Mode', 'Healing', { instant: true })
