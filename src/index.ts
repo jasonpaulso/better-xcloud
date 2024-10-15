@@ -52,7 +52,7 @@ import { StreamUiHandler } from './modules/stream/stream-ui'
 import { UserAgent } from './utils/user-agent'
 import { XboxApi } from './utils/xbox-api'
 import { StreamStatsCollector } from './utils/stream-stats-collector'
-
+import { PipBoy } from './modules/ui/pipboy/pipboy'
 
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
@@ -264,6 +264,9 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
     gameBar.enable()
     gameBar.showBar()
   }
+
+  PipBoy.getInstance()
+  
 
   if (isFullVersion()) {
     const $video = (e as any).$video as HTMLVideoElement
