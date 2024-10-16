@@ -243,8 +243,8 @@ export class AwayModeHandler {
     window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_MODE, (e) => {
       e.preventDefault()
       e.stopPropagation()
-      const pipboyButtonEvent = (e as any).action
-      this.toggleAwayMode(pipboyButtonEvent)
+      const actionEvent = (e as any).action
+      this.toggleAwayMode(actionEvent)
     })
     window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_AWAY, (e) => {
       e.preventDefault()

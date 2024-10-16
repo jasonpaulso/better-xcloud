@@ -1,28 +1,25 @@
-import { compressCss, isFullVersion } from '@macros/build' with {type: "macro"};
+import { compressCss, isFullVersion } from '@macros/build' with { type: "macro" };
 
-import '@utils/global'
-import { BxEvent } from '@utils/bx-event'
-import { BX_FLAGS } from '@utils/bx-flags'
-import { BxExposed } from '@utils/bx-exposed'
-import { t } from '@utils/translation'
-import { interceptHttpRequests } from '@utils/network'
-import { CE } from '@utils/html'
-import { showGamepadToast } from '@utils/gamepad'
-import { EmulatedMkbHandler } from '@modules/mkb/mkb-handler'
-import { AwayModeHandler } from '@modules/away-mode/away-mode-handler'
-import { StreamBadges } from '@modules/stream/stream-badges'
-import { StreamStats } from '@modules/stream/stream-stats'
-import { addCss, preloadFonts } from '@utils/css'
-import { Toast } from '@utils/toast'
-import { LoadingScreen } from '@modules/loading-screen'
-import { MouseCursorHider } from '@modules/mkb/mouse-cursor-hider'
-import { TouchController } from '@modules/touch-controller'
-import { checkForUpdate, disablePwa, productTitleToSlug } from '@utils/utils'
-import { Patcher } from '@modules/patcher'
-import { RemotePlayManager } from '@/modules/remote-play-manager'
-import { onHistoryChanged, patchHistoryMethod } from '@utils/history'
-import { VibrationManager } from '@modules/vibration-manager'
-import { overridePreloadState } from '@utils/preload-state'
+import { RemotePlayManager } from '@/modules/remote-play-manager';
+import { AwayModeHandler } from '@modules/away-mode/away-mode-handler';
+import { LoadingScreen } from '@modules/loading-screen';
+import { EmulatedMkbHandler } from '@modules/mkb/mkb-handler';
+import { MouseCursorHider } from '@modules/mkb/mouse-cursor-hider';
+import { Patcher } from '@modules/patcher';
+import { StreamBadges } from '@modules/stream/stream-badges';
+import { StreamStats } from '@modules/stream/stream-stats';
+import { TouchController } from '@modules/touch-controller';
+import { VibrationManager } from '@modules/vibration-manager';
+import { BxEvent } from '@utils/bx-event';
+import { BxExposed } from '@utils/bx-exposed';
+import { BX_FLAGS } from '@utils/bx-flags';
+import { BxLogger } from '@utils/bx-logger';
+import { addCss, preloadFonts } from '@utils/css';
+import { showGamepadToast } from '@utils/gamepad';
+import '@utils/global';
+import { AppInterface, STATES } from '@utils/global';
+import { onHistoryChanged, patchHistoryMethod } from '@utils/history';
+import { CE } from '@utils/html';
 import {
   disableAdobeAudienceManager,
   patchAudioContext,
@@ -32,27 +29,30 @@ import {
   patchRtcCodecs,
   patchRtcPeerConnection,
   patchVideoApi,
-} from '@utils/monkey-patches'
-import { AppInterface, STATES } from '@utils/global'
-import { BxLogger } from '@utils/bx-logger'
-import { GameBar } from './modules/game-bar/game-bar'
-import { Screenshot } from './utils/screenshot'
-import { NativeMkbHandler } from './modules/mkb/native-mkb-handler'
-import { GuideMenu } from './modules/ui/guide-menu'
-import { updateVideoPlayer } from './modules/stream/stream-settings-utils'
-import { UiSection } from './enums/ui-sections'
-import { HeaderSection } from './modules/ui/header'
-import { GameTile } from './modules/ui/game-tile'
-import { ProductDetailsPage } from './modules/ui/product-details'
-import { NavigationDialogManager } from './modules/ui/dialog/navigation-dialog'
-import { PrefKey } from './enums/pref-keys'
-import { getPref, StreamTouchController } from './utils/settings-storages/global-settings-storage'
-import { SettingsNavigationDialog } from './modules/ui/dialog/settings-dialog'
-import { StreamUiHandler } from './modules/stream/stream-ui'
-import { UserAgent } from './utils/user-agent'
-import { XboxApi } from './utils/xbox-api'
-import { StreamStatsCollector } from './utils/stream-stats-collector'
-import { PipBoy } from './modules/ui/pipboy/pipboy'
+} from '@utils/monkey-patches';
+import { interceptHttpRequests } from '@utils/network';
+import { overridePreloadState } from '@utils/preload-state';
+import { Toast } from '@utils/toast';
+import { t } from '@utils/translation';
+import { checkForUpdate, disablePwa, productTitleToSlug } from '@utils/utils';
+import { PrefKey } from './enums/pref-keys';
+import { UiSection } from './enums/ui-sections';
+import { GameBar } from './modules/game-bar/game-bar';
+import { NativeMkbHandler } from './modules/mkb/native-mkb-handler';
+import { updateVideoPlayer } from './modules/stream/stream-settings-utils';
+import { StreamUiHandler } from './modules/stream/stream-ui';
+import { NavigationDialogManager } from './modules/ui/dialog/navigation-dialog';
+import { SettingsNavigationDialog } from './modules/ui/dialog/settings-dialog';
+import { GameTile } from './modules/ui/game-tile';
+import { GuideMenu } from './modules/ui/guide-menu';
+import { HeaderSection } from './modules/ui/header';
+import { ProductDetailsPage } from './modules/ui/product-details';
+import { Screenshot } from './utils/screenshot';
+import { getPref, StreamTouchController } from './utils/settings-storages/global-settings-storage';
+import { StreamStatsCollector } from './utils/stream-stats-collector';
+import { UserAgent } from './utils/user-agent';
+import { XboxApi } from './utils/xbox-api';
+
 
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
@@ -265,7 +265,7 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
     gameBar.showBar()
   }
 
-  PipBoy.getInstance()
+  AwayModeHandler.getInstance().init()
   
 
   if (isFullVersion()) {
