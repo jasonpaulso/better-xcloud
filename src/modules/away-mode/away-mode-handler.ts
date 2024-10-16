@@ -29,9 +29,6 @@ export class AwayModeHandler {
   #pressButton = this.#mkbHandler.pressButton.bind(this.#mkbHandler)
   #onPointerLockExited = this.#mkbHandler.onPointerLockExited.bind(this.#mkbHandler)
 
-  #removeGamepads = () => {
-    return []
-  }
   init = () => {
     this.setupEventListeners()
   }
@@ -236,7 +233,7 @@ export class AwayModeHandler {
 
   toggleGamepads() {
     window.navigator.getGamepads = () =>
-      !this.#windowFocused ? [] : EmulatedMkbHandler.getInstance().patchedGetGamepads()
+      !this.#windowFocused ? [] : this.#mkbHandler.patchedGetGamepads()
   }
 
   setupEventListeners() {
@@ -263,13 +260,13 @@ export class AwayModeHandler {
     setInterval(checkWindowFocused, 200) // 👉️ check if focused every
 
     window.addEventListener('blur', () => {
-      window.navigator.getGamepads = () => EmulatedMkbHandler.getInstance().getVirtualGamepads()
+      window.navigator.getGamepads = () => this.#mkbHandler.getVirtualGamepads()
       SoundShortcut.mute(true)
       BxLogger.info('AwayModeHandler', 'Window blurred')
     })
 
     window.addEventListener('focus', () => {
-      window.navigator.getGamepads = () => EmulatedMkbHandler.getInstance().patchedGetGamepads()
+      window.navigator.getGamepads = () => this.#mkbHandler.patchedGetGamepads()
       const prefVolume = SoundShortcut.getPrefVolume()
       if (prefVolume > 0) {
         SoundShortcut.unmute()
