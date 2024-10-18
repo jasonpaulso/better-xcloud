@@ -8,7 +8,7 @@ declare global {
 }
 
 // Define the shape of the state
-interface StateType {
+export interface StateType {
   [key: string]: any
 }
 
