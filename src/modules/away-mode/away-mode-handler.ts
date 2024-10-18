@@ -4,6 +4,7 @@ import { EmulatedMkbHandler } from '../mkb/mkb-handler'
 import { GamepadKey } from '@/enums/mkb'
 import { BxEvent } from '@/utils/bx-event'
 import { SoundShortcut } from '../shortcuts/shortcut-sound'
+import { BXCState } from '@/utils/shared-state'
 
 export type AwayModes = 'heal' | 'pivot' | 'crouch' | 'awayMode' | 'coffee' | 'vats' | 'custom'
 
@@ -272,6 +273,11 @@ export class AwayModeHandler {
         SoundShortcut.unmute()
       }
       BxLogger.info('AwayModeHandler', 'Window focused')
+    })
+
+    window.addEventListener('ReactStateUpdate', (event: Event) => {
+      const customEvent = event as CustomEvent
+      BXCState.setState(customEvent.detail)
     })
   }
 }
