@@ -279,5 +279,13 @@ export class AwayModeHandler {
       const customEvent = event as CustomEvent
       BXCState.setState(customEvent.detail)
     })
+
+    BXCState.subscribe(
+      (state: { pipboyAction?: { awayModeAction: AwayModes; active: boolean } }) => {
+        if (state.pipboyAction) {
+          this.toggleAwayMode(state.pipboyAction.awayModeAction)
+        }
+      }
+    )
   }
 }
