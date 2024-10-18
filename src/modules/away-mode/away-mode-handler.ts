@@ -4,7 +4,7 @@ import { EmulatedMkbHandler } from '../mkb/mkb-handler'
 import { GamepadKey } from '@/enums/mkb'
 import { BxEvent } from '@/utils/bx-event'
 import { SoundShortcut } from '../shortcuts/shortcut-sound'
-import { BXCState } from '@/utils/shared-state'
+import { BXCState, type StateType } from '@/utils/shared-state'
 
 export type AwayModes = 'heal' | 'pivot' | 'crouch' | 'awayMode' | 'coffee' | 'vats' | 'custom'
 
@@ -29,9 +29,11 @@ export class AwayModeHandler {
   #mkbHandler = EmulatedMkbHandler.getInstance()
   #pressButton = this.#mkbHandler.pressButton.bind(this.#mkbHandler)
   #onPointerLockExited = this.#mkbHandler.onPointerLockExited.bind(this.#mkbHandler)
+  #state: StateType = {}
 
   init = () => {
     this.setupEventListeners()
+    this.#state = BXCState.getState()
   }
 
   static getInstance() {
@@ -108,16 +110,16 @@ export class AwayModeHandler {
       pauseDuration: 15000,
       action: async () => {
         await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 1000)
-        BxLogger.info('AwayModeHandler', 'Pivoting right')
+        // BxLogger.info('AwayModeHandler', 'Pivoting right')
         await this.#delay(500)
         await this.#pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 1000)
-        BxLogger.info('AwayModeHandler', 'Pivoting left')
+        // BxLogger.info('AwayModeHandler', 'Pivoting left')
         await this.#delay(500)
         await this.#pressButtonWithRandomDelay(GamepadKey.RS_UP, 500)
-        BxLogger.info('AwayModeHandler', 'Pivoting up')
+        // BxLogger.info('AwayModeHandler', 'Pivoting up')
         await this.#delay(500)
         await this.#pressButtonWithRandomDelay(GamepadKey.RS_DOWN, 500)
-        BxLogger.info('AwayModeHandler', 'Pivoting down')
+        // BxLogger.info('AwayModeHandler', 'Pivoting down')
       },
     },
     crouch: {
@@ -186,13 +188,13 @@ export class AwayModeHandler {
   toggleButtonLoop(mode: AwayModes) {
     BxLogger.info('AwayModeHandler', `${mode} button loop toggled`)
     this.#loopModes[mode] = !this.#loopModes[mode]
-
-    if (this.#enabled) {
-      if (this.#loopModes[mode]) {
-        this.startButtonLoop(mode)
-      } else {
-        this.stopButtonLoop(mode)
-      }
+    if (!this.#enabled) {
+      this.toggle()
+    }
+    if (this.#loopModes[mode]) {
+      this.startButtonLoop(mode)
+    } else {
+      this.stopButtonLoop(mode)
     }
   }
 
@@ -238,18 +240,6 @@ export class AwayModeHandler {
   }
 
   setupEventListeners() {
-    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_MODE, (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      const actionEvent = (e as any).action
-      this.toggleAwayMode(actionEvent)
-    })
-    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_AWAY, (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      this.toggle()
-    })
-
     const checkWindowFocused = () => {
       if (document.hasFocus()) {
         BxEvent.dispatch(window, 'window-focused')
