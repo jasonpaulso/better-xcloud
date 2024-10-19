@@ -1,4 +1,10 @@
-{
-  "key": "cmd+s",
-  "command": "workbench.action.tasks.build"
-}
+// Place your key bindings in this file to override the defaults
+[
+  {
+    "command": "runCommands",
+    "key": "cmd+s",
+    "args": {
+      "commands": ["workbench.action.files.save", "workbench.action.tasks.build"]
+    }
+  }
+]
