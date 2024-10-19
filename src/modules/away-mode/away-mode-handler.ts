@@ -34,6 +34,7 @@ export class AwayModeHandler {
   init = () => {
     this.setupEventListeners()
     this.#state = BXCState.getState()
+    BxLogger.info('AwayModeHandler', 'Initialized', this.#state)
   }
 
   static getInstance() {

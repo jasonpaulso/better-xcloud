@@ -6,7 +6,10 @@
       "tsconfig": "tsconfig.json",
       "option": "watch",
       "problemMatcher": ["$tsc-watch"],
-      "group": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "label": "tsc: watch - tsconfig.json"
     },
     {
@@ -19,11 +22,9 @@
     {
       "type": "shell",
       "command": "npm run build-dev",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "label": "build: run"
+      "group": "build",
+      "label": "build: run",
+      "problemMatcher": []
     }
   ]
 }
