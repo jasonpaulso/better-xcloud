@@ -9,9 +9,11 @@
   "bin": {
     "build": "build.ts"
   },
-  "scripts": {},
+  "scripts": {
+    "build-dev": "bun ./build.ts --version x.x.x"
+  },
   "devDependencies": {
-    "@types/bun": "^1.1.11",
+    "@types/bun": "^1.1.10",
     "@types/node": "^22.7.4",
     "@types/stylus": "^0.48.43",
     "eslint": "^9.12.0",

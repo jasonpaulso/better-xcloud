@@ -197,6 +197,8 @@ document.addEventListener('readystatechange', (e) => {
 
 window.BX_EXPOSED = BxExposed
 
+AwayModeHandler.getInstance().init()
+
 // Hide Settings UI when navigate to another page
 // @ts-ignore
 window.addEventListener(BxEvent.POPSTATE, onHistoryChanged)
@@ -264,8 +266,6 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
     gameBar.enable()
     gameBar.showBar()
   }
-
-  AwayModeHandler.getInstance().init()
   
 
   if (isFullVersion()) {

@@ -1,4 +1,10 @@
 import { BxLogger } from '@/utils/bx-logger'
+
+declare global {
+  interface Window {
+    awayModeHandler: AwayModeHandler
+  }
+}
 import { Toast } from '@/utils/toast'
 import { EmulatedMkbHandler } from '../mkb/mkb-handler'
 import { GamepadKey } from '@/enums/mkb'
@@ -17,6 +23,21 @@ const AwayModeButtonIndexKey = {
   HEAL: GamepadKey.RIGHT,
 } as const
 
+interface AwayModeMode {
+  name: AwayModes
+  interval: number
+  pause: number
+  enabled: boolean
+}
+
+interface AwayModeState extends StateType {
+  awayMode?: boolean
+  awayModeMode?: AwayModeMode
+  awayModeInterval?: number
+  awayModePause?: number
+  awayModeEnabled?: boolean
+}
+
 export const HEAL_MODE_INTERVALS = [5000, 10000, 15000, 20000, 30000, 60000]
 /**
  * @class AwayModeHandler
@@ -29,12 +50,33 @@ export class AwayModeHandler {
   #mkbHandler = EmulatedMkbHandler.getInstance()
   #pressButton = this.#mkbHandler.pressButton.bind(this.#mkbHandler)
   #onPointerLockExited = this.#mkbHandler.onPointerLockExited.bind(this.#mkbHandler)
-  #state: StateType = {}
+  #state: AwayModeState | {} = {
+    awayModeEnabled: false,
+  }
 
   init = () => {
     this.setupEventListeners()
-    this.#state = BXCState.getState()
-    BxLogger.info('AwayModeHandler', 'Initialized', this.#state)
+    BXCState.setState(this.#state)
+    BxLogger.info('AwayModeHandler', 'Initialized', BXCState.getState())
+    BXCState.subscribe((state: AwayModeState) => {
+      this.#state = state
+      if (state.hasOwnProperty('awayModeMode')) {
+        if (!this.#enabled) {
+          this.toggle(true)
+          BXCState.setState({ awayModeEnabled: true })
+        }
+        switch (state.awayModeMode?.name) {
+          case 'heal':
+            this.toggleCustomHealLoop(state.awayModeMode.interval || 500)
+            break
+          case 'vats':
+            this.toggleCustomVatsLoop(state.awayModeMode.interval || 500)
+            break
+          default:
+            break
+        }
+      }
+    })
   }
 
   static getInstance() {
@@ -44,17 +86,39 @@ export class AwayModeHandler {
     return this.#instance
   }
 
-  toggle = (force?: boolean) => {
-    this.#enabled = Boolean(force) || !this.#enabled
-    if (this.#enabled) {
-      this.#mkbHandler.start()
-      this.#onPointerLockExited()
+  toggle = (toggle: boolean) => {
+    if (toggle && !this.#enabled) {
+      this.activate()
     } else {
-      this.stopRunningLoops()
-      this.#mkbHandler.stop()
-      this.#mkbHandler.hideMessage()
+      this.deactivate()
     }
-    Toast.show('Away Mode', this.#enabled ? 'Activated' : 'Deactivated', { instant: true })
+  }
+
+  // this.#enabled = Boolean(force) || !this.#enabled
+  // if (this.#enabled) {
+  //   this.#mkbHandler.start()
+  //   this.#onPointerLockExited()
+  // } else {
+  //   this.stopRunningLoops()
+  //   this.#mkbHandler.stop()
+  //   this.#mkbHandler.hideMessage()
+  // }
+  // Toast.show('Away Mode', this.#enabled ? 'Activated' : 'Deactivated', { instant: true })
+  // }
+
+  activate = () => {
+    this.#enabled = true
+    this.#mkbHandler.start()
+    this.#onPointerLockExited()
+    Toast.show('Away Mode', 'Activated', { instant: true })
+  }
+
+  deactivate = () => {
+    this.#enabled = false
+    this.stopRunningLoops()
+    this.#mkbHandler.stop()
+    this.#mkbHandler.hideMessage()
+    Toast.show('Away Mode', 'Deactivated', { instant: true })
   }
 
   destroy = () => {
@@ -167,19 +231,47 @@ export class AwayModeHandler {
   }
 
   toggleCustomLoop(mode: string, config: any) {
+    // stop the loop if it's already running and the config is the same
+    if (this.#loopConfigs[mode] === config) {
+      this.stopButtonLoop(mode)
+      return
+    }
+    // stop the loop if it's already running and the config is different
+    if (this.#loopConfigs[mode] && this.#loopModes[mode]) {
+      this.stopButtonLoop(mode)
+    }
+    // start the loop
     this.#loopConfigs[mode] = config
     this.toggleButtonLoop(mode as AwayModes)
   }
 
   toggleCustomHealLoop(interval: number) {
     this.toggleCustomLoop(
-      'custom',
+      'Medic',
       this.generateCustomLoopConfig(interval, 0, async () => {
         this.#pressButton(AwayModeButtonIndexKey.HEAL, true)
         await this.#delay(500)
         this.#pressButton(AwayModeButtonIndexKey.HEAL, false)
       })
     )
+  }
+
+  toggleCustomVatsLoop(interval: number) {
+    const config = {
+      actionInterval: interval,
+      pauseDuration: 0,
+      action: async () => {
+        this.#pressButton(GamepadKey.LB, true)
+        await this.#delay(500)
+        this.#pressButton(GamepadKey.LB, false)
+        this.#pressButton(GamepadKey.RT, true)
+        await this.#delay(1000)
+        this.#pressButton(GamepadKey.RT, false)
+        BxLogger.info('AwayModeHandler', `vats every ${interval}ms`)
+        this.#pressButtonWithRandomDelay(GamepadKey.RIGHT, 60000)
+      },
+    }
+    this.toggleCustomLoop('vats', config)
   }
 
   #delay(ms: number): Promise<void> {
@@ -189,9 +281,6 @@ export class AwayModeHandler {
   toggleButtonLoop(mode: AwayModes) {
     BxLogger.info('AwayModeHandler', `${mode} button loop toggled`)
     this.#loopModes[mode] = !this.#loopModes[mode]
-    if (!this.#enabled) {
-      this.toggle()
-    }
     if (this.#loopModes[mode]) {
       this.startButtonLoop(mode)
     } else {
@@ -202,13 +291,18 @@ export class AwayModeHandler {
   private startButtonLoop(mode: string) {
     BxLogger.info('AwayModeHandler', `${mode} loop started`)
     const config = this.#loopConfigs[mode]
+
     if (config) {
       const loopFunction = async () => {
-        if (this.#loopModes[mode] && this.#enabled) {
+        if (this.#loopModes[mode]) {
           await config.action()
           await this.#delay(config.pauseDuration)
+
           this.#loopIntervals[mode] = window.setTimeout(loopFunction, config.actionInterval)
-          Toast.show('Away Mode', `${mode} loop running`, { instant: true })
+          // display a toast as we countdown to the next iteration
+          Toast.show('Away Mode', `${mode} loop in ${config.actionInterval / 1000} seconds`, {
+            instant: true,
+          })
         }
       }
       loopFunction()
@@ -268,15 +362,15 @@ export class AwayModeHandler {
 
     window.addEventListener('ReactStateUpdate', (event: Event) => {
       const customEvent = event as CustomEvent
+      console.log('🚌 ~ window.addEventListener ~ customEvent:', customEvent)
       BXCState.setState(customEvent.detail)
     })
-
-    BXCState.subscribe(
-      (state: { pipboyAction?: { awayModeAction: AwayModes; active: boolean } }) => {
-        if (state.pipboyAction) {
-          this.toggleAwayMode(state.pipboyAction.awayModeAction)
-        }
-      }
-    )
   }
+}
+
+if (process.env.NODE_ENV === 'development') {
+  window.awayModeHandler = AwayModeHandler.getInstance()
+  window.window.addEventListener('DOMContentLoaded', () => {
+    window.awayModeHandler.init()
+  })
 }
