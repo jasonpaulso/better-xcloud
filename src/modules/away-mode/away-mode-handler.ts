@@ -80,6 +80,12 @@ export class AwayModeHandler {
         case 'vats':
           this.toggleCustomVatsLoop(state.awayModeMode.interval || 500)
           break
+        case 'pivot':
+          this.toggleButtonLoop('pivot')
+          break
+        case 'awayMode':
+          this.toggleButtonLoop('awayMode')
+          break
         default:
           break
       }
