@@ -54,28 +54,44 @@ export class AwayModeHandler {
     awayModeEnabled: false,
   }
 
+  setModeState = (mode: AwayModes, interval: number, pause: number, enabled: boolean) => {
+    this.#state = {
+      ...this.#state,
+      awayModeMode: {
+        name: mode,
+        interval,
+        pause,
+        enabled,
+      },
+    }
+  }
+
+  handleAwayModeEvent = (state: AwayModeState) => {
+    this.#state = state
+    if (state.hasOwnProperty('awayModeMode')) {
+      if (!this.#enabled) {
+        this.toggle(true)
+        BXCState.setState({ awayModeEnabled: true })
+      }
+      switch (state.awayModeMode?.name) {
+        case 'heal':
+          this.toggleCustomHealLoop(state.awayModeMode.interval || 500)
+          break
+        case 'vats':
+          this.toggleCustomVatsLoop(state.awayModeMode.interval || 500)
+          break
+        default:
+          break
+      }
+    }
+  }
+
   init = () => {
     this.setupEventListeners()
     BXCState.setState(this.#state)
     BxLogger.info('AwayModeHandler', 'Initialized', BXCState.getState())
     BXCState.subscribe((state: AwayModeState) => {
-      this.#state = state
-      if (state.hasOwnProperty('awayModeMode')) {
-        if (!this.#enabled) {
-          this.toggle(true)
-          BXCState.setState({ awayModeEnabled: true })
-        }
-        switch (state.awayModeMode?.name) {
-          case 'heal':
-            this.toggleCustomHealLoop(state.awayModeMode.interval || 500)
-            break
-          case 'vats':
-            this.toggleCustomVatsLoop(state.awayModeMode.interval || 500)
-            break
-          default:
-            break
-        }
-      }
+      this.handleAwayModeEvent(state)
     })
   }
 
