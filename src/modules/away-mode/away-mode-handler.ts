@@ -75,16 +75,33 @@ export class AwayModeHandler {
       }
       switch (state.awayModeMode?.name) {
         case 'heal':
-          this.toggleCustomHealLoop(state.awayModeMode.interval || 500)
+          if (state.awayModeMode.enabled) {
+            this.toggleCustomHealLoop(state.awayModeMode.interval || 500)
+          } else {
+            this.stopButtonLoop('heal')
+          }
           break
         case 'vats':
-          this.toggleCustomVatsLoop(state.awayModeMode.interval || 500)
+          if (state.awayModeMode.enabled) {
+            this.toggleCustomVatsLoop(state.awayModeMode.interval || 5000)
+          } else {
+            this.stopButtonLoop('vats')
+          }
           break
         case 'pivot':
-          this.toggleButtonLoop('pivot')
+          if (state.awayModeMode.enabled) {
+            this.toggleButtonLoop('pivot')
+          } else {
+            this.stopButtonLoop('pivot')
+          }
+
           break
         case 'awayMode':
-          this.toggleButtonLoop('awayMode')
+          if (state.awayModeMode.enabled) {
+            this.toggleButtonLoop('awayMode')
+          } else {
+            this.stopButtonLoop('awayMode')
+          }
           break
         default:
           break
