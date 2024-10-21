@@ -28,13 +28,20 @@ const BXCState: BXCStateType = {
   _listeners: new Set<(state: StateType) => void>(),
 
   setState(newState: Partial<StateType>) {
+    BxLogger.info('BXCState', this._state, newState)
+
+    if (JSON.stringify(this._state) === JSON.stringify(newState)) {
+      BxLogger.info('BXCState', 'setState', 'No change')
+      return
+    }
+
     this._state = { ...this._state, ...newState }
     this._notifyListeners()
 
     // Dispatch a custom event for external listeners (like the React app)
     window.dispatchEvent(new CustomEvent('BXCStateUpdate', { detail: this._state }))
 
-    BxLogger.info('BXCState', 'setState', newState)
+    BxLogger.info('BXCState', 'setState', this._state)
   },
 
   getState() {
