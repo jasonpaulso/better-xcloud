@@ -73,6 +73,7 @@ export class AwayModeHandler {
   }
 
   init = () => {
+    BxLogger.info('AwayModeHandler', 'Initializing away mode handler')
     this.setupEventListeners()
     this.initializeDefaultConfigs()
   }
@@ -330,7 +331,15 @@ export class AwayModeHandler {
   }
 }
 
-// Development-only code
-if (process.env.NODE_ENV === 'development') {
-  ;(window as any).awayModeHandler = AwayModeHandler.getInstance()
+;() => {
+  window.addEventListener(BxEvent.STREAM_PLAYING, (_e) => {
+    AwayModeHandler.getInstance().init()
+  })
+  window.addEventListener(BxEvent.STREAM_STOPPED, (_e) => {
+    AwayModeHandler.getInstance().destroy()
+  })
+  // Development-only code
+  if (process.env.NODE_ENV === 'development') {
+    ;(window as any).awayModeHandler = AwayModeHandler.getInstance()
+  }
 }
