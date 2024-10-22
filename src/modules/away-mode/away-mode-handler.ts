@@ -320,6 +320,9 @@ export class AwayModeHandler {
   handleAwayModeEvent(state: AwayModeState) {
     const mode = state.awayModeMode
     if (mode && mode.name) {
+      if (!this.#enabled) {
+        this.activate()
+      }
       const existingConfig = this.loopConfigs.get(mode.name)
       this.updateMode(mode.name, {
         actionInterval: mode.interval || existingConfig?.actionInterval || 1000,
