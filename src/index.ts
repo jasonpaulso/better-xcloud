@@ -197,6 +197,8 @@ document.addEventListener('readystatechange', (e) => {
 
 window.BX_EXPOSED = BxExposed
 
+
+
 // Hide Settings UI when navigate to another page
 // @ts-ignore
 window.addEventListener(BxEvent.POPSTATE, onHistoryChanged)
@@ -255,6 +257,7 @@ window.addEventListener(BxEvent.STREAM_STARTING, (e) => {
 })
 
 window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
+  
   STATES.isPlaying = true
   StreamUiHandler.observe()
 
@@ -264,16 +267,16 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
     gameBar.enable()
     gameBar.showBar()
   }
-
-  AwayModeHandler.getInstance().init()
   
 
   if (isFullVersion()) {
     const $video = (e as any).$video as HTMLVideoElement
     Screenshot.updateCanvasSize($video.videoWidth, $video.videoHeight)
   }
-
+  
   updateVideoPlayer()
+  AwayModeHandler.getInstance().init()
+
 })
 
 window.addEventListener(BxEvent.STREAM_ERROR_PAGE, (e) => {
@@ -340,7 +343,6 @@ function unload() {
 
   NavigationDialogManager.getInstance().hide()
   StreamStats.getInstance().onStoppedPlaying()
-  AwayModeHandler.getInstance().destroy()
 
   if (isFullVersion()) {
     MouseCursorHider.stop()
@@ -475,6 +477,7 @@ function main() {
     getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup()
 
     EmulatedMkbHandler.setupEvents()
+    
 
   }
 

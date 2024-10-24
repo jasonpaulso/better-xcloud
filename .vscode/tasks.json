@@ -13,7 +13,9 @@
       "type": "typescript",
       "tsconfig": "tsconfig.json",
       "problemMatcher": ["$tsc"],
-      "group": "build",
+      "group": {
+        "kind": "build"
+      },
       "label": "tsc: build - tsconfig.json"
     },
     {
@@ -23,7 +25,8 @@
         "kind": "build",
         "isDefault": true
       },
-      "label": "build: run"
+      "label": "build: run",
+      "problemMatcher": []
     }
   ]
 }
