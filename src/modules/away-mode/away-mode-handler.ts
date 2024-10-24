@@ -90,12 +90,12 @@ export class AwayModeHandler {
     })
 
     this.updateMode('pivot', {
-      actionInterval: 1000,
+      actionInterval: 2500,
       pauseDuration: 15000,
       action: async () => {
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 5000)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 1000)
         await this.#delay(500)
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 5000)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 1000)
       },
     })
 
@@ -103,9 +103,9 @@ export class AwayModeHandler {
       actionInterval: 1000,
       pauseDuration: 15000,
       action: async () => {
-        this.#pressButton(GamepadKey.SELECT, true)
+        this.#pressButton(GamepadKey.L3, true)
         await this.#delay(500)
-        this.#pressButton(GamepadKey.SELECT, false)
+        this.#pressButton(GamepadKey.L3, false)
       },
     })
 
