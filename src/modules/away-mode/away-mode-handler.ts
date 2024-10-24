@@ -130,9 +130,9 @@ export class AwayModeHandler {
       actionInterval: 500,
       pauseDuration: 60000 * 3,
       action: async () => {
-        this.#pressButton(GamepadKey.SELECT, true)
+        this.#pressButton(GamepadKey.L3, true)
         await this.#delay(500)
-        this.#pressButton(GamepadKey.SELECT, false)
+        this.#pressButton(GamepadKey.L3, false)
       },
     },
     vats: {
