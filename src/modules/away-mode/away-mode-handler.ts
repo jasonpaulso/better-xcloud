@@ -106,17 +106,11 @@ export class AwayModeHandler {
       actionInterval: 1000,
       pauseDuration: 15000,
       action: async () => {
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 1000)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 30000)
         BxLogger.info('AwayModeHandler', 'Pivoting right')
         await this.#delay(500)
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 1000)
+        await this.#pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 30000)
         BxLogger.info('AwayModeHandler', 'Pivoting left')
-        await this.#delay(500)
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_UP, 500)
-        BxLogger.info('AwayModeHandler', 'Pivoting up')
-        await this.#delay(500)
-        await this.#pressButtonWithRandomDelay(GamepadKey.RS_DOWN, 500)
-        BxLogger.info('AwayModeHandler', 'Pivoting down')
       },
     },
     crouch: {
