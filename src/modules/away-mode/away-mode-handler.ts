@@ -110,14 +110,14 @@ export class AwayModeHandler {
     })
 
     this.updateMode('vats', {
-      actionInterval: 500,
+      actionInterval: 1000,
       pauseDuration: 5000,
       action: async () => {
         this.#pressButton(GamepadKey.LB, true)
         await this.#delay(500)
         this.#pressButton(GamepadKey.LB, false)
         this.#pressButton(GamepadKey.RT, true)
-        await this.#delay(1000)
+        await this.#delay(2000)
         this.#pressButton(GamepadKey.RT, false)
       },
     })
