@@ -13,9 +13,35 @@ import { BypassServerIps } from "@/enums/bypass-servers";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref, StreamResolution, StreamTouchController } from "./settings-storages/global-settings-storage";
 
-export
-class XcloudInterceptor {
-    static async #handleLogin(request: RequestInfo | URL, init?: RequestInit) {
+export class XcloudInterceptor {
+    private static readonly SERVER_EXTRA_INFO: Record<string, [string, ServerContinent]> = {
+        // North America
+        EastUS: ['🇺🇸', 'america-north'],
+        EastUS2: ['🇺🇸', 'america-north'],
+        NorthCentralUs: ['🇺🇸', 'america-north'],
+        SouthCentralUS: ['🇺🇸', 'america-north'],
+        WestUS: ['🇺🇸', 'america-north'],
+        WestUS2: ['🇺🇸', 'america-north'],
+        MexicoCentral: ['🇲🇽', 'america-north'],
+
+        // South America
+        BrazilSouth: ['🇧🇷', 'america-south'],
+
+        // Asia
+        JapanEast: ['🇯🇵', 'asia'],
+        KoreaCentral: ['🇰🇷', 'asia'],
+
+        // Australia
+        AustraliaEast: ['🇦🇺', 'australia'],
+        AustraliaSouthEast: ['🇦🇺', 'australia'],
+
+        // Europe
+        SwedenCentral: ['🇸🇪', 'europe'],
+        UKSouth: ['🇬🇧', 'europe'],
+        WestEurope: ['🇪🇺', 'europe'],
+    };
+
+    private static async handleLogin(request: RequestInfo | URL, init?: RequestInit) {
         const bypassServer = getPref(PrefKey.SERVER_BYPASS_RESTRICTION);
         if (bypassServer !== 'off') {
             const ip = BypassServerIps[bypassServer as keyof typeof BypassServerIps];
@@ -35,27 +61,12 @@ class XcloudInterceptor {
         RemotePlayManager.getInstance().xcloudToken = obj.gsToken;
 
         // Get server list
-        const serverEmojis = {
-            AustraliaEast: '🇦🇺',
-            AustraliaSouthEast: '🇦🇺',
-            BrazilSouth: '🇧🇷',
-            EastUS: '🇺🇸',
-            EastUS2: '🇺🇸',
-            JapanEast: '🇯🇵',
-            KoreaCentral: '🇰🇷',
-            MexicoCentral: '🇲🇽',
-            NorthCentralUs: '🇺🇸',
-            SouthCentralUS: '🇺🇸',
-            UKSouth: '🇬🇧',
-            WestEurope: '🇪🇺',
-            WestUS: '🇺🇸',
-            WestUS2: '🇺🇸',
-        };
-
         const serverRegex = /\/\/(\w+)\./;
+        const serverExtra = XcloudInterceptor.SERVER_EXTRA_INFO;
 
-        for (let region of obj.offeringSettings.regions) {
-            const regionName = region.name as keyof typeof serverEmojis;
+        let region: ServerRegion;
+        for (region of obj.offeringSettings.regions) {
+            const regionName = region.name as keyof typeof serverExtra;
             let shortName = region.name;
 
             if (region.isDefault) {
@@ -65,8 +76,11 @@ class XcloudInterceptor {
             let match = serverRegex.exec(region.baseUri);
             if (match) {
                 shortName = match[1];
-                if (serverEmojis[regionName]) {
-                    shortName = serverEmojis[regionName] + ' ' + shortName;
+                if (serverExtra[regionName]) {
+                    shortName = serverExtra[regionName][0] + ' ' + shortName;
+                    region.contintent = serverExtra[regionName][1];
+                } else {
+                    region.contintent = 'other';
                 }
             }
 
@@ -91,7 +105,9 @@ class XcloudInterceptor {
         return response;
     }
 
-    static async #handlePlay(request: RequestInfo | URL, init?: RequestInit) {
+    private static async handlePlay(request: RequestInfo | URL, init?: RequestInit) {
+        BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
+
         const PREF_STREAM_TARGET_RESOLUTION = getPref(PrefKey.STREAM_TARGET_RESOLUTION);
         const PREF_STREAM_PREFERRED_LOCALE = getPref(PrefKey.STREAM_PREFERRED_LOCALE);
 
@@ -129,7 +145,7 @@ class XcloudInterceptor {
         return NATIVE_FETCH(newRequest);
     }
 
-    static async #handleWaitTime(request: RequestInfo | URL, init?: RequestInit) {
+    private static async handleWaitTime(request: RequestInfo | URL, init?: RequestInit) {
         const response = await NATIVE_FETCH(request, init);
 
         if (getPref(PrefKey.UI_LOADING_SCREEN_WAIT_TIME)) {
@@ -143,7 +159,7 @@ class XcloudInterceptor {
         return response;
     }
 
-    static async #handleConfiguration(request: RequestInfo | URL, init?: RequestInit) {
+    private static async handleConfiguration(request: RequestInfo | URL, init?: RequestInit) {
         if ((request as Request).method !== 'GET') {
             return NATIVE_FETCH(request, init);
         }
@@ -164,6 +180,8 @@ class XcloudInterceptor {
         if (!text.length) {
             return response;
         }
+
+        BxEvent.dispatch(window, BxEvent.STREAM_STARTING);
 
         const obj = JSON.parse(text);
         let overrides = JSON.parse(obj.clientStreamingConfigOverrides || '{}') || {};
@@ -213,13 +231,13 @@ class XcloudInterceptor {
 
         // Server list
         if (url.endsWith('/v2/login/user')) {
-            return XcloudInterceptor.#handleLogin(request, init);
+            return XcloudInterceptor.handleLogin(request, init);
         } else if (url.endsWith('/sessions/cloud/play')) {  // Get session
-            return XcloudInterceptor.#handlePlay(request, init);
+            return XcloudInterceptor.handlePlay(request, init);
         } else if (url.includes('xboxlive.com') && url.includes('/waittime/')) {
-            return XcloudInterceptor.#handleWaitTime(request, init);
+            return XcloudInterceptor.handleWaitTime(request, init);
         } else if (url.endsWith('/configuration')) {
-            return XcloudInterceptor.#handleConfiguration(request, init);
+            return XcloudInterceptor.handleConfiguration(request, init);
         } else if (url && url.endsWith('/ice') && url.includes('/sessions/') && (request as Request).method === 'GET') {
             return patchIceCandidates(request as Request);
         }

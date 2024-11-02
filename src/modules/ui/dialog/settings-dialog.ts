@@ -1,6 +1,6 @@
 import { isFullVersion } from "@macros/build" with {type: "macro"};
 
-import { onChangeVideoPlayerType, updateVideoPlayer } from "@/modules/stream/stream-settings-utils";
+import { limitVideoPlayerFps, onChangeVideoPlayerType, updateVideoPlayer } from "@/modules/stream/stream-settings-utils";
 import { ButtonStyle, CE, createButton, createSvgIcon, removeChildElements, type BxButton } from "@/utils/html";
 import { NavigationDialog, NavigationDirection } from "./navigation-dialog";
 import { ControllerShortcut } from "@/modules/controller-shortcut";
@@ -19,7 +19,7 @@ import { setNearby } from "@/utils/navigation-utils";
 import { PatcherCache } from "@/modules/patcher";
 import { UserAgentProfile } from "@/enums/user-agent";
 import { UserAgent } from "@/utils/user-agent";
-import { BX_FLAGS, NATIVE_FETCH } from "@/utils/bx-flags";
+import { BX_FLAGS, NATIVE_FETCH, type BxFlags } from "@/utils/bx-flags";
 import { copyToClipboard } from "@/utils/utils";
 import { GamepadKey } from "@/enums/mkb";
 import { PrefKey, StorageKey } from "@/enums/pref-keys";
@@ -27,16 +27,19 @@ import { ControllerDeviceVibration, getPref, getPrefDefinition, setPref, StreamT
 import { SettingElement, type BxHtmlSettingElement } from "@/utils/setting-element";
 import type { RecommendedSettings, SettingDefinition, SuggestedSettingCategory as SuggestedSettingProfile } from "@/types/setting-definition";
 import { FullscreenText } from "../fullscreen-text";
+import { BxLogger } from "@/utils/bx-logger";
+import { updatePollingRate } from "@/utils/gamepad";
 
 
 type SettingTabContentItem = Partial<{
     pref: PrefKey;
     label: string;
-    note: string;
+    note: string | (() => HTMLElement);
     experimental: string;
     content: HTMLElement | (() => HTMLElement);
     options: {[key: string]: string};
     unsupported: boolean;
+    unsupportedNote: string;
     onChange: (e: any, value: number) => void;
     onCreated: (setting: SettingTabContentItem, $control: any) => void;
     params: any;
@@ -46,33 +49,33 @@ type SettingTabContentItem = Partial<{
 type SettingTabContent = {
     group: 'general' | 'server' | 'stream' | 'game-bar' | 'co-op' | 'mkb' | 'touch-control' | 'loading-screen' | 'ui' | 'other' | 'advanced' | 'footer' | 'audio' | 'video' | 'controller' | 'native-mkb' | 'stats' | 'controller-shortcuts';
     label?: string;
-    note?: string | Text | null;
     unsupported?: boolean;
+    unsupportedNote?: string | Text | null;
     helpUrl?: string;
     content?: any;
+    lazyContent?: boolean | (() => HTMLElement);
     items?: Array<SettingTabContentItem | PrefKey | (($parent: HTMLElement) => void) | false>;
     requiredVariants?: BuildVariant | Array<BuildVariant>;
 };
 
 type SettingTab = {
     icon: SVGElement;
-    group: 'global';
-    items: Array<SettingTabContent | false>;
+    group: SettingTabGroup,
+    items: Array<SettingTabContent | false> | (() => Array<SettingTabContent | false>);
     requiredVariants?: BuildVariant | Array<BuildVariant>;
+    lazyContent?: boolean;
 };
+
+type SettingTabGroup = 'global' | 'stream' | 'controller' | 'mkb' | 'native-mkb' | 'shortcuts' | 'stats';
 
 export class SettingsNavigationDialog extends NavigationDialog {
     private static instance: SettingsNavigationDialog;
-    public static getInstance(): SettingsNavigationDialog {
-        if (!SettingsNavigationDialog.instance) {
-            SettingsNavigationDialog.instance = new SettingsNavigationDialog();
-        }
-        return SettingsNavigationDialog.instance;
-    }
+    public static getInstance = () => SettingsNavigationDialog.instance ?? (SettingsNavigationDialog.instance = new SettingsNavigationDialog());
+    private readonly LOG_TAG = 'SettingsNavigationDialog';
 
     $container!: HTMLElement;
     private $tabs!: HTMLElement;
-    private $settings!: HTMLElement;
+    private $tabContents!: HTMLElement;
 
     private $btnReload!: HTMLElement;
     private $btnGlobalReload!: HTMLButtonElement;
@@ -220,6 +223,11 @@ export class SettingsNavigationDialog extends NavigationDialog {
         requiredVariants: 'full',
         group: 'mkb',
         label: t('mouse-and-keyboard'),
+        unsupportedNote: !STATES.userAgent.capabilities.mkb ? CE('a', {
+            href: 'https://github.com/redphx/better-xcloud/issues/206#issuecomment-1920475657',
+            target: '_blank',
+        }, '⚠️ ' + t('browser-unsupported-feature')) : null,
+        unsupported: !STATES.userAgent.capabilities.mkb,
         items: [
             PrefKey.NATIVE_MKB_ENABLED,
             PrefKey.GAME_MSFS2020_FORCE_NATIVE_MKB,
@@ -230,8 +238,8 @@ export class SettingsNavigationDialog extends NavigationDialog {
         requiredVariants: 'full',
         group: 'touch-control',
         label: t('touch-controller'),
-        note: !STATES.userAgent.capabilities.touch ? '⚠️ ' + t('device-unsupported-touch') : null,
         unsupported: !STATES.userAgent.capabilities.touch,
+        unsupportedNote: !STATES.userAgent.capabilities.touch ? '⚠️ ' + t('device-unsupported-touch') : null,
         items: [
             PrefKey.STREAM_TOUCH_CONTROLLER,
             PrefKey.STREAM_TOUCH_CONTROLLER_AUTO_OFF,
@@ -245,7 +253,6 @@ export class SettingsNavigationDialog extends NavigationDialog {
         items: [
             PrefKey.UI_LAYOUT,
             PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME,
-            PrefKey.UI_HOME_CONTEXT_MENU_DISABLED,
             PrefKey.CONTROLLER_SHOW_CONNECTION_STATUS,
             PrefKey.STREAM_SIMPLIFY_MENU,
             PrefKey.SKIP_SPLASH_VIDEO,
@@ -326,8 +333,8 @@ export class SettingsNavigationDialog extends NavigationDialog {
             // xCloud version
             ($parent) => {
                 try {
-                    const appVersion = (document.querySelector('meta[name=gamepass-app-version]') as HTMLMetaElement).content;
-                    const appDate = new Date((document.querySelector('meta[name=gamepass-app-date]') as HTMLMetaElement).content).toISOString().substring(0, 10);
+                    const appVersion = document.querySelector<HTMLMetaElement>('meta[name=gamepass-app-version]')!.content;
+                    const appDate = new Date(document.querySelector<HTMLMetaElement>('meta[name=gamepass-app-date]')!.content).toISOString().substring(0, 10);
                     $parent.appendChild(CE('div', {
                         class: 'bx-settings-app-version',
                     }, `xCloud website version ${appVersion} (${appDate})`));
@@ -380,7 +387,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
                 disabled: !getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL),
             },
             onCreated: (setting: SettingTabContentItem, $elm: HTMLElement) => {
-                const $range = $elm.querySelector('input[type=range') as HTMLInputElement;
+                const $range = $elm.querySelector<HTMLInputElement>('input[type=range')!;
                 window.addEventListener(BxEvent.SETTINGS_CHANGED, e => {
                     const { storageKey, settingKey, settingValue } = e as any;
                     if (storageKey !== StorageKey.GLOBAL || settingKey !== PrefKey.AUDIO_VOLUME) {
@@ -401,6 +408,11 @@ export class SettingsNavigationDialog extends NavigationDialog {
         items: [{
             pref: PrefKey.VIDEO_PLAYER_TYPE,
             onChange: onChangeVideoPlayerType,
+        }, {
+            pref: PrefKey.VIDEO_MAX_FPS,
+            onChange: e => {
+                limitVideoPlayerFps(parseInt(e.target.value));
+            },
         }, {
             pref: PrefKey.VIDEO_POWER_PREFERENCE,
             onChange: () => {
@@ -449,6 +461,9 @@ export class SettingsNavigationDialog extends NavigationDialog {
             pref: PrefKey.CONTROLLER_VIBRATION_INTENSITY,
             unsupported: !VibrationManager.supportDeviceVibration(),
             onChange: () => VibrationManager.updateGlobalVars(),
+        }, isFullVersion() && {
+            pref: PrefKey.CONTROLLER_POLLING_RATE,
+            onChange: () => updatePollingRate(),
         }],
     },
 
@@ -506,11 +521,11 @@ export class SettingsNavigationDialog extends NavigationDialog {
         }],
     }];
 
-    private readonly TAB_VIRTUAL_CONTROLLER_ITEMS: Array<SettingTabContent | false> = [{
+    private readonly TAB_VIRTUAL_CONTROLLER_ITEMS: (() => Array<SettingTabContent | false>) = () => [{
         group: 'mkb',
         label: t('virtual-controller'),
         helpUrl: 'https://better-xcloud.github.io/mouse-and-keyboard/',
-        content: isFullVersion() && MkbRemapper.INSTANCE.render(),
+        content: MkbRemapper.getInstance().render(),
     }];
 
     private readonly TAB_NATIVE_MKB_ITEMS: Array<SettingTabContent | false> = [{
@@ -530,7 +545,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
         }] : [],
     }];
 
-    private readonly TAB_SHORTCUTS_ITEMS: Array<SettingTabContent | false> = [{
+    private readonly TAB_SHORTCUTS_ITEMS: (() => Array<SettingTabContent | false>) = () => [{
         requiredVariants: 'full',
         group: 'controller-shortcuts',
         label: t('controller-shortcuts'),
@@ -571,56 +586,59 @@ export class SettingsNavigationDialog extends NavigationDialog {
         ],
     }];
 
-    private readonly SETTINGS_UI: Array<SettingTab> = [
-        {
-            icon: BxIcon.HOME,
+    private readonly SETTINGS_UI: Record<SettingTabGroup, SettingTab> = {
+        global: {
             group: 'global',
+            icon: BxIcon.HOME,
             items: this.TAB_GLOBAL_ITEMS,
         },
 
-        {
-            icon: BxIcon.DISPLAY,
+        stream: {
             group: 'stream',
+            icon: BxIcon.DISPLAY,
             items: this.TAB_DISPLAY_ITEMS,
         },
 
-        {
-            icon: BxIcon.CONTROLLER,
+        controller: {
             group: 'controller',
+            icon: BxIcon.CONTROLLER,
             items: this.TAB_CONTROLLER_ITEMS,
             requiredVariants: 'full',
         },
 
-        isFullVersion() && getPref(PrefKey.MKB_ENABLED) && {
-            icon: BxIcon.VIRTUAL_CONTROLLER,
+        mkb: isFullVersion() && getPref(PrefKey.MKB_ENABLED) && {
             group: 'mkb',
+            icon: BxIcon.VIRTUAL_CONTROLLER,
             items: this.TAB_VIRTUAL_CONTROLLER_ITEMS,
+            lazyContent: true,
             requiredVariants: 'full',
         },
 
-        isFullVersion() && AppInterface && getPref(PrefKey.NATIVE_MKB_ENABLED) === 'on' && {
-            icon: BxIcon.NATIVE_MKB,
+        'native-mkb': isFullVersion() && AppInterface && getPref(PrefKey.NATIVE_MKB_ENABLED) === 'on' && {
             group: 'native-mkb',
+            icon: BxIcon.NATIVE_MKB,
             items: this.TAB_NATIVE_MKB_ITEMS,
             requiredVariants: 'full',
         },
 
-        {
-            icon: BxIcon.COMMAND,
+        shortcuts: {
             group: 'shortcuts',
+            icon: BxIcon.COMMAND,
             items: this.TAB_SHORTCUTS_ITEMS,
+            lazyContent: true,
             requiredVariants: 'full',
         },
 
-        {
-            icon: BxIcon.STREAM_STATS,
+        stats: {
             group: 'stats',
+            icon: BxIcon.STREAM_STATS,
             items: this.TAB_STATS_ITEMS,
         },
-    ];
+    };
 
-    constructor() {
+    private constructor() {
         super();
+        BxLogger.info(this.LOG_TAG, 'constructor()');
 
         this.renderFullSettings = STATES.supportedRegion && STATES.isSignedIn;
         this.setupDialog();
@@ -648,7 +666,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
         }
 
         // Trigger event
-        const $selectUserAgent = document.querySelector(`#bx_setting_${PrefKey.USER_AGENT_PROFILE}`) as HTMLSelectElement;
+        const $selectUserAgent = document.querySelector<HTMLSelectElement>(`#bx_setting_${PrefKey.USER_AGENT_PROFILE}`);
         if ($selectUserAgent) {
             $selectUserAgent.disabled = true;
             BxEvent.dispatch($selectUserAgent, 'input', {});
@@ -665,10 +683,23 @@ export class SettingsNavigationDialog extends NavigationDialog {
         window.location.reload();
     }
 
-    private async getRecommendedSettings(deviceCode: string): Promise<string | null> {
+    private async getRecommendedSettings(androidInfo: BxFlags['DeviceInfo']['androidInfo']): Promise<string | null> {
+        function normalize(str: string) {
+            return str.toLowerCase()
+                .trim()
+                .replaceAll(/\s+/g, '-')
+                .replaceAll(/-+/g, '-');
+        }
+
         // Get recommended settings from GitHub
         try {
-            const response = await NATIVE_FETCH(`https://raw.githubusercontent.com/redphx/better-xcloud/gh-pages/devices/${deviceCode.toLowerCase()}.json`);
+            let {brand, board, model} = androidInfo!;
+            brand = normalize(brand);
+            board = normalize(board);
+            model = normalize(model);
+
+            const url = `https://raw.githubusercontent.com/redphx/better-xcloud/gh-pages/devices/${brand}/${board}-${model}.json`;
+            const response = await NATIVE_FETCH(url);
             const json = (await response.json()) as RecommendedSettings;
             const recommended: PartialRecord<PrefKey, any> = {};
 
@@ -752,8 +783,11 @@ export class SettingsNavigationDialog extends NavigationDialog {
         }
 
         // Get labels
-        for (const settingTab of this.SETTINGS_UI) {
-            if (!settingTab || !settingTab.items) {
+        let settingTabGroup: keyof typeof this.SETTINGS_UI;
+        for (settingTabGroup in this.SETTINGS_UI) {
+            const settingTab = this.SETTINGS_UI[settingTabGroup];
+
+            if (!settingTab || !settingTab.items || typeof settingTab.items === 'function') {
                 continue;
             }
 
@@ -783,11 +817,17 @@ export class SettingsNavigationDialog extends NavigationDialog {
 
         if (BX_FLAGS.DeviceInfo.deviceType.includes('android')) {
             if (BX_FLAGS.DeviceInfo.androidInfo) {
-                const deviceCode = BX_FLAGS.DeviceInfo.androidInfo.board;
-                recommendedDevice = await this.getRecommendedSettings(deviceCode);
+                recommendedDevice = await this.getRecommendedSettings(BX_FLAGS.DeviceInfo.androidInfo);
             }
         }
-        // recommendedDevice = await this.getRecommendedSettings('foster_e');
+
+        /*
+        recommendedDevice = await this.getRecommendedSettings({
+            manufacturer: 'Lenovo',
+            board: 'kona',
+            model: 'Lenovo TB-9707F',
+        });
+        */
 
         const hasRecommendedSettings = Object.keys(this.suggestedSettings.recommended).length > 0;
 
@@ -896,7 +936,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
             let prefKey: PrefKey;
             for (prefKey in settings) {
                 const suggestedValue = settings[prefKey];
-                const $checkBox = $content.querySelector(`#bx_suggest_${prefKey}`) as HTMLInputElement;
+                const $checkBox = $content.querySelector<HTMLInputElement>(`#bx_suggest_${prefKey}`)!;
                 if (!$checkBox.checked || $checkBox.disabled) {
                     continue;
                 }
@@ -956,43 +996,64 @@ export class SettingsNavigationDialog extends NavigationDialog {
             }, t('suggest-settings-link')),
         );
 
-        $btnSuggest?.insertAdjacentElement('afterend', $content);
+        $btnSuggest.insertAdjacentElement('afterend', $content);
+    }
+
+    private onTabClicked(e: Event) {
+        const $svg = (e.target as SVGElement).closest('svg')!;
+
+        // Render tab content lazily
+        if (!!$svg.dataset.lazy) {
+            // Remove attribute
+            delete $svg.dataset.lazy;
+            // Render data
+            const settingTab = this.SETTINGS_UI[$svg.dataset.group as SettingTabGroup];
+
+            const items = (settingTab.items as Function)();
+            const $tabContent = this.renderTabContent.call(this, settingTab, items);
+            this.$tabContents.appendChild($tabContent);
+        }
+
+        // Switch tab
+        let $child: HTMLElement;
+        const children = Array.from(this.$tabContents.children) as HTMLElement[];
+        for ($child of children) {
+            if ($child.dataset.tabGroup === $svg.dataset.group) {
+                // Show tab content
+                $child.classList.remove('bx-gone');
+
+                // Calculate size of controller-friendly select boxes
+                if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
+                    this.dialogManager.calculateSelectBoxes($child as HTMLElement);
+                }
+            } else {
+                // Hide tab content
+                $child.classList.add('bx-gone');
+            }
+        }
+
+        // Highlight current tab button
+        for (const $child of Array.from(this.$tabs.children)) {
+            $child.classList.remove('bx-active');
+        }
+
+        $svg.classList.add('bx-active');
     }
 
     private renderTab(settingTab: SettingTab) {
         const $svg = createSvgIcon(settingTab.icon as any);
         $svg.dataset.group = settingTab.group;
         $svg.tabIndex = 0;
+        settingTab.lazyContent && ($svg.dataset.lazy = settingTab.lazyContent.toString());
 
-        $svg.addEventListener('click', e => {
-            // Switch tab
-            for (const $child of Array.from(this.$settings.children)) {
-                if ($child.getAttribute('data-tab-group') === settingTab.group) {
-                    $child.classList.remove('bx-gone');
-
-                    // Calculate size of controller-friendly select boxes
-                    if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
-                        this.dialogManager.calculateSelectBoxes($child as HTMLElement);
-                    }
-                } else {
-                    $child.classList.add('bx-gone');
-                }
-            }
-
-            // Highlight current tab button
-            for (const $child of Array.from(this.$tabs.children)) {
-                $child.classList.remove('bx-active');
-            }
-
-            $svg.classList.add('bx-active');
-        });
+        $svg.addEventListener('click', this.onTabClicked.bind(this));
 
         return $svg;
     }
 
     private onGlobalSettingChanged(e: Event) {
         // Clear PatcherCache;
-        isFullVersion() && PatcherCache.clear();
+        isFullVersion() && PatcherCache.getInstance().clear();
 
         this.$btnReload.classList.add('bx-danger');
 
@@ -1002,21 +1063,43 @@ export class SettingsNavigationDialog extends NavigationDialog {
     }
 
     private renderServerSetting(setting: SettingTabContentItem): HTMLElement {
-        let selectedValue;
+        let selectedValue =getPref(PrefKey.SERVER_REGION);
+
+        const continents: Record<ServerContinent, {
+            label: string,
+            children?: HTMLOptionElement[],
+        }> = {
+            'america-north': {
+                label: t('continent-north-america'),
+            },
+            'america-south': {
+                label: t('continent-south-america'),
+            },
+            'asia': {
+                label: t('continent-asia'),
+            },
+            'australia': {
+                label: t('continent-australia'),
+            },
+            'europe': {
+                label: t('continent-europe'),
+            },
+            'other': {
+                label: t('other'),
+            },
+        };
 
         const $control = CE<HTMLSelectElement>('select', {
-                id: `bx_setting_${setting.pref}`,
-                title: setting.label,
-                tabindex: 0,
-            });
+            id: `bx_setting_${setting.pref}`,
+            title: setting.label,
+            tabindex: 0,
+        });
         $control.name = $control.id;
 
         $control.addEventListener('input', (e: Event) => {
             setPref(setting.pref!, (e.target as HTMLSelectElement).value);
             this.onGlobalSettingChanged(e);
         });
-
-        selectedValue = getPref(PrefKey.SERVER_REGION);
 
         setting.options = {};
         for (const regionName in STATES.serverRegions) {
@@ -1034,15 +1117,29 @@ export class SettingsNavigationDialog extends NavigationDialog {
             }
 
             setting.options[value] = label;
+
+            const $option = CE<HTMLOptionElement>('option', {value: value}, label);
+            const continent = continents[region.contintent];
+            if (!continent.children) {
+                continent.children = [];
+            }
+            continent.children.push($option);
         }
 
-        for (const value in setting.options) {
-            const label = setting.options[value];
+        const fragment = document.createDocumentFragment();
+        let key: keyof typeof continents;
+        for (key in continents) {
+            const continent = continents[key];
+            if (!continent.children) {
+                continue;
+            }
 
-            const $option = CE('option', {value: value}, label);
-            $control.appendChild($option);
+            fragment.appendChild(CE('optgroup', {
+                label: continent.label,
+            }, ...continent.children));
         }
 
+        $control.appendChild(fragment);
         $control.disabled = Object.keys(STATES.serverRegions).length === 0;
 
         // Select preferred region
@@ -1132,8 +1229,18 @@ export class SettingsNavigationDialog extends NavigationDialog {
         }
 
         let label = prefDefinition?.label || setting.label;
-        let note = prefDefinition?.note || setting.note;
+        let note: string | undefined | (() => HTMLElement) | HTMLElement = prefDefinition?.note || setting.note;
+        let unsupportedNote: string | undefined | (() => HTMLElement) | HTMLElement = prefDefinition?.unsupportedNote || setting.unsupportedNote;
         const experimental = prefDefinition?.experimental || setting.experimental;
+
+        // Render note lazily
+        if (typeof note === 'function') {
+            note = note();
+        }
+
+        if (typeof unsupportedNote === 'function') {
+            unsupportedNote = unsupportedNote();
+        }
 
         if (settingTabContent.label && setting.pref) {
             if (prefDefinition?.suggest) {
@@ -1152,6 +1259,13 @@ export class SettingsNavigationDialog extends NavigationDialog {
             }
         }
 
+        let $note;
+        if (unsupportedNote) {
+            $note = CE('div', {class: 'bx-settings-dialog-note'}, unsupportedNote);
+        } else if (note) {
+            $note = CE('div', {class: 'bx-settings-dialog-note'}, note);
+        }
+
         let $label;
 
         const $row = CE('label', {
@@ -1164,7 +1278,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
         },
             $label = CE('span', {class: 'bx-settings-label'},
                 label,
-                note ? CE('div', {class: 'bx-settings-dialog-note'}, note) : prefDefinition?.unsupported && CE('div', {class: 'bx-settings-dialog-note'}, t('browser-unsupported-feature')),
+                $note,
             ),
             !prefDefinition?.unsupported && $control,
         );
@@ -1182,9 +1296,101 @@ export class SettingsNavigationDialog extends NavigationDialog {
         !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
     }
 
+    private renderTabContent(settingTab: SettingTab, items: Array<SettingTabContent | false>): HTMLElement {
+        const $tabContent = CE('div', {
+            class: 'bx-gone',
+            'data-tab-group': settingTab.group,
+        });
+
+        for (const settingTabContent of items) {
+            if (!settingTabContent) {
+                continue;
+            }
+
+            if (!this.isSupportedVariant(settingTabContent.requiredVariants)) {
+                continue;
+            }
+
+            // Don't render other settings in unsupported regions
+            if (!this.renderFullSettings && settingTab.group === 'global' && settingTabContent.group !== 'general' && settingTabContent.group !== 'footer') {
+                continue;
+            }
+
+            let label = settingTabContent.label;
+
+            // If label is "Better xCloud" => create a link to Releases page
+            if (label === t('better-xcloud')) {
+                label += ' ' + SCRIPT_VERSION;
+
+                if (SCRIPT_VARIANT === 'lite') {
+                    label += ' (Lite)';
+                }
+
+                label = createButton({
+                    label: label,
+                    url: 'https://github.com/redphx/better-xcloud/releases',
+                    style: ButtonStyle.NORMAL_CASE | ButtonStyle.FROSTED | ButtonStyle.FOCUSABLE,
+                });
+            }
+
+            if (label) {
+                const $title = CE('h2', {
+                    _nearby: {
+                        orientation: 'horizontal',
+                    }
+                },
+                    CE('span', {}, label),
+                    settingTabContent.helpUrl && createButton({
+                            icon: BxIcon.QUESTION,
+                            style: ButtonStyle.GHOST | ButtonStyle.FOCUSABLE,
+                            url: settingTabContent.helpUrl,
+                            title: t('help'),
+                        }),
+                );
+
+                $tabContent.appendChild($title);
+            }
+
+            // Add note
+            if (settingTabContent.unsupportedNote) {
+                const $note = CE('b', {class: 'bx-note-unsupported'}, settingTabContent.unsupportedNote);
+
+                $tabContent.appendChild($note);
+            }
+
+            // Don't render settings if this is an unsupported feature
+            if (settingTabContent.unsupported) {
+                continue;
+            }
+
+            // Add content DOM
+            if (settingTabContent.content) {
+                $tabContent.appendChild(settingTabContent.content);
+                continue;
+            }
+
+            // Render list of settings
+            settingTabContent.items = settingTabContent.items || [];
+            for (const setting of settingTabContent.items) {
+                if (setting === false) {
+                    continue;
+                }
+
+                if (typeof setting === 'function') {
+                    setting.apply(this, [$tabContent]);
+                    continue;
+                }
+
+                this.renderSettingRow(settingTab, $tabContent, settingTabContent, setting);
+            }
+        }
+
+        return $tabContent;
+    }
+
     private setupDialog() {
         let $tabs: HTMLElement;
-        let $settings: HTMLElement;
+        let $tabContents: HTMLElement;
 
         const $container = CE('div', {
             class: 'bx-settings-dialog',
@@ -1232,7 +1438,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
                 ),
             ),
 
-            $settings = CE('div', {
+            $tabContents = CE('div', {
                 class: 'bx-settings-tab-contents',
                 _nearby: {
                     orientation: 'vertical',
@@ -1251,7 +1457,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
 
         this.$container = $container;
         this.$tabs = $tabs;
-        this.$settings = $settings;
+        this.$tabContents = $tabContents;
 
         // Close dialog when not clicking on any child elements in the dialog
         $container.addEventListener('click', e => {
@@ -1262,7 +1468,10 @@ export class SettingsNavigationDialog extends NavigationDialog {
             }
         });
 
-        for (const settingTab of this.SETTINGS_UI) {
+        let settingTabGroup: keyof typeof this.SETTINGS_UI
+        for (settingTabGroup in this.SETTINGS_UI) {
+            const settingTab = this.SETTINGS_UI[settingTabGroup];
+
             if (!settingTab) {
                 continue;
             }
@@ -1280,100 +1489,13 @@ export class SettingsNavigationDialog extends NavigationDialog {
             const $svg = this.renderTab(settingTab);
             $tabs.appendChild($svg);
 
-            const $tabContent = CE('div', {
-                class: 'bx-gone',
-                'data-tab-group': settingTab.group,
-            });
-
-            for (const settingTabContent of settingTab.items) {
-                if (settingTabContent === false) {
-                    continue;
-                }
-
-                if (!this.isSupportedVariant(settingTabContent.requiredVariants)) {
-                    continue;
-                }
-
-                // Don't render other settings in unsupported regions
-                if (!this.renderFullSettings && settingTab.group === 'global' && settingTabContent.group !== 'general' && settingTabContent.group !== 'footer') {
-                    continue;
-                }
-
-                let label = settingTabContent.label;
-
-                // If label is "Better xCloud" => create a link to Releases page
-                if (label === t('better-xcloud')) {
-                    label += ' ' + SCRIPT_VERSION;
-
-                    if (SCRIPT_VARIANT === 'lite') {
-                        label += ' (Lite)';
-                    }
-
-                    label = createButton({
-                        label: label,
-                        url: 'https://github.com/redphx/better-xcloud/releases',
-                        style: ButtonStyle.NORMAL_CASE | ButtonStyle.FROSTED | ButtonStyle.FOCUSABLE,
-                    });
-                }
-
-                if (label) {
-                    const $title = CE('h2', {
-                        _nearby: {
-                            orientation: 'horizontal',
-                        }
-                    },
-                        CE('span', {}, label),
-                        settingTabContent.helpUrl && createButton({
-                                icon: BxIcon.QUESTION,
-                                style: ButtonStyle.GHOST | ButtonStyle.FOCUSABLE,
-                                url: settingTabContent.helpUrl,
-                                title: t('help'),
-                            }),
-                    );
-
-                    $tabContent.appendChild($title);
-                }
-
-                // Add note
-                if (settingTabContent.note) {
-                    let $note;
-                    if (typeof settingTabContent.note === 'string') {
-                        $note = CE('b', {class: 'bx-note-unsupported'}, settingTabContent.note);
-                    } else {
-                        $note = settingTabContent.note;
-                    }
-
-                    $tabContent.appendChild($note);
-                }
-
-                // Don't render settings if this is an unsupported feature
-                if (settingTabContent.unsupported) {
-                    continue;
-                }
-
-                // Add content DOM
-                if (settingTabContent.content) {
-                    $tabContent.appendChild(settingTabContent.content);
-                    continue;
-                }
-
-                // Render list of settings
-                settingTabContent.items = settingTabContent.items || [];
-                for (const setting of settingTabContent.items) {
-                    if (setting === false) {
-                        continue;
-                    }
-
-                    if (typeof setting === 'function') {
-                        setting.apply(this, [$tabContent]);
-                        continue;
-                    }
-
-                    this.renderSettingRow(settingTab, $tabContent, settingTabContent, setting);
-                }
+            // Don't render lazy tab content
+            if (typeof settingTab.items === 'function') {
+                continue;
             }
 
-            $settings.appendChild($tabContent);
+            const $tabContent = this.renderTabContent.call(this, settingTab, settingTab.items);
+            $tabContents.appendChild($tabContent);
         }
 
         // Select first tab
@@ -1390,13 +1512,13 @@ export class SettingsNavigationDialog extends NavigationDialog {
     }
 
     private focusActiveTab() {
-        const $currentTab = this.$tabs!.querySelector('.bx-active') as HTMLElement;
+        const $currentTab = this.$tabs!.querySelector<HTMLElement>('.bx-active');
         $currentTab && $currentTab.focus();
         return true;
     }
 
     private focusVisibleSetting(type: 'first' | 'last' = 'first'): boolean {
-        const controls = Array.from(this.$settings.querySelectorAll('div[data-tab-group]:not(.bx-gone) > *'));
+        const controls = Array.from(this.$tabContents.querySelectorAll('div[data-tab-group]:not(.bx-gone) > *'));
         if (!controls.length) {
             return false;
         }
@@ -1442,7 +1564,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
     }
 
     private jumpToSettingGroup(direction: 'next' | 'previous'): boolean {
-        const $tabContent = this.$settings.querySelector('div[data-tab-group]:not(.bx-gone)');
+        const $tabContent = this.$tabContents.querySelector('div[data-tab-group]:not(.bx-gone)');
         if (!$tabContent) {
             return false;
         }
@@ -1453,7 +1575,7 @@ export class SettingsNavigationDialog extends NavigationDialog {
             $header = $tabContent.querySelector('h2');
         } else {
             // Find the parent element
-            const $parent = $focusing.closest('[data-tab-group] > *') as HTMLElement;
+            const $parent = $focusing.closest<HTMLElement>('[data-tab-group] > *');
             const siblingProperty = direction === 'next' ? 'nextSibling' : 'previousSibling';
 
             let $tmp = $parent;

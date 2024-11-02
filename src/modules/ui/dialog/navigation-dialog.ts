@@ -2,6 +2,7 @@ import { GamepadKey } from "@/enums/mkb";
 import { PrefKey } from "@/enums/pref-keys";
 import { VIRTUAL_GAMEPAD_ID } from "@/modules/mkb/mkb-handler";
 import { BxEvent } from "@/utils/bx-event";
+import { BxLogger } from "@/utils/bx-logger";
 import { STATES } from "@/utils/global";
 import { CE, isElementVisible } from "@/utils/html";
 import { setNearby } from "@/utils/navigation-utils";
@@ -88,12 +89,8 @@ export abstract class NavigationDialog {
 
 export class NavigationDialogManager {
     private static instance: NavigationDialogManager;
-    public static getInstance(): NavigationDialogManager {
-        if (!NavigationDialogManager.instance) {
-            NavigationDialogManager.instance = new NavigationDialogManager();
-        }
-        return NavigationDialogManager.instance;
-    }
+    public static getInstance = () => NavigationDialogManager.instance ?? (NavigationDialogManager.instance = new NavigationDialogManager());
+    private readonly LOG_TAG = 'NavigationDialogManager';
 
     private static readonly GAMEPAD_POLLING_INTERVAL = 50;
     private static readonly GAMEPAD_KEYS = [
@@ -141,7 +138,9 @@ export class NavigationDialogManager {
     private $container: HTMLElement;
     private dialog: NavigationDialog | null = null;
 
-    constructor() {
+    private constructor() {
+        BxLogger.info(this.LOG_TAG, 'constructor()');
+
         this.$overlay = CE('div', {class: 'bx-navigation-dialog-overlay bx-gone'});
         this.$overlay.addEventListener('click', e => {
             e.preventDefault();
@@ -178,8 +177,9 @@ export class NavigationDialogManager {
     }
 
     calculateSelectBoxes($root: HTMLElement) {
-        const $selects = $root.querySelectorAll('.bx-select:not([data-calculated]) select');
-        $selects.forEach($select => {
+        const selects = Array.from($root.querySelectorAll('.bx-select:not([data-calculated]) select'));
+
+        for (const $select of selects) {
             const $parent = $select.parentElement! as HTMLElement;
 
             // Don't apply to select.bx-full-width elements
@@ -190,23 +190,28 @@ export class NavigationDialogManager {
 
             const rect = $select.getBoundingClientRect();
 
-            let $label;
+            let $label: HTMLElement;
             let width = Math.ceil(rect.width);
             if (!width) {
                 return;
             }
 
             if (($select as HTMLSelectElement).multiple) {
-                $label = $parent.querySelector('.bx-select-value') as HTMLElement;
+                $label = $parent.querySelector<HTMLElement>('.bx-select-value')!;
                 width += 20;  // Add checkbox's width
             } else {
-                $label = $parent.querySelector('div') as HTMLElement;
+                $label = $parent.querySelector<HTMLElement>('div')!;
+            }
+
+            // Reduce width if it has <optgroup>
+            if ($select.querySelector('optgroup')) {
+                width -= 15;
             }
 
             // Set min-width
             $label.style.minWidth = width + 'px';
             $parent.dataset.calculated = 'true';
-        });
+        };
     }
 
     handleEvent(event: Event) {
@@ -234,7 +239,7 @@ export class NavigationDialogManager {
                 } else if (keyCode === 'Enter' || keyCode === 'NumpadEnter' || keyCode === 'Space') {
                     if (!($target instanceof HTMLInputElement && $target.type === 'text')) {
                         handled = true;
-                        $target.dispatchEvent(new MouseEvent('click'));
+                        $target.dispatchEvent(new MouseEvent('click', {bubbles: true}));
                     }
                 } else if (keyCode === 'Escape') {
                     handled = true;
@@ -361,7 +366,7 @@ export class NavigationDialogManager {
             }
 
             if (releasedButton === GamepadKey.A) {
-                document.activeElement && document.activeElement.dispatchEvent(new MouseEvent('click'));
+                document.activeElement && document.activeElement.dispatchEvent(new MouseEvent('click', {bubbles: true}));
                 return;
             } else if (releasedButton === GamepadKey.B) {
                 this.hide();

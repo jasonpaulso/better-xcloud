@@ -1,36 +1,34 @@
 import { BxIcon } from "@utils/bx-icon";
 import { createButton, ButtonStyle, CE } from "@utils/html";
-import { TouchController } from "@modules/touch-controller";
 import { BaseGameBarAction } from "./action-base";
-import { t } from "@utils/translation";
+import { RendererShortcut } from "../shortcuts/shortcut-renderer";
 
-export class TouchControlAction extends BaseGameBarAction {
+
+export class RendererAction extends BaseGameBarAction {
     $content: HTMLElement;
 
     constructor() {
         super();
 
-        const $btnEnable = createButton({
+        const $btnDefault = createButton({
             style: ButtonStyle.GHOST,
-            icon: BxIcon.TOUCH_CONTROL_ENABLE,
-            title: t('show-touch-controller'),
+            icon: BxIcon.EYE,
             onClick: this.onClick.bind(this),
         });
 
-        const $btnDisable = createButton({
+        const $btnActivated = createButton({
             style: ButtonStyle.GHOST,
-            icon: BxIcon.TOUCH_CONTROL_DISABLE,
-            title: t('hide-touch-controller'),
+            icon: BxIcon.EYE_SLASH,
             onClick: this.onClick.bind(this),
             classes: ['bx-activated'],
         });
 
-        this.$content = CE('div', {}, $btnEnable, $btnDisable);
+        this.$content = CE('div', {}, $btnDefault, $btnActivated);
     }
 
     onClick(e: Event) {
         super.onClick(e);
-        const isVisible = TouchController.toggleVisibility();
+        const isVisible = RendererShortcut.toggleVisibility();
         this.$content.dataset.activated = (!isVisible).toString();
     }
 

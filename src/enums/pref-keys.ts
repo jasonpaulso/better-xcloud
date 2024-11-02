@@ -37,11 +37,11 @@ export enum PrefKey {
     LOCAL_CO_OP_ENABLED = 'local_co_op_enabled',
     // LOCAL_CO_OP_SEPARATE_TOUCH_CONTROLLER = 'local_co_op_separate_touch_controller',
 
-    CONTROLLER_ENABLE_SHORTCUTS = 'controller_enable_shortcuts',
     CONTROLLER_ENABLE_VIBRATION = 'controller_enable_vibration',
     CONTROLLER_DEVICE_VIBRATION = 'controller_device_vibration',
     CONTROLLER_VIBRATION_INTENSITY = 'controller_vibration_intensity',
     CONTROLLER_SHOW_CONNECTION_STATUS = 'controller_show_connection_status',
+    CONTROLLER_POLLING_RATE = 'controller_polling_rate',
 
     NATIVE_MKB_ENABLED = 'native_mkb_enabled',
     NATIVE_MKB_SCROLL_HORIZONTAL_SENSITIVITY = 'native_mkb_scroll_x_sensitivity',
@@ -69,12 +69,12 @@ export enum PrefKey {
     UI_SCROLLBAR_HIDE = 'ui_scrollbar_hide',
     UI_HIDE_SECTIONS = 'ui_hide_sections',
 
-    UI_HOME_CONTEXT_MENU_DISABLED = 'ui_home_context_menu_disabled',
     UI_GAME_CARD_SHOW_WAIT_TIME = 'ui_game_card_show_wait_time',
 
     VIDEO_PLAYER_TYPE = 'video_player_type',
     VIDEO_PROCESSING = 'video_processing',
     VIDEO_POWER_PREFERENCE = 'video_power_preference',
+    VIDEO_MAX_FPS = 'video_max_fps',
     VIDEO_SHARPNESS = 'video_sharpness',
     VIDEO_RATIO = 'video_ratio',
     VIDEO_BRIGHTNESS = 'video_brightness',

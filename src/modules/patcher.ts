@@ -17,6 +17,7 @@ import { UiSection } from "@/enums/ui-sections.js";
 import { PrefKey } from "@/enums/pref-keys.js";
 import { getPref, StreamTouchController } from "@/utils/settings-storages/global-settings-storage";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery.js";
+import { t } from "@/utils/translation.js";
 
 type PatchArray = (keyof typeof PATCHES)[];
 
@@ -174,17 +175,16 @@ const PATCHES = {
     },
 
     // Remote Play: change web page's title
-    /*
     remotePlayWebTitle(str: string) {
-        let text = '"undefined"!==typeof e&&document.title!==e';
-        if (!str.includes(text)) {
+        let text = 'titleTemplate:void 0,title:';
+        const index = str.indexOf(text);
+        if (index < 0) {
             return false;
         }
 
-        const newCode = `if (window.BX_REMOTE_PLAY_CONFIG) { e = "${t('remote-play')} - ${t('better-xcloud')}"; }`;
-        return str.replace(text, newCode + text);
+        str = PatcherUtils.insertAt(str, index + text.length, `!!window.BX_REMOTE_PLAY_CONFIG ? "${t('remote-play')} - Better xCloud" :`);
+        return str;
     },
-    */
 
     // Block WebRTC stats collector
     blockWebRtcStatsCollector(str: string) {
@@ -202,16 +202,22 @@ const PATCHES = {
             return false;
         }
 
-        const nextIndex = str.indexOf('setTimeout(this.pollGamepads', index);
-        if (nextIndex === -1) {
+        const setTimeoutIndex = str.indexOf('setTimeout(this.pollGamepads', index);
+        if (setTimeoutIndex < 0) {
             return false;
         }
 
-        let codeBlock = str.substring(index, nextIndex);
+        let codeBlock = str.substring(index, setTimeoutIndex);
+
+        // Patch polling rate
+        const tmp = str.substring(setTimeoutIndex, setTimeoutIndex + 150);
+        const tmpPatched = tmp.replaceAll('Math.max(0,4-', 'Math.max(0,window.BX_CONTROLLER_POLLING_RATE-');
+        str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched);
 
         // Block gamepad stats collecting
         if (getPref(PrefKey.BLOCK_TRACKING)) {
-            codeBlock = codeBlock.replaceAll('this.inputPollingIntervalStats.addValue', '');
+            codeBlock = codeBlock.replace('this.inputPollingIntervalStats.addValue', '');
+            codeBlock = codeBlock.replace('this.inputPollingDurationStats.addValue', '');
         }
 
         // Map the Share button on Xbox Series controller with the capturing screenshot feature
@@ -219,13 +225,14 @@ const PATCHES = {
         if (match) {
             const gamepadVar = match[1];
             const newCode = renderString(codeControllerShortcuts, {
-                    gamepadVar,
-                });
+                gamepadVar,
+            });
 
             codeBlock = codeBlock.replace('this.gamepadTimestamps.set', newCode + 'this.gamepadTimestamps.set');
         }
 
-        return str.substring(0, index) + codeBlock + str.substring(nextIndex);
+        str = str.substring(0, index) + codeBlock + str.substring(setTimeoutIndex);
+        return str;
     },
 
     enableXcloudLogger(str: string) {
@@ -631,12 +638,12 @@ true` + text;
     },
 
     skipFeedbackDialog(str: string) {
-        let text = '&&this.shouldTransitionToFeedback(';
+        let text = 'shouldTransitionToFeedback(e){';
         if (!str.includes(text)) {
             return false;
         }
 
-        str = str.replace(text, '&& false ' + text);
+        str = str.replace(text, text + 'return !1;');
         return str;
     },
 
@@ -828,10 +835,10 @@ true` + text;
             [UiSection.MOST_POPULAR]: GamePassCloudGallery.MOST_POPULAR,
         };
 
-        PREF_HIDE_SECTIONS.forEach(section => {
+        for (const section of PREF_HIDE_SECTIONS) {
             const galleryId = sections[section];
             galleryId && siglIds.push(galleryId);
-        });
+        };
 
         const checkSyntax = siglIds.map(item => `siglId === "${item}"`).join(' || ');
 
@@ -950,7 +957,44 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
 
         str = PatcherUtils.replaceWith(str, index, '.All', '.Locked');
         return str;
-    }
+    },
+
+    // Disable long touch activating context menu
+    disableTouchContextMenu(str: string) {
+        let index = str.indexOf('"ContextualCardActions-module__container');
+        index >= 0 && (index = str.indexOf('addEventListener("touchstart"', index));
+        index >= 0 && (index = PatcherUtils.lastIndexOf(str, 'return ', index, 50));
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.replaceWith(str, index, 'return', 'return () => {};');
+        return str;
+    },
+
+    // Optimize Game slug generator by using cached RegEx
+    optimizeGameSlugGenerator(str: string) {
+        let text = '/[;,/?:@&=+_`~$%#^*()!^\\u2122\\xae\\xa9]/g';
+        if (!str.includes(text)) {
+            return false;
+        }
+
+        str = str.replace(text, 'window.BX_EXPOSED.GameSlugRegexes[0]');
+        str = str.replace('/ {2,}/g', 'window.BX_EXPOSED.GameSlugRegexes[1]');
+        str = str.replace('/ /g', 'window.BX_EXPOSED.GameSlugRegexes[2]');
+
+        return str;
+    },
+
+    modifyPreloadedState(str: string) {
+        let text = '=window.__PRELOADED_STATE__;';
+        if (!str.includes(text)) {
+            return false;
+        }
+
+        str = str.replace(text, '=window.BX_EXPOSED.modifyPreloadedState(window.__PRELOADED_STATE__);');
+        return str;
+    },
 };
 
 let PATCH_ORDERS: PatchArray = [
@@ -960,6 +1004,10 @@ let PATCH_ORDERS: PatchArray = [
         'disableNativeRequestPointerLock',
         'exposeInputSink',
     ] : []),
+
+    'modifyPreloadedState',
+
+    'optimizeGameSlugGenerator',
 
     'detectBrowserRouterReady',
     'patchRequestInfoCrash',
@@ -989,6 +1037,10 @@ let PATCH_ORDERS: PatchArray = [
     getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
     (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.NATIVE_MKB) || getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.MOST_POPULAR)) && 'ignoreSiglSections',
 
+    ...(STATES.userAgent.capabilities.touch ? [
+        'disableTouchContextMenu',
+    ] : []),
+
     ...(getPref(PrefKey.BLOCK_TRACKING) ? [
         'disableAiTrack',
         'disableTelemetry',
@@ -1004,6 +1056,7 @@ let PATCH_ORDERS: PatchArray = [
         'remotePlayDirectConnectUrl',
         'remotePlayDisableAchievementToast',
         'remotePlayRecentlyUsedTitleIds',
+        'remotePlayWebTitle',
         STATES.userAgent.capabilities.touch && 'patchUpdateInputConfigurationAsync',
     ] : []),
 
@@ -1076,7 +1129,7 @@ export class Patcher {
                 return nativeBind.apply(this, arguments);
             }
 
-            PatcherCache.init();
+            PatcherCache.getInstance().init();
 
             if (typeof arguments[1] === 'function') {
                 BxLogger.info(LOG_TAG, 'Restored Function.prototype.bind()');
@@ -1101,11 +1154,12 @@ export class Patcher {
         let appliedPatches: PatchArray;
 
         const patchesMap: Record<string, PatchArray> = {};
+        const patcherCache = PatcherCache.getInstance();
 
         for (let id in item[1]) {
             appliedPatches = [];
 
-            const cachedPatches = PatcherCache.getPatches(id);
+            const cachedPatches = patcherCache.getPatches(id);
             if (cachedPatches) {
                 patchesToCheck = cachedPatches.slice(0);
                 patchesToCheck.push(...PATCH_ORDERS);
@@ -1172,7 +1226,7 @@ export class Patcher {
         }
 
         if (Object.keys(patchesMap).length) {
-            PatcherCache.saveToCache(patchesMap);
+            patcherCache.saveToCache(patchesMap);
         }
     }
 
@@ -1182,51 +1236,65 @@ export class Patcher {
 }
 
 export class PatcherCache {
-    static #KEY_CACHE = 'better_xcloud_patches_cache';
-    static #KEY_SIGNATURE = 'better_xcloud_patches_cache_signature';
+    private static instance: PatcherCache;
+    public static getInstance = () => PatcherCache.instance ?? (PatcherCache.instance = new PatcherCache());
 
-    static #CACHE: any;
+    private readonly KEY_CACHE = 'better_xcloud_patches_cache';
+    private readonly KEY_SIGNATURE = 'better_xcloud_patches_cache_signature';
 
-    static #isInitialized = false;
+    private CACHE: any;
+
+    private isInitialized = false;
 
     /**
      * Get patch's signature
      */
-    static #getSignature(): number {
+    private getSignature(): number {
         const scriptVersion = SCRIPT_VERSION;
-        const webVersion = (document.querySelector('meta[name=gamepass-app-version]') as HTMLMetaElement)?.content;
         const patches = JSON.stringify(ALL_PATCHES);
+
+        // Get client.js's hash
+        let webVersion = '';
+        const $link = document.querySelector<HTMLLinkElement>('link[data-chunk="client"][href*="/client."]');
+        if ($link) {
+            const match = /\/client\.([^\.]+)\.js/.exec($link.href);
+            match && (webVersion = match[1]);
+        } else {
+            // Get version from <meta>
+            // Sometimes this value is missing
+            webVersion = (document.querySelector<HTMLMetaElement>('meta[name=gamepass-app-version]'))?.content ?? '';
+        }
 
         // Calculate signature
         const sig = hashCode(scriptVersion + webVersion + patches)
         return sig;
     }
 
-    static clear() {
+    clear() {
         // Clear cache
-        window.localStorage.removeItem(PatcherCache.#KEY_CACHE);
-        PatcherCache.#CACHE = {};
+        window.localStorage.removeItem(this.KEY_CACHE);
+        this.CACHE = {};
     }
 
-    static checkSignature() {
-        const storedSig = window.localStorage.getItem(PatcherCache.#KEY_SIGNATURE) || 0;
-        const currentSig = PatcherCache.#getSignature();
+    private checkSignature() {
+        const storedSig = window.localStorage.getItem(this.KEY_SIGNATURE) || 0;
+        const currentSig = this.getSignature();
 
         if (currentSig !== parseInt(storedSig as string)) {
             // Save new signature
             BxLogger.warning(LOG_TAG, 'Signature changed');
-            window.localStorage.setItem(PatcherCache.#KEY_SIGNATURE, currentSig.toString());
+            window.localStorage.setItem(this.KEY_SIGNATURE, currentSig.toString());
 
-            PatcherCache.clear();
+            this.clear();
         } else {
             BxLogger.info(LOG_TAG, 'Signature unchanged');
         }
     }
 
-    static #cleanupPatches(patches: PatchArray): PatchArray {
+    private cleanupPatches(patches: PatchArray): PatchArray {
         return patches.filter(item => {
-            for (const id in PatcherCache.#CACHE) {
-                const cached = PatcherCache.#CACHE[id];
+            for (const id in this.CACHE) {
+                const cached = this.CACHE[id];
 
                 if (cached.includes(item)) {
                     return false;
@@ -1237,17 +1305,17 @@ export class PatcherCache {
         });
     }
 
-    static getPatches(id: string): PatchArray {
-        return PatcherCache.#CACHE[id];
+    getPatches(id: string): PatchArray {
+        return this.CACHE[id];
     }
 
-    static saveToCache(subCache: Record<string, PatchArray>) {
+    saveToCache(subCache: Record<string, PatchArray>) {
         for (const id in subCache) {
             const patchNames = subCache[id];
 
-            let data = PatcherCache.#CACHE[id];
+            let data = this.CACHE[id];
             if (!data) {
-                PatcherCache.#CACHE[id] = patchNames;
+                this.CACHE[id] = patchNames;
             } else {
                 for (const patchName of patchNames) {
                     if (!data.includes(patchName)) {
@@ -1258,20 +1326,20 @@ export class PatcherCache {
         }
 
         // Save to storage
-        window.localStorage.setItem(PatcherCache.#KEY_CACHE, JSON.stringify(PatcherCache.#CACHE));
+        window.localStorage.setItem(this.KEY_CACHE, JSON.stringify(this.CACHE));
     }
 
-    static init() {
-        if (PatcherCache.#isInitialized) {
+    init() {
+        if (this.isInitialized) {
             return;
         }
-        PatcherCache.#isInitialized = true;
+        this.isInitialized = true;
 
-        PatcherCache.checkSignature();
+        this.checkSignature();
 
         // Read cache from storage
-        PatcherCache.#CACHE = JSON.parse(window.localStorage.getItem(PatcherCache.#KEY_CACHE) || '{}');
-        BxLogger.info(LOG_TAG, PatcherCache.#CACHE);
+        this.CACHE = JSON.parse(window.localStorage.getItem(this.KEY_CACHE) || '{}');
+        BxLogger.info(LOG_TAG, this.CACHE);
 
         if (window.location.pathname.includes('/play/')) {
             PATCH_ORDERS.push(...PLAYING_PATCH_ORDERS);
@@ -1280,8 +1348,8 @@ export class PatcherCache {
         }
 
         // Remove cached patches from PATCH_ORDERS & PLAYING_PATCH_ORDERS
-        PATCH_ORDERS = PatcherCache.#cleanupPatches(PATCH_ORDERS);
-        PLAYING_PATCH_ORDERS = PatcherCache.#cleanupPatches(PLAYING_PATCH_ORDERS);
+        PATCH_ORDERS = this.cleanupPatches(PATCH_ORDERS);
+        PLAYING_PATCH_ORDERS = this.cleanupPatches(PLAYING_PATCH_ORDERS);
 
         BxLogger.info(LOG_TAG, PATCH_ORDERS.slice(0));
         BxLogger.info(LOG_TAG, PLAYING_PATCH_ORDERS.slice(0));

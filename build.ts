@@ -20,6 +20,8 @@ enum BuildTarget {
 
 type BuildVariant = 'full' | 'lite';
 
+const MINIFY_SYNTAX = true;
+
 const postProcess = (str: string): string => {
     // Unescape unicode charaters
     str = unescape((str.replace(/\\u/g, '%u')));
@@ -55,7 +57,7 @@ const postProcess = (str: string): string => {
 
     // Minify SVG import code
     const svgMap = {}
-    str = str.replaceAll(/var ([\w_]+) = ("<svg.*?");\n\n/g, function(match, p1, p2) {
+    str = str.replaceAll(/var ([\w_]+) = ("<svg.*?");\n\n/g, (match, p1, p2) => {
         // Remove new lines in SVG
         p2 = p2.replaceAll(/\\n*\s*/g, '');
 
@@ -70,11 +72,36 @@ const postProcess = (str: string): string => {
     // Collapse empty brackets
     str = str.replaceAll(/\{[\s\n]+\}/g, '{}');
 
-    // Collapse if/else blocks without curly braces
-    str = str.replaceAll(/((if \(.*?\)|else)\n\s+)/g, '$2 ');
-
     // Remove blank lines
     str = str.replaceAll(/\n([\s]*)\n/g, "\n");
+
+    // Minify WebGL shaders & JS strings
+    // Replace "\n     " with "\n"
+    str = str.replaceAll(/\\n+\s*/g, '\\n');
+    // Remove comment line
+    str = str.replaceAll(/\\n\/\/.*?(?=\\n)/g, '');
+
+    // Replace ${"time".toUpperCase()} with "TIME"
+    str = str.replaceAll(/\$\{"([^"]+)"\.toUpperCase\(\)\}/g, (match, p1) => {
+        return p1.toUpperCase();
+    });
+
+    // Replace " (e) =>" to " e =>"
+    // str = str.replaceAll(/ \(([^\s,.$()]+)\) =>/g, ' $1 =>');
+
+    // Set indent to 1 space
+    if (MINIFY_SYNTAX) {
+        // Collapse if/else blocks without curly braces
+        str = str.replaceAll(/((if \(.*?\)|else)\n\s+)/g, '$2 ');
+
+        str = str.replaceAll(/\n(\s+)/g, (match, p1) => {
+            const len = p1.length / 2;
+            return '\n' + ' '.repeat(len);
+        });
+    }
+
+    // Fix unicode regex in Patcher.optimizeGameSlugGenerator
+    str = str.replaceAll('^\\™', '^\\\\u2122');
 
     assert(str.includes('/* ADDITIONAL CODE */'));
     assert(str.includes('window.BX_EXPOSED = BxExposed'));
@@ -108,7 +135,7 @@ const build = async (target: BuildTarget, version: string, variant: BuildVariant
         outdir: outDir,
         naming: outputScriptName,
         minify: {
-            syntax: true,
+            syntax: MINIFY_SYNTAX,
         },
         define: {
             'Bun.env.BUILD_TARGET': JSON.stringify(target),
@@ -139,7 +166,7 @@ const build = async (target: BuildTarget, version: string, variant: BuildVariant
     await Bun.write(path, scriptHeader + result);
 
     // Create meta file (don't build if it's beta version)
-    if (!version.includes('beta')) {
+    if (!version.includes('beta') && variant === 'full') {
         await Bun.write(outDir + '/' + outputMetaName, txtMetaHeader.replace('[[VERSION]]', version));
     }
 

@@ -2,11 +2,12 @@ import { isFullVersion } from "@macros/build" with {type: "macro"};
 
 import { CE } from "@/utils/html";
 import { WebGL2Player } from "./player/webgl2-player";
-import { Screenshot } from "@/utils/screenshot";
+import { ScreenshotManager } from "@/utils/screenshot-manager";
 import { StreamPlayerType, StreamVideoProcessing } from "@enums/stream-player";
 import { STATES } from "@/utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { BX_FLAGS } from "@/utils/bx-flags";
 
 export type StreamPlayerOptions = Partial<{
     processing: string,
@@ -17,35 +18,35 @@ export type StreamPlayerOptions = Partial<{
 }>;
 
 export class StreamPlayer {
-    #$video: HTMLVideoElement;
-    #playerType: StreamPlayerType = StreamPlayerType.VIDEO;
+    private $video: HTMLVideoElement;
+    private playerType: StreamPlayerType = StreamPlayerType.VIDEO;
 
-    #options: StreamPlayerOptions = {};
+    private options: StreamPlayerOptions = {};
 
-    #webGL2Player: WebGL2Player | null = null;
+    private webGL2Player: WebGL2Player | null = null;
 
-    #$videoCss: HTMLStyleElement | null = null;
-    #$usmMatrix: SVGFEConvolveMatrixElement | null = null;
+    private $videoCss: HTMLStyleElement | null = null;
+    private $usmMatrix: SVGFEConvolveMatrixElement | null = null;
 
     constructor($video: HTMLVideoElement, type: StreamPlayerType, options: StreamPlayerOptions) {
-        this.#setupVideoElements();
+        this.setupVideoElements();
 
-        this.#$video = $video;
-        this.#options = options || {};
+        this.$video = $video;
+        this.options = options || {};
         this.setPlayerType(type);
     }
 
-    #setupVideoElements() {
-        this.#$videoCss = document.getElementById('bx-video-css') as HTMLStyleElement;
-        if (this.#$videoCss) {
-            this.#$usmMatrix = this.#$videoCss.querySelector('#bx-filter-usm-matrix') as any;
+    private setupVideoElements() {
+        this.$videoCss = document.getElementById('bx-video-css') as HTMLStyleElement;
+        if (this.$videoCss) {
+            this.$usmMatrix = this.$videoCss.querySelector('#bx-filter-usm-matrix') as any;
             return;
         }
 
         const $fragment = document.createDocumentFragment();
 
-        this.#$videoCss = CE<HTMLStyleElement>('style', {id: 'bx-video-css'});
-        $fragment.appendChild(this.#$videoCss);
+        this.$videoCss = CE<HTMLStyleElement>('style', {id: 'bx-video-css'});
+        $fragment.appendChild(this.$videoCss);
 
         // Setup SVG filters
         const $svg = CE('svg', {
@@ -56,7 +57,7 @@ export class StreamPlayer {
             CE('filter', {
                     id: 'bx-filter-usm',
                     xmlns: 'http://www.w3.org/2000/svg',
-                }, this.#$usmMatrix = CE('feConvolveMatrix', {
+                }, this.$usmMatrix = CE('feConvolveMatrix', {
                     id: 'bx-filter-usm-matrix',
                     order: '3',
                     xmlns: 'http://www.w3.org/2000/svg',
@@ -67,29 +68,29 @@ export class StreamPlayer {
         document.documentElement.appendChild($fragment);
     }
 
-    #getVideoPlayerFilterStyle() {
+    private getVideoPlayerFilterStyle() {
         const filters = [];
 
-        const sharpness = this.#options.sharpness || 0;
-        if (this.#options.processing === StreamVideoProcessing.USM && sharpness != 0) {
+        const sharpness = this.options.sharpness || 0;
+        if (this.options.processing === StreamVideoProcessing.USM && sharpness != 0) {
             const level = (7 - ((sharpness / 2) - 1) * 0.5).toFixed(1); // 5, 5.5, 6, 6.5, 7
             const matrix = `0 -1 0 -1 ${level} -1 0 -1 0`;
-            this.#$usmMatrix?.setAttributeNS(null, 'kernelMatrix', matrix);
+            this.$usmMatrix?.setAttributeNS(null, 'kernelMatrix', matrix);
 
             filters.push(`url(#bx-filter-usm)`);
         }
 
-        const saturation = this.#options.saturation || 100;
+        const saturation = this.options.saturation || 100;
         if (saturation != 100) {
             filters.push(`saturate(${saturation}%)`);
         }
 
-        const contrast =  this.#options.contrast || 100;
+        const contrast =  this.options.contrast || 100;
         if (contrast != 100) {
             filters.push(`contrast(${contrast}%)`);
         }
 
-        const brightness = this.#options.brightness || 100;
+        const brightness = this.options.brightness || 100;
         if (brightness != 100) {
             filters.push(`brightness(${brightness}%)`);
         }
@@ -97,14 +98,14 @@ export class StreamPlayer {
         return filters.join(' ');
     }
 
-    #resizePlayer() {
+    private resizePlayer() {
         const PREF_RATIO = getPref(PrefKey.VIDEO_RATIO);
-        const $video = this.#$video;
+        const $video = this.$video;
         const isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport;
 
         let $webGL2Canvas;
-        if (this.#playerType == StreamPlayerType.WEBGL2) {
-            $webGL2Canvas = this.#webGL2Player?.getCanvas()!;
+        if (this.playerType == StreamPlayerType.WEBGL2) {
+            $webGL2Canvas = this.webGL2Player?.getCanvas()!;
         }
 
         let targetWidth;
@@ -166,67 +167,69 @@ export class StreamPlayer {
         }
 
         // Update video dimensions
-        if (isNativeTouchGame && this.#playerType == StreamPlayerType.WEBGL2) {
+        if (isNativeTouchGame && this.playerType == StreamPlayerType.WEBGL2) {
             window.BX_EXPOSED.streamSession.updateDimensions();
         }
     }
 
     setPlayerType(type: StreamPlayerType, refreshPlayer: boolean = false) {
-        if (this.#playerType !== type) {
+        if (this.playerType !== type) {
+            const videoClass = BX_FLAGS.DeviceInfo.deviceType === 'android-tv' ? 'bx-pixel' : 'bx-gone';
+
             // Switch from Video -> WebGL2
             if (type === StreamPlayerType.WEBGL2) {
                 // Initialize WebGL2 player
-                if (!this.#webGL2Player) {
-                    this.#webGL2Player = new WebGL2Player(this.#$video);
+                if (!this.webGL2Player) {
+                    this.webGL2Player = new WebGL2Player(this.$video);
                 } else {
-                    this.#webGL2Player.resume();
+                    this.webGL2Player.resume();
                 }
 
-                this.#$videoCss!.textContent = '';
+                this.$videoCss!.textContent = '';
 
-                this.#$video.classList.add('bx-pixel');
+                this.$video.classList.add(videoClass);
             } else {
                 // Cleanup WebGL2 Player
-                this.#webGL2Player?.stop();
+                this.webGL2Player?.stop();
 
-                this.#$video.classList.remove('bx-pixel');
+                this.$video.classList.remove(videoClass);
             }
         }
 
-        this.#playerType = type;
+        this.playerType = type;
         refreshPlayer && this.refreshPlayer();
     }
 
     setOptions(options: StreamPlayerOptions, refreshPlayer: boolean = false) {
-        this.#options = options;
+        this.options = options;
         refreshPlayer && this.refreshPlayer();
     }
 
     updateOptions(options: StreamPlayerOptions, refreshPlayer: boolean = false) {
-        this.#options = Object.assign(this.#options, options);
+        this.options = Object.assign(this.options, options);
         refreshPlayer && this.refreshPlayer();
     }
 
     getPlayerElement(playerType?: StreamPlayerType) {
         if (typeof playerType === 'undefined') {
-            playerType = this.#playerType;
+            playerType = this.playerType;
         }
 
         if (playerType === StreamPlayerType.WEBGL2) {
-            return this.#webGL2Player?.getCanvas();
+            return this.webGL2Player?.getCanvas();
         }
 
-        return this.#$video;
+        return this.$video;
     }
 
     getWebGL2Player() {
-        return this.#webGL2Player;
+        return this.webGL2Player;
     }
 
     refreshPlayer() {
-        if (this.#playerType === StreamPlayerType.WEBGL2) {
-            const options = this.#options;
-            const webGL2Player = this.#webGL2Player!;
+        if (this.playerType === StreamPlayerType.WEBGL2) {
+            const options = this.options;
+            const webGL2Player = this.webGL2Player!;
 
             if (options.processing === StreamVideoProcessing.USM) {
                 webGL2Player.setFilter(1);
@@ -234,14 +237,14 @@ export class StreamPlayer {
                 webGL2Player.setFilter(2);
             }
 
-            isFullVersion() && Screenshot.updateCanvasFilters('none');
+            isFullVersion() && ScreenshotManager.getInstance().updateCanvasFilters('none');
 
             webGL2Player.setSharpness(options.sharpness || 0);
             webGL2Player.setSaturation(options.saturation || 100);
             webGL2Player.setContrast(options.contrast || 100);
             webGL2Player.setBrightness(options.brightness || 100);
         } else {
-            let filters = this.#getVideoPlayerFilterStyle();
+            let filters = this.getVideoPlayerFilterStyle();
             let videoCss = '';
             if (filters) {
                 videoCss += `filter: ${filters} !important;`;
@@ -249,7 +252,7 @@ export class StreamPlayer {
 
             // Apply video filters to screenshots
             if (isFullVersion() && getPref(PrefKey.SCREENSHOT_APPLY_FILTERS)) {
-                Screenshot.updateCanvasFilters(filters);
+                ScreenshotManager.getInstance().updateCanvasFilters(filters);
             }
 
             let css = '';
@@ -257,26 +260,26 @@ export class StreamPlayer {
                 css = `#game-stream video { ${videoCss} }`;
             }
 
-            this.#$videoCss!.textContent = css;
+            this.$videoCss!.textContent = css;
         }
 
-        this.#resizePlayer();
+        this.resizePlayer();
     }
 
     reloadPlayer() {
-        this.#cleanUpWebGL2Player();
+        this.cleanUpWebGL2Player();
 
-        this.#playerType = StreamPlayerType.VIDEO;
+        this.playerType = StreamPlayerType.VIDEO;
         this.setPlayerType(StreamPlayerType.WEBGL2, false);
     }
 
-    #cleanUpWebGL2Player() {
+    private cleanUpWebGL2Player() {
         // Clean up WebGL2 Player
-        this.#webGL2Player?.destroy();
-        this.#webGL2Player = null;
+        this.webGL2Player?.destroy();
+        this.webGL2Player = null;
     }
 
     destroy() {
-        this.#cleanUpWebGL2Player();
+        this.cleanUpWebGL2Player();
     }
 }

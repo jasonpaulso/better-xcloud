@@ -56,6 +56,8 @@ function createElement<T=HTMLElement>(elmName: string, props: CreateElementOptio
     let $elm;
     const hasNs = 'xmlns' in props;
 
+    // console.trace('createElement', elmName, props);
+
     if (hasNs) {
         $elm = document.createElementNS(props.xmlns, elmName);
         delete props.xmlns;
@@ -101,29 +103,30 @@ function createElement<T=HTMLElement>(elmName: string, props: CreateElementOptio
 
 export const CE = createElement;
 
-// Credit: https://phosphoricons.com
-const svgParser = (svg: string) => new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
-
-export const createSvgIcon = (icon: typeof BxIcon) => {
-    return svgParser(icon.toString());
+const domParser = new DOMParser();
+export function createSvgIcon(icon: typeof BxIcon) {
+    return domParser.parseFromString(icon.toString(), 'image/svg+xml').documentElement;
 }
 
 const ButtonStyleIndices = Object.keys(ButtonStyleClass).map(i => parseInt(i));
 
-export const createButton = <T=HTMLButtonElement>(options: BxButton): T => {
+export function createButton<T=HTMLButtonElement>(options: BxButton): T {
     let $btn;
     if (options.url) {
-        $btn = CE('a', {'class': 'bx-button'}) as HTMLAnchorElement;
+        $btn = CE<HTMLAnchorElement>('a', {'class': 'bx-button'});
         $btn.href = options.url;
         $btn.target = '_blank';
     } else {
-        $btn = CE('button', {'class': 'bx-button', type: 'button'}) as HTMLButtonElement;
+        $btn = CE<HTMLButtonElement>('button', {'class': 'bx-button', type: 'button'});
     }
 
     const style = (options.style || 0) as number;
-    style && ButtonStyleIndices.forEach((index: keyof typeof ButtonStyleClass) => {
+    if (style) {
+        let index: keyof typeof ButtonStyleClass;
+        for (index of ButtonStyleIndices) {
             (style & index) && $btn.classList.add(ButtonStyleClass[index] as string);
-        });
+        }
+    }
 
     options.classes && $btn.classList.add(...options.classes);
 

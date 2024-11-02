@@ -9,8 +9,6 @@ import { PrefKey } from "@/enums/pref-keys";
 import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
 import { RemotePlayNavigationDialog } from "./ui/dialog/remote-play-dialog";
 
-const LOG_TAG = 'RemotePlay';
-
 export const enum RemotePlayConsoleState {
     ON = 'On',
     OFF = 'Off',
@@ -37,13 +35,8 @@ type RemotePlayConsole = {
 
 export class RemotePlayManager {
     private static instance: RemotePlayManager;
-    public static getInstance(): RemotePlayManager {
-        if (!this.instance) {
-            this.instance = new RemotePlayManager();
-        }
-
-        return this.instance;
-    }
+    public static getInstance = () => RemotePlayManager.instance ?? (RemotePlayManager.instance = new RemotePlayManager());
+    private readonly LOG_TAG = 'RemotePlayManager';
 
     private isInitialized = false;
 
@@ -52,6 +45,10 @@ export class RemotePlayManager {
 
     private consoles!: Array<RemotePlayConsole>;
     private regions: Array<RemotePlayRegion> = [];
+
+    private constructor() {
+        BxLogger.info(this.LOG_TAG, 'constructor()');
+    }
 
     initialize() {
         if (this.isInitialized) {
@@ -62,9 +59,9 @@ export class RemotePlayManager {
 
         this.getXhomeToken(() => {
             this.getConsolesList(() => {
-                BxLogger.info(LOG_TAG, 'Consoles', this.consoles);
+                BxLogger.info(this.LOG_TAG, 'Consoles', this.consoles);
 
-                STATES.supportedRegion && HeaderSection.showRemotePlayButton();
+                STATES.supportedRegion && HeaderSection.getInstance().showRemotePlayButton();
                 BxEvent.dispatch(window, BxEvent.REMOTE_PLAY_READY);
             });
         });

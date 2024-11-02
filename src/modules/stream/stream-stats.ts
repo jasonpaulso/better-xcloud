@@ -5,17 +5,13 @@ import { STATES } from "@utils/global"
 import { PrefKey } from "@/enums/pref-keys"
 import { getPref } from "@/utils/settings-storages/global-settings-storage"
 import { StreamStat, StreamStatsCollector, type StreamStatGrade } from "@/utils/stream-stats-collector"
+import { BxLogger } from "@/utils/bx-logger"
 
 
 export class StreamStats {
     private static instance: StreamStats;
-    public static getInstance(): StreamStats {
-        if (!StreamStats.instance) {
-            StreamStats.instance = new StreamStats();
-        }
-
-        return StreamStats.instance;
-    }
+    public static getInstance = () => StreamStats.instance ?? (StreamStats.instance = new StreamStats());
+    private readonly LOG_TAG = 'StreamStats';
 
     private intervalId?: number | null;
     private readonly REFRESH_INTERVAL = 1 * 1000;
@@ -35,6 +31,10 @@ export class StreamStats {
         },
         [StreamStat.PING]: {
             name: t('stat-ping'),
+            $element: CE('span'),
+        },
+        [StreamStat.JITTER]: {
+            name: t('jitter'),
             $element: CE('span'),
         },
         [StreamStat.FPS]: {
@@ -71,7 +71,8 @@ export class StreamStats {
 
     quickGlanceObserver?: MutationObserver | null;
 
-    constructor() {
+    private constructor() {
+        BxLogger.info(this.LOG_TAG, 'constructor()');
         this.render();
     }
 
@@ -109,7 +110,7 @@ export class StreamStats {
         }
     }
 
-    onStoppedPlaying() {
+    destroy() {
         this.stop();
         this.quickGlanceStop();
         this.hideSettingsUi();
@@ -158,7 +159,7 @@ export class StreamStats {
 
     private async update(forceUpdate=false) {
         if ((!forceUpdate && this.isHidden()) || !STATES.currentStream.peerConnection) {
-            this.onStoppedPlaying();
+            this.destroy();
             return;
         }
 
@@ -179,10 +180,8 @@ export class StreamStats {
             $element.textContent = value.toString();
 
             // Get stat's grade
-            if (PREF_STATS_CONDITIONAL_FORMATTING) {
-                if (statKey === StreamStat.PING || statKey === StreamStat.DECODE_TIME) {
-                    grade = (value as any).calculateGrade();
-                }
+            if (PREF_STATS_CONDITIONAL_FORMATTING && 'grades' in value) {
+                grade = statsCollector.calculateGrade(value.current, value.grades);
             }
 
             if ($element.dataset.grade !== grade) {

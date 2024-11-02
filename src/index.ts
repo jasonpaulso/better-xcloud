@@ -1,59 +1,47 @@
 import { compressCss, isFullVersion } from '@macros/build' with { type: "macro" };
 
-import { RemotePlayManager } from '@/modules/remote-play-manager';
+import "@utils/global";
+import { BxEvent } from "@utils/bx-event";
+import { BX_FLAGS } from "@utils/bx-flags";
+import { BxExposed } from "@utils/bx-exposed";
+import { t } from "@utils/translation";
+import { interceptHttpRequests } from "@utils/network";
+import { CE } from "@utils/html";
+import { showGamepadToast, updatePollingRate } from "@utils/gamepad";
+import { EmulatedMkbHandler } from "@modules/mkb/mkb-handler";
+import { StreamBadges } from "@modules/stream/stream-badges";
+import { StreamStats } from "@modules/stream/stream-stats";
+import { addCss, preloadFonts } from "@utils/css";
+import { LoadingScreen } from "@modules/loading-screen";
+import { MouseCursorHider } from "@modules/mkb/mouse-cursor-hider";
+import { TouchController } from "@modules/touch-controller";
+import { checkForUpdate, disablePwa, productTitleToSlug } from "@utils/utils";
+import { Patcher } from "@modules/patcher";
+import { RemotePlayManager } from "@/modules/remote-play-manager";
+import { onHistoryChanged, patchHistoryMethod } from "@utils/history";
+import { VibrationManager } from "@modules/vibration-manager";
+import { disableAdobeAudienceManager, patchAudioContext, patchCanvasContext, patchMeControl, patchPointerLockApi, patchRtcCodecs, patchRtcPeerConnection, patchVideoApi } from "@utils/monkey-patches";
+import { AppInterface, STATES } from "@utils/global";
+import { BxLogger } from "@utils/bx-logger";
+import { GameBar } from "./modules/game-bar/game-bar";
+import { ScreenshotManager } from "./utils/screenshot-manager";
+import { NativeMkbHandler } from "./modules/mkb/native-mkb-handler";
+import { GuideMenu } from "./modules/ui/guide-menu";
+import { updateVideoPlayer } from "./modules/stream/stream-settings-utils";
+import { UiSection } from "./enums/ui-sections";
+import { HeaderSection } from "./modules/ui/header";
+import { GameTile } from "./modules/ui/game-tile";
+import { ProductDetailsPage } from "./modules/ui/product-details";
+import { NavigationDialogManager } from "./modules/ui/dialog/navigation-dialog";
+import { PrefKey } from "./enums/pref-keys";
+import { getPref, StreamTouchController } from "./utils/settings-storages/global-settings-storage";
+import { SettingsNavigationDialog } from "./modules/ui/dialog/settings-dialog";
+import { StreamUiHandler } from "./modules/stream/stream-ui";
+import { UserAgent } from "./utils/user-agent";
+import { XboxApi } from "./utils/xbox-api";
+import { StreamStatsCollector } from "./utils/stream-stats-collector";
+import { RootDialogObserver } from "./utils/root-dialog-observer";
 import { AwayModeHandler } from '@modules/away-mode/away-mode-handler';
-import { LoadingScreen } from '@modules/loading-screen';
-import { EmulatedMkbHandler } from '@modules/mkb/mkb-handler';
-import { MouseCursorHider } from '@modules/mkb/mouse-cursor-hider';
-import { Patcher } from '@modules/patcher';
-import { StreamBadges } from '@modules/stream/stream-badges';
-import { StreamStats } from '@modules/stream/stream-stats';
-import { TouchController } from '@modules/touch-controller';
-import { VibrationManager } from '@modules/vibration-manager';
-import { BxEvent } from '@utils/bx-event';
-import { BxExposed } from '@utils/bx-exposed';
-import { BX_FLAGS } from '@utils/bx-flags';
-import { BxLogger } from '@utils/bx-logger';
-import { addCss, preloadFonts } from '@utils/css';
-import { showGamepadToast } from '@utils/gamepad';
-import '@utils/global';
-import { AppInterface, STATES } from '@utils/global';
-import { onHistoryChanged, patchHistoryMethod } from '@utils/history';
-import { CE } from '@utils/html';
-import {
-  disableAdobeAudienceManager,
-  patchAudioContext,
-  patchCanvasContext,
-  patchMeControl,
-  patchPointerLockApi,
-  patchRtcCodecs,
-  patchRtcPeerConnection,
-  patchVideoApi,
-} from '@utils/monkey-patches';
-import { interceptHttpRequests } from '@utils/network';
-import { overridePreloadState } from '@utils/preload-state';
-import { Toast } from '@utils/toast';
-import { t } from '@utils/translation';
-import { checkForUpdate, disablePwa, productTitleToSlug } from '@utils/utils';
-import { PrefKey } from './enums/pref-keys';
-import { UiSection } from './enums/ui-sections';
-import { GameBar } from './modules/game-bar/game-bar';
-import { NativeMkbHandler } from './modules/mkb/native-mkb-handler';
-import { updateVideoPlayer } from './modules/stream/stream-settings-utils';
-import { StreamUiHandler } from './modules/stream/stream-ui';
-import { NavigationDialogManager } from './modules/ui/dialog/navigation-dialog';
-import { SettingsNavigationDialog } from './modules/ui/dialog/settings-dialog';
-import { GameTile } from './modules/ui/game-tile';
-import { GuideMenu } from './modules/ui/guide-menu';
-import { HeaderSection } from './modules/ui/header';
-import { ProductDetailsPage } from './modules/ui/product-details';
-import { Screenshot } from './utils/screenshot';
-import { getPref, StreamTouchController } from './utils/settings-storages/global-settings-storage';
-import { StreamStatsCollector } from './utils/stream-stats-collector';
-import { UserAgent } from './utils/user-agent';
-import { XboxApi } from './utils/xbox-api';
-
-
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
   const nativePushState = window.history['pushState']
@@ -183,13 +171,11 @@ document.addEventListener('readystatechange', (e) => {
     window.setTimeout(HeaderSection.watchHeader, 2000)
   }
 
-  // Hide "Play with Friends" skeleton section
-  if (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS)) {
-    const $parent = document
-      .querySelector('div[class*=PlayWithFriendsSkeleton]')
-      ?.closest('div[class*=HomePage-module]') as HTMLElement
-    $parent && ($parent.style.display = 'none')
-  }
+    // Hide "Play with Friends" skeleton section
+    if (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS)) {
+        const $parent = document.querySelector('div[class*=PlayWithFriendsSkeleton]')?.closest<HTMLElement>('div[class*=HomePage-module]');
+        $parent && ($parent.style.display = 'none');
+    }
 
   // Preload fonts
   preloadFonts()
@@ -215,9 +201,7 @@ window.addEventListener(
     window.setTimeout(HeaderSection.watchHeader, 2000)
 
     // Open Settings dialog on Unsupported page
-    const $unsupportedPage = document.querySelector(
-      'div[class^=UnsupportedMarketPage-module__container]'
-    ) as HTMLElement
+    const $unsupportedPage = document.querySelector<HTMLElement>('div[class^=UnsupportedMarketPage-module__container]');
     if ($unsupportedPage) {
       SettingsNavigationDialog.getInstance().show()
     }
@@ -271,7 +255,7 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
 
   if (isFullVersion()) {
     const $video = (e as any).$video as HTMLVideoElement
-    Screenshot.updateCanvasSize($video.videoWidth, $video.videoHeight)
+    ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight)
   }
   
   updateVideoPlayer()
@@ -333,22 +317,23 @@ function unload() {
     NativeMkbHandler.getInstance().destroy()
   }
 
-  // Destroy StreamPlayer
-  STATES.currentStream.streamPlayer?.destroy()
+    // Destroy StreamPlayer
+    STATES.currentStream.streamPlayer?.destroy();
 
-  STATES.isPlaying = false
-  STATES.currentStream = {}
-  window.BX_EXPOSED.shouldShowSensorControls = false
-  window.BX_EXPOSED.stopTakRendering = false
+    STATES.isPlaying = false;
+    STATES.currentStream = {};
+    window.BX_EXPOSED.shouldShowSensorControls = false;
+    window.BX_EXPOSED.stopTakRendering = false;
 
-  NavigationDialogManager.getInstance().hide()
-  StreamStats.getInstance().onStoppedPlaying()
+    NavigationDialogManager.getInstance().hide();
+    StreamStats.getInstance().destroy();
+    StreamBadges.getInstance().destroy();
 
-  if (isFullVersion()) {
-    MouseCursorHider.stop()
-    TouchController.reset()
-    GameBar.getInstance().disable()
-  }
+    if (isFullVersion()) {
+        MouseCursorHider.stop();
+        TouchController.reset();
+        (getPref(PrefKey.GAME_BAR_POSITION) !== 'off') && GameBar.getInstance().disable();
+    }
 }
 
 window.addEventListener(BxEvent.STREAM_STOPPED, unload)
@@ -356,61 +341,10 @@ window.addEventListener('pagehide', (e) => {
   BxEvent.dispatch(window, BxEvent.STREAM_STOPPED)
 })
 
-isFullVersion() &&
-  window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, (e) => {
-    Screenshot.takeScreenshot()
-  })
+isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
+    ScreenshotManager.getInstance().takeScreenshot();
+});
 
-function observeRootDialog($root: HTMLElement) {
-  let beingShown = false
-
-  const observer = new MutationObserver((mutationList) => {
-    for (const mutation of mutationList) {
-      if (mutation.type !== 'childList') {
-        continue
-      }
-
-      BX_FLAGS.Debug && BxLogger.warning('RootDialog', 'added', mutation.addedNodes)
-      if (mutation.addedNodes.length === 1) {
-        const $addedElm = mutation.addedNodes[0]
-        if ($addedElm instanceof HTMLElement && $addedElm.className) {
-          // Make sure it's Guide dialog
-          if ($root.querySelector('div[class*=GuideDialog]')) {
-            GuideMenu.observe($addedElm)
-          }
-        }
-      }
-
-      const shown = !!($root.firstElementChild && $root.firstElementChild.childElementCount > 0)
-      if (shown !== beingShown) {
-        beingShown = shown
-        BxEvent.dispatch(
-          window,
-          shown ? BxEvent.XCLOUD_DIALOG_SHOWN : BxEvent.XCLOUD_DIALOG_DISMISSED
-        )
-      }
-    }
-  })
-  observer.observe($root, { subtree: true, childList: true })
-}
-
-function waitForRootDialog() {
-  const observer = new MutationObserver((mutationList) => {
-    for (const mutation of mutationList) {
-      if (mutation.type !== 'childList') {
-        continue
-      }
-
-      const $target = mutation.target as HTMLElement
-      if ($target.id && $target.id === 'gamepass-dialog-root') {
-        observer.disconnect()
-        observeRootDialog($target)
-        break
-      }
-    }
-  })
-  observer.observe(document.documentElement, { subtree: true, childList: true })
-}
 
 function main() {
   if (getPref(PrefKey.GAME_MSFS2020_FORCE_NATIVE_MKB)) {
@@ -432,23 +366,19 @@ function main() {
     disableAdobeAudienceManager()
   }
 
-  waitForRootDialog()
+    RootDialogObserver.waitForRootDialog();
 
-  // Setup UI
-  addCss()
-  Toast.setup()
+    // Setup UI
+    addCss();
 
-  GuideMenu.addEventListeners()
-  StreamStatsCollector.setupEvents()
-  StreamBadges.setupEvents()
-  StreamStats.setupEvents()
+    GuideMenu.getInstance().addEventListeners();
+    StreamStatsCollector.setupEvents();
+    StreamBadges.setupEvents();
+    StreamStats.setupEvents();
 
-  if (isFullVersion()) {
-    getPref(PrefKey.GAME_BAR_POSITION) !== 'off' && GameBar.getInstance()
-    Screenshot.setup()
-
-    STATES.userAgent.capabilities.touch && TouchController.updateCustomList()
-    overridePreloadState()
+    if (isFullVersion()) {
+        updatePollingRate();
+        STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
 
     VibrationManager.initialSetup()
 

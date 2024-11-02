@@ -12,6 +12,7 @@ interface Window {
     BX_EXPOSED: any;
 
     BX_VIBRATION_INTENSITY: number;
+    BX_CONTROLLER_POLLING_RATE: number;
     BX_ENABLE_CONTROLLER_VIBRATION: boolean;
     BX_ENABLE_DEVICE_VIBRATION: boolean;
 
@@ -20,20 +21,29 @@ interface Window {
 
 interface NavigatorBattery extends Navigator {
     getBattery: () => Promise<{
-        charging: boolean,
-        level: float,
+        charging: boolean;
+        level: float;
     }>,
 }
 
+type ServerContinent = 'america-north' | 'america-south' | 'asia' | 'australia' | 'europe' | 'other';
+type ServerRegion = {
+    baseUri: string;
+    isDefault: boolean;
+    name: string;
+    shortName: string;
+
+    contintent: ServerContinent;
+};
+
 type BxStates = {
     supportedRegion: boolean;
-    serverRegions: any;
+    serverRegions: Record<string, ServerRegion>;
     selectedRegion: any;
     gsToken: string;
     isSignedIn: boolean;
 
     isPlaying: boolean;
-    appContext: any | null;
 
     browser: {
         capabilities: {
@@ -46,6 +56,7 @@ type BxStates = {
         isTv: boolean;
         capabilities: {
             touch: boolean;
+            mkb: boolean;
         };
     };
 

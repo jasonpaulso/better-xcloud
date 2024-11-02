@@ -7,9 +7,10 @@ import { getPref, setPref } from "@/utils/settings-storages/global-settings-stor
 
 export function onChangeVideoPlayerType() {
     const playerType = getPref(PrefKey.VIDEO_PLAYER_TYPE);
-    const $videoProcessing = document.getElementById('bx_setting_video_processing') as HTMLSelectElement;
-    const $videoSharpness = document.getElementById('bx_setting_video_sharpness') as HTMLElement;
-    const $videoPowerPreference = document.getElementById('bx_setting_video_power_preference') as HTMLElement;
+    const $videoProcessing = document.getElementById(`bx_setting_${PrefKey.VIDEO_PROCESSING}`) as HTMLSelectElement;
+    const $videoSharpness = document.getElementById(`bx_setting_${PrefKey.VIDEO_SHARPNESS}`) as HTMLElement;
+    const $videoPowerPreference = document.getElementById(`bx_setting_${PrefKey.VIDEO_POWER_PREFERENCE}`) as HTMLElement;
+    const $videoMaxFps = document.getElementById(`bx_setting_${PrefKey.VIDEO_MAX_FPS}`) as HTMLElement;
 
     if (!$videoProcessing) {
         return;
@@ -17,7 +18,7 @@ export function onChangeVideoPlayerType() {
 
     let isDisabled = false;
 
-    const $optCas = $videoProcessing.querySelector(`option[value=${StreamVideoProcessing.CAS}]`) as HTMLOptionElement;
+    const $optCas = $videoProcessing.querySelector<HTMLOptionElement>(`option[value=${StreamVideoProcessing.CAS}]`);
 
     if (playerType === StreamPlayerType.WEBGL2) {
         $optCas && ($optCas.disabled = false);
@@ -38,8 +39,15 @@ export function onChangeVideoPlayerType() {
 
     // Hide Power Preference setting if renderer isn't WebGL2
     $videoPowerPreference.closest('.bx-settings-row')!.classList.toggle('bx-gone', playerType !== StreamPlayerType.WEBGL2);
+    $videoMaxFps.closest('.bx-settings-row')!.classList.toggle('bx-gone', playerType !== StreamPlayerType.WEBGL2);
 
     updateVideoPlayer();
+}
+
+
+export function limitVideoPlayerFps(targetFps: number) {
+    const streamPlayer = STATES.currentStream.streamPlayer;
+    streamPlayer?.getWebGL2Player()?.setTargetFps(targetFps);
 }
 
 
@@ -48,6 +56,8 @@ export function updateVideoPlayer() {
     if (!streamPlayer) {
         return;
     }
+
+    limitVideoPlayerFps(getPref(PrefKey.VIDEO_MAX_FPS));
 
     const options = {
         processing: getPref(PrefKey.VIDEO_PROCESSING),
@@ -60,6 +70,7 @@ export function updateVideoPlayer() {
     streamPlayer.setPlayerType(getPref(PrefKey.VIDEO_PLAYER_TYPE));
     streamPlayer.updateOptions(options);
     streamPlayer.refreshPlayer();
+
 }
 
 window.addEventListener('resize', updateVideoPlayer);

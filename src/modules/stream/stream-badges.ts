@@ -19,7 +19,6 @@ type StreamBadgeInfo = {
 
 type StreamServerInfo = {
     server?: {
-        ipv6: boolean,
         region?: string,
     },
 
@@ -50,13 +49,8 @@ enum StreamBadge {
 
 export class StreamBadges {
     private static instance: StreamBadges;
-    public static getInstance(): StreamBadges {
-        if (!StreamBadges.instance) {
-            StreamBadges.instance = new StreamBadges();
-        }
-
-        return StreamBadges.instance;
-    }
+    public static getInstance = () => StreamBadges.instance ?? (StreamBadges.instance = new StreamBadges());
+    private readonly LOG_TAG = 'StreamBadges';
 
     private serverInfo: StreamServerInfo = {};
 
@@ -103,10 +97,13 @@ export class StreamBadges {
     private intervalId?: number | null;
     private readonly REFRESH_INTERVAL = 3 * 1000;
 
+    private constructor() {
+        BxLogger.info(this.LOG_TAG, 'constructor()');
+    }
+
     setRegion(region: string) {
         this.serverInfo.server = {
             region: region,
-            ipv6: false,
         };
     }
 
@@ -192,6 +189,11 @@ export class StreamBadges {
         this.intervalId = null;
     }
 
+    destroy() {
+        this.serverInfo = {};
+        delete this.$container;
+    }
+
     async render() {
         if (this.$container) {
             this.start();
@@ -211,15 +213,16 @@ export class StreamBadges {
             [StreamBadge.BATTERY, batteryLevel],
             [StreamBadge.DOWNLOAD, humanFileSize(0)],
             [StreamBadge.UPLOAD, humanFileSize(0)],
-            this.serverInfo.server ? this.badges.server.$element : [StreamBadge.SERVER, '?'],
+            this.badges.server.$element ?? [StreamBadge.SERVER, '?'],
             this.serverInfo.video ? this.badges.video.$element : [StreamBadge.VIDEO, '?'],
             this.serverInfo.audio ? this.badges.audio.$element : [StreamBadge.AUDIO, '?'],
         ];
 
         const $container = CE('div', {class: 'bx-badges'});
-        BADGES.forEach(item => {
+
+        for (const item of BADGES) {
             if (!item) {
-                return;
+                continue;
             }
 
             let $badge: HTMLElement;
@@ -230,7 +233,7 @@ export class StreamBadges {
             }
 
             $container.appendChild($badge);
-        });
+        };
 
         this.$container = $container;
         await this.start();
@@ -336,18 +339,16 @@ export class StreamBadges {
             BxLogger.info('candidate', candidateId, allCandidates);
 
             // Server + Region
+            let text = '';
+            const isIpv6 = allCandidates[candidateId].includes(':');
+
             const server = this.serverInfo.server;
-            if (server) {
-                server.ipv6 = allCandidates[candidateId].includes(':');
-
-                let text = '';
-                if (server.region) {
-                    text += server.region;
-                }
-
-                text += '@' + (server ? 'IPv6' : 'IPv4');
-                this.badges.server.$element = this.renderBadge(StreamBadge.SERVER, text);
+            if (server && server.region) {
+                text += server.region;
             }
+
+            text += '@' + (isIpv6 ? 'IPv6' : 'IPv4');
+            this.badges.server.$element = this.renderBadge(StreamBadge.SERVER, text);
         }
     }
 

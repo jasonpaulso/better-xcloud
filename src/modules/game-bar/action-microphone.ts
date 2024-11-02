@@ -8,56 +8,42 @@ import { MicrophoneShortcut, MicrophoneState } from "../shortcuts/shortcut-micro
 export class MicrophoneAction extends BaseGameBarAction {
     $content: HTMLElement;
 
-    visible: boolean = false;
-
     constructor() {
         super();
-
-        const onClick = (e: Event) => {
-            BxEvent.dispatch(window, BxEvent.GAME_BAR_ACTION_ACTIVATED);
-
-            const enabled = MicrophoneShortcut.toggle(false);
-            this.$content.setAttribute('data-enabled', enabled.toString());
-        };
 
         const $btnDefault = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.MICROPHONE,
-            onClick: onClick,
+            onClick: this.onClick.bind(this),
             classes: ['bx-activated'],
         });
 
         const $btnMuted = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.MICROPHONE_MUTED,
-            onClick: onClick,
+            onClick: this.onClick.bind(this),
         });
 
-        this.$content = CE('div', {},
-            $btnDefault,
-            $btnMuted,
-        );
-
-        this.reset();
+        this.$content = CE('div', {}, $btnMuted, $btnDefault);
 
         window.addEventListener(BxEvent.MICROPHONE_STATE_CHANGED, e => {
             const microphoneState = (e as any).microphoneState;
             const enabled = microphoneState === MicrophoneState.ENABLED;
-
-            this.$content.setAttribute('data-enabled', enabled.toString());
+            this.$content.dataset.activated = enabled.toString();
 
             // Show the button in Game Bar if the mic is enabled
             this.$content.classList.remove('bx-gone');
         });
     }
 
-    render(): HTMLElement {
-        return this.$content;
+    onClick(e: Event) {
+        super.onClick(e);
+        const enabled = MicrophoneShortcut.toggle(false);
+        this.$content.dataset.activated = enabled.toString();
     }
 
     reset(): void {
-        this.visible = false;
         this.$content.classList.add('bx-gone');
-        this.$content.setAttribute('data-enabled', 'false');
+        this.$content.dataset.activated = 'false';
     }
 }

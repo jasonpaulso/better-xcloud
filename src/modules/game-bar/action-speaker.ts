@@ -11,44 +11,35 @@ export class SpeakerAction extends BaseGameBarAction {
     constructor() {
         super();
 
-        const onClick = (e: Event) => {
-            BxEvent.dispatch(window, BxEvent.GAME_BAR_ACTION_ACTIVATED);
-            SoundShortcut.muteUnmute();
-        };
-
         const $btnEnable = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.AUDIO,
-            onClick: onClick,
+            onClick: this.onClick.bind(this),
         });
 
         const $btnMuted = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.SPEAKER_MUTED,
-            onClick: onClick,
+            onClick: this.onClick.bind(this),
             classes: ['bx-activated'],
         });
 
-        this.$content = CE('div', {},
-            $btnEnable,
-            $btnMuted,
-        );
-
-        this.reset();
+        this.$content = CE('div', {}, $btnEnable, $btnMuted);
 
         window.addEventListener(BxEvent.SPEAKER_STATE_CHANGED, e => {
             const speakerState = (e as any).speakerState;
             const enabled = speakerState === SpeakerState.ENABLED;
 
-            this.$content.dataset.enabled = enabled.toString();
+            this.$content.dataset.activated = (!enabled).toString();
         });
     }
 
-    render(): HTMLElement {
-        return this.$content;
+    onClick(e: Event) {
+        super.onClick(e);
+        SoundShortcut.muteUnmute();
     }
 
     reset(): void {
-        this.$content.dataset.enabled = 'true';
+        this.$content.dataset.activated = 'false';
     }
 }

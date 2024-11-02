@@ -25,9 +25,9 @@ export interface BxSelectSettingElement extends HTMLSelectElement, BxBaseSetting
 export class SettingElement {
     static #renderOptions(key: string, setting: PreferenceSetting, currentValue: any, onChange: any): BxSelectSettingElement {
         const $control = CE<BxSelectSettingElement>('select', {
-                // title: setting.label,
-                tabindex: 0,
-            });
+            // title: setting.label,
+            tabindex: 0,
+        });
 
         let $parent: HTMLElement;
         if (setting.optionsGroup) {
@@ -64,10 +64,10 @@ export class SettingElement {
 
     static #renderMultipleOptions(key: string, setting: PreferenceSetting, currentValue: any, onChange: any, params: MultipleOptionsParams={}): BxSelectSettingElement {
         const $control = CE<BxSelectSettingElement>('select', {
-                // title: setting.label,
-                multiple: true,
-                tabindex: 0,
-            });
+            // title: setting.label,
+            multiple: true,
+            tabindex: 0,
+        });
 
         if (params && params.size) {
             $control.setAttribute('size', params.size.toString());
@@ -160,9 +160,17 @@ export class SettingElement {
 
         let controlValue = value;
 
-        const MIN = setting.min!;
-        const MAX = setting.max!;
+        const MIN = options.reverse ? -setting.max! : setting.min!;
+        const MAX = options.reverse ? -setting.min! : setting.max!;
         const STEPS = Math.max(setting.steps || 1, 1);
+
+        let intervalId: number | null;
+        let isHolding = false;
+
+        const clearIntervalId = () => {
+            intervalId && clearInterval(intervalId);
+            intervalId = null;
+        }
 
         const renderTextValue = (value: any) => {
             value = parseInt(value as string);
@@ -182,6 +190,10 @@ export class SettingElement {
         const updateButtonsVisibility = () => {
             $btnDec.classList.toggle('bx-inactive', controlValue === MIN);
             $btnInc.classList.toggle('bx-inactive', controlValue === MAX);
+
+            if (controlValue === MIN || controlValue === MAX) {
+                clearIntervalId();
+            }
         }
 
         const $wrapper = CE<BxHtmlSettingElement>('div', {'class': 'bx-number-stepper', id: `bx_setting_${key}`},
@@ -212,11 +224,11 @@ export class SettingElement {
         }
 
         $range = CE<HTMLInputElement>('input', {
-            id: `bx_setting_${key}`,
+            id: `bx_inp_setting_${key}`,
             type: 'range',
             min: MIN,
             max: MAX,
-            value: value,
+            value: options.reverse ? -value : value,
             step: STEPS,
             tabindex: 0,
         });
@@ -225,13 +237,16 @@ export class SettingElement {
 
         $range.addEventListener('input', e => {
             value = parseInt((e.target as HTMLInputElement).value);
-            const valueChanged = controlValue !== value;
+            if (options.reverse) {
+                value *= -1;
+            }
 
+            const valueChanged = controlValue !== value;
             if (!valueChanged) {
                 return;
             }
 
-            controlValue = value;
+            controlValue = options.reverse ? -value : value;
             updateButtonsVisibility();
             $text.textContent = renderTextValue(value);
 
@@ -245,22 +260,24 @@ export class SettingElement {
 
         if (options.ticks || options.exactTicks) {
             const markersId = `markers-${key}`;
-            const $markers = CE('datalist', {'id': markersId});
+            const $markers = CE('datalist', {id: markersId});
             $range.setAttribute('list', markersId);
 
             if (options.exactTicks) {
-                let start = Math.max(Math.floor(MIN / options.exactTicks), 1) * options.exactTicks;
+                let start = Math.max(Math.floor(setting.min! / options.exactTicks), 1) * options.exactTicks;
 
-                if (start === MIN) {
+                if (start === setting.min!) {
                     start += options.exactTicks;
                 }
 
-                for (let i = start; i < MAX; i += options.exactTicks) {
-                    $markers.appendChild(CE<HTMLOptionElement>('option', {'value': i}));
+                for (let i = start; i < setting.max!; i += options.exactTicks) {
+                    $markers.appendChild(CE<HTMLOptionElement>('option', {
+                        value: options.reverse ? -i : i,
+                    }));
                 }
             } else {
                 for (let i = MIN + options.ticks!; i < MAX; i += options.ticks!) {
-                    $markers.appendChild(CE<HTMLOptionElement>('option', {'value': i}));
+                    $markers.appendChild(CE<HTMLOptionElement>('option', {value: i}));
                 }
             }
             $wrapper.appendChild($markers);
@@ -268,18 +285,7 @@ export class SettingElement {
 
         updateButtonsVisibility();
 
-        let interval: number;
-        let isHolding = false;
-
-        const onClick = (e: Event) => {
-            if (isHolding) {
-                e.preventDefault();
-                isHolding = false;
-
-                return;
-            }
-
-            const $btn = e.target as HTMLElement;
+        const buttonPressed = (e: Event, $btn: HTMLElement) => {
             let value = parseInt(controlValue);
 
             const btnType = $btn.dataset.type;
@@ -295,27 +301,43 @@ export class SettingElement {
             $text.textContent = renderTextValue(value);
             $range && ($range.value = value.toString());
 
-            isHolding = false;
-            !(e as any).ignoreOnChange && onChange && onChange(e, value);
-        }
-
-        const onMouseDown = (e: PointerEvent) => {
-            e.preventDefault();
-            isHolding = true;
-
-            const args = arguments;
-            interval && clearInterval(interval);
-            interval = window.setInterval(() => {
-                e.target && BxEvent.dispatch(e.target as HTMLElement, 'click', {
-                    arguments: args,
-                });
-            }, 200);
+            onChange && onChange(e, value);
         };
 
-        const onMouseUp = (e: PointerEvent) => {
+        const onClick = (e: Event) => {
+            e.preventDefault();
+            if (isHolding) {
+                return;
+            }
+
+            const $btn = (e.target as HTMLElement).closest('button') as HTMLElement;
+            $btn && buttonPressed(e, $btn);
+
+            clearIntervalId();
+            isHolding = false;
+        };
+
+        const onPointerDown = (e: PointerEvent) => {
+            clearIntervalId();
+
+            const $btn = (e.target as HTMLElement).closest('button') as HTMLElement;
+            if (!$btn) {
+                return;
+            }
+
+            isHolding = true;
             e.preventDefault();
 
-            interval && clearInterval(interval);
+            intervalId = window.setInterval((e: Event) => {
+                buttonPressed(e, $btn);
+            }, 200);
+
+            window.addEventListener('pointerup', onPointerUp, {once: true});
+            window.addEventListener('pointercancel', onPointerUp, {once: true});
+        };
+
+        const onPointerUp = (e: PointerEvent) => {
+            clearIntervalId();
             isHolding = false;
         };
 
@@ -324,21 +346,14 @@ export class SettingElement {
         // Custom method
         $wrapper.setValue = (value: any) => {
             $text.textContent = renderTextValue(value);
-            $range.value = value;
+            $range.value = options.reverse ? -value : value;
         };
 
-        $btnDec.addEventListener('click', onClick);
-        $btnDec.addEventListener('pointerdown', onMouseDown);
-        $btnDec.addEventListener('pointerup', onMouseUp);
-        $btnDec.addEventListener('contextmenu', onContextMenu);
-
-        $btnInc.addEventListener('click', onClick);
-        $btnInc.addEventListener('pointerdown', onMouseDown);
-        $btnInc.addEventListener('pointerup', onMouseUp);
-        $btnInc.addEventListener('contextmenu', onContextMenu);
-
+        $wrapper.addEventListener('click', onClick);
+        $wrapper.addEventListener('pointerdown', onPointerDown);
+        $wrapper.addEventListener('contextmenu', onContextMenu);
         setNearby($wrapper, {
-            focus: $range || $btnInc,
+            focus: options.hideSlider ? $btnInc : $range,
         })
 
         return $wrapper;

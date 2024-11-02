@@ -39,6 +39,10 @@ export const enum ControllerDeviceVibration {
 }
 
 
+export type GameBarPosition = 'bottom-left' | 'bottom-right' | 'off';
+export type GameBarPositionOptions = Record<GameBarPosition, string>;
+
+
 function getSupportedCodecProfiles() {
     const options: PartialRecord<CodecProfile, string> = {
         default: t('default'),
@@ -131,6 +135,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             options: {
                 default: t('default'),
                 'ar-SA': 'العربية',
+                'bg-BG': 'Български',
                 'cs-CZ': 'čeština',
                 'da-DK': 'dansk',
                 'de-DE': 'Deutsch',
@@ -151,9 +156,11 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 'pl-PL': 'polski',
                 'pt-BR': 'português (Brasil)',
                 'pt-PT': 'português (Portugal)',
+                'ro-RO': 'Română',
                 'ru-RU': 'русский',
                 'sk-SK': 'slovenčina',
                 'sv-SE': 'svenska',
+                'th-TH': 'ไทย',
                 'tr-TR': 'Türkçe',
                 'zh-CN': '中文(简体)',
                 'zh-TW': '中文 (繁體)',
@@ -182,7 +189,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
 
                 if (keys.length <= 1) { // Unsupported
                     setting.unsupported = true;
-                    setting.note = '⚠️ ' + t('browser-unsupported-feature');
+                    setting.unsupportedNote = '⚠️ ' + t('browser-unsupported-feature');
                 }
 
                 setting.suggest = {
@@ -323,22 +330,22 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         [PrefKey.GAME_BAR_POSITION]: {
             requiredVariants: 'full',
             label: t('position'),
-            default: 'bottom-left',
+            default: 'bottom-left' satisfies GameBarPosition,
             options: {
                 'bottom-left': t('bottom-left'),
                 'bottom-right': t('bottom-right'),
                 'off': t('off'),
-            },
+            } satisfies GameBarPositionOptions,
         },
 
         [PrefKey.LOCAL_CO_OP_ENABLED]: {
             requiredVariants: 'full',
             label: t('enable-local-co-op-support'),
             default: false,
-            note: CE<HTMLAnchorElement>('a', {
-                    href: 'https://github.com/redphx/better-xcloud/discussions/275',
-                    target: '_blank',
-                }, t('enable-local-co-op-support-note')),
+            note: () => CE<HTMLAnchorElement>('a', {
+                href: 'https://github.com/redphx/better-xcloud/discussions/275',
+                target: '_blank',
+            }, t('enable-local-co-op-support-note')),
         },
 
         /*
@@ -351,11 +358,6 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         [PrefKey.CONTROLLER_SHOW_CONNECTION_STATUS]: {
             label: t('show-controller-connection-status'),
             default: true,
-        },
-
-        [PrefKey.CONTROLLER_ENABLE_SHORTCUTS]: {
-            requiredVariants: 'full',
-            default: false,
         },
 
         [PrefKey.CONTROLLER_ENABLE_VIBRATION]: {
@@ -389,14 +391,35 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
+        [PrefKey.CONTROLLER_POLLING_RATE]: {
+            requiredVariants: 'full',
+            label: t('polling-rate'),
+            type: SettingElementType.NUMBER_STEPPER,
+            default: 4,
+            min: 4,
+            max: 60,
+            steps: 4,
+            params: {
+                exactTicks: 20,
+                reverse: true,
+                customTextValue(value: any) {
+                    value = parseInt(value);
+
+                    let text = +(1000 / value).toFixed(2) + ' Hz';
+                    if (value === 4) {
+                        text = `${text} (${t('default')})`;
+                    }
+
+                    return text;
+                },
+            },
+        },
+
         [PrefKey.MKB_ENABLED]: {
             requiredVariants: 'full',
             label: t('enable-mkb'),
             default: false,
-            unsupported: ((): string | boolean => {
-                const userAgent = ((window.navigator as any).orgUserAgent || window.navigator.userAgent || '').toLowerCase();
-                return !AppInterface && userAgent.match(/(android|iphone|ipad)/) ? t('browser-unsupported-feature') : false;
-            })(),
+            unsupported: !STATES.userAgent.capabilities.mkb,
             ready: (setting: SettingDefinition) => {
                 let note;
                 let url;
@@ -408,10 +431,10 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                     url = 'https://better-xcloud.github.io/mouse-and-keyboard/#disclaimer';
                 }
 
-                setting.note = CE('a', {
-                        href: url,
-                        target: '_blank',
-                    }, '⚠️ ' + note);
+                setting.unsupportedNote = () => CE<HTMLAnchorElement>('a', {
+                    href: url,
+                    target: '_blank',
+                }, '⚠️ ' + note);
             },
         },
 
@@ -532,12 +555,6 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             default: false,
         },
 
-        [PrefKey.UI_HOME_CONTEXT_MENU_DISABLED]: {
-            requiredVariants: 'full',
-            label: t('disable-home-context-menu'),
-            default: STATES.browser.capabilities.touch,
-        },
-
         [PrefKey.UI_HIDE_SECTIONS]: {
             requiredVariants: 'full',
             label: t('hide-sections'),
@@ -619,6 +636,21 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 highest: 'low-power',
             },
         },
+        [PrefKey.VIDEO_MAX_FPS]: {
+            label: t('max-fps'),
+            type: SettingElementType.NUMBER_STEPPER,
+            default: 60,
+            min: 10,
+            max: 60,
+            steps: 10,
+            params: {
+                exactTicks: 10,
+                customTextValue: (value: any) => {
+                    value = parseInt(value);
+                    return value === 60 ? t('unlimited') : value + 'fps';
+                },
+            },
+        },
         [PrefKey.VIDEO_SHARPNESS]: {
             label: t('sharpness'),
             type: SettingElementType.NUMBER_STEPPER,
@@ -634,7 +666,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
             suggest: {
                 lowest: 0,
-                highest: 4,
+                highest: 2,
             },
         },
         [PrefKey.VIDEO_RATIO]: {
@@ -717,6 +749,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 [StreamStat.PLAYTIME]: `${StreamStat.PLAYTIME.toUpperCase()}: ${t('playtime')}`,
                 [StreamStat.BATTERY]: `${StreamStat.BATTERY.toUpperCase()}: ${t('battery')}`,
                 [StreamStat.PING]: `${StreamStat.PING.toUpperCase()}: ${t('stat-ping')}`,
+                [StreamStat.JITTER]: `${StreamStat.JITTER.toUpperCase()}: ${t('jitter')}`,
                 [StreamStat.FPS]: `${StreamStat.FPS.toUpperCase()}: ${t('stat-fps')}`,
                 [StreamStat.BITRATE]: `${StreamStat.BITRATE.toUpperCase()}: ${t('stat-bitrate')}`,
                 [StreamStat.DECODE_TIME]: `${StreamStat.DECODE_TIME.toUpperCase()}: ${t('stat-decode-time')}`,
