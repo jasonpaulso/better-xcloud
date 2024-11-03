@@ -51,15 +51,21 @@
         }
     }
 
-    &[data-is-playing="true"] {
+    &[data-is-playing='true'] {
         button[data-state='normal'] {
             display: none;
         }
     }
 
-    &[data-is-playing="false"] {
+    &[data-is-playing='false'] {
         button[data-state='playing'] {
             display: none;
         }
+    }
+}
+
+.away-mode-button {
+    span {
+        display: inline !important;
     }
 }

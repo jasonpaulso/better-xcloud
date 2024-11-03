@@ -35,6 +35,46 @@ export class GuideMenu {
             return this.$renderedButtons;
         }
 
+        const awayModeButtons = {
+            heal: createButton({
+                classes: ['bx-button','away-mode-button'],
+                label: 'Medic',
+                title: 'Start Medic',
+                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
+                onClick: (() => {
+                    AwayModeHandler.getInstance().sendDefaultHealEvent();
+                }).bind(this),
+            }),
+            pivot: createButton({
+                classes: ['bx-button','away-mode-button'],
+                label: 'Pivot',
+                title: 'Start Pivot',
+                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
+                onClick: (() => {
+                    AwayModeHandler.getInstance().sendDefaultPivotEvent();
+                }).bind(this),
+            }),
+            vats: createButton({
+                classes: ['bx-button','away-mode-button'],
+                label: 'VATS',
+                title: 'Start VATS',
+                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
+                onClick: (() => {
+                    AwayModeHandler.getInstance().sendDefaultVatsEvent();
+                }).bind(this),
+            }),
+            away: createButton({
+                classes: ['bx-button','away-mode-button'],
+                label: 'Away',
+                title: 'Start Away',
+                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
+                onClick: (() => {
+                    AwayModeHandler.getInstance().sendDefaultAwayModeEvent();
+                }).bind(this),
+            }),
+        
+        }
+
         const buttons = {
             toggleAwayMode: createButton({
                 label: 'Away Mode',
@@ -108,6 +148,12 @@ export class GuideMenu {
 
         const buttonsLayout = [
             buttons.toggleAwayMode,
+            [
+                awayModeButtons.heal,
+                awayModeButtons.pivot,
+                awayModeButtons.vats,
+                awayModeButtons.away,
+            ],
             buttons.scriptSettings,
             [
                 buttons.backToHome,

@@ -72,7 +72,7 @@ export class AwayModeHandler {
   }
 
   init = () => {
-    BxLogger.info("AwayModeHandler", "Initializing away mode handler");
+    console.log("AwayModeHandler", "Initializing away mode handler");
     this.setupEventListeners();
     this.initializeDefaultConfigs();
   };
@@ -147,7 +147,7 @@ export class AwayModeHandler {
     const loopFunction = async () => {
       if (!config.isRunning) return;
 
-      BxLogger.info("AwayModeHandler", `Running ${mode} loop`);
+      console.log("AwayModeHandler", `Running ${mode} loop`);
       await config.action();
       await this.#delay(config.pauseDuration);
 
@@ -183,7 +183,7 @@ export class AwayModeHandler {
     let countdown = (config.actionInterval + config.pauseDuration) / 1000;
     const logInterval = setInterval(() => {
       if (config.isRunning) {
-        BxLogger.info(
+        console.log(
           "AwayModeHandler",
           `Loop ${mode} will run again in ${countdown} seconds`
         );
@@ -203,6 +203,7 @@ export class AwayModeHandler {
   }
 
   toggle = () => {
+    console.log("AwayModeHandler", "Toggling away mode");
     !this.#enabled ? this.activate() : this.deactivate();
   };
 
@@ -210,6 +211,8 @@ export class AwayModeHandler {
     if (this.#enabled) {
       BxLogger.warning("AwayModeHandler", "Away mode is already activated");
       return;
+    } else {
+      console.log("AwayModeHandler", "Activating away mode");
     }
     this.#enabled = true;
     this.#mkbHandler.start();
@@ -217,13 +220,15 @@ export class AwayModeHandler {
     this.#mkbHandler.hideMessage();
     Toast.show("Away Mode", "Activated", { instant: true });
 
-    BXCState.setState({ awayMode: true });
+    // BXCState.setState({ awayMode: true });
   };
 
   deactivate = () => {
     if (!this.#enabled) {
       BxLogger.warning("AwayModeHandler", "Away mode is already deactivated");
       return;
+    } else {
+      console.log("AwayModeHandler", "Deactivating away mode");
     }
     this.#enabled = false;
     this.stopAllLoops();
@@ -232,7 +237,7 @@ export class AwayModeHandler {
 
     Toast.show("Away Mode", "Deactivated", { instant: true });
 
-    BXCState.setState({ awayMode: false });
+    // BXCState.setState({ awayMode: false });
   };
 
   destroy = () => {
@@ -282,7 +287,7 @@ export class AwayModeHandler {
       window.navigator.getGamepads = () =>
         this.#mkbHandler.getVirtualGamepads();
       SoundShortcut.mute(true);
-      BxLogger.info("AwayModeHandler", "Window blurred");
+      console.log("AwayModeHandler", "Window blurred");
     });
 
     window.addEventListener("focus", () => {
@@ -292,13 +297,13 @@ export class AwayModeHandler {
       if (prefVolume > 0) {
         SoundShortcut.unmute();
       }
-      BxLogger.info("AwayModeHandler", "Window focused");
+      console.log("AwayModeHandler", "Window focused");
     });
 
     window.addEventListener("ReactStateUpdate", (event: Event) => {
       const customEvent = event as CustomEvent;
       console.log("🚌 ~ window.addEventListener ~ customEvent:", customEvent);
-      BXCState.setState(customEvent.detail);
+      // BXCState.setState(customEvent.detail);
     });
 
     window.addEventListener(BxEvent.STREAM_STOPPED, () => {
@@ -316,22 +321,15 @@ export class AwayModeHandler {
       this.toggle();
     });
 
-    BXCState.subscribe((state: AwayModeState) => {
-      BxLogger.info("AwayModeHandler", `State update: `, state);
-      const mode = state.awayModeMode;
-      if (mode) {
-        BxLogger.info("AwayModeHandler", `Away mode mode: `, mode);
-        this.handleAwayModeEvent(state);
-      }
-      // const enabled = state.awayModeEnabled;
-      // if (enabled !== undefined) {
-      //   if (enabled && !this.#enabled) {
-      //     this.activate();
-      //   } else {
-      //     this.deactivate();
-      //   }
-      // }
+    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_MODE, (event: Event) => {
+      console.log("AwayModeHandler", `Toggle mode event: `, event);
+      const customEvent = event as CustomEvent;
+      const mode = customEvent.detail as AwayModeMode;
+      this.handleAwayModeEvent({
+        awayModeMode: mode,
+      });
     });
+
   }
 
   handleAwayModeEvent = async (
@@ -379,38 +377,74 @@ export class AwayModeHandler {
   };
 
   sendDefaultHealEvent = () => {
-    BxEvent.dispatch(window, AWAY_MODE_EVENTS.TOGGLE_MODE, {
+    const mode = {
       name: "heal",
       interval: 1000,
       pause: 0,
       enabled: true,
+    };
+    const existingConfig = this.loopConfigs.get(mode.name);
+
+    mode.enabled = !existingConfig?.isRunning;
+    this.updateMode(mode.name, {
+      actionInterval: mode.interval || existingConfig?.actionInterval || 1000,
+      pauseDuration: existingConfig?.pauseDuration || 0,
+      action: existingConfig?.action || (async () => {}),
+      enabled: mode.enabled,
     });
   };
 
   sendDefaultPivotEvent = () => {
-    BxEvent.dispatch(window, AWAY_MODE_EVENTS.TOGGLE_MODE, {
+    const mode = {
       name: "pivot",
       interval: 2500,
       pause: 15000,
       enabled: true,
+    };
+    const existingConfig = this.loopConfigs.get(mode.name);
+
+    mode.enabled = !existingConfig?.isRunning;
+    this.updateMode(mode.name, {
+      actionInterval: mode.interval || existingConfig?.actionInterval || 1000,
+      pauseDuration: existingConfig?.pauseDuration || 0,
+      action: existingConfig?.action || (async () => {}),
+      enabled: mode.enabled,
     });
   };
 
   sendDefaultAwayModeEvent = () => {
-    BxEvent.dispatch(window, AWAY_MODE_EVENTS.TOGGLE_MODE, {
+    const mode = {
       name: "awayMode",
       interval: 1000,
       pause: 15000,
       enabled: true,
+    };
+    const existingConfig = this.loopConfigs.get(mode.name);
+
+    mode.enabled = !existingConfig?.isRunning;
+    this.updateMode(mode.name, {
+      actionInterval: mode.interval || existingConfig?.actionInterval || 1000,
+      pauseDuration: existingConfig?.pauseDuration || 0,
+      action: existingConfig?.action || (async () => {}),
+      enabled: mode.enabled,
     });
   };
 
   sendDefaultVatsEvent = () => {
-    BxEvent.dispatch(window, AWAY_MODE_EVENTS.TOGGLE_MODE, {
+    const mode = {
       name: "vats",
       interval: 1000,
       pause: 0,
       enabled: true,
+    };
+    const existingConfig = this.loopConfigs.get(mode.name);
+
+    mode.enabled = !existingConfig?.isRunning;
+    this.updateMode(mode.name, {
+      actionInterval: mode.interval || existingConfig?.actionInterval || 1000,
+      pauseDuration: existingConfig?.pauseDuration || 0,
+      action: existingConfig?.action || (async () => {}),
+      enabled: mode.enabled,
     });
   };
 }
