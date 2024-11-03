@@ -7,6 +7,7 @@ import { t } from "@/utils/translation";
 import { SettingsNavigationDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
+import { AwayModeHandler } from "../away-mode/away-mode-handler";
 
 export enum GuideMenuTab {
   HOME = 'home',
@@ -35,6 +36,14 @@ export class GuideMenu {
         }
 
         const buttons = {
+            toggleAwayMode: createButton({
+                label: 'Away Mode',
+                title: 'Away Mode',
+                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
+                onClick: (() => {
+                    AwayModeHandler.getInstance().toggle();
+                }).bind(this),
+            }),
             scriptSettings: createButton({
                 label: t('better-xcloud'),
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
@@ -98,6 +107,7 @@ export class GuideMenu {
         };
 
         const buttonsLayout = [
+            buttons.toggleAwayMode,
             buttons.scriptSettings,
             [
                 buttons.backToHome,
