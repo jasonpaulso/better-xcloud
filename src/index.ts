@@ -259,7 +259,6 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
   }
   
   updateVideoPlayer()
-  AwayModeHandler.getInstance().init()
 
 })
 
@@ -419,3 +418,15 @@ function main() {
 }
 
 main()
+
+
+const initializeAwayMode = () => {
+  window.addEventListener(BxEvent.STREAM_PLAYING, (_e) => {
+    AwayModeHandler.getInstance().init()
+  })
+  window.addEventListener(BxEvent.STREAM_STOPPED, (_e) => {
+    AwayModeHandler.getInstance().destroy()
+  })
+}
+
+initializeAwayMode()
