@@ -10,7 +10,7 @@ import { EmulatedMkbHandler } from "../mkb/mkb-handler";
 import { GamepadKey } from "@/enums/mkb";
 import { BxEvent } from "@/utils/bx-event";
 import { SoundShortcut } from "../shortcuts/shortcut-sound";
-import { BXCState, type StateType } from "@/utils/shared-state";
+import { type StateType } from "@/utils/shared-state";
 
 export type AwayModes = "heal" | "pivot" | "awayMode" | "vats";
 
@@ -317,8 +317,12 @@ export class AwayModeHandler {
     });
 
     // listen to custom toggle away mode event
-    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_AWAY, () => {
+    window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_AWAY, (event) => {
+      event.preventDefault();
+      // check event detail for controller property
       this.toggle();
+
+      console.log("AwayModeHandler", `Toggle away mode event: `, event);
     });
 
     window.addEventListener(AWAY_MODE_EVENTS.TOGGLE_MODE, (event: Event) => {
@@ -329,7 +333,6 @@ export class AwayModeHandler {
         awayModeMode: mode,
       });
     });
-
   }
 
   handleAwayModeEvent = async (
