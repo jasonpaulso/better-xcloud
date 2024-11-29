@@ -41,7 +41,7 @@ import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
 import { StreamStatsCollector } from "./utils/stream-stats-collector";
 import { RootDialogObserver } from "./utils/root-dialog-observer";
-import { AwayModeHandler } from '@modules/away-mode/away-mode-handler';
+import { FO76AutomationHandler } from '@/modules/game-automation/game-automation-handler';
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
   const nativePushState = window.history['pushState']
@@ -422,10 +422,10 @@ main()
 
 const initializeAwayMode = () => {
   window.addEventListener(BxEvent.STREAM_PLAYING, (_e) => {
-    AwayModeHandler.getInstance().init()
+    FO76AutomationHandler.getInstance().init()
   })
   window.addEventListener(BxEvent.STREAM_STOPPED, (_e) => {
-    AwayModeHandler.getInstance().destroy()
+    FO76AutomationHandler.getInstance().destroy()
   })
 }
 

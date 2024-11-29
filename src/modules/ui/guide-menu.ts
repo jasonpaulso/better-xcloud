@@ -7,7 +7,7 @@ import { t } from "@/utils/translation";
 import { SettingsNavigationDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
-import { AwayModeHandler } from "../away-mode/away-mode-handler";
+import { FO76_AUTOMATION_EVENTS, FO76AutomationHandler } from "../game-automation/game-automation-handler";
 
 export enum GuideMenuTab {
   HOME = 'home',
@@ -42,7 +42,9 @@ export class GuideMenu {
                 title: 'Start Medic',
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
                 onClick: (() => {
-                    AwayModeHandler.getInstance().sendDefaultHealEvent();
+                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+                        detail: { name: 'heal', enabled: true },
+                      })
                 }).bind(this),
             }),
             pivot: createButton({
@@ -51,7 +53,9 @@ export class GuideMenu {
                 title: 'Start Pivot',
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
                 onClick: (() => {
-                    AwayModeHandler.getInstance().sendDefaultPivotEvent();
+                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+                        detail: { name: 'pivot', enabled: true },
+                      })
                 }).bind(this),
             }),
             vats: createButton({
@@ -60,7 +64,9 @@ export class GuideMenu {
                 title: 'Start VATS',
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
                 onClick: (() => {
-                    AwayModeHandler.getInstance().sendDefaultVatsEvent();
+                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+                        detail: { name: 'vats', enabled: true },
+                      })
                 }).bind(this),
             }),
             away: createButton({
@@ -69,7 +75,9 @@ export class GuideMenu {
                 title: 'Start Away',
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
                 onClick: (() => {
-                    AwayModeHandler.getInstance().sendDefaultAwayModeEvent();
+                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+                        detail: { name: 'away', enabled: true },
+                      })
                 }).bind(this),
             }),
         
@@ -81,7 +89,7 @@ export class GuideMenu {
                 title: 'Away Mode',
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
                 onClick: (() => {
-                    AwayModeHandler.getInstance().toggle();
+                    FO76AutomationHandler.getInstance().toggle();
                 }).bind(this),
             }),
             scriptSettings: createButton({
