@@ -114,6 +114,7 @@ export class WebGL2Player {
                 return;
             }
 
+            this.animFrameId = frameCallback(animate);
             let draw = true;
 
             // Don't draw when FPS is 0
@@ -135,8 +136,6 @@ export class WebGL2Player {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.$video);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             }
-
-            this.animFrameId = frameCallback(animate);
         }
 
         this.animFrameId = frameCallback(animate);
