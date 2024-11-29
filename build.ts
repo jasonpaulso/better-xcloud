@@ -22,6 +22,40 @@ type BuildVariant = 'full' | 'lite';
 
 const MINIFY_SYNTAX = true;
 
+function minifySvgImports(str: string): string {
+    // Minify SVG imports
+    const svgMap = {};
+    str = str.replaceAll(/var ([\w_]+) = `(<svg.*?\n)`;\n\n/gsm, (match, p1, p2) => {
+        // Remove new lines in SVG
+        p2 = p2.replaceAll(/\n\s*/g, '');
+        svgMap[p1] = '"' + p2.trim() + '"';
+
+        return '';
+    });
+
+    for (const name in svgMap) {
+        str = str.replace(name + ',', svgMap[name] + ',');
+        str = str.replace(name + '\n', svgMap[name] + '\n');
+    }
+
+    return str;
+}
+
+function minifyCodeImports(str: string): string {
+    str = str.replaceAll(/var ([\w_]+_default\d?) = `(.*?)`;/gsm, (match, p1, p2) => {
+        // Remove new lines in SVG
+        p2 = p2.replaceAll(/\n\s*/g, '\n');
+        p2 = p2.replaceAll(/\n\/\/.*/g, '\n');
+        p2 = p2.replaceAll(/^\/\/.*/g, '\n');
+        p2 = p2.replaceAll(/\n+/g, '\n');
+        p2 = p2.trim();
+
+        return `var ${p1} = \`${p2}\`;`;
+    });
+
+    return str;
+}
+
 const postProcess = (str: string): string => {
     // Unescape unicode charaters
     str = unescape((str.replace(/\\u/g, '%u')));
@@ -32,7 +66,7 @@ const postProcess = (str: string): string => {
     str = str.replaceAll('globalThis.', 'var ');
 
     // Remove enum's inlining comments
-    str = str.replaceAll(/ \/\* [A-Z0-9_]+ \*\//g, '');
+    str = str.replaceAll(/ \/\* [A-Z0-9_:]+ \*\//g, '');
     str = str.replaceAll('/* @__PURE__ */ ', '');
 
     // Remove comments from import
@@ -55,19 +89,8 @@ const postProcess = (str: string): string => {
         return p1 + ': ';
     });
 
-    // Minify SVG import code
-    const svgMap = {}
-    str = str.replaceAll(/var ([\w_]+) = ("<svg.*?");\n\n/g, (match, p1, p2) => {
-        // Remove new lines in SVG
-        p2 = p2.replaceAll(/\\n*\s*/g, '');
-
-        svgMap[p1] = p2;
-        return '';
-    });
-
-    for (const name in svgMap) {
-        str = str.replace(`: ${name}`, `: ${svgMap[name]}`);
-    }
+    str = minifySvgImports(str);
+    str = minifyCodeImports(str);
 
     // Collapse empty brackets
     str = str.replaceAll(/\{[\s\n]+\}/g, '{}');
