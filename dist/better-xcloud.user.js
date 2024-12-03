@@ -4423,11 +4423,8 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   return str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, { component: "product-details" });' + str.substring(index), str;
  },
  detectBrowserRouterReady(str) {
-  let text = "BrowserRouter:()=>";
-  if (!str.includes(text)) return !1;
   let index = str.indexOf("{history:this.history,");
-  if (index < 0) return !1;
-  if (index = PatcherUtils.lastIndexOf(str, "return", index, 100), index < 0) return !1;
+  if (index >= 0 && (index = PatcherUtils.lastIndexOf(str, "return", index, 100)), index < 0) return !1;
   return str = PatcherUtils.insertAt(str, index, "window.BxEvent.dispatch(window, window.BxEvent.XCLOUD_ROUTER_HISTORY_READY, {history: this.history});"), str;
  },
  guideAchievementsDefaultLocked(str) {
@@ -5223,7 +5220,10 @@ class SuggestionsSetting {
    note && fragment.appendChild(CE("div", { class: "bx-suggest-note" }, note));
    let settings = this.suggestedSettings[profile], prefKey;
    for (prefKey in settings) {
-    let currentValue = getPref(prefKey, !1), suggestedValue = settings[prefKey], currentValueText = STORAGE.Global.getValueText(prefKey, currentValue), isSameValue = currentValue === suggestedValue, $child, $value;
+    let suggestedValue, definition = getPrefDefinition(prefKey);
+    if (definition && definition.transformValue) suggestedValue = definition.transformValue.get.call(definition, settings[prefKey]);
+    else suggestedValue = settings[prefKey];
+    let currentValue = getPref(prefKey, !1), currentValueText = STORAGE.Global.getValueText(prefKey, currentValue), isSameValue = currentValue === suggestedValue, $child, $value;
     if (isSameValue) $value = currentValueText;
     else {
      let suggestedValueText = STORAGE.Global.getValueText(prefKey, suggestedValue);
@@ -5886,6 +5886,7 @@ class SettingsDialog extends NavigationDialog {
   group: "loading-screen",
   label: t("loading-screen"),
   items: [
+   "loadingScreenGameArt",
    "loadingScreenShowWaitTime",
    "loadingScreenRocket"
   ]
@@ -7315,7 +7316,7 @@ class LoadingScreen {
   }, 1000);
  }
  static hide() {
-  if (LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle), LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add("bx-gone"), LoadingScreen.$bgStyle) {
+  if (LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle), LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add("bx-gone"), getPref("loadingScreenGameArt") && LoadingScreen.$bgStyle) {
    let $rocketBg = document.querySelector('#game-stream rect[width="800"]');
    $rocketBg && $rocketBg.addEventListener("transitionend", (e) => {
     LoadingScreen.$bgStyle.textContent += "#game-stream{background:#000 !important}";
@@ -9066,7 +9067,7 @@ window.addEventListener(BxEvent.STREAM_LOADING, (e) => {
  if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
  else STATES.currentStream.titleSlug = "remote-play";
 });
-window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
+getPref("loadingScreenGameArt") && window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
 window.addEventListener(BxEvent.STREAM_STARTING, (e) => {
  LoadingScreen.hide();
  {
