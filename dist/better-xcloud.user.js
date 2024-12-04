@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.0.0-beta
+// @version      6.0.0-beta-2
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -107,7 +107,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.0-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.0-beta-2", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -812,7 +812,7 @@ function renderPresetsList($select, allPresets, selectedValue, addOffValue = !1)
   }
   if ($optGroup.hasChildNodes()) $select.appendChild($optGroup);
  }
- if (selectedValue) $select.value = selectedValue.toString(), BxEvent.dispatch($select, "input", { manualTrigger: !0 });
+ if (selectedValue !== null) $select.value = selectedValue.toString(), BxEvent.dispatch($select, "input", { manualTrigger: !0 });
 }
 var FILE_SIZE_UNITS = ["B", "KB", "MB", "GB", "TB"];
 function humanFileSize(size) {
@@ -2638,7 +2638,12 @@ class StreamSettings {
   mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkbMappingPresetIdP1", orgPreset.id), BxEvent.dispatch(window, BxEvent.MKB_UPDATED);
  }
  static async refreshKeyboardShortcuts() {
-  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcutsInGamePresetId"), orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
+  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcutsInGamePresetId");
+  if (presetId === 0) {
+   settings.keyboardShortcuts = null, setPref("keyboardShortcutsInGamePresetId", presetId), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
+   return;
+  }
+  let orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
   for (action in orgPresetData) {
    let info = orgPresetData[action], key = `${info.code}:${info.modifiers || 0}`;
    converted[key] = action;
@@ -3730,7 +3735,7 @@ class BxSelectElement extends HTMLSelectElement {
     return $select.value;
    },
    set(value) {
-    $select.value = value, self.visibleIndex = $select.selectedIndex, BxSelectElement.render.call(self);
+    self.optionsList = Array.from($select.querySelectorAll("option")), $select.value = value, self.visibleIndex = $select.selectedIndex, BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
    }
   }), Object.defineProperty(self, "disabled", {
    get() {
@@ -3942,6 +3947,8 @@ BxLogger.error('supportLocalCoOp', '❌ Unable to patch local co-op support');
 }
 this.toggleLocalCoOp = enable => {
 BxLogger.info('toggleLocalCoOp', enable ? 'Enabled' : 'Disabled');
+this.onGamepadChanged = enable ? this.patchedOnGamepadChanged : this.orgOnGamepadChanged;
+this.onGamepadInput = enable ? this.patchedOnGamepadInput : this.orgOnGamepadInput;
 const gamepads = window.navigator.getGamepads();
 for (const gamepad of gamepads) {
 if (!gamepad?.connected) {
@@ -3950,11 +3957,9 @@ continue;
 if (gamepad.id.includes('Better xCloud')) {
 continue;
 }
-const event = new GamepadEvent('gamepaddisconnected', { gamepad });
-window.dispatchEvent(event);
+window.dispatchEvent(new GamepadEvent('gamepaddisconnected', { gamepad }));
+window.dispatchEvent(new GamepadEvent('gamepadconnected', { gamepad }));
 }
-this.onGamepadChanged = enable ? this.patchedOnGamepadChanged : this.orgOnGamepadChanged;
-this.onGamepadInput = enable ? this.patchedOnGamepadInput : this.orgOnGamepadInput;
 };
 window.BX_EXPOSED.toggleLocalCoOp = this.toggleLocalCoOp.bind(this);`;
 var set_currently_focused_interactable_default = `e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, {element: e});`;
@@ -5669,20 +5674,23 @@ class MkbExtraSettings extends HTMLElement {
     input: $container.saveShortcutsSettings
    }
   }));
-  return $container.append(createSettingRow(t("virtual-controller"), CE("div", {
-   class: "bx-preset-row",
-   _nearby: {
-    orientation: "horizontal"
-   }
-  }, $mappingPresets, createButton({
-   label: t("manage"),
-   style: 64,
-   onClick: () => MkbMappingManagerDialog.getInstance().show({
-    id: parseInt($container.$mappingPresets.value)
-   })
-  })), { multiLines: !0 }), createSettingRow(ut("Virtual controller slot"), SettingElement.fromPref("mkbSlotP1", STORAGE.Global, () => {
-   EmulatedMkbHandler.getInstance()?.updateGamepadSlots();
-  })), createSettingRow(t("keyboard-shortcuts-in-game"), CE("div", {
+  return $container.append(...getPref("mkbEnabled") ? [
+   createSettingRow(t("virtual-controller"), CE("div", {
+    class: "bx-preset-row",
+    _nearby: {
+     orientation: "horizontal"
+    }
+   }, $mappingPresets, createButton({
+    label: t("manage"),
+    style: 64,
+    onClick: () => MkbMappingManagerDialog.getInstance().show({
+     id: parseInt($container.$mappingPresets.value)
+    })
+   })), { multiLines: !0 }),
+   createSettingRow(ut("Virtual controller slot"), SettingElement.fromPref("mkbSlotP1", STORAGE.Global, () => {
+    EmulatedMkbHandler.getInstance()?.updateGamepadSlots();
+   }))
+  ] : [], createSettingRow(t("keyboard-shortcuts-in-game"), CE("div", {
    class: "bx-preset-row",
    _nearby: {
     orientation: "horizontal"
@@ -5699,9 +5707,9 @@ class MkbExtraSettings extends HTMLElement {
  }
  static async updateLayout() {
   let mappingPresets = await MkbMappingPresetsTable.getInstance().getPresets();
-  renderPresetsList(this.$mappingPresets, mappingPresets, null, !1);
+  renderPresetsList(this.$mappingPresets, mappingPresets, getPref("mkbMappingPresetIdP1"), !1);
   let shortcutsPresets = await KeyboardShortcutsTable.getInstance().getPresets();
-  renderPresetsList(this.$shortcutsPresets, shortcutsPresets, null, !1), this.$mappingPresets.value = getPref("mkbMappingPresetIdP1").toString(), this.$shortcutsPresets.value = getPref("keyboardShortcutsInGamePresetId").toString();
+  renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref("keyboardShortcutsInGamePresetId"), !0);
  }
  static async saveMkbSettings() {
   let presetId = parseInt(this.$mappingPresets.value);
@@ -6193,7 +6201,7 @@ class SettingsDialog extends NavigationDialog {
    items: this.TAB_CONTROLLER_ITEMS,
    requiredVariants: "full"
   },
-  mkb: (getPref("mkbEnabled") || AppInterface && getPref("nativeMkbMode") === "on") && {
+  mkb: {
    group: "mkb",
    icon: BxIcon.NATIVE_MKB,
    items: this.TAB_MKB_ITEMS,
@@ -6237,7 +6245,9 @@ class SettingsDialog extends NavigationDialog {
   let $svg = e.target.closest("svg");
   if ($svg.dataset.lazy) {
    delete $svg.dataset.lazy;
-   let settingTab = this.SETTINGS_UI[$svg.dataset.group], items = settingTab.items(), $tabContent = this.renderSettingsSection.call(this, settingTab, items);
+   let settingTab = this.SETTINGS_UI[$svg.dataset.group];
+   if (!settingTab) return;
+   let items = settingTab.items(), $tabContent = this.renderSettingsSection.call(this, settingTab, items);
    this.$tabContents.appendChild($tabContent);
   }
   let $child, children = Array.from(this.$tabContents.children);
@@ -8940,7 +8950,7 @@ class KeyboardShortcutHandler {
   if (e.repeat) return;
   let fullKeyCode = KeyHelper.getFullKeyCodeFromEvent(e);
   if (!fullKeyCode) return;
-  let action = window.BX_STREAM_SETTINGS.keyboardShortcuts[fullKeyCode];
+  let action = window.BX_STREAM_SETTINGS.keyboardShortcuts?.[fullKeyCode];
   if (action) e.preventDefault(), e.stopPropagation(), ShortcutHandler.runAction(action);
  };
 }
@@ -9082,7 +9092,7 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
   if (gameBar) gameBar.reset(), gameBar.enable(), gameBar.showBar();
   KeyboardShortcutHandler.getInstance().start();
   let $video = e.$video;
-  ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), BxExposed.toggleLocalCoOp(getPref("localCoOpEnabled"));
+  ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), getPref("localCoOpEnabled") && BxExposed.toggleLocalCoOp(getPref("localCoOpEnabled"));
  }
  updateVideoPlayer();
 });
