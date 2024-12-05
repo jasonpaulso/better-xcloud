@@ -2,7 +2,6 @@
 import iconBetterXcloud from "@assets/svg/better-xcloud.svg" with { type: "text" };
 import iconTrueAchievements from "@assets/svg/true-achievements.svg" with { type: "text" };
 import iconClose from "@assets/svg/close.svg" with { type: "text" };
-import iconCommand from "@assets/svg/command.svg" with { type: "text" };
 import iconController from "@assets/svg/controller.svg" with { type: "text" };
 import iconCopy from "@assets/svg/copy.svg" with { type: "text" };
 import iconCreateShortcut from "@assets/svg/create-shortcut.svg" with { type: "text" };
@@ -23,7 +22,6 @@ import iconStreamStats from "@assets/svg/stream-stats.svg" with { type: "text" }
 import iconTouchControlDisable from "@assets/svg/touch-control-disable.svg" with { type: "text" };
 import iconTouchControlEnable from "@assets/svg/touch-control-enable.svg" with { type: "text" };
 import iconTrash from "@assets/svg/trash.svg" with { type: "text" };
-import iconVirtualController from "@assets/svg/virtual-controller.svg" with { type: "text" };
 
 // Game Bar
 import iconCaretLeft from "@assets/svg/caret-left.svg" with { type: "text" };
@@ -47,7 +45,6 @@ export const BxIcon = {
     STREAM_SETTINGS: iconStreamSettings,
     STREAM_STATS: iconStreamStats,
     CLOSE: iconClose,
-    COMMAND: iconCommand,
     CONTROLLER: iconController,
     CREATE_SHORTCUT: iconCreateShortcut,
     DISPLAY: iconDisplay,
@@ -62,7 +59,6 @@ export const BxIcon = {
     POWER: iconPower,
     QUESTION: iconQuestion,
     REFRESH: iconRefresh,
-    VIRTUAL_CONTROLLER: iconVirtualController,
 
     REMOTE_PLAY: iconRemotePlay,
 

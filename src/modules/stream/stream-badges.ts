@@ -7,7 +7,8 @@ import { STATES } from "@utils/global";
 import { BxLogger } from "@/utils/bx-logger";
 import { BxIcon } from "@/utils/bx-icon";
 import { GuideMenuTab } from "../ui/guide-menu";
-import { StreamStat, StreamStatsCollector } from "@/utils/stream-stats-collector";
+import { StreamStatsCollector } from "@/utils/stream-stats-collector";
+import { StreamStat } from "@/enums/pref-values";
 
 
 type StreamBadgeInfo = {
@@ -130,7 +131,7 @@ export class StreamBadges {
         return $badge;
     }
 
-    private async updateBadges(forceUpdate = false) {
+    private updateBadges = async (forceUpdate = false) => {
         if (!this.$container || (!forceUpdate && !this.$container.isConnected)) {
             this.stop();
             return;
@@ -181,7 +182,7 @@ export class StreamBadges {
     private async start() {
         await this.updateBadges(true);
         this.stop();
-        this.intervalId = window.setInterval(this.updateBadges.bind(this), this.REFRESH_INTERVAL);
+        this.intervalId = window.setInterval(this.updateBadges, this.REFRESH_INTERVAL);
     }
 
     private stop() {

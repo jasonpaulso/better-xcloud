@@ -1,9 +1,10 @@
 import { AppInterface, SCRIPT_VERSION } from "@utils/global";
 import { UserAgent } from "@utils/user-agent";
-import { Translations } from "./translation";
+import { t, Translations } from "./translation";
 import { Toast } from "./toast";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref, setPref } from "./settings-storages/global-settings-storage";
+import { LocalDb } from "./local-db/local-db";
 
 /**
  * Check for update
@@ -16,8 +17,8 @@ export function checkForUpdate() {
 
     const CHECK_INTERVAL_SECONDS = 2 * 3600; // check every 2 hours
 
-    const currentVersion = getPref(PrefKey.CURRENT_VERSION);
-    const lastCheck = getPref(PrefKey.LAST_UPDATE_CHECK);
+    const currentVersion = getPref<VersionCurrent>(PrefKey.VERSION_CURRENT);
+    const lastCheck = getPref<VersionLastCheck>(PrefKey.VERSION_LAST_CHECK);
     const now = Math.round((+new Date) / 1000);
 
     if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
@@ -25,13 +26,13 @@ export function checkForUpdate() {
     }
 
     // Start checking
-    setPref(PrefKey.LAST_UPDATE_CHECK, now);
+    setPref(PrefKey.VERSION_LAST_CHECK, now);
     fetch('https://api.github.com/repos/redphx/better-xcloud/releases/latest')
         .then(response => response.json())
         .then(json => {
             // Store the latest version
-            setPref(PrefKey.LATEST_VERSION, json.tag_name.substring(1));
-            setPref(PrefKey.CURRENT_VERSION, SCRIPT_VERSION);
+            setPref(PrefKey.VERSION_LATEST, json.tag_name.substring(1));
+            setPref(PrefKey.VERSION_CURRENT, SCRIPT_VERSION);
         });
 
     // Update translations
@@ -131,4 +132,26 @@ export function parseDetailsPath(path: string) {
     const productId = matches.groups.productId;
 
     return {titleSlug, productId};
+}
+
+export function clearAllData() {
+    // Delete localStorage items
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) {
+            continue;
+        }
+
+        // Delete key
+        if (key.startsWith('BetterXcloud') || key.startsWith('better_xcloud')) {
+            localStorage.removeItem(key);
+        }
+    }
+
+    // Delete IndexedDB database
+    try {
+        indexedDB.deleteDatabase(LocalDb.DB_NAME);
+    } catch (e) {};
+
+    alert(t('clear-data-success'));
 }

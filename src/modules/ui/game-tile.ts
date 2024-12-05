@@ -3,10 +3,14 @@ import { BxIcon } from "@/utils/bx-icon";
 import { CE, createSvgIcon, getReactProps, isElementVisible, secondsToHms } from "@/utils/html";
 import { XcloudApi } from "@/utils/xcloud-api";
 
-export class GameTile {
-    static #timeout: number | null;
+interface GameTimeElement extends HTMLElement {
+    hasWaitTime?: boolean;
+}
 
-    static async #showWaitTime($elm: HTMLElement, productId: string) {
+export class GameTile {
+    static timeoutId: number | null;
+
+    private static async showWaitTime($elm: HTMLElement, productId: string) {
         if (($elm as any).hasWaitTime) {
             return;
         }
@@ -32,14 +36,14 @@ export class GameTile {
         }
     }
 
-    static #requestWaitTime($elm: HTMLElement, productId: string) {
-        GameTile.#timeout && clearTimeout(GameTile.#timeout);
-        GameTile.#timeout = window.setTimeout(async () => {
-            GameTile.#showWaitTime($elm, productId);
+    private static requestWaitTime($elm: HTMLElement, productId: string) {
+        GameTile.timeoutId && clearTimeout(GameTile.timeoutId);
+        GameTile.timeoutId = window.setTimeout(async () => {
+            GameTile.showWaitTime($elm, productId);
         }, 500);
     }
 
-    static #findProductId($elm: HTMLElement): string | null {
+    private static findProductId($elm: HTMLElement): string | null {
         let productId = null;
 
         try {
@@ -55,6 +59,7 @@ export class GameTile {
             } else if ($elm.tagName === 'A' && $elm.className.includes('GameItem'))  {
                 let props = getReactProps($elm.parentElement!);
                 props = props.children.props;
+
                 if (props.location !== 'NonStreamableGameItem') {
                     if ('productId' in props) {
                         productId = props.productId;
@@ -73,19 +78,20 @@ export class GameTile {
         window.addEventListener(BxEvent.NAVIGATION_FOCUS_CHANGED, e => {
             const $elm = (e as any).element;
             const className = $elm.className || '';
+
             if (className.includes('MruGameCard')) {
                 // Show the wait time of every games in the "Jump back in" section all at once
-                const $ol = $elm.closest('ol');
-                if ($ol && !($ol as any).hasWaitTime) {
-                    ($ol as any).hasWaitTime = true;
-                    $ol.querySelectorAll('button[class*=MruGameCard]').forEach(($elm: HTMLElement) => {
-                        const productId = GameTile.#findProductId($elm);
-                        productId && GameTile.#showWaitTime($elm, productId);
+                const $ol = $elm.closest('ol') as GameTimeElement;
+                if ($ol && !$ol.hasWaitTime) {
+                    $ol.hasWaitTime = true;
+                    $ol.querySelectorAll<HTMLElement>('button[class*=MruGameCard]').forEach(($elm: HTMLElement) => {
+                        const productId = GameTile.findProductId($elm);
+                        productId && GameTile.showWaitTime($elm, productId);
                     });
                 }
             } else {
-                const productId = GameTile.#findProductId($elm);
-                productId && GameTile.#requestWaitTime($elm, productId);
+                const productId = GameTile.findProductId($elm);
+                productId && GameTile.requestWaitTime($elm, productId);
             }
         });
     }

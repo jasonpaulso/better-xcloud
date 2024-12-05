@@ -1,6 +1,6 @@
 import { CE } from "@utils/html";
 import { compressCss, renderStylus } from "@macros/build" with {type: "macro"};
-import { UiSection } from "@/enums/ui-sections";
+import { UiSection } from "@/enums/pref-values";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 
@@ -9,12 +9,17 @@ export function addCss() {
     const STYLUS_CSS = renderStylus() as unknown as string;
     let css = STYLUS_CSS;
 
-    const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS);
+    const PREF_HIDE_SECTIONS = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
     const selectorToHide = [];
 
     // Hide "News" section
     if (PREF_HIDE_SECTIONS.includes(UiSection.NEWS)) {
         selectorToHide.push('#BodyContent > div[class*=CarouselRow-module]');
+    }
+
+    // Hide BYOG section
+    if (getPref(PrefKey.BYOG_DISABLED)) {
+        selectorToHide.push('#BodyContent > div[class*=ByogRow-module__container___]');
     }
 
     // Hide "All games" section
@@ -43,7 +48,7 @@ export function addCss() {
     }
 
     // Reduce animations
-    if (getPref(PrefKey.REDUCE_ANIMATIONS)) {
+    if (getPref(PrefKey.UI_REDUCE_ANIMATIONS)) {
         css += compressCss(`
 div[class*=GameCard-module__gameTitleInnerWrapper],
 div[class*=GameCard-module__card],
@@ -54,7 +59,7 @@ div[class*=ScrollArrows-module] {
     }
 
     // Hide the top-left dots icon while playing
-    if (getPref(PrefKey.HIDE_DOTS_ICON)) {
+    if (getPref(PrefKey.UI_HIDE_SYSTEM_MENU_ICON)) {
         css += compressCss(`
 div[class*=Grip-module__container] {
     visibility: hidden;
@@ -87,7 +92,7 @@ div[class*=StreamMenu-module__menu] {
 `);
 
     // Simplify Stream's menu
-    if (getPref(PrefKey.STREAM_SIMPLIFY_MENU)) {
+    if (getPref(PrefKey.UI_SIMPLIFY_STREAM_MENU)) {
         css += compressCss(`
 div[class*=Menu-module__scrollable] {
     --bxStreamMenuItemSize: 80px;

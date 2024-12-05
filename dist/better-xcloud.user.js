@@ -143,7 +143,7 @@ function deepClone(obj) {
 }
 var BxEvent;
 ((BxEvent) => {
- BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.TITLE_INFO_READY = "bx-title-info-ready", BxEvent.SETTINGS_CHANGED = "bx-settings-changed", BxEvent.STREAM_LOADING = "bx-stream-loading", BxEvent.STREAM_STARTING = "bx-stream-starting", BxEvent.STREAM_STARTED = "bx-stream-started", BxEvent.STREAM_PLAYING = "bx-stream-playing", BxEvent.STREAM_STOPPED = "bx-stream-stopped", BxEvent.STREAM_ERROR_PAGE = "bx-stream-error-page", BxEvent.STREAM_WEBRTC_CONNECTED = "bx-stream-webrtc-connected", BxEvent.STREAM_WEBRTC_DISCONNECTED = "bx-stream-webrtc-disconnected", BxEvent.MKB_UPDATED = "bx-mkb-updated", BxEvent.KEYBOARD_SHORTCUTS_UPDATED = "bx-keyboard-shortcuts-updated", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.XCLOUD_SERVERS_READY = "bx-servers-ready", BxEvent.XCLOUD_SERVERS_UNAVAILABLE = "bx-servers-unavailable", BxEvent.DATA_CHANNEL_CREATED = "bx-data-channel-created", BxEvent.DEVICE_VIBRATION_CHANGED = "bx-device-vibration-changed", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.XCLOUD_DIALOG_SHOWN = "bx-xcloud-dialog-shown", BxEvent.XCLOUD_DIALOG_DISMISSED = "bx-xcloud-dialog-dismissed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
+ BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.TITLE_INFO_READY = "bx-title-info-ready", BxEvent.SETTINGS_CHANGED = "bx-settings-changed", BxEvent.STREAM_LOADING = "bx-stream-loading", BxEvent.STREAM_STARTING = "bx-stream-starting", BxEvent.STREAM_STARTED = "bx-stream-started", BxEvent.STREAM_PLAYING = "bx-stream-playing", BxEvent.STREAM_STOPPED = "bx-stream-stopped", BxEvent.STREAM_ERROR_PAGE = "bx-stream-error-page", BxEvent.STREAM_WEBRTC_CONNECTED = "bx-stream-webrtc-connected", BxEvent.STREAM_WEBRTC_DISCONNECTED = "bx-stream-webrtc-disconnected", BxEvent.MKB_UPDATED = "bx-mkb-updated", BxEvent.KEYBOARD_SHORTCUTS_UPDATED = "bx-keyboard-shortcuts-updated", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.XCLOUD_SERVERS_READY = "bx-servers-ready", BxEvent.XCLOUD_SERVERS_UNAVAILABLE = "bx-servers-unavailable", BxEvent.DATA_CHANNEL_CREATED = "bx-data-channel-created", BxEvent.DEVICE_VIBRATION_CHANGED = "bx-device-vibration-changed", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED = "bx-gh-pages-force-native-mkb-updated", BxEvent.XCLOUD_DIALOG_SHOWN = "bx-xcloud-dialog-shown", BxEvent.XCLOUD_DIALOG_DISMISSED = "bx-xcloud-dialog-dismissed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
  function dispatch(target, eventName, data) {
   if (!target) return;
   if (!eventName) {
@@ -205,11 +205,10 @@ class GhPagesUtils {
   if (latestCommitHash) return `${prefix}/${latestCommitHash}/${path}`;
   else return `${prefix}/refs/heads/gh-pages/${path}`;
  }
- static getNativeMkbCustomList() {
+ static getNativeMkbCustomList(update = !1) {
   let key = "BetterXcloud.GhPages.ForceNativeMkb";
-  NATIVE_FETCH(GhPagesUtils.getUrl("native-mkb/ids.json")).then((response) => response.json()).then((json) => {
-   if (json.$schemaVersion !== 1) return;
-   window.localStorage.setItem(key, JSON.stringify(json));
+  update && NATIVE_FETCH(GhPagesUtils.getUrl("native-mkb/ids.json")).then((response) => response.json()).then((json) => {
+   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), BxEvent.dispatch(window, BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED);
   });
   let info = JSON.parse(window.localStorage.getItem(key) || "{}");
   if (info.$schemaVersion !== 1) return window.localStorage.removeItem(key), {};
@@ -524,6 +523,7 @@ var SUPPORTED_LANGUAGES = {
  small: "Small",
  "smart-tv": "Smart TV",
  sound: "Sound",
+ standard: "Standard",
  standby: "Standby",
  "stat-bitrate": "Bitrate",
  "stat-decode-time": "Decode time",
@@ -602,6 +602,7 @@ var SUPPORTED_LANGUAGES = {
  "vibration-status": "Vibration",
  video: "Video",
  "virtual-controller": "Virtual controller",
+ "virtual-controller-slot": "Virtual controller slot",
  "visual-quality": "Visual quality",
  "visual-quality-high": "High",
  "visual-quality-low": "Low",
@@ -678,9 +679,7 @@ class Translations {
   localStorage.setItem(Translations.KEY_LOCALE, locale);
  }
 }
-var t = Translations.get, ut = (text) => {
- return BxLogger.warning("Untranslated text", text), text;
-};
+var t = Translations.get;
 Translations.init();
 class NavigationUtils {
  static setNearby($elm, nearby) {
@@ -798,7 +797,7 @@ function clearDataSet($elm) {
 function renderPresetsList($select, allPresets, selectedValue, addOffValue = !1) {
  if (removeChildElements($select), addOffValue) {
   let $option = CE("option", { value: 0 }, t("off"));
-  $select.appendChild($option);
+  $option.selected = selectedValue === 0, $select.appendChild($option);
  }
  let groups = {
   default: t("default"),
@@ -808,11 +807,10 @@ function renderPresetsList($select, allPresets, selectedValue, addOffValue = !1)
   let $optGroup = CE("optgroup", { label: groups[key] });
   for (let id of allPresets[key]) {
    let record = allPresets.data[id], $option = CE("option", { value: record.id }, record.name);
-   $optGroup.appendChild($option);
+   $option.selected = selectedValue === record.id, $optGroup.appendChild($option);
   }
   if ($optGroup.hasChildNodes()) $select.appendChild($optGroup);
  }
- if (selectedValue !== null) $select.value = selectedValue.toString(), BxEvent.dispatch($select, "input", { manualTrigger: !0 });
 }
 var FILE_SIZE_UNITS = ["B", "KB", "MB", "GB", "TB"];
 function humanFileSize(size) {
@@ -831,6 +829,9 @@ function secondsToHms(seconds) {
  let m = Math.floor(seconds / 60), s = seconds % 60, output = [];
  if (h > 0 && output.push(`${h}h`), m > 0 && output.push(`${m}m`), s > 0 || output.length === 0) output.push(`${s}s`);
  return output.join(" ");
+}
+function escapeCssSelector(name) {
+ return name.replaceAll(".", "-");
 }
 var CE = createElement;
 window.BX_CE = createElement;
@@ -1139,6 +1140,45 @@ class MkbMappingPresetsTable extends BasePresetsTable {
  DEFAULT_PRESETS = {
   [-1]: {
    id: -1,
+   name: t("standard"),
+   data: {
+    mapping: {
+     16: ["Backquote"],
+     12: ["ArrowUp", "Digit1"],
+     13: ["ArrowDown", "Digit2"],
+     14: ["ArrowLeft", "Digit3"],
+     15: ["ArrowRight", "Digit4"],
+     100: ["KeyW"],
+     101: ["KeyS"],
+     102: ["KeyA"],
+     103: ["KeyD"],
+     200: ["KeyU"],
+     201: ["KeyJ"],
+     202: ["KeyH"],
+     203: ["KeyK"],
+     0: ["Space", "KeyE"],
+     2: ["KeyR"],
+     1: ["KeyC", "Backspace"],
+     3: ["KeyE"],
+     9: ["Enter"],
+     8: ["Tab"],
+     4: ["KeyQ"],
+     5: ["KeyF"],
+     7: ["Mouse0"],
+     6: ["Mouse2"],
+     10: ["KeyX"],
+     11: ["KeyZ"]
+    },
+    mouse: {
+     mapTo: 2,
+     sensitivityX: 100,
+     sensitivityY: 100,
+     deadzoneCounterweight: 20
+    }
+   }
+  },
+  [-2]: {
+   id: -2,
    name: "Shooter",
    data: {
     mapping: {
@@ -1191,13 +1231,13 @@ class KeyboardShortcutsTable extends BasePresetsTable {
  DEFAULT_PRESETS = {
   [-1]: {
    id: -1,
-   name: t("default"),
+   name: t("standard"),
    data: {
     mapping: {
-     "mkb-toggle": {
+     "mkb.toggle": {
       code: "F8"
      },
-     "stream-screenshot-capture": {
+     "stream.screenshot.capture": {
       code: "Slash"
      }
     }
@@ -1233,26 +1273,26 @@ function getSupportedCodecProfiles() {
 }
 class GlobalSettingsStorage extends BaseSettingsStore {
  static DEFINITIONS = {
-  versionLastCheck: {
+  "version.lastCheck": {
    default: 0
   },
-  versionLatest: {
+  "version.latest": {
    default: ""
   },
-  versionCurrent: {
+  "version.current": {
    default: ""
   },
-  bxLocale: {
+  "bx.locale": {
    label: t("language"),
    default: localStorage.getItem("BetterXcloud.Locale") || "en-US",
    options: SUPPORTED_LANGUAGES
   },
-  serverRegion: {
+  "server.region": {
    label: t("region"),
    note: CE("a", { target: "_blank", href: "https://umap.openstreetmap.fr/en/map/xbox-cloud-gaming-servers_1135022" }, t("server-locations")),
    default: "default"
   },
-  serverBypassRestriction: {
+  "server.bypassRestriction": {
    label: t("bypass-region-restriction"),
    note: "⚠️ " + t("use-this-at-your-own-risk"),
    default: "off",
@@ -1261,7 +1301,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     off: t("off")
    }, BypassServers)
   },
-  streamLocale: {
+  "stream.locale": {
    label: t("preferred-game-language"),
    default: "default",
    options: {
@@ -1298,7 +1338,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "zh-TW": "中文 (繁體)"
    }
   },
-  streamResolution: {
+  "stream.video.resolution": {
    label: t("target-resolution"),
    default: "auto",
    options: {
@@ -1309,10 +1349,10 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    },
    suggest: {
     lowest: "720p",
-    highest: "1080p"
+    highest: "1080p-hq"
    }
   },
-  streamCodecProfile: {
+  "stream.video.codecProfile": {
    label: t("visual-quality"),
    default: "default",
    options: getSupportedCodecProfiles(),
@@ -1325,31 +1365,31 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     };
    }
   },
-  serverPreferIpv6: {
+  "server.ipv6.prefer": {
    label: t("prefer-ipv6-server"),
    default: !1
   },
-  screenshotApplyFilters: {
+  "screenshot.applyFilters": {
    requiredVariants: "full",
    label: t("screenshot-apply-filters"),
    default: !1
   },
-  uiSkipSplashVideo: {
+  "ui.splashVideo.skip": {
    label: t("skip-splash-video"),
    default: !1
   },
-  uiHideSystemMenuIcon: {
+  "ui.systemMenu.hideHandle": {
    label: t("hide-system-menu-icon"),
    default: !1
   },
-  streamCombineSources: {
+  "stream.video.combineAudio": {
    requiredVariants: "full",
    label: t("combine-audio-video-streams"),
    default: !1,
    experimental: !0,
    note: t("combine-audio-video-streams-summary")
   },
-  touchControllerMode: {
+  "touchController.mode": {
    requiredVariants: "full",
    label: t("tc-availability"),
    default: "all",
@@ -1361,13 +1401,13 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    unsupported: !STATES.userAgent.capabilities.touch,
    unsupportedValue: "default"
   },
-  touchControllerAutoOff: {
+  "touchController.autoOff": {
    requiredVariants: "full",
    label: t("tc-auto-off"),
    default: !1,
    unsupported: !STATES.userAgent.capabilities.touch
   },
-  touchControllerDefaultOpacity: {
+  "touchController.opacity.default": {
    requiredVariants: "full",
    label: t("tc-default-opacity"),
    default: 100,
@@ -1381,7 +1421,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    },
    unsupported: !STATES.userAgent.capabilities.touch
   },
-  touchControllerStyleStandard: {
+  "touchController.style.standard": {
    requiredVariants: "full",
    label: t("tc-standard-layout-style"),
    default: "default",
@@ -1392,7 +1432,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    },
    unsupported: !STATES.userAgent.capabilities.touch
   },
-  touchControllerStyleCustom: {
+  "touchController.style.custom": {
    requiredVariants: "full",
    label: t("tc-custom-layout-style"),
    default: "default",
@@ -1402,21 +1442,21 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    },
    unsupported: !STATES.userAgent.capabilities.touch
   },
-  uiSimplifyStreamMenu: {
+  "ui.streamMenu.simplify": {
    label: t("simplify-stream-menu"),
    default: !1
   },
-  mkbHideIdleCursor: {
+  "mkb.cursor.hideIdle": {
    requiredVariants: "full",
    label: t("hide-idle-cursor"),
    default: !1
   },
-  uiDisableFeedbackDialog: {
+  "ui.feedbackDialog.disabled": {
    requiredVariants: "full",
    label: t("disable-post-stream-feedback-dialog"),
    default: !1
   },
-  streamMaxVideoBitrate: {
+  "stream.video.maxBitrate": {
    requiredVariants: "full",
    label: t("bitrate-video-maximum"),
    note: "⚠️ " + t("unexpected-behavior"),
@@ -1443,7 +1483,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     highest: 0
    }
   },
-  gameBarPosition: {
+  "gameBar.position": {
    requiredVariants: "full",
    label: t("position"),
    default: "bottom-left",
@@ -1453,7 +1493,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "bottom-right": t("bottom-right")
    }
   },
-  localCoOpEnabled: {
+  "localCoOp.enabled": {
    requiredVariants: "full",
    label: t("enable-local-co-op-support"),
    default: !1,
@@ -1462,11 +1502,11 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     target: "_blank"
    }, t("enable-local-co-op-support-note"))
   },
-  uiShowControllerStatus: {
+  "ui.controllerStatus.show": {
    label: t("show-controller-connection-status"),
    default: !0
   },
-  deviceVibrationMode: {
+  "deviceVibration.mode": {
    requiredVariants: "full",
    label: t("device-vibration"),
    default: "off",
@@ -1476,7 +1516,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     auto: t("device-vibration-not-using-gamepad")
    }
   },
-  deviceVibrationIntensity: {
+  "deviceVibration.intensity": {
    requiredVariants: "full",
    label: t("vibration-intensity"),
    default: 50,
@@ -1488,7 +1528,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     exactTicks: 20
    }
   },
-  controllerPollingRate: {
+  "controller.pollingRate": {
    requiredVariants: "full",
    label: t("polling-rate"),
    default: 4,
@@ -1506,7 +1546,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     }
    }
   },
-  mkbEnabled: {
+  "mkb.enabled": {
    requiredVariants: "full",
    label: t("enable-mkb"),
    default: !1,
@@ -1521,7 +1561,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     }, "⚠️ " + note);
    }
   },
-  nativeMkbMode: {
+  "nativeMkb.mode": {
    requiredVariants: "full",
    label: t("native-mkb"),
    default: "default",
@@ -1536,14 +1576,17 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     else delete setting.options["on"];
    }
   },
-  forceNativeMkbGames: {
+  "nativeMkb.forcedGames": {
    label: t("force-native-mkb-games"),
    default: [],
+   unsupported: !AppInterface && UserAgent.isMobile(),
    ready: (setting) => {
-    setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(), setting.unsupported = !AppInterface && UserAgent.isMobile();
+    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), window.addEventListener(BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED, (e) => {
+      setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList();
+     });
    }
   },
-  nativeMkbScrollXSensitivity: {
+  "nativeMkb.scroll.sensitivityX": {
    requiredVariants: "full",
    label: t("horizontal-scroll-sensitivity"),
    default: 0,
@@ -1558,7 +1601,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     }
    }
   },
-  nativeMkbScrollYSensitivity: {
+  "nativeMkb.scroll.sensitivityY": {
    requiredVariants: "full",
    label: t("vertical-scroll-sensitivity"),
    default: 0,
@@ -1573,11 +1616,11 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     }
    }
   },
-  mkbMappingPresetIdP1: {
+  "mkb.p1.preset.mappingId": {
    requiredVariants: "full",
    default: -1
   },
-  mkbSlotP1: {
+  "mkb.p1.slot": {
    requiredVariants: "full",
    default: 1,
    min: 1,
@@ -1586,11 +1629,11 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     hideSlider: !0
    }
   },
-  mkbMappingPresetIdP2: {
+  "mkb.p2.preset.mappingId": {
    requiredVariants: "full",
    default: 0
   },
-  mkbSlotP2: {
+  "mkb.p2.slot": {
    requiredVariants: "full",
    default: 0,
    min: 0,
@@ -1602,24 +1645,24 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     }
    }
   },
-  keyboardShortcutsInGamePresetId: {
+  "keyboardShortcuts.preset.inGameId": {
    requiredVariants: "full",
    default: -1
   },
-  uiReduceAnimations: {
+  "ui.reduceAnimations": {
    label: t("reduce-animations"),
    default: !1
   },
-  loadingScreenGameArt: {
+  "loadingScreen.gameArt.show": {
    requiredVariants: "full",
    label: t("show-game-art"),
    default: !0
   },
-  loadingScreenShowWaitTime: {
+  "loadingScreen.waitTime.show": {
    label: t("show-wait-time"),
    default: !0
   },
-  loadingScreenRocket: {
+  "loadingScreen.rocket": {
    label: t("rocket-animation"),
    default: "show",
    options: {
@@ -1628,11 +1671,11 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     hide: t("rocket-always-hide")
    }
   },
-  uiControllerFriendly: {
+  "ui.controllerFriendly": {
    label: t("controller-friendly-ui"),
    default: BX_FLAGS.DeviceInfo.deviceType !== "unknown"
   },
-  uiLayout: {
+  "ui.layout": {
    requiredVariants: "full",
    label: t("layout"),
    default: "default",
@@ -1642,11 +1685,11 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     tv: t("smart-tv")
    }
   },
-  uiHideScrollbar: {
+  "ui.hideScrollbar": {
    label: t("hide-scrollbar"),
    default: !1
   },
-  uiHideSections: {
+  "ui.hideSections": {
    requiredVariants: "full",
    label: t("hide-sections"),
    default: [],
@@ -1662,24 +1705,24 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     size: 0
    }
   },
-  byogDisabled: {
+  "feature.byog.disabled": {
    label: t("disable-byog-feature"),
    default: !1
   },
-  uiGameCardShowWaitTime: {
+  "ui.gameCard.waitTime.show": {
    requiredVariants: "full",
    label: t("show-wait-time-in-game-card"),
    default: !0
   },
-  blockSocialFeatures: {
+  "block.social": {
    label: t("disable-social-features"),
    default: !1
   },
-  blockTracking: {
+  "block.tracking": {
    label: t("disable-xcloud-analytics"),
    default: !1
   },
-  userAgentProfile: {
+  "userAgent.profile": {
    label: t("user-agent-profile"),
    note: "⚠️ " + t("unexpected-behavior"),
    default: BX_FLAGS.DeviceInfo.deviceType === "android-tv" || BX_FLAGS.DeviceInfo.deviceType === "webos" ? "vr-oculus" : "default",
@@ -1693,7 +1736,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     custom: t("custom")
    }
   },
-  videoPlayerType: {
+  "video.player.type": {
    label: t("renderer"),
    default: "default",
    options: {
@@ -1705,7 +1748,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     highest: "webgl2"
    }
   },
-  videoProcessing: {
+  "video.processing": {
    label: t("clarity-boost"),
    default: "usm",
    options: {
@@ -1717,7 +1760,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     highest: "cas"
    }
   },
-  videoPowerPreference: {
+  "video.player.powerPreference": {
    label: t("renderer-configuration"),
    default: "default",
    options: {
@@ -1729,7 +1772,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     highest: "low-power"
    }
   },
-  videoMaxFps: {
+  "video.maxFps": {
    label: t("max-fps"),
    default: 60,
    min: 10,
@@ -1742,7 +1785,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     }
    }
   },
-  videoSharpness: {
+  "video.processing.sharpness": {
    label: t("sharpness"),
    default: 0,
    min: 0,
@@ -1758,7 +1801,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     highest: 2
    }
   },
-  videoRatio: {
+  "video.ratio": {
    label: t("aspect-ratio"),
    note: t("aspect-ratio-note"),
    default: "16:9",
@@ -1771,7 +1814,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     fill: t("stretch")
    }
   },
-  videoSaturation: {
+  "video.saturation": {
    label: t("saturation"),
    default: 100,
    min: 50,
@@ -1781,7 +1824,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     ticks: 25
    }
   },
-  videoContrast: {
+  "video.contrast": {
    label: t("contrast"),
    default: 100,
    min: 50,
@@ -1791,7 +1834,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     ticks: 25
    }
   },
-  videoBrightness: {
+  "video.brightness": {
    label: t("brightness"),
    default: 100,
    min: 50,
@@ -1801,16 +1844,16 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     ticks: 25
    }
   },
-  audioMicOnPlaying: {
+  "audio.mic.onPlaying": {
    label: t("enable-mic-on-startup"),
    default: !1
   },
-  audioEnableVolumeControl: {
+  "audio.volume.booster.enabled": {
    requiredVariants: "full",
    label: t("enable-volume-control"),
    default: !1
   },
-  audioVolume: {
+  "audio.volume": {
    label: t("volume"),
    default: 100,
    min: 0,
@@ -1821,7 +1864,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     ticks: 100
    }
   },
-  statsItems: {
+  "stats.items": {
    label: t("stats"),
    default: ["ping", "fps", "btr", "dt", "pl", "fl"],
    multipleOptions: {
@@ -1848,15 +1891,15 @@ class GlobalSettingsStorage extends BaseSettingsStore {
      multipleOptions[key] = key.toUpperCase() + ": " + multipleOptions[key];
    }
   },
-  statsShowWhenPlaying: {
+  "stats.showWhenPlaying": {
    label: t("show-stats-on-startup"),
    default: !1
   },
-  statsQuickGlance: {
+  "stats.quickGlance.enabled": {
    label: "👀 " + t("enable-quick-glance-mode"),
    default: !0
   },
-  statsPosition: {
+  "stats.position": {
    label: t("position"),
    default: "top-right",
    options: {
@@ -1865,7 +1908,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "top-right": t("top-right")
    }
   },
-  statsTextSize: {
+  "stats.textSize": {
    label: t("text-size"),
    default: "0.9rem",
    options: {
@@ -1874,11 +1917,11 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "1.1rem": t("large")
    }
   },
-  statsTransparent: {
+  "stats.transparent": {
    label: t("transparent-background"),
    default: !1
   },
-  statsOpacity: {
+  "stats.opacity": {
    label: t("opacity"),
    default: 80,
    min: 50,
@@ -1889,16 +1932,16 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     ticks: 10
    }
   },
-  statsConditionalFormatting: {
+  "stats.colors": {
    label: t("conditional-formatting"),
    default: !1
   },
-  xhomeEnabled: {
+  "xhome.enabled": {
    requiredVariants: "full",
    label: t("enable-remote-play-feature"),
    default: !1
   },
-  xhomeStreamResolution: {
+  "xhome.video.resolution": {
    requiredVariants: "full",
    default: "1080p",
    options: {
@@ -1907,7 +1950,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "1080p-hq": "1080p (HQ)"
    }
   },
-  gameFortniteForceConsole: {
+  "game.fortnite.forceConsole": {
    requiredVariants: "full",
    label: "🎮 " + t("fortnite-force-console-version"),
    default: !1,
@@ -1922,10 +1965,10 @@ var globalSettings = new GlobalSettingsStorage, getPrefDefinition = globalSettin
 STORAGE.Global = globalSettings;
 function checkForUpdate() {
  if (SCRIPT_VERSION.includes("beta")) return;
- let CHECK_INTERVAL_SECONDS = 7200, currentVersion = getPref("versionCurrent"), lastCheck = getPref("versionLastCheck"), now = Math.round(+new Date / 1000);
+ let CHECK_INTERVAL_SECONDS = 7200, currentVersion = getPref("version.current"), lastCheck = getPref("version.lastCheck"), now = Math.round(+new Date / 1000);
  if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) return;
- setPref("versionLastCheck", now), fetch("https://api.github.com/repos/redphx/better-xcloud/releases/latest").then((response) => response.json()).then((json) => {
-  setPref("versionLatest", json.tag_name.substring(1)), setPref("versionCurrent", SCRIPT_VERSION);
+ setPref("version.lastCheck", now), fetch("https://api.github.com/repos/redphx/better-xcloud/releases/latest").then((response) => response.json()).then((json) => {
+  setPref("version.latest", json.tag_name.substring(1)), setPref("version.current", SCRIPT_VERSION);
  }), Translations.updateTranslations(currentVersion === SCRIPT_VERSION);
 }
 function disablePwa() {
@@ -1985,22 +2028,22 @@ function clearAllData() {
 }
 class SoundShortcut {
  static adjustGainNodeVolume(amount) {
-  if (!getPref("audioEnableVolumeControl")) return 0;
-  let currentValue = getPref("audioVolume"), nearestValue;
+  if (!getPref("audio.volume.booster.enabled")) return 0;
+  let currentValue = getPref("audio.volume"), nearestValue;
   if (amount > 0) nearestValue = ceilToNearest(currentValue, amount);
   else nearestValue = floorToNearest(currentValue, -1 * amount);
   let newValue;
   if (currentValue !== nearestValue) newValue = nearestValue;
   else newValue = currentValue + amount;
-  return newValue = setPref("audioVolume", newValue, !0), SoundShortcut.setGainNodeVolume(newValue), Toast.show(`${t("stream")} ❯ ${t("volume")}`, newValue + "%", { instant: !0 }), newValue;
+  return newValue = setPref("audio.volume", newValue, !0), SoundShortcut.setGainNodeVolume(newValue), Toast.show(`${t("stream")} ❯ ${t("volume")}`, newValue + "%", { instant: !0 }), newValue;
  }
  static setGainNodeVolume(value) {
   STATES.currentStream.audioGainNode && (STATES.currentStream.audioGainNode.gain.value = value / 100);
  }
  static muteUnmute() {
-  if (getPref("audioEnableVolumeControl") && STATES.currentStream.audioGainNode) {
-   let gainValue = STATES.currentStream.audioGainNode.gain.value, settingValue = getPref("audioVolume"), targetValue;
-   if (settingValue === 0) targetValue = 100, setPref("audioVolume", targetValue, !0);
+  if (getPref("audio.volume.booster.enabled") && STATES.currentStream.audioGainNode) {
+   let gainValue = STATES.currentStream.audioGainNode.gain.value, settingValue = getPref("audio.volume"), targetValue;
+   if (settingValue === 0) targetValue = 100, setPref("audio.volume", targetValue, !0);
    else if (gainValue === 0) targetValue = settingValue;
    else targetValue = 0;
    let status;
@@ -2052,7 +2095,7 @@ class StreamStatsCollector {
   fps: {
    current: 0,
    toString() {
-    let maxFps = getPref("videoMaxFps");
+    let maxFps = getPref("video.maxFps");
     return maxFps < 60 ? `${maxFps}/${this.current}` : this.current.toString();
    }
   },
@@ -2294,7 +2337,7 @@ class StreamStats {
    this.destroy();
    return;
   }
-  let PREF_STATS_CONDITIONAL_FORMATTING = getPref("statsConditionalFormatting"), grade = "", statsCollector = StreamStatsCollector.getInstance();
+  let PREF_STATS_CONDITIONAL_FORMATTING = getPref("stats.colors"), grade = "", statsCollector = StreamStatsCollector.getInstance();
   await statsCollector.collect();
   let statKey;
   for (statKey in this.stats) {
@@ -2305,11 +2348,11 @@ class StreamStats {
   }
  };
  refreshStyles() {
-  let PREF_ITEMS = getPref("statsItems"), $container = this.$container;
-  $container.dataset.stats = "[" + PREF_ITEMS.join("][") + "]", $container.dataset.position = getPref("statsPosition"), $container.dataset.transparent = getPref("statsTransparent"), $container.style.opacity = getPref("statsOpacity") + "%", $container.style.fontSize = getPref("statsTextSize");
+  let PREF_ITEMS = getPref("stats.items"), $container = this.$container;
+  $container.dataset.stats = "[" + PREF_ITEMS.join("][") + "]", $container.dataset.position = getPref("stats.position"), $container.dataset.transparent = getPref("stats.transparent"), $container.style.opacity = getPref("stats.opacity") + "%", $container.style.fontSize = getPref("stats.textSize");
  }
  hideSettingsUi() {
-  if (this.isGlancing() && !getPref("statsQuickGlance")) this.stop();
+  if (this.isGlancing() && !getPref("stats.quickGlance.enabled")) this.stop();
  }
  async render() {
   this.$container = CE("div", { class: "bx-stats-bar bx-gone" });
@@ -2325,7 +2368,7 @@ class StreamStats {
  }
  static setupEvents() {
   window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
-   let PREF_STATS_QUICK_GLANCE = getPref("statsQuickGlance"), PREF_STATS_SHOW_WHEN_PLAYING = getPref("statsShowWhenPlaying"), streamStats = StreamStats.getInstance();
+   let PREF_STATS_QUICK_GLANCE = getPref("stats.quickGlance.enabled"), PREF_STATS_SHOW_WHEN_PLAYING = getPref("stats.showWhenPlaying"), streamStats = StreamStats.getInstance();
    if (PREF_STATS_SHOW_WHEN_PLAYING) streamStats.start();
    else if (PREF_STATS_QUICK_GLANCE) streamStats.quickGlanceSetup(), !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(!0);
   });
@@ -2335,11 +2378,11 @@ class StreamStats {
  }
 }
 function onChangeVideoPlayerType() {
- let playerType = getPref("videoPlayerType"), $videoProcessing = document.getElementById(`bx_setting_${"videoProcessing"}`), $videoSharpness = document.getElementById(`bx_setting_${"videoSharpness"}`), $videoPowerPreference = document.getElementById(`bx_setting_${"videoPowerPreference"}`), $videoMaxFps = document.getElementById(`bx_setting_${"videoMaxFps"}`);
+ let playerType = getPref("video.player.type"), $videoProcessing = document.getElementById(`bx_setting_${escapeCssSelector("video.processing")}`), $videoSharpness = document.getElementById(`bx_setting_${escapeCssSelector("video.processing.sharpness")}`), $videoPowerPreference = document.getElementById(`bx_setting_${escapeCssSelector("video.player.powerPreference")}`), $videoMaxFps = document.getElementById(`bx_setting_${escapeCssSelector("video.maxFps")}`);
  if (!$videoProcessing) return;
  let isDisabled = !1, $optCas = $videoProcessing.querySelector(`option[value=${"cas"}]`);
  if (playerType === "webgl2") $optCas && ($optCas.disabled = !1);
- else if ($videoProcessing.value = "usm", setPref("videoProcessing", "usm"), $optCas && ($optCas.disabled = !0), UserAgent.isSafari()) isDisabled = !0;
+ else if ($videoProcessing.value = "usm", setPref("video.processing", "usm"), $optCas && ($optCas.disabled = !0), UserAgent.isSafari()) isDisabled = !0;
  $videoProcessing.disabled = isDisabled, $videoSharpness.dataset.disabled = isDisabled.toString(), $videoPowerPreference.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), $videoMaxFps.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), updateVideoPlayer();
 }
 function limitVideoPlayerFps(targetFps) {
@@ -2348,15 +2391,15 @@ function limitVideoPlayerFps(targetFps) {
 function updateVideoPlayer() {
  let streamPlayer = STATES.currentStream.streamPlayer;
  if (!streamPlayer) return;
- limitVideoPlayerFps(getPref("videoMaxFps"));
+ limitVideoPlayerFps(getPref("video.maxFps"));
  let options = {
-  processing: getPref("videoProcessing"),
-  sharpness: getPref("videoSharpness"),
-  saturation: getPref("videoSaturation"),
-  contrast: getPref("videoContrast"),
-  brightness: getPref("videoBrightness")
+  processing: getPref("video.processing"),
+  sharpness: getPref("video.processing.sharpness"),
+  saturation: getPref("video.saturation"),
+  contrast: getPref("video.contrast"),
+  brightness: getPref("video.brightness")
  };
- streamPlayer.setPlayerType(getPref("videoPlayerType")), streamPlayer.updateOptions(options), streamPlayer.refreshPlayer();
+ streamPlayer.setPlayerType(getPref("video.player.type")), streamPlayer.updateOptions(options), streamPlayer.refreshPlayer();
 }
 window.addEventListener("resize", updateVideoPlayer);
 class KeyHelper {
@@ -2516,12 +2559,12 @@ class ControllerShortcutsTable extends BasePresetsTable {
    name: "Type A",
    data: {
     mapping: {
-     3: AppInterface ? "device-volume-inc" : "stream-volume-inc",
-     0: AppInterface ? "device-volume-dec" : "stream-volume-dec",
-     2: "stream-stats-toggle",
-     1: AppInterface ? "device-sound-toggle" : "stream-sound-toggle",
-     5: "stream-screenshot-capture",
-     9: "stream-menu-show"
+     3: AppInterface ? "device.volume.inc" : "stream.volume.inc",
+     0: AppInterface ? "device.volume.dec" : "stream.volume.dec",
+     2: "stream.stats.toggle",
+     1: AppInterface ? "device.sound.toggle" : "stream.sound.toggle",
+     5: "stream.screenshot.capture",
+     9: "stream.menu.show"
     }
    }
   },
@@ -2530,12 +2573,12 @@ class ControllerShortcutsTable extends BasePresetsTable {
    name: "Type B",
    data: {
     mapping: {
-     12: AppInterface ? "device-volume-inc" : "stream-volume-inc",
-     13: AppInterface ? "device-volume-dec" : "stream-volume-dec",
-     15: "stream-stats-toggle",
-     14: AppInterface ? "device-sound-toggle" : "stream-sound-toggle",
-     4: "stream-screenshot-capture",
-     8: "stream-menu-show"
+     12: AppInterface ? "device.volume.inc" : "stream.volume.inc",
+     13: AppInterface ? "device.volume.dec" : "stream.volume.dec",
+     15: "stream.stats.toggle",
+     14: AppInterface ? "device.sound.toggle" : "stream.sound.toggle",
+     4: "stream.screenshot.capture",
+     8: "stream.menu.show"
     }
    }
   }
@@ -2571,7 +2614,7 @@ function showGamepadToast(gamepad) {
  if (gamepad.id === VIRTUAL_GAMEPAD_ID) return;
  BxLogger.info("Gamepad", gamepad);
  let text = "🎮";
- if (getPref("localCoOpEnabled")) text += ` #${gamepad.index + 1}`;
+ if (getPref("localCoOp.enabled")) text += ` #${gamepad.index + 1}`;
  let gamepadId = gamepad.id.replace(/ \(.*?Vendor: \w+ Product: \w+\)$/, "");
  text += ` - ${gamepadId}`;
  let status;
@@ -2617,16 +2660,16 @@ class StreamSettings {
     shortcuts: shortcutsMapping
    };
   }
-  settings.controllers = controllers, settings.controllerPollingRate = StreamSettings.getPref("controllerPollingRate"), await StreamSettings.refreshDeviceVibration();
+  settings.controllers = controllers, settings.controllerPollingRate = StreamSettings.getPref("controller.pollingRate"), await StreamSettings.refreshDeviceVibration();
  }
  static async refreshDeviceVibration() {
   if (!STATES.browser.capabilities.deviceVibration) return;
-  let mode = StreamSettings.getPref("deviceVibrationMode"), intensity = 0;
-  if (mode === "on" || mode === "auto" && !hasGamepad()) intensity = StreamSettings.getPref("deviceVibrationIntensity") / 100;
+  let mode = StreamSettings.getPref("deviceVibration.mode"), intensity = 0;
+  if (mode === "on" || mode === "auto" && !hasGamepad()) intensity = StreamSettings.getPref("deviceVibration.intensity") / 100;
   StreamSettings.settings.deviceVibrationIntensity = intensity, BxEvent.dispatch(window, BxEvent.DEVICE_VIBRATION_CHANGED);
  }
  static async refreshMkbSettings() {
-  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("mkbMappingPresetIdP1"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
+  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("mkb.p1.preset.mappingId"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
    mapping: {},
    mouse: Object.assign({}, orgPresetData.mouse)
   }, key;
@@ -2637,12 +2680,12 @@ class StreamSettings {
     if (typeof keyName === "string") converted.mapping[keyName] = buttonIndex;
   }
   let mouse = converted.mouse;
-  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkbMappingPresetIdP1", orgPreset.id), BxEvent.dispatch(window, BxEvent.MKB_UPDATED);
+  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkb.p1.preset.mappingId", orgPreset.id), BxEvent.dispatch(window, BxEvent.MKB_UPDATED);
  }
  static async refreshKeyboardShortcuts() {
-  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcutsInGamePresetId");
+  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcuts.preset.inGameId");
   if (presetId === 0) {
-   settings.keyboardShortcuts = null, setPref("keyboardShortcutsInGamePresetId", presetId), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
+   settings.keyboardShortcuts = null, setPref("keyboardShortcuts.preset.inGameId", presetId), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
    return;
   }
   let orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
@@ -2650,7 +2693,7 @@ class StreamSettings {
    let info = orgPresetData[action], key = `${info.code}:${info.modifiers || 0}`;
    converted[key] = action;
   }
-  settings.keyboardShortcuts = converted, setPref("keyboardShortcutsInGamePresetId", orgPreset.id), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
+  settings.keyboardShortcuts = converted, setPref("keyboardShortcuts.preset.inGameId", orgPreset.id), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
  }
  static async refreshAllSettings() {
   window.BX_STREAM_SETTINGS = StreamSettings.settings, await StreamSettings.refreshControllerSettings(), await StreamSettings.refreshMkbSettings(), await StreamSettings.refreshKeyboardShortcuts();
@@ -2696,7 +2739,7 @@ class MkbPopup {
    style: 1 | 512 | 128,
    label: t("activate"),
    onClick: this.onActivate
-  }, shortcutKey = StreamSettings.findKeyboardShortcut("mkb-toggle");
+  }, shortcutKey = StreamSettings.findKeyboardShortcut("mkb.toggle");
   if (shortcutKey) options.secondaryText = t("press-key-to-toggle-mkb", { key: KeyHelper.codeToKeyName(shortcutKey) });
   return createButton(options);
  }
@@ -2732,7 +2775,7 @@ class NativeMkbHandler extends MkbHandler {
  }
  LOG_TAG = "NativeMkbHandler";
  static isAllowed = () => {
-  return STATES.browser.capabilities.emulatedNativeMkb && getPref("nativeMkbMode") === "on";
+  return STATES.browser.capabilities.emulatedNativeMkb && getPref("nativeMkb.mode") === "on";
  };
  pointerClient;
  enabled = !1;
@@ -2792,8 +2835,8 @@ class NativeMkbHandler extends MkbHandler {
   } catch (e) {
    Toast.show("Cannot enable Mouse & Keyboard feature");
   }
-  this.mouseVerticalMultiply = getPref("nativeMkbScrollYSensitivity"), this.mouseHorizontalMultiply = getPref("nativeMkbScrollXSensitivity"), window.addEventListener("keyup", this), window.addEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this), window.addEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.addEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this);
-  let shortcutKey = StreamSettings.findKeyboardShortcut("mkb-toggle");
+  this.mouseVerticalMultiply = getPref("nativeMkb.scroll.sensitivityY"), this.mouseHorizontalMultiply = getPref("nativeMkb.scroll.sensitivityX"), window.addEventListener("keyup", this), window.addEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this), window.addEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.addEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this);
+  let shortcutKey = StreamSettings.findKeyboardShortcut("mkb.toggle");
   if (shortcutKey) {
    let msg = t("press-key-to-toggle-mkb", { key: `<b>${KeyHelper.codeToKeyName(shortcutKey)}</b>` });
    Toast.show(msg, t("native-mkb"), { html: !0 });
@@ -2948,7 +2991,7 @@ class EmulatedMkbHandler extends MkbHandler {
  }
  static LOG_TAG = "EmulatedMkbHandler";
  static isAllowed() {
-  return getPref("mkbEnabled") && (AppInterface || !UserAgent.isMobile());
+  return getPref("mkb.enabled") && (AppInterface || !UserAgent.isMobile());
  }
  PRESET;
  VIRTUAL_GAMEPAD = {
@@ -3147,7 +3190,7 @@ class EmulatedMkbHandler extends MkbHandler {
   window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged), window.removeEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this.onDialogShown), this.mouseDataProvider?.destroy(), window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged);
  }
  updateGamepadSlots() {
-  this.VIRTUAL_GAMEPAD.index = getPref("mkbSlotP1") - 1;
+  this.VIRTUAL_GAMEPAD.index = getPref("mkb.p1.slot") - 1;
  }
  start() {
   if (!this.enabled) this.enabled = !0, Toast.show(t("virtual-controller"), t("enabled"), { instant: !0 });
@@ -3260,7 +3303,7 @@ class NavigationDialogManager {
  constructor() {
   if (BxLogger.info(this.LOG_TAG, "constructor()"), this.$overlay = CE("div", { class: "bx-navigation-dialog-overlay bx-gone" }), this.$overlay.addEventListener("click", (e) => {
    e.preventDefault(), e.stopPropagation(), this.dialog?.isCancellable() && this.hide();
-  }), document.documentElement.appendChild(this.$overlay), this.$container = CE("div", { class: "bx-navigation-dialog bx-gone" }), document.documentElement.appendChild(this.$container), window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, (e) => this.hide()), getPref("uiControllerFriendly"))
+  }), document.documentElement.appendChild(this.$overlay), this.$container = CE("div", { class: "bx-navigation-dialog bx-gone" }), document.documentElement.appendChild(this.$container), window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, (e) => this.hide()), getPref("ui.controllerFriendly"))
    new MutationObserver((mutationList) => {
     if (mutationList.length === 0 || mutationList[0].addedNodes.length === 0) return;
     let $dialog = mutationList[0].addedNodes[0];
@@ -3284,9 +3327,13 @@ class NavigationDialogManager {
    $label.style.minWidth = width + "px", $parent.dataset.calculated = "true";
   }
  }
+ updateActiveInput(input) {
+  document.documentElement.dataset.activeInput = input;
+ }
  handleEvent(event) {
   switch (event.type) {
    case "keydown":
+    this.updateActiveInput("keyboard");
     let $target = event.target, keyboardEvent = event, keyCode = keyboardEvent.code || keyboardEvent.key, handled = this.dialog?.handleKeyPress(keyCode);
     if (handled) {
      event.preventDefault(), event.stopPropagation();
@@ -3349,6 +3396,7 @@ class NavigationDialogManager {
     continue;
    }
    if (this.gamepadLastStates[gamepad.index] = null, lastKeyPressed) return;
+   if (this.updateActiveInput("gamepad"), this.handleGamepad(gamepad, releasedButton)) return;
    if (releasedButton === 0) {
     document.activeElement && document.activeElement.dispatchEvent(new MouseEvent("click", { bubbles: !0 }));
     return;
@@ -3356,7 +3404,6 @@ class NavigationDialogManager {
     this.hide();
     return;
    }
-   if (this.handleGamepad(gamepad, releasedButton)) return;
   }
  };
  handleGamepad(gamepad, key) {
@@ -3616,7 +3663,7 @@ class TouchController {
   };
   let $style = document.createElement("style");
   document.documentElement.appendChild($style), TouchController.#$style = $style;
-  let PREF_STYLE_STANDARD = getPref("touchControllerStyleStandard"), PREF_STYLE_CUSTOM = getPref("touchControllerStyleCustom");
+  let PREF_STYLE_STANDARD = getPref("touchController.style.standard"), PREF_STYLE_CUSTOM = getPref("touchController.style.custom");
   window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e) => {
    let dataChannel = e.dataChannel;
    if (!dataChannel || dataChannel.label !== "message") return;
@@ -3699,7 +3746,7 @@ class BxSelectElement extends HTMLSelectElement {
  $label;
  $checkBox;
  static create($select, forceFriendly = !1) {
-  if (!forceFriendly && !getPref("uiControllerFriendly")) return $select.classList.add("bx-select"), $select;
+  if (!forceFriendly && !getPref("ui.controllerFriendly")) return $select.classList.add("bx-select"), $select;
   $select.removeAttribute("tabindex");
   let $wrapper = CE("div", { class: "bx-select" }), $btnPrev = createButton({
    label: "<",
@@ -3726,13 +3773,13 @@ class BxSelectElement extends HTMLSelectElement {
   let boundOnPrevNext = BxSelectElement.onPrevNext.bind(self);
   return $select.addEventListener("input", BxSelectElement.render.bind(self)), $btnPrev.addEventListener("click", boundOnPrevNext), $btnNext.addEventListener("click", boundOnPrevNext), new MutationObserver((mutationList, observer2) => {
    mutationList.forEach((mutation) => {
-    if (mutation.type === "childList" || mutation.type === "attributes") self.optionsList = Array.from($select.querySelectorAll("option")), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
+    if (mutation.type === "childList" || mutation.type === "attributes") self.visibleIndex = $select.selectedIndex, self.optionsList = Array.from($select.querySelectorAll("option")), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
    });
   }).observe($select, {
    subtree: !0,
    childList: !0,
    attributes: !0
-  }), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self), self.append($select, $btnPrev, $content, $btnNext), Object.defineProperty(self, "value", {
+  }), self.append($select, $btnPrev, $content, $btnNext), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self), Object.defineProperty(self, "value", {
    get() {
     return $select.value;
    },
@@ -3994,10 +4041,10 @@ var FeatureGates = {
  EnableWifiWarnings: !1,
  EnableUpdateRequiredPage: !1,
  ShowForcedUpdateScreen: !1
-}, nativeMkbMode = getPref("nativeMkbMode");
+}, nativeMkbMode = getPref("nativeMkb.mode");
 if (nativeMkbMode !== "default") FeatureGates.EnableMouseAndKeyboard = nativeMkbMode === "on";
-if (getPref("blockSocialFeatures")) FeatureGates.EnableGuideChatTab = !1;
-if (getPref("byogDisabled")) FeatureGates.EnableBYOG = !1, FeatureGates.EnableBYOGPurchase = !1;
+if (getPref("block.social")) FeatureGates.EnableGuideChatTab = !1;
+if (getPref("feature.byog.disabled")) FeatureGates.EnableBYOG = !1, FeatureGates.EnableBYOGPurchase = !1;
 if (BX_FLAGS.FeatureGates) FeatureGates = Object.assign(BX_FLAGS.FeatureGates, FeatureGates);
 class PatcherUtils {
  static indexOf(txt, searchString, startIndex, maxRange) {
@@ -4053,7 +4100,7 @@ var ENDING_CHUNKS_PATCH_NAME = "loadingEndingChunks", LOG_TAG2 = "Patcher", PATC
  websiteLayout(str) {
   let text = '?"tv":"default"';
   if (!str.includes(text)) return !1;
-  let layout = getPref("uiLayout") === "tv" ? "tv" : "default";
+  let layout = getPref("ui.layout") === "tv" ? "tv" : "default";
   return str.replace(text, `?"${layout}":"${layout}"`);
  },
  remotePlayDirectConnectUrl(str) {
@@ -4099,7 +4146,7 @@ var ENDING_CHUNKS_PATCH_NAME = "loadingEndingChunks", LOG_TAG2 = "Patcher", PATC
   let setTimeoutIndex = str.indexOf("setTimeout(this.pollGamepads", index);
   if (setTimeoutIndex < 0) return !1;
   let codeBlock = str.substring(index, setTimeoutIndex), tmp = str.substring(setTimeoutIndex, setTimeoutIndex + 150), tmpPatched = tmp.replaceAll("Math.max(0,4-", "Math.max(0,window.BX_STREAM_SETTINGS.controllerPollingRate - ");
-  if (str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched), getPref("blockTracking")) codeBlock = codeBlock.replace("this.inputPollingIntervalStats.addValue", ""), codeBlock = codeBlock.replace("this.inputPollingDurationStats.addValue", "");
+  if (str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched), getPref("block.tracking")) codeBlock = codeBlock.replace("this.inputPollingIntervalStats.addValue", ""), codeBlock = codeBlock.replace("this.inputPollingDurationStats.addValue", "");
   let match = codeBlock.match(/this\.gamepadTimestamps\.set\((\w+)\.index/);
   if (match) {
    let gamepadVar = match[1], newCode = renderString(controller_shortcuts_default, {
@@ -4202,8 +4249,8 @@ if (window.BX_EXPOSED.stopTakRendering) {
   let text = "const{TakRenderer:";
   if (!str.includes(text)) return !1;
   let autoOffCode = "";
-  if (getPref("touchControllerMode") === "off") autoOffCode = "return;";
-  else if (getPref("touchControllerAutoOff")) autoOffCode = `
+  if (getPref("touchController.mode") === "off") autoOffCode = "return;";
+  else if (getPref("touchController.autoOff")) autoOffCode = `
 const gamepads = window.navigator.getGamepads();
 let gamepadFound = false;
 for (let gamepad of gamepads) {
@@ -4239,7 +4286,7 @@ window.BX_EXPOSED.showStreamMenu = e.onShowStreamMenu;
 // Restore the "..." button
 e.guideUI = null;
 `;
-  if (getPref("touchControllerMode") === "off") newCode += "e.canShowTakHUD = false;";
+  if (getPref("touchController.mode") === "off") newCode += "e.canShowTakHUD = false;";
   return str = str.replace(text, newCode + text), str;
  },
  broadcastPollingMode(str) {
@@ -4293,7 +4340,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
  patchTouchControlDefaultOpacity(str) {
   let text = "opacityMultiplier:1";
   if (!str.includes(text)) return !1;
-  let newCode = `opacityMultiplier: ${(getPref("touchControllerDefaultOpacity") / 100).toFixed(1)}`;
+  let newCode = `opacityMultiplier: ${(getPref("touchController.opacity.default") / 100).toFixed(1)}`;
   return str = str.replace(text, newCode), str;
  },
  patchShowSensorControls(str) {
@@ -4380,7 +4427,7 @@ true` + text;
   let index = str.indexOf("SiglRow-module__heroCard___");
   if (index < 0) return !1;
   if (index = PatcherUtils.lastIndexOf(str, "const[", index, 300), index < 0) return !1;
-  let PREF_HIDE_SECTIONS = getPref("uiHideSections"), siglIds = [], sections = {
+  let PREF_HIDE_SECTIONS = getPref("ui.hideSections"), siglIds = [], sections = {
    "native-mkb": "8fa264dd-124f-4af3-97e8-596fcdf4b486",
    "most-popular": "e7590b22-e299-44db-ae22-25c61405454c"
   };
@@ -4456,7 +4503,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   return str = str.replace(text, "=window.BX_EXPOSED.modifyPreloadedState(window.__PRELOADED_STATE__);"), str;
  }
 }, PATCH_ORDERS = [
- ...getPref("nativeMkbMode") === "on" ? [
+ ...getPref("nativeMkb.mode") === "on" ? [
   "enableNativeMkb",
   "exposeInputSink"
  ] : [],
@@ -4474,24 +4521,24 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  "enableTvRoutes",
  "supportLocalCoOp",
  "overrideStorageGetSettings",
- getPref("uiGameCardShowWaitTime") && "patchSetCurrentlyFocusedInteractable",
- getPref("uiLayout") !== "default" && "websiteLayout",
- getPref("gameFortniteForceConsole") && "forceFortniteConsole",
- getPref("uiHideSections").includes("friends") && "ignorePlayWithFriendsSection",
- getPref("uiHideSections").includes("all-games") && "ignoreAllGamesSection",
- getPref("uiHideSections").includes("touch") && "ignorePlayWithTouchSection",
- (getPref("uiHideSections").includes("native-mkb") || getPref("uiHideSections").includes("most-popular")) && "ignoreSiglSections",
+ getPref("ui.gameCard.waitTime.show") && "patchSetCurrentlyFocusedInteractable",
+ getPref("ui.layout") !== "default" && "websiteLayout",
+ getPref("game.fortnite.forceConsole") && "forceFortniteConsole",
+ getPref("ui.hideSections").includes("friends") && "ignorePlayWithFriendsSection",
+ getPref("ui.hideSections").includes("all-games") && "ignoreAllGamesSection",
+ getPref("ui.hideSections").includes("touch") && "ignorePlayWithTouchSection",
+ (getPref("ui.hideSections").includes("native-mkb") || getPref("ui.hideSections").includes("most-popular")) && "ignoreSiglSections",
  ...STATES.userAgent.capabilities.touch ? [
   "disableTouchContextMenu"
  ] : [],
- ...getPref("blockTracking") ? [
+ ...getPref("block.tracking") ? [
   "disableAiTrack",
   "disableTelemetry",
   "blockWebRtcStatsCollector",
   "disableIndexDbLogging",
   "disableTelemetryProvider"
  ] : [],
- ...getPref("xhomeEnabled") ? [
+ ...getPref("xhome.enabled") ? [
   "remotePlayKeepAlive",
   "remotePlayDirectConnectUrl",
   "remotePlayDisableAchievementToast",
@@ -4509,24 +4556,24 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  "patchStreamHud",
  "playVibration",
  "alwaysShowStreamHud",
- getPref("audioEnableVolumeControl") && !getPref("streamCombineSources") && "patchAudioMediaStream",
- getPref("audioEnableVolumeControl") && getPref("streamCombineSources") && "patchCombinedAudioVideoMediaStream",
- getPref("uiDisableFeedbackDialog") && "skipFeedbackDialog",
+ getPref("audio.volume.booster.enabled") && !getPref("stream.video.combineAudio") && "patchAudioMediaStream",
+ getPref("audio.volume.booster.enabled") && getPref("stream.video.combineAudio") && "patchCombinedAudioVideoMediaStream",
+ getPref("ui.feedbackDialog.disabled") && "skipFeedbackDialog",
  ...STATES.userAgent.capabilities.touch ? [
-  getPref("touchControllerMode") === "all" && "patchShowSensorControls",
-  getPref("touchControllerMode") === "all" && "exposeTouchLayoutManager",
-  (getPref("touchControllerMode") === "off" || getPref("touchControllerAutoOff") || !STATES.userAgent.capabilities.touch) && "disableTakRenderer",
-  getPref("touchControllerDefaultOpacity") !== 100 && "patchTouchControlDefaultOpacity",
+  getPref("touchController.mode") === "all" && "patchShowSensorControls",
+  getPref("touchController.mode") === "all" && "exposeTouchLayoutManager",
+  (getPref("touchController.mode") === "off" || getPref("touchController.autoOff") || !STATES.userAgent.capabilities.touch) && "disableTakRenderer",
+  getPref("touchController.opacity.default") !== 100 && "patchTouchControlDefaultOpacity",
   "patchBabylonRendererClass"
  ] : [],
  BX_FLAGS.EnableXcloudLogging && "enableConsoleLogging",
  "patchPollGamepads",
- getPref("streamCombineSources") && "streamCombineSources",
- ...getPref("xhomeEnabled") ? [
+ getPref("stream.video.combineAudio") && "streamCombineSources",
+ ...getPref("xhome.enabled") ? [
   "patchRemotePlayMkb",
   "remotePlayConnectMode"
  ] : [],
- ...getPref("nativeMkbMode") === "on" ? [
+ ...getPref("nativeMkb.mode") === "on" ? [
   "patchMouseAndKeyboardEnabled",
   "disableNativeRequestPointerLock"
  ] : []
@@ -4581,7 +4628,7 @@ class PatcherCache {
  static instance;
  static getInstance = () => PatcherCache.instance ?? (PatcherCache.instance = new PatcherCache);
  KEY_CACHE = "BetterXcloud.Patches.Cache";
- KEY_SIGNATURE = "BetterXcloud.Patches.CacheSignature";
+ KEY_SIGNATURE = "BetterXcloud.Patches.Cache.Signature";
  CACHE;
  isInitialized = !1;
  getSignature() {
@@ -4652,7 +4699,7 @@ class BxNumberStepper extends HTMLInputElement {
   options = options || {}, options.suffix = options.suffix || "", options.disabled = !!options.disabled, options.hideSlider = !!options.hideSlider;
   let $text, $btnInc, $btnDec, $range, self = CE("div", {
    class: "bx-number-stepper",
-   id: `bx_setting_${key}`
+   id: `bx_setting_${escapeCssSelector(key)}`
   }, CE("div", {}, $btnDec = CE("button", {
    _dataset: {
     type: "dec"
@@ -4817,7 +4864,7 @@ class SettingElement {
  };
  static render(type, key, setting, currentValue, onChange, options) {
   let method = SettingElement.METHOD_MAP[type], $control = method(...Array.from(arguments).slice(1));
-  if (type !== "number-stepper") $control.id = `bx_setting_${key}`;
+  if (type !== "number-stepper") $control.id = `bx_setting_${escapeCssSelector(key)}`;
   if (type === "options" || type === "multiple-options") $control.name = $control.id;
   return $control;
  }
@@ -4868,7 +4915,7 @@ class BaseProfileManagerDialog extends NavigationDialog {
   this.title = title, this.presetsDb = presetsDb;
  }
  updateButtonStates() {
-  let isDefaultPreset = this.currentPresetId < 0;
+  let isDefaultPreset = this.currentPresetId <= 0;
   this.$btnRename.disabled = isDefaultPreset, this.$btnDelete.disabled = isDefaultPreset;
  }
  async renderPresetsList() {
@@ -4902,7 +4949,7 @@ class BaseProfileManagerDialog extends NavigationDialog {
    onClick: async () => {
     let preset = this.allPresets.data[this.currentPresetId], newName = this.promptNewName(t("rename"), preset.name);
     if (!newName) return;
-    preset.name = newName, await this.presetsDb.updatePreset(preset), await this.renderPresetsList();
+    preset.name = newName, await this.presetsDb.updatePreset(preset), await this.refresh();
    }
   }), this.$btnDelete = createButton({
    icon: BxIcon.TRASH,
@@ -4910,7 +4957,7 @@ class BaseProfileManagerDialog extends NavigationDialog {
    style: 4 | 64,
    onClick: async (e) => {
     if (!confirm(t("confirm-delete-preset"))) return;
-    await this.presetsDb.deletePreset(this.currentPresetId), delete this.allPresets.data[this.currentPresetId], this.currentPresetId = parseInt(Object.keys(this.allPresets.data)[0]), await this.renderPresetsList();
+    await this.presetsDb.deletePreset(this.currentPresetId), delete this.allPresets.data[this.currentPresetId], this.currentPresetId = parseInt(Object.keys(this.allPresets.data)[0]), await this.refresh();
    }
   }), createButton({
    icon: BxIcon.NEW,
@@ -4920,7 +4967,7 @@ class BaseProfileManagerDialog extends NavigationDialog {
     let newName = this.promptNewName(t("new"));
     if (!newName) return;
     let newId = await this.presetsDb.newPreset(newName, this.BLANK_PRESET_DATA);
-    this.currentPresetId = newId, await this.renderPresetsList();
+    this.currentPresetId = newId, await this.refresh();
    }
   }), createButton({
    icon: BxIcon.COPY,
@@ -4930,7 +4977,7 @@ class BaseProfileManagerDialog extends NavigationDialog {
     let preset = this.allPresets.data[this.currentPresetId], newName = this.promptNewName(t("copy"), `${preset.name} (2)`);
     if (!newName) return;
     let newId = await this.presetsDb.newPreset(newName, preset.data);
-    this.currentPresetId = newId, await this.renderPresetsList();
+    this.currentPresetId = newId, await this.refresh();
    }
   }));
   this.$header = $header, this.$container = CE("div", { class: "bx-centered-dialog" }, CE("div", { class: "bx-dialog-title" }, CE("p", {}, this.title), createButton({
@@ -4959,36 +5006,36 @@ class BaseProfileManagerDialog extends NavigationDialog {
 }
 var SHORTCUT_ACTIONS = {
  [t("better-xcloud")]: {
-  "bx-settings-show": [t("settings"), t("show")]
+  "bx.settings.show": [t("settings"), t("show")]
  },
  ...AppInterface ? {
   [t("device")]: {
-   "device-sound-toggle": [t("sound"), t("toggle")],
-   "device-volume-inc": [t("volume"), t("increase")],
-   "device-volume-dec": [t("volume"), t("decrease")],
-   "device-brightness-inc": [t("brightness"), t("increase")],
-   "device-brightness-dec": [t("brightness"), t("decrease")]
+   "device.sound.toggle": [t("sound"), t("toggle")],
+   "device.volume.inc": [t("volume"), t("increase")],
+   "device.volume.dec": [t("volume"), t("decrease")],
+   "device.brightness.inc": [t("brightness"), t("increase")],
+   "device.brightness.dec": [t("brightness"), t("decrease")]
   }
  } : {},
  [t("stream")]: {
-  "stream-screenshot-capture": [t("take-screenshot")],
-  "stream-video-toggle": [t("video"), t("toggle")],
-  "stream-sound-toggle": [t("sound"), t("toggle")],
-  ...getPref("audioEnableVolumeControl") ? {
-   "stream-volume-inc": [t("volume"), t("increase")],
-   "stream-volume-dec": [t("volume"), t("decrease")]
+  "stream.screenshot.capture": [t("take-screenshot")],
+  "stream.video.toggle": [t("video"), t("toggle")],
+  "stream.sound.toggle": [t("sound"), t("toggle")],
+  ...getPref("audio.volume.booster.enabled") ? {
+   "stream.volume.inc": [t("volume"), t("increase")],
+   "stream.volume.dec": [t("volume"), t("decrease")]
   } : {},
-  "stream-menu-show": [t("menu"), t("show")],
-  "stream-stats-toggle": [t("stats"), t("show-hide")],
-  "stream-microphone-toggle": [t("microphone"), t("toggle")]
+  "stream.menu.show": [t("menu"), t("show")],
+  "stream.stats.toggle": [t("stats"), t("show-hide")],
+  "stream.microphone.toggle": [t("microphone"), t("toggle")]
  },
  ...STATES.browser.capabilities.mkb ? {
   [t("mouse-and-keyboard")]: {
-   "mkb-toggle": [t("toggle")]
+   "mkb.toggle": [t("toggle")]
   }
  } : {},
  [t("other")]: {
-  "ta-open": [t("true-achievements"), t("show")]
+  "ta.open": [t("true-achievements"), t("show")]
  }
 };
 class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
@@ -5019,7 +5066,7 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
  ];
  constructor(title) {
   super(title, ControllerShortcutsTable.getInstance());
-  let PREF_CONTROLLER_FRIENDLY_UI = getPref("uiControllerFriendly"), $baseSelect = CE("select", { autocomplete: "off" }, CE("option", { value: "" }, "---"));
+  let PREF_CONTROLLER_FRIENDLY_UI = getPref("ui.controllerFriendly"), $baseSelect = CE("select", { autocomplete: "off" }, CE("option", { value: "" }, "---"));
   for (let groupLabel in SHORTCUT_ACTIONS) {
    let items = SHORTCUT_ACTIONS[groupLabel];
    if (!items) continue;
@@ -5069,7 +5116,7 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
    return;
   }
   this.currentPresetId = id;
-  let isDefaultPreset = id < 0, actions = preset.data, button;
+  let isDefaultPreset = id <= 0, actions = preset.data, button;
   for (button in this.selectActions) {
    let [$select, $fakeSelect] = this.selectActions[button];
    $select.value = actions.mapping[button] || "", $select.disabled = isDefaultPreset, $fakeSelect && ($fakeSelect.disabled = isDefaultPreset), BxEvent.dispatch($select, "input", {
@@ -5213,9 +5260,9 @@ class SuggestionsSetting {
    if (BX_FLAGS.DeviceInfo.androidInfo) recommendedDevice = await SuggestionsSetting.getRecommendedSettings.call(this, BX_FLAGS.DeviceInfo.androidInfo);
   }
   let hasRecommendedSettings = Object.keys(this.suggestedSettings.recommended).length > 0, deviceType = BX_FLAGS.DeviceInfo.deviceType;
-  if (deviceType === "android-handheld") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "touchControllerMode", "off"), SuggestionsSetting.addDefaultSuggestedSetting.call(this, "deviceVibrationMode", "on");
-  else if (deviceType === "android") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "deviceVibrationMode", "auto");
-  else if (deviceType === "android-tv") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "touchControllerMode", "off");
+  if (deviceType === "android-handheld") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "touchController.mode", "off"), SuggestionsSetting.addDefaultSuggestedSetting.call(this, "deviceVibration.mode", "on");
+  else if (deviceType === "android") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "deviceVibration.mode", "auto");
+  else if (deviceType === "android-tv") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "touchController.mode", "off");
   SuggestionsSetting.generateDefaultSuggestedSettings.call(this);
   let $suggestedSettings = CE("div", { class: "bx-suggest-wrapper" }), $select = CE("select", {}, hasRecommendedSettings && CE("option", { value: "recommended" }, t("recommended")), !hasRecommendedSettings && CE("option", { value: "highest" }, t("highest-quality")), CE("option", { value: "default" }, t("default")), CE("option", { value: "lowest" }, t("lowest-quality")));
   $select.addEventListener("input", (e2) => {
@@ -5236,16 +5283,16 @@ class SuggestionsSetting {
      let suggestedValueText = STORAGE.Global.getValueText(prefKey, suggestedValue);
      $value = currentValueText + " ➔ " + suggestedValueText;
     }
-    let $checkbox, breadcrumb = this.suggestedSettingLabels[prefKey] + " ❯ " + STORAGE.Global.getLabel(prefKey);
+    let $checkbox, breadcrumb = this.suggestedSettingLabels[prefKey] + " ❯ " + STORAGE.Global.getLabel(prefKey), id = escapeCssSelector(`bx_suggest_${prefKey}`);
     if ($child = CE("div", {
      class: `bx-suggest-row ${isSameValue ? "bx-suggest-ok" : "bx-suggest-change"}`
     }, $checkbox = CE("input", {
      type: "checkbox",
      tabindex: 0,
      checked: !0,
-     id: `bx_suggest_${prefKey}`
+     id
     }), CE("label", {
-     for: `bx_suggest_${prefKey}`
+     for: id
     }, CE("div", {
      class: "bx-suggest-label"
     }, breadcrumb), CE("div", {
@@ -5259,7 +5306,7 @@ class SuggestionsSetting {
   let onClickApply = () => {
    let profile = $select.value, settings = this.suggestedSettings[profile], prefKey;
    for (prefKey in settings) {
-    let suggestedValue = settings[prefKey], $checkBox = $content.querySelector(`#bx_suggest_${prefKey}`);
+    let suggestedValue = settings[prefKey], $checkBox = $content.querySelector(`#bx_suggest_${escapeCssSelector(prefKey)}`);
     if (!$checkBox.checked || $checkBox.disabled) continue;
     let $control = this.settingElements[prefKey];
     if (!$control) {
@@ -5305,7 +5352,7 @@ class SuggestionsSetting {
    let { brand, board, model } = androidInfo;
    brand = normalize(brand), board = normalize(board), model = normalize(model);
    let url = GhPagesUtils.getUrl(`devices/${brand}/${board}-${model}.json`), json = await (await NATIVE_FETCH(url)).json(), recommended = {};
-   if (json.schema_version !== 1) return null;
+   if (json.schema_version !== 2) return null;
    let scriptSettings = json.settings.script;
    if (scriptSettings._base) {
     let base = typeof scriptSettings._base === "string" ? [scriptSettings._base] : scriptSettings._base;
@@ -5549,7 +5596,7 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
   }
   let presetData = preset.data;
   this.currentPresetId = id;
-  let isDefaultPreset = id < 0;
+  let isDefaultPreset = id <= 0;
   this.updateButtonStates();
   for (let $elm of this.allKeyElements) {
    let { buttonIndex, keySlot } = this.parseDataset($elm), buttonKeys = presetData.mapping[buttonIndex];
@@ -5633,7 +5680,7 @@ class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
   }
   let presetData = preset.data;
   this.currentPresetId = id;
-  let isDefaultPreset = id < 0;
+  let isDefaultPreset = id <= 0;
   this.updateButtonStates();
   for (let $elm of this.allKeyElements) {
    let { action } = this.parseDataset($elm), keyInfo = presetData.mapping[action];
@@ -5676,7 +5723,7 @@ class MkbExtraSettings extends HTMLElement {
     input: $container.saveShortcutsSettings
    }
   }));
-  return $container.append(...getPref("mkbEnabled") ? [
+  return $container.append(...getPref("mkb.enabled") ? [
    createSettingRow(t("virtual-controller"), CE("div", {
     class: "bx-preset-row",
     _nearby: {
@@ -5689,7 +5736,7 @@ class MkbExtraSettings extends HTMLElement {
      id: parseInt($container.$mappingPresets.value)
     })
    })), { multiLines: !0 }),
-   createSettingRow(ut("Virtual controller slot"), SettingElement.fromPref("mkbSlotP1", STORAGE.Global, () => {
+   createSettingRow(t("virtual-controller-slot"), SettingElement.fromPref("mkb.p1.slot", STORAGE.Global, () => {
     EmulatedMkbHandler.getInstance()?.updateGamepadSlots();
    }))
   ] : [], createSettingRow(t("keyboard-shortcuts-in-game"), CE("div", {
@@ -5709,17 +5756,17 @@ class MkbExtraSettings extends HTMLElement {
  }
  static async updateLayout() {
   let mappingPresets = await MkbMappingPresetsTable.getInstance().getPresets();
-  renderPresetsList(this.$mappingPresets, mappingPresets, getPref("mkbMappingPresetIdP1"), !1);
+  renderPresetsList(this.$mappingPresets, mappingPresets, getPref("mkb.p1.preset.mappingId"), !1);
   let shortcutsPresets = await KeyboardShortcutsTable.getInstance().getPresets();
-  renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref("keyboardShortcutsInGamePresetId"), !0);
+  renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref("keyboardShortcuts.preset.inGameId"), !0);
  }
  static async saveMkbSettings() {
   let presetId = parseInt(this.$mappingPresets.value);
-  setPref("mkbMappingPresetIdP1", presetId), StreamSettings.refreshMkbSettings();
+  setPref("mkb.p1.preset.mappingId", presetId), StreamSettings.refreshMkbSettings();
  }
  static async saveShortcutsSettings() {
   let presetId = parseInt(this.$shortcutsPresets.value);
-  setPref("keyboardShortcutsInGamePresetId", presetId), StreamSettings.refreshKeyboardShortcuts();
+  setPref("keyboardShortcuts.preset.inGameId", presetId), StreamSettings.refreshKeyboardShortcuts();
  }
 }
 class SettingsDialog extends NavigationDialog {
@@ -5748,7 +5795,7 @@ class SettingsDialog extends NavigationDialog {
   helpUrl: "https://better-xcloud.github.io/features/",
   items: [
    ($parent) => {
-    let PREF_LATEST_VERSION = getPref("versionLatest"), topButtons = [];
+    let PREF_LATEST_VERSION = getPref("version.latest"), topButtons = [];
     if (!SCRIPT_VERSION.includes("beta") && PREF_LATEST_VERSION && PREF_LATEST_VERSION != SCRIPT_VERSION) {
      let opts = {
       label: "🌟 " + t("new-version-available", { version: PREF_LATEST_VERSION }),
@@ -5793,53 +5840,52 @@ class SettingsDialog extends NavigationDialog {
     $parent.appendChild($div);
    },
    {
-    pref: "bxLocale",
+    pref: "bx.locale",
     multiLines: !0
    },
-   "serverBypassRestriction",
-   "uiControllerFriendly",
-   "xhomeEnabled"
+   "server.bypassRestriction",
+   "ui.controllerFriendly",
+   "xhome.enabled"
   ]
  }, {
   group: "server",
   label: t("server"),
   items: [
    {
-    pref: "serverRegion",
+    pref: "server.region",
     multiLines: !0
    },
    {
-    pref: "streamLocale",
+    pref: "stream.locale",
     multiLines: !0
    },
-   "serverPreferIpv6"
+   "server.ipv6.prefer"
   ]
  }, {
   group: "stream",
   label: t("stream"),
   items: [
-   "streamResolution",
-   "streamCodecProfile",
-   "streamMaxVideoBitrate",
-   "audioEnableVolumeControl",
-   "uiDisableFeedbackDialog",
-   "screenshotApplyFilters",
-   "audioMicOnPlaying",
-   "gameFortniteForceConsole",
-   "streamCombineSources"
+   "stream.video.resolution",
+   "stream.video.codecProfile",
+   "stream.video.maxBitrate",
+   "audio.volume.booster.enabled",
+   "screenshot.applyFilters",
+   "audio.mic.onPlaying",
+   "game.fortnite.forceConsole",
+   "stream.video.combineAudio"
   ]
  }, {
   requiredVariants: "full",
   group: "mkb",
   label: t("mouse-and-keyboard"),
   items: [
-   "nativeMkbMode",
+   "nativeMkb.mode",
    {
-    pref: "forceNativeMkbGames",
+    pref: "nativeMkb.forcedGames",
     multiLines: !0
    },
-   "mkbEnabled",
-   "mkbHideIdleCursor"
+   "mkb.enabled",
+   "mkb.cursor.hideIdle"
   ],
   ...!STATES.browser.capabilities.emulatedNativeMkb && (!STATES.userAgent.capabilities.mkb || !STATES.browser.capabilities.mkb) ? {
    unsupported: !0,
@@ -5854,13 +5900,13 @@ class SettingsDialog extends NavigationDialog {
   label: t("touch-controller"),
   items: [
    {
-    pref: "touchControllerMode",
+    pref: "touchController.mode",
     note: CE("a", { href: "https://github.com/redphx/better-xcloud/discussions/241", target: "_blank" }, t("unofficial-game-list"))
    },
-   "touchControllerAutoOff",
-   "touchControllerDefaultOpacity",
-   "touchControllerStyleStandard",
-   "touchControllerStyleCustom"
+   "touchController.autoOff",
+   "touchController.opacity.default",
+   "touchController.style.standard",
+   "touchController.style.custom"
   ],
   ...!STATES.userAgent.capabilities.touch ? {
    unsupported: !0,
@@ -5870,18 +5916,19 @@ class SettingsDialog extends NavigationDialog {
   group: "ui",
   label: t("ui"),
   items: [
-   "uiLayout",
-   "uiGameCardShowWaitTime",
-   "uiShowControllerStatus",
-   "uiSimplifyStreamMenu",
-   "uiSkipSplashVideo",
-   !AppInterface && "uiHideScrollbar",
-   "uiHideSystemMenuIcon",
-   "uiReduceAnimations",
-   "blockSocialFeatures",
-   "byogDisabled",
+   "ui.layout",
+   "ui.gameCard.waitTime.show",
+   "ui.controllerStatus.show",
+   "ui.streamMenu.simplify",
+   "ui.splashVideo.skip",
+   !AppInterface && "ui.hideScrollbar",
+   "ui.systemMenu.hideHandle",
+   "ui.feedbackDialog.disabled",
+   "ui.reduceAnimations",
+   "block.social",
+   "feature.byog.disabled",
    {
-    pref: "uiHideSections",
+    pref: "ui.hideSections",
     multiLines: !0
    }
   ]
@@ -5890,32 +5937,31 @@ class SettingsDialog extends NavigationDialog {
   group: "game-bar",
   label: t("game-bar"),
   items: [
-   "gameBarPosition"
+   "gameBar.position"
   ]
  }, {
   group: "loading-screen",
   label: t("loading-screen"),
   items: [
-   "loadingScreenGameArt",
-   "loadingScreenShowWaitTime",
-   "loadingScreenRocket"
+   "loadingScreen.gameArt.show",
+   "loadingScreen.waitTime.show",
+   "loadingScreen.rocket"
   ]
  }, {
   group: "other",
   label: t("other"),
   items: [
-   "blockTracking"
+   "block.tracking"
   ]
  }, {
   group: "advanced",
   label: t("advanced"),
   items: [
    {
-    pref: "userAgentProfile",
+    pref: "userAgent.profile",
     multiLines: !0,
     onCreated: (setting, $control) => {
      let defaultUserAgent = window.navigator.orgUserAgent || window.navigator.userAgent, $inpCustomUserAgent = CE("input", {
-      id: `bx_setting_inp_${setting.pref}`,
       type: "text",
       placeholder: defaultUserAgent,
       autocomplete: "off",
@@ -5991,18 +6037,18 @@ class SettingsDialog extends NavigationDialog {
   label: t("audio"),
   helpUrl: "https://better-xcloud.github.io/ingame-features/#audio",
   items: [{
-   pref: "audioVolume",
+   pref: "audio.volume",
    onChange: (e, value) => {
     SoundShortcut.setGainNodeVolume(value);
    },
    params: {
-    disabled: !getPref("audioEnableVolumeControl")
+    disabled: !getPref("audio.volume.booster.enabled")
    },
    onCreated: (setting, $elm) => {
     let $range = $elm.querySelector("input[type=range");
     window.addEventListener(BxEvent.SETTINGS_CHANGED, (e) => {
      let { storageKey, settingKey, settingValue } = e;
-     if (storageKey !== "BetterXcloud" || settingKey !== "audioVolume") return;
+     if (storageKey !== "BetterXcloud" || settingKey !== "audio.volume") return;
      $range.value = settingValue, BxEvent.dispatch($range, "input", {
       ignoreOnChange: !0
      });
@@ -6014,37 +6060,37 @@ class SettingsDialog extends NavigationDialog {
   label: t("video"),
   helpUrl: "https://better-xcloud.github.io/ingame-features/#video",
   items: [{
-   pref: "videoPlayerType",
+   pref: "video.player.type",
    onChange: onChangeVideoPlayerType
   }, {
-   pref: "videoMaxFps",
+   pref: "video.maxFps",
    onChange: (e) => {
     limitVideoPlayerFps(parseInt(e.target.value));
    }
   }, {
-   pref: "videoPowerPreference",
+   pref: "video.player.powerPreference",
    onChange: () => {
     let streamPlayer = STATES.currentStream.streamPlayer;
     if (!streamPlayer) return;
     streamPlayer.reloadPlayer(), updateVideoPlayer();
    }
   }, {
-   pref: "videoProcessing",
+   pref: "video.processing",
    onChange: updateVideoPlayer
   }, {
-   pref: "videoRatio",
+   pref: "video.ratio",
    onChange: updateVideoPlayer
   }, {
-   pref: "videoSharpness",
+   pref: "video.processing.sharpness",
    onChange: updateVideoPlayer
   }, {
-   pref: "videoSaturation",
+   pref: "video.saturation",
    onChange: updateVideoPlayer
   }, {
-   pref: "videoContrast",
+   pref: "video.contrast",
    onChange: updateVideoPlayer
   }, {
-   pref: "videoBrightness",
+   pref: "video.brightness",
    onChange: updateVideoPlayer
   }]
  }];
@@ -6053,12 +6099,12 @@ class SettingsDialog extends NavigationDialog {
    group: "device",
    label: t("device"),
    items: [{
-    pref: "deviceVibrationMode",
+    pref: "deviceVibration.mode",
     multiLines: !0,
     unsupported: !STATES.browser.capabilities.deviceVibration,
     onChange: () => StreamSettings.refreshControllerSettings()
    }, {
-    pref: "deviceVibrationIntensity",
+    pref: "deviceVibration.intensity",
     unsupported: !STATES.browser.capabilities.deviceVibration,
     onChange: () => StreamSettings.refreshControllerSettings()
    }]
@@ -6069,13 +6115,13 @@ class SettingsDialog extends NavigationDialog {
    helpUrl: "https://better-xcloud.github.io/ingame-features/#controller",
    items: [
     {
-     pref: "localCoOpEnabled",
+     pref: "localCoOp.enabled",
      onChange: () => {
-      BxExposed.toggleLocalCoOp(getPref("localCoOpEnabled"));
+      BxExposed.toggleLocalCoOp(getPref("localCoOp.enabled"));
      }
     },
     {
-     pref: "controllerPollingRate",
+     pref: "controller.pollingRate",
      onChange: () => StreamSettings.refreshControllerSettings()
     },
     ($parent) => {
@@ -6133,12 +6179,12 @@ class SettingsDialog extends NavigationDialog {
    group: "native-mkb",
    label: t("native-mkb"),
    items: [{
-    pref: "nativeMkbScrollYSensitivity",
+    pref: "nativeMkb.scroll.sensitivityY",
     onChange: (e, value) => {
      NativeMkbHandler.getInstance()?.setVerticalScrollMultiplier(value / 100);
     }
    }, {
-    pref: "nativeMkbScrollXSensitivity",
+    pref: "nativeMkb.scroll.sensitivityX",
     onChange: (e, value) => {
      NativeMkbHandler.getInstance()?.setHorizontalScrollMultiplier(value / 100);
     }
@@ -6151,37 +6197,37 @@ class SettingsDialog extends NavigationDialog {
   helpUrl: "https://better-xcloud.github.io/stream-stats/",
   items: [
    {
-    pref: "statsShowWhenPlaying"
+    pref: "stats.showWhenPlaying"
    },
    {
-    pref: "statsQuickGlance",
+    pref: "stats.quickGlance.enabled",
     onChange: (e) => {
      let streamStats = StreamStats.getInstance();
      e.target.checked ? streamStats.quickGlanceSetup() : streamStats.quickGlanceStop();
     }
    },
    {
-    pref: "statsItems",
+    pref: "stats.items",
     onChange: StreamStats.refreshStyles
    },
    {
-    pref: "statsPosition",
+    pref: "stats.position",
     onChange: StreamStats.refreshStyles
    },
    {
-    pref: "statsTextSize",
+    pref: "stats.textSize",
     onChange: StreamStats.refreshStyles
    },
    {
-    pref: "statsOpacity",
+    pref: "stats.opacity",
     onChange: StreamStats.refreshStyles
    },
    {
-    pref: "statsTransparent",
+    pref: "stats.transparent",
     onChange: StreamStats.refreshStyles
    },
    {
-    pref: "statsConditionalFormatting",
+    pref: "stats.colors",
     onChange: StreamStats.refreshStyles
    }
   ]
@@ -6220,7 +6266,7 @@ class SettingsDialog extends NavigationDialog {
   super();
   BxLogger.info(this.LOG_TAG, "constructor()"), this.renderFullSettings = STATES.supportedRegion && STATES.isSignedIn, this.setupDialog(), this.onMountedCallbacks.push(() => {
    if (onChangeVideoPlayerType(), STATES.userAgent.capabilities.touch) BxEvent.dispatch(window, BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED);
-   let $selectUserAgent = document.querySelector(`#bx_setting_${"userAgentProfile"}`);
+   let $selectUserAgent = document.querySelector(`#bx_setting_${escapeCssSelector("userAgent.profile")}`);
    if ($selectUserAgent) $selectUserAgent.disabled = !0, BxEvent.dispatch($selectUserAgent, "input", {}), $selectUserAgent.disabled = !1;
   });
  }
@@ -6255,7 +6301,7 @@ class SettingsDialog extends NavigationDialog {
   let $child, children = Array.from(this.$tabContents.children);
   for ($child of children)
    if ($child.dataset.tabGroup === $svg.dataset.group) {
-    if ($child.classList.remove("bx-gone"), getPref("uiControllerFriendly")) this.dialogManager.calculateSelectBoxes($child);
+    if ($child.classList.remove("bx-gone"), getPref("ui.controllerFriendly")) this.dialogManager.calculateSelectBoxes($child);
    } else $child.classList.add("bx-gone");
   for (let $child2 of Array.from(this.$tabs.children))
    $child2.classList.remove("bx-active");
@@ -6269,7 +6315,7 @@ class SettingsDialog extends NavigationDialog {
   PatcherCache.getInstance().clear(), this.$btnReload.classList.add("bx-danger"), this.$noteGlobalReload.classList.add("bx-gone"), this.$btnGlobalReload.classList.remove("bx-gone"), this.$btnGlobalReload.classList.add("bx-danger");
  };
  renderServerSetting(setting) {
-  let selectedValue = getPref("serverRegion"), continents = {
+  let selectedValue = getPref("server.region"), continents = {
    "america-north": {
     label: t("continent-north-america")
    },
@@ -6289,7 +6335,7 @@ class SettingsDialog extends NavigationDialog {
     label: t("other")
    }
   }, $control = CE("select", {
-   id: `bx_setting_${setting.pref}`,
+   id: `bx_setting_${escapeCssSelector(setting.pref)}`,
    title: setting.label,
    tabindex: 0
   });
@@ -6324,10 +6370,10 @@ class SettingsDialog extends NavigationDialog {
   if (setting.content) if (typeof setting.content === "function") $control = setting.content.apply(this);
    else $control = setting.content;
   else if (!setting.unsupported) {
-   if (pref === "serverRegion") $control = this.renderServerSetting(setting);
-   else if (pref === "bxLocale") $control = SettingElement.fromPref(pref, STORAGE.Global, async (e) => {
+   if (pref === "server.region") $control = this.renderServerSetting(setting);
+   else if (pref === "bx.locale") $control = SettingElement.fromPref(pref, STORAGE.Global, async (e) => {
      let newLocale = e.target.value;
-     if (getPref("uiControllerFriendly")) {
+     if (getPref("ui.controllerFriendly")) {
       let timeoutId = e.target.timeoutId;
       timeoutId && window.clearTimeout(timeoutId), e.target.timeoutId = window.setTimeout(() => {
        Translations.refreshLocale(newLocale), Translations.updateTranslations();
@@ -6335,7 +6381,7 @@ class SettingsDialog extends NavigationDialog {
      } else Translations.refreshLocale(newLocale), Translations.updateTranslations();
      this.onGlobalSettingChanged(e);
     });
-   else if (pref === "userAgentProfile") $control = SettingElement.fromPref("userAgentProfile", STORAGE.Global, (e) => {
+   else if (pref === "userAgent.profile") $control = SettingElement.fromPref("userAgent.profile", STORAGE.Global, (e) => {
      let value = e.target.value, isCustom = value === "custom", userAgent2 = UserAgent.get(value);
      UserAgent.updateStorage(value);
      let $inp = $control.nextElementSibling;
@@ -6367,7 +6413,7 @@ class SettingsDialog extends NavigationDialog {
    $note,
    multiLines: setting.multiLines
   });
-  $row.htmlFor = `bx_setting_${pref}`, $row.dataset.type = settingTabContent.group, $tabContent.appendChild($row), !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
+  $row.htmlFor = `bx_setting_${escapeCssSelector(pref)}`, $row.dataset.type = settingTabContent.group, $tabContent.appendChild($row), !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
  }
  renderSettingsSection(settingTab, sections) {
   let $tabContent = CE("div", {
@@ -6568,6 +6614,11 @@ class SettingsDialog extends NavigationDialog {
  handleGamepad(button) {
   let handled = !0;
   switch (button) {
+   case 1:
+    let $focusing = document.activeElement;
+    if ($focusing && this.$tabs.contains($focusing)) this.hide();
+    else this.focusActiveTab();
+    break;
    case 4:
    case 5:
     this.focusActiveTab();
@@ -6611,7 +6662,7 @@ class ScreenshotManager {
   let currentStream = STATES.currentStream, streamPlayer = currentStream.streamPlayer, $canvas = this.$canvas;
   if (!streamPlayer || !$canvas) return;
   let $player;
-  if (getPref("screenshotApplyFilters")) $player = streamPlayer.getPlayerElement();
+  if (getPref("screenshot.applyFilters")) $player = streamPlayer.getPlayerElement();
   else $player = streamPlayer.getPlayerElement("default");
   if (!$player || !$player.isConnected) return;
   $player.parentElement.addEventListener("animationend", this.onAnimationEnd, { once: !0 }), $player.parentElement.classList.add("bx-taking-screenshot");
@@ -6638,7 +6689,7 @@ class RendererShortcut {
   }
   $mediaContainer.classList.toggle("bx-gone");
   let isShowing = !$mediaContainer.classList.contains("bx-gone");
-  limitVideoPlayerFps(isShowing ? getPref("videoMaxFps") : 0), BxEvent.dispatch(window, BxEvent.VIDEO_VISIBILITY_CHANGED, { isShowing });
+  limitVideoPlayerFps(isShowing ? getPref("video.maxFps") : 0), BxEvent.dispatch(window, BxEvent.VIDEO_VISIBILITY_CHANGED, { isShowing });
  }
 }
 class TrueAchievements {
@@ -6723,45 +6774,45 @@ class TrueAchievements {
 class ShortcutHandler {
  static runAction(action) {
   switch (action) {
-   case "bx-settings-show":
+   case "bx.settings.show":
     SettingsDialog.getInstance().show();
     break;
-   case "stream-screenshot-capture":
+   case "stream.screenshot.capture":
     ScreenshotManager.getInstance().takeScreenshot();
     break;
-   case "stream-video-toggle":
+   case "stream.video.toggle":
     RendererShortcut.toggleVisibility();
     break;
-   case "stream-stats-toggle":
+   case "stream.stats.toggle":
     StreamStats.getInstance().toggle();
     break;
-   case "stream-microphone-toggle":
+   case "stream.microphone.toggle":
     MicrophoneShortcut.toggle();
     break;
-   case "stream-menu-show":
+   case "stream.menu.show":
     StreamUiShortcut.showHideStreamMenu();
     break;
-   case "stream-sound-toggle":
+   case "stream.sound.toggle":
     SoundShortcut.muteUnmute();
     break;
-   case "stream-volume-inc":
+   case "stream.volume.inc":
     SoundShortcut.adjustGainNodeVolume(10);
     break;
-   case "stream-volume-dec":
+   case "stream.volume.dec":
     SoundShortcut.adjustGainNodeVolume(-10);
     break;
-   case "device-brightness-inc":
-   case "device-brightness-dec":
-   case "device-sound-toggle":
-   case "device-volume-inc":
-   case "device-volume-dec":
+   case "device.brightness.inc":
+   case "device.brightness.dec":
+   case "device.sound.toggle":
+   case "device.volume.inc":
+   case "device.volume.dec":
     AppInterface && AppInterface.runShortcut && AppInterface.runShortcut(action);
     break;
-   case "mkb-toggle":
+   case "mkb.toggle":
     if (STATES.currentStream.titleInfo?.details.hasMkbSupport) NativeMkbHandler.getInstance()?.toggle();
     else EmulatedMkbHandler.getInstance()?.toggle();
     break;
-   case "ta-open":
+   case "ta.open":
     TrueAchievements.getInstance().open(!1);
     break;
   }
@@ -6827,10 +6878,10 @@ var BxExposed = {
   titleInfo = deepClone(titleInfo);
   let supportedInputTypes = titleInfo.details.supportedInputTypes;
   if (BX_FLAGS.ForceNativeMkbTitles?.includes(titleInfo.details.productId)) supportedInputTypes.push("MKB");
-  if (getPref("nativeMkbMode") === "off") supportedInputTypes = supportedInputTypes.filter((i) => i !== "MKB");
+  if (getPref("nativeMkb.mode") === "off") supportedInputTypes = supportedInputTypes.filter((i) => i !== "MKB");
   if (titleInfo.details.hasMkbSupport = supportedInputTypes.includes("MKB"), STATES.userAgent.capabilities.touch) {
-   let touchControllerAvailability = getPref("touchControllerMode");
-   if (touchControllerAvailability !== "off" && getPref("touchControllerAutoOff")) {
+   let touchControllerAvailability = getPref("touchController.mode");
+   if (touchControllerAvailability !== "off" && getPref("touchController.autoOff")) {
     let gamepads = window.navigator.getGamepads(), gamepadFound = !1;
     for (let gamepad of gamepads)
      if (gamepad && gamepad.connected) {
@@ -6901,7 +6952,7 @@ function localRedirect(path) {
 }
 window.localRedirect = localRedirect;
 function getPreferredServerRegion(shortName = !1) {
- let preferredRegion = getPref("serverRegion"), serverRegions = STATES.serverRegions;
+ let preferredRegion = getPref("server.region"), serverRegions = STATES.serverRegions;
  if (preferredRegion in serverRegions) if (shortName && serverRegions[preferredRegion].shortName) return serverRegions[preferredRegion].shortName;
   else return preferredRegion;
  for (let regionName in serverRegions) {
@@ -6933,11 +6984,11 @@ class HeaderSection {
    label: "???",
    style: 16 | 32 | 64 | 256,
    onClick: (e) => SettingsDialog.getInstance().show()
-  }), this.$buttonsWrapper = CE("div", {}, getPref("xhomeEnabled") ? this.$btnRemotePlay : null, this.$btnSettings);
+  }), this.$buttonsWrapper = CE("div", {}, getPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
  }
  injectSettingsButton($parent) {
   if (!$parent) return;
-  let PREF_LATEST_VERSION = getPref("versionLatest"), $btnSettings = this.$btnSettings;
+  let PREF_LATEST_VERSION = getPref("version.latest"), $btnSettings = this.$btnSettings;
   if (isElementVisible(this.$buttonsWrapper)) return;
   if ($btnSettings.querySelector("span").textContent = getPreferredServerRegion(!0) || t("better-xcloud"), !SCRIPT_VERSION.includes("beta") && PREF_LATEST_VERSION && PREF_LATEST_VERSION !== SCRIPT_VERSION) $btnSettings.setAttribute("data-update-available", "true");
   $parent.appendChild(this.$buttonsWrapper);
@@ -6977,10 +7028,10 @@ class RemotePlayDialog extends NavigationDialog {
   BxLogger.info(this.LOG_TAG, "constructor()"), this.setupDialog();
  }
  setupDialog() {
-  let $fragment = CE("div", { class: "bx-remote-play-container" }), $settingNote = CE("p", {}), currentResolution = getPref("xhomeStreamResolution"), $resolutions = CE("select", {}, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
+  let $fragment = CE("div", { class: "bx-remote-play-container" }), $settingNote = CE("p", {}), currentResolution = getPref("xhome.video.resolution"), $resolutions = CE("select", {}, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
   $resolutions = BxSelectElement.create($resolutions), $resolutions.addEventListener("input", (e) => {
    let value = e.target.value;
-   $settingNote.textContent = value === "1080p" ? "✅ " + t("can-stream-xbox-360-games") : "❌ " + t("cant-stream-xbox-360-games"), setPref("xhomeStreamResolution", value);
+   $settingNote.textContent = value === "1080p" ? "✅ " + t("can-stream-xbox-360-games") : "❌ " + t("cant-stream-xbox-360-games"), setPref("xhome.video.resolution", value);
   }), $resolutions.value = currentResolution, BxEvent.dispatch($resolutions, "input", {
    manualTrigger: !0
   });
@@ -7028,7 +7079,7 @@ class RemotePlayDialog extends NavigationDialog {
 class RemotePlayManager {
  static instance;
  static getInstance() {
-  if (typeof RemotePlayManager.instance === "undefined") if (getPref("xhomeEnabled")) RemotePlayManager.instance = new RemotePlayManager;
+  if (typeof RemotePlayManager.instance === "undefined") if (getPref("xhome.enabled")) RemotePlayManager.instance = new RemotePlayManager;
    else RemotePlayManager.instance = null;
   return RemotePlayManager.instance;
  }
@@ -7118,7 +7169,7 @@ class RemotePlayManager {
   callback();
  }
  play(serverId, resolution) {
-  if (resolution) setPref("xhomeStreamResolution", resolution);
+  if (resolution) setPref("xhome.video.resolution", resolution);
   STATES.remotePlay.config = {
    serverId
   }, window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config, localRedirect("/launch/fortnite/BT5P2X999VH2#remote-play");
@@ -7132,14 +7183,10 @@ class RemotePlayManager {
    Toast.show(t("no-consoles-found"), "", { instant: !0 });
    return;
   }
-  if (AppInterface && AppInterface.showRemotePlayDialog) {
-   AppInterface.showRemotePlayDialog(JSON.stringify(this.consoles)), document.activeElement.blur();
-   return;
-  }
   RemotePlayDialog.getInstance().show();
  }
  static detect() {
-  if (!getPref("xhomeEnabled")) return;
+  if (!getPref("xhome.enabled")) return;
   if (STATES.remotePlay.isPlaying = window.location.pathname.includes("/launch/") && window.location.hash.startsWith("#remote-play"), STATES.remotePlay?.isPlaying) window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config, window.history.replaceState({ origin: "better-xcloud" }, "", "https://www.xbox.com/" + location.pathname.substring(1, 6) + "/play");
   else window.BX_REMOTE_PLAY_CONFIG = null;
  }
@@ -7221,7 +7268,7 @@ class XhomeInterceptor {
  }
  static async handleInputConfigs(request, opts) {
   let response = await NATIVE_FETCH(request);
-  if (getPref("touchControllerMode") !== "all") return response;
+  if (getPref("touchController.mode") !== "all") return response;
   let obj = await response.clone().json(), xboxTitleId = JSON.parse(opts.body).titleIds[0];
   TouchController.setXboxTitleId(xboxTitleId);
   let inputConfigs = obj[0], hasTouchSupport = inputConfigs.supportedTabs.length > 0;
@@ -7261,12 +7308,15 @@ class XhomeInterceptor {
    headers[pair[0]] = pair[1];
   headers.authorization = `Bearer ${RemotePlayManager.getInstance().getXhomeToken()}`;
   let deviceInfo = XhomeInterceptor.BASE_DEVICE_INFO;
-  switch (getPref("xhomeStreamResolution")) {
+  switch (getPref("xhome.video.resolution")) {
    case "1080p-hq":
     deviceInfo.dev.os.name = "tizen";
     break;
    case "720p":
     deviceInfo.dev.os.name = "android";
+    break;
+   default:
+    deviceInfo.dev.os.name = "windows";
     break;
   }
   headers["x-ms-device-info"] = JSON.stringify(deviceInfo);
@@ -7305,7 +7355,7 @@ class LoadingScreen {
    let $bgStyle = CE("style");
    document.documentElement.appendChild($bgStyle), LoadingScreen.$bgStyle = $bgStyle;
   }
-  if (LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl), getPref("loadingScreenRocket") === "hide") LoadingScreen.hideRocket();
+  if (LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl), getPref("loadingScreen.rocket") === "hide") LoadingScreen.hideRocket();
  }
  static hideRocket() {
   let $bgStyle = LoadingScreen.$bgStyle;
@@ -7320,7 +7370,7 @@ class LoadingScreen {
   }, bg.src = imageUrl;
  }
  static setupWaitTime(waitTime) {
-  if (getPref("loadingScreenRocket") === "hide-queue") LoadingScreen.hideRocket();
+  if (getPref("loadingScreen.rocket") === "hide-queue") LoadingScreen.hideRocket();
   let secondsLeft = waitTime, $countDown, $estimated;
   LoadingScreen.orgWebTitle = document.title;
   let endDate = new Date, timeZoneOffsetSeconds = endDate.getTimezoneOffset() * 60;
@@ -7335,7 +7385,7 @@ class LoadingScreen {
   }, 1000);
  }
  static hide() {
-  if (LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle), LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add("bx-gone"), getPref("loadingScreenGameArt") && LoadingScreen.$bgStyle) {
+  if (LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle), LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add("bx-gone"), getPref("loadingScreen.gameArt.show") && LoadingScreen.$bgStyle) {
    let $rocketBg = document.querySelector('#game-stream rect[width="800"]');
    $rocketBg && $rocketBg.addEventListener("transitionend", (e) => {
     LoadingScreen.$bgStyle.textContent += "#game-stream{background:#000 !important}";
@@ -7697,7 +7747,7 @@ class XcloudInterceptor {
   }
  };
  static async handleLogin(request, init) {
-  let bypassServer = getPref("serverBypassRestriction");
+  let bypassServer = getPref("server.bypassRestriction");
   if (bypassServer !== "off") {
    let ip = BypassServerIps[bypassServer];
    ip && request.headers.set("X-Forwarded-For", ip);
@@ -7725,7 +7775,7 @@ class XcloudInterceptor {
  }
  static async handlePlay(request, init) {
   BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
-  let PREF_STREAM_TARGET_RESOLUTION = getPref("streamResolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("streamLocale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
+  let PREF_STREAM_TARGET_RESOLUTION = getPref("stream.video.resolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("stream.locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
   for (let regionName in STATES.serverRegions) {
    let region = STATES.serverRegions[regionName];
    if (parsedUrl.origin == region.baseUri) {
@@ -7763,7 +7813,7 @@ class XcloudInterceptor {
  }
  static async handleWaitTime(request, init) {
   let response = await NATIVE_FETCH(request, init);
-  if (getPref("loadingScreenShowWaitTime")) {
+  if (getPref("loadingScreen.waitTime.show")) {
    let json = await response.clone().json();
    if (json.estimatedAllocationTimeInSeconds > 0) LoadingScreen.setupWaitTime(json.estimatedTotalWaitTimeInSeconds);
   }
@@ -7771,7 +7821,7 @@ class XcloudInterceptor {
  }
  static async handleConfiguration(request, init) {
   if (request.method !== "GET") return NATIVE_FETCH(request, init);
-  if (getPref("touchControllerMode") === "all") if (STATES.currentStream.titleInfo?.details.hasTouchSupport) TouchController.disable();
+  if (getPref("touchController.mode") === "all") if (STATES.currentStream.titleInfo?.details.hasTouchSupport) TouchController.disable();
    else TouchController.enable();
   let response = await NATIVE_FETCH(request, init), text = await response.clone().text();
   if (!text.length) return response;
@@ -7779,14 +7829,14 @@ class XcloudInterceptor {
   let obj = JSON.parse(text), overrides = JSON.parse(obj.clientStreamingConfigOverrides || "{}") || {};
   overrides.inputConfiguration = overrides.inputConfiguration || {}, overrides.inputConfiguration.enableVibration = !0;
   let overrideMkb = null;
-  if (getPref("nativeMkbMode") === "on" || STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId)) overrideMkb = !0;
-  if (getPref("nativeMkbMode") === "off") overrideMkb = !1;
+  if (getPref("nativeMkb.mode") === "on" || STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId)) overrideMkb = !0;
+  if (getPref("nativeMkb.mode") === "off") overrideMkb = !1;
   if (overrideMkb !== null) overrides.inputConfiguration = Object.assign(overrides.inputConfiguration, {
     enableMouseInput: overrideMkb,
     enableKeyboardInput: overrideMkb
    });
   if (TouchController.isEnabled()) overrides.inputConfiguration.enableTouchInput = !0, overrides.inputConfiguration.maxTouchPoints = 10;
-  if (getPref("audioMicOnPlaying")) overrides.audioConfiguration = overrides.audioConfiguration || {}, overrides.audioConfiguration.enableMicrophone = !0;
+  if (getPref("audio.mic.onPlaying")) overrides.audioConfiguration = overrides.audioConfiguration || {}, overrides.audioConfiguration.enableMicrophone = !0;
   return obj.clientStreamingConfigOverrides = JSON.stringify(overrides), response.json = () => Promise.resolve(obj), response.text = () => Promise.resolve(JSON.stringify(obj)), response;
  }
  static async handle(request, init) {
@@ -7846,21 +7896,21 @@ async function patchIceCandidates(request, consoleAddrs) {
  let response = await NATIVE_FETCH(request), text = await response.clone().text();
  if (!text.length) return response;
  let options = {
-  preferIpv6Server: getPref("serverPreferIpv6"),
+  preferIpv6Server: getPref("server.ipv6.prefer"),
   consoleAddrs
  }, obj = JSON.parse(text), exchangeResponse = JSON.parse(obj.exchangeResponse);
  return exchangeResponse = updateIceCandidates(exchangeResponse, options), obj.exchangeResponse = JSON.stringify(exchangeResponse), response.json = () => Promise.resolve(obj), response.text = () => Promise.resolve(JSON.stringify(obj)), response;
 }
 function interceptHttpRequests() {
  let BLOCKED_URLS = [];
- if (getPref("blockTracking")) clearAllLogs(), BLOCKED_URLS = BLOCKED_URLS.concat([
+ if (getPref("block.tracking")) clearAllLogs(), BLOCKED_URLS = BLOCKED_URLS.concat([
    "https://arc.msn.com",
    "https://browser.events.data.microsoft.com",
    "https://dc.services.visualstudio.com",
    "https://2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io",
    "https://mscom.demdex.net"
   ]);
- if (getPref("blockSocialFeatures")) BLOCKED_URLS = BLOCKED_URLS.concat([
+ if (getPref("block.social")) BLOCKED_URLS = BLOCKED_URLS.concat([
    "https://peoplehub.xboxlive.com/users/me/people/social",
    "https://peoplehub.xboxlive.com/users/me/people/recommendations",
    "https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox"
@@ -7939,19 +7989,19 @@ function interceptHttpRequests() {
  };
 }
 function addCss() {
- let css = ':root{--bx-title-font:Bahnschrift,Arial,Helvetica,sans-serif;--bx-title-font-semibold:Bahnschrift Semibold,Arial,Helvetica,sans-serif;--bx-normal-font:"Segoe UI",Arial,Helvetica,sans-serif;--bx-monospaced-font:Consolas,"Courier New",Courier,monospace;--bx-promptfont-font:promptfont;--bx-button-height:40px;--bx-default-button-color:#2d3036;--bx-default-button-rgb:45,48,54;--bx-default-button-hover-color:#515863;--bx-default-button-hover-rgb:81,88,99;--bx-default-button-active-color:#222428;--bx-default-button-active-rgb:34,36,40;--bx-default-button-disabled-color:#8e8e8e;--bx-default-button-disabled-rgb:142,142,142;--bx-primary-button-color:#008746;--bx-primary-button-rgb:0,135,70;--bx-primary-button-hover-color:#04b358;--bx-primary-button-hover-rgb:4,179,88;--bx-primary-button-active-color:#044e2a;--bx-primary-button-active-rgb:4,78,42;--bx-primary-button-disabled-color:#448262;--bx-primary-button-disabled-rgb:68,130,98;--bx-warning-button-color:#c16e04;--bx-warning-button-rgb:193,110,4;--bx-warning-button-hover-color:#fa9005;--bx-warning-button-hover-rgb:250,144,5;--bx-warning-button-active-color:#965603;--bx-warning-button-active-rgb:150,86,3;--bx-warning-button-disabled-color:#a2816c;--bx-warning-button-disabled-rgb:162,129,108;--bx-danger-button-color:#c10404;--bx-danger-button-rgb:193,4,4;--bx-danger-button-hover-color:#e61d1d;--bx-danger-button-hover-rgb:230,29,29;--bx-danger-button-active-color:#a26c6c;--bx-danger-button-active-rgb:162,108,108;--bx-danger-button-disabled-color:#df5656;--bx-danger-button-disabled-rgb:223,86,86;--bx-fullscreen-text-z-index:9999;--bx-toast-z-index:6000;--bx-key-binding-dialog-z-index:5010;--bx-key-binding-dialog-overlay-z-index:5000;--bx-stats-bar-z-index:4010;--bx-navigation-dialog-z-index:3010;--bx-navigation-dialog-overlay-z-index:3000;--bx-mkb-pointer-lock-msg-z-index:2000;--bx-game-bar-z-index:1000;--bx-screenshot-animation-z-index:200;--bx-wait-time-box-z-index:100}@font-face{font-family:\'promptfont\';src:url("https://redphx.github.io/better-xcloud/fonts/promptfont.otf")}div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]){opacity:0;pointer-events:none !important;position:absolute;top:-9999px;left:-9999px}@media screen and (max-width:640px){header a[href="/play"]{display:none}}.bx-full-width{width:100% !important}.bx-full-height{height:100% !important}.bx-no-scroll{overflow:hidden !important}.bx-hide-scroll-bar{scrollbar-width:none}.bx-hide-scroll-bar::-webkit-scrollbar{display:none}.bx-gone{display:none !important}.bx-offscreen{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}.bx-hidden{visibility:hidden !important}.bx-invisible{opacity:0}.bx-unclickable{pointer-events:none}.bx-pixel{width:1px !important;height:1px !important}.bx-no-margin{margin:0 !important}.bx-no-padding{padding:0 !important}.bx-prompt{font-family:var(--bx-promptfont-font) !important}.bx-line-through{text-decoration:line-through !important}.bx-normal-case{text-transform:none !important}.bx-normal-link{text-transform:none !important;text-align:left !important;font-weight:400 !important;font-family:var(--bx-normal-font) !important}select[multiple]{overflow:auto}#headerArea,#uhfSkipToMain,.uhf-footer{display:none}div[class*=NotFocusedDialog]{position:absolute !important;top:-9999px !important;left:-9999px !important;width:0 !important;height:0 !important}#game-stream video:not([src]){visibility:hidden}div[class*=SupportedInputsBadge]:not(:has(:nth-child(2))),div[class*=SupportedInputsBadge] svg:first-of-type{display:none}.bx-game-tile-wait-time{position:absolute;top:0;left:0;z-index:1;background:rgba(0,0,0,0.549);display:flex;border-radius:4px 0 4px 0;align-items:center;padding:4px 8px}.bx-game-tile-wait-time svg{width:14px;height:16px;margin-right:2px}.bx-game-tile-wait-time span{display:inline-block;height:16px;line-height:16px;font-size:12px;font-weight:bold;margin-left:2px}.bx-fullscreen-text{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);z-index:var(--bx-fullscreen-text-z-index);line-height:100vh;color:#fff;text-align:center;font-weight:400;font-family:var(--bx-normal-font);font-size:1.3rem;user-select:none;-webkit-user-select:none}#root section[class*=DeviceCodePage-module__page]{margin-left:20px !important;margin-right:20px !important;margin-top:20px !important;max-width:800px !important}#root div[class*=DeviceCodePage-module__back]{display:none}.bx-blink-me{animation:bx-blinker 1s linear infinite}@-moz-keyframes bx-blinker{100%{opacity:0}}@-webkit-keyframes bx-blinker{100%{opacity:0}}@-o-keyframes bx-blinker{100%{opacity:0}}@keyframes bx-blinker{100%{opacity:0}}.bx-button{--button-rgb:var(--bx-default-button-rgb);--button-hover-rgb:var(--bx-default-button-hover-rgb);--button-active-rgb:var(--bx-default-button-active-rgb);--button-disabled-rgb:var(--bx-default-button-disabled-rgb);background-color:rgb(var(--button-rgb));user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;border:none;font-weight:400;height:var(--bx-button-height);border-radius:4px;padding:0 8px;text-transform:uppercase;cursor:pointer;overflow:hidden}.bx-button:not([disabled]):active{background-color:rgb(var(--button-active-rgb))}.bx-button:focus{outline:none !important}.bx-button:not([disabled]):not(:active):hover,.bx-button:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button:disabled{cursor:default;background-color:rgb(var(--button-disabled-rgb))}.bx-button.bx-ghost{background-color:transparent}.bx-button.bx-ghost:not([disabled]):not(:active):hover,.bx-button.bx-ghost:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button.bx-primary{--button-rgb:var(--bx-primary-button-rgb)}.bx-button.bx-primary:not([disabled]):active{--button-active-rgb:var(--bx-primary-button-active-rgb)}.bx-button.bx-primary:not([disabled]):not(:active):hover,.bx-button.bx-primary:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-primary-button-hover-rgb)}.bx-button.bx-primary:disabled{--button-disabled-rgb:var(--bx-primary-button-disabled-rgb)}.bx-button.bx-warning{--button-rgb:var(--bx-warning-button-rgb)}.bx-button.bx-warning:not([disabled]):active{--button-active-rgb:var(--bx-warning-button-active-rgb)}.bx-button.bx-warning:not([disabled]):not(:active):hover,.bx-button.bx-warning:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-warning-button-hover-rgb)}.bx-button.bx-warning:disabled{--button-disabled-rgb:var(--bx-warning-button-disabled-rgb)}.bx-button.bx-danger{--button-rgb:var(--bx-danger-button-rgb)}.bx-button.bx-danger:not([disabled]):active{--button-active-rgb:var(--bx-danger-button-active-rgb)}.bx-button.bx-danger:not([disabled]):not(:active):hover,.bx-button.bx-danger:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-danger-button-hover-rgb)}.bx-button.bx-danger:disabled{--button-disabled-rgb:var(--bx-danger-button-disabled-rgb)}.bx-button.bx-frosted{--button-alpha:.2;background-color:rgba(var(--button-rgb), var(--button-alpha));backdrop-filter:blur(4px) brightness(1.5)}.bx-button.bx-frosted:not([disabled]):not(:active):hover,.bx-button.bx-frosted:not([disabled]):not(:active).bx-focusable:focus{background-color:rgba(var(--button-hover-rgb), var(--button-alpha))}.bx-button.bx-drop-shadow{box-shadow:0 0 4px rgba(0,0,0,0.502)}.bx-button.bx-tall{height:calc(var(--bx-button-height) * 1.5) !important}.bx-button.bx-circular{border-radius:var(--bx-button-height);width:var(--bx-button-height);height:var(--bx-button-height)}.bx-button svg{display:inline-block;width:16px;height:var(--bx-button-height)}.bx-button span{display:inline-block;line-height:var(--bx-button-height);vertical-align:middle;color:#fff;overflow:hidden;white-space:nowrap}.bx-button span:not(:only-child){margin-left:10px}.bx-button.bx-button-multi-lines{height:auto;text-align:left;padding:10px 0}.bx-button.bx-button-multi-lines span{line-height:unset;display:block}.bx-button.bx-button-multi-lines span:last-of-type{text-transform:none;font-weight:normal;font-family:"Segoe Sans Variable Text";font-size:12px;margin-top:4px}.bx-focusable{position:relative;overflow:visible}.bx-focusable::after{border:2px solid transparent;border-radius:10px}.bx-focusable:focus::after{content:\'\';border-color:#fff;position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px}html[data-active-input=touch] .bx-focusable:focus::after,html[data-active-input=mouse] .bx-focusable:focus::after{border-color:transparent !important}.bx-focusable.bx-circular::after{border-radius:var(--bx-button-height)}a.bx-button{display:inline-block}a.bx-button.bx-full-width{text-align:center}button.bx-inactive{pointer-events:none;opacity:.2;background:transparent !important}.bx-header-remote-play-button{height:auto;margin-right:8px !important}.bx-header-remote-play-button svg{width:24px;height:24px}.bx-header-settings-button{line-height:30px;font-size:14px;text-transform:uppercase;position:relative}.bx-header-settings-button[data-update-available]::before{content:\'🌟\' !important;line-height:var(--bx-button-height);display:inline-block;margin-left:4px}.bx-key-binding-dialog-overlay{position:fixed;inset:0;z-index:var(--bx-key-binding-dialog-overlay-z-index);background:#000;opacity:50%}.bx-key-binding-dialog{display:flex;flex-flow:column;max-height:90vh;position:fixed;top:50%;left:50%;margin-right:-50%;transform:translate(-50%,-50%);min-width:420px;padding:20px;border-radius:8px;z-index:var(--bx-key-binding-dialog-z-index);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-normal-font);box-shadow:0 0 6px #000;user-select:none;-webkit-user-select:none}.bx-key-binding-dialog *:focus{outline:none !important}.bx-key-binding-dialog h2{margin-bottom:12px;color:#fff;display:block;font-family:var(--bx-title-font);font-size:32px;font-weight:400;line-height:var(--bx-button-height)}.bx-key-binding-dialog > div{overflow:auto;padding:2px 0}.bx-key-binding-dialog > button{padding:8px 32px;margin:10px auto 0;border:none;border-radius:4px;display:block;background-color:#2d3036;text-align:center;color:#fff;text-transform:uppercase;font-family:var(--bx-title-font);font-weight:400;line-height:18px;font-size:14px}@media (hover:hover){.bx-key-binding-dialog > button:hover{background-color:#515863}}.bx-key-binding-dialog > button:focus{background-color:#515863}.bx-key-binding-dialog ul{margin-bottom:1rem}.bx-key-binding-dialog ul li{display:none}.bx-key-binding-dialog ul[data-flags*="[1]"] > li[data-flag="1"],.bx-key-binding-dialog ul[data-flags*="[2]"] > li[data-flag="2"],.bx-key-binding-dialog ul[data-flags*="[4]"] > li[data-flag="4"],.bx-key-binding-dialog ul[data-flags*="[8]"] > li[data-flag="8"]{display:list-item}@media screen and (max-width:450px){.bx-key-binding-dialog{min-width:100%}}.bx-navigation-dialog{position:absolute;z-index:var(--bx-navigation-dialog-z-index);font-family:var(--bx-title-font)}.bx-navigation-dialog *:focus{outline:none !important}.bx-navigation-dialog select:disabled{-webkit-appearance:none;text-align-last:right;text-align:right;color:#fff;background:#131416;border:none;border-radius:4px;padding:0 5px}.bx-navigation-dialog-overlay{position:fixed;background:rgba(11,11,11,0.89);top:0;left:0;right:0;bottom:0;z-index:var(--bx-navigation-dialog-overlay-z-index)}.bx-navigation-dialog-overlay[data-is-playing="true"]{background:transparent}.bx-centered-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:450px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:20px;max-height:95vh;flex-direction:column;overflow:hidden;display:flex;flex-direction:column}.bx-centered-dialog .bx-dialog-title{display:flex;flex-direction:row;align-items:center;margin-bottom:10px}.bx-centered-dialog .bx-dialog-title p{padding:0;margin:0;flex:1;font-size:1.2rem;font-weight:bold}.bx-centered-dialog .bx-dialog-title button{flex-shrink:0}.bx-centered-dialog .bx-dialog-content{flex:1;overflow:auto;overflow-x:hidden}.bx-centered-dialog .bx-dialog-preset-tools{display:flex;margin-bottom:12px;gap:6px}.bx-centered-dialog .bx-dialog-preset-tools select{flex:1}.bx-centered-dialog input,.bx-settings-dialog input{accent-color:var(--bx-primary-button-color)}.bx-centered-dialog input:focus,.bx-settings-dialog input:focus{accent-color:var(--bx-danger-button-color)}.bx-centered-dialog select:disabled,.bx-settings-dialog select:disabled{-webkit-appearance:none;background:transparent;text-align-last:right;border:none;color:#fff}.bx-centered-dialog select option:disabled,.bx-settings-dialog select option:disabled{display:none}.bx-centered-dialog input[type=checkbox]:focus,.bx-settings-dialog input[type=checkbox]:focus,.bx-centered-dialog select:focus,.bx-settings-dialog select:focus{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}.bx-centered-dialog a,.bx-settings-dialog a{color:#1c9d1c;text-decoration:none}.bx-centered-dialog a:hover,.bx-settings-dialog a:hover,.bx-centered-dialog a:focus,.bx-settings-dialog a:focus{color:#5dc21e}.bx-centered-dialog label,.bx-settings-dialog label{margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-note{margin-top:10px;font-size:14px;text-align:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt{flex-shrink:0;font-size:32px;margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt::first-letter{letter-spacing:6px}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions{flex:1;position:relative}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select{width:100%;height:100%;min-height:38px;display:block}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select:first-of-type{position:absolute;top:0;left:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select:last-of-type{opacity:0;z-index:calc(var(--bx-settings-z-index) + 1)}.bx-controller-shortcuts-manager-container select:disabled{text-align:left;text-align-last:left}.bx-keyboard-shortcuts-manager-container{display:flex;flex-direction:column;gap:16px}.bx-keyboard-shortcuts-manager-container fieldset{background:#2a2a2a;border:1px solid #2a2a2a;border-radius:4px;padding:4px}.bx-keyboard-shortcuts-manager-container legend{width:auto;padding:4px 8px;margin:0 4px 4px;background:#004f87;box-shadow:0 2px 0 #071e3d;border-radius:4px;font-size:14px;font-weight:bold;text-transform:uppercase}.bx-keyboard-shortcuts-manager-container .bx-settings-row{background:none}.bx-settings-dialog{display:flex;position:fixed;top:0;right:0;bottom:0;opacity:.98;user-select:none;-webkit-user-select:none}.bx-settings-dialog .bx-focusable::after{border-radius:4px}.bx-settings-dialog .bx-focusable:focus::after{top:0;left:0;right:0;bottom:0}.bx-settings-dialog .bx-settings-reload-note{font-size:.8rem;display:block;padding:8px;font-style:italic;font-weight:normal;height:var(--bx-button-height)}.bx-settings-tabs-container{position:fixed;width:48px;max-height:100vh;display:flex;flex-direction:column}.bx-settings-tabs-container > div:last-of-type{display:flex;flex-direction:column;align-items:end}.bx-settings-tabs-container > div:last-of-type button{flex-shrink:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-top:8px;height:unset;padding:8px 10px}.bx-settings-tabs-container > div:last-of-type button svg{width:16px;height:16px}.bx-settings-tabs{display:flex;flex-direction:column;border-radius:0 0 0 8px;box-shadow:0 0 6px #000;overflow:overlay;flex:1}.bx-settings-tabs svg{width:24px;height:24px;padding:10px;flex-shrink:0;box-sizing:content-box;background:#131313;cursor:pointer;border-left:4px solid #1e1e1e}.bx-settings-tabs svg.bx-active{background:#222;border-color:#008746}.bx-settings-tabs svg:not(.bx-active):hover{background:#2f2f2f;border-color:#484848}.bx-settings-tabs svg:focus{border-color:#fff}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]{background:var(--bx-danger-button-color) !important}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]:hover{background:var(--bx-danger-button-hover-color) !important}.bx-settings-tab-contents{flex-direction:column;padding:10px;margin-left:48px;width:450px;max-width:calc(100vw - tabsWidth);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-title-font);text-align:center;box-shadow:0 0 6px #000;overflow:overlay;z-index:1}.bx-settings-tab-contents > div[data-tab-group=mkb]{display:flex;flex-direction:column;height:100%;overflow:hidden}.bx-settings-tab-contents .bx-top-buttons{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}.bx-settings-tab-contents .bx-top-buttons .bx-button{display:block}.bx-settings-tab-contents h2{margin:16px 0 8px 0;display:flex;align-items:center}.bx-settings-tab-contents h2:first-of-type{margin-top:0}.bx-settings-tab-contents h2 span{display:inline-block;font-size:20px;font-weight:bold;text-align:left;flex:1;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-height:var(--bx-button-height);align-content:center}@media (max-width:500px){.bx-settings-tab-contents{width:calc(100vw - 48px)}}.bx-settings-row{display:flex;gap:10px;padding:16px 10px;margin:0;background:#2a2a2a;border-bottom:1px solid #343434}.bx-settings-row:hover,.bx-settings-row:focus-within{background-color:#242424}.bx-settings-row:not(:has(> input[type=checkbox])){flex-wrap:wrap}.bx-settings-row > span.bx-settings-label{font-size:14px;display:block;text-align:left;align-self:center;margin-bottom:0 !important;flex:1}.bx-settings-row > span.bx-settings-label + *{margin:0 0 0 auto}.bx-settings-row[data-multi-lines="true"]{flex-direction:column}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label{align-self:start}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label + *{margin:unset}.bx-settings-dialog-note{display:block;color:#afafb0;font-size:12px;font-weight:lighter;font-style:italic}.bx-settings-dialog-note:not(:has(a)){margin-top:4px}.bx-settings-dialog-note a{display:inline-block;padding:4px}.bx-settings-custom-user-agent{display:block;width:100%;padding:6px}.bx-donation-link{display:block;text-align:center;text-decoration:none;height:20px;line-height:20px;font-size:14px;margin-top:10px;margin-bottom:10px}.bx-debug-info button{margin-top:10px}.bx-debug-info pre{margin-top:10px;cursor:copy;color:#fff;padding:8px;border:1px solid #2d2d2d;background:#212121;white-space:break-spaces;text-align:left}.bx-debug-info pre:hover{background:#272727}.bx-settings-app-version{margin-top:10px;text-align:center;color:#747474;font-size:12px}.bx-note-unsupported{display:block;font-size:12px;font-style:italic;font-weight:normal;color:#828282}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row){border-top-left-radius:6px;border-top-right-radius:6px}.bx-settings-tab-contents > div .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-radius:6px}.bx-suggest-toggler{text-align:left;display:flex;border-radius:4px;overflow:hidden;background:#003861}.bx-suggest-toggler label{flex:1;padding:10px;background:#004f87}.bx-suggest-toggler span{display:inline-block;align-self:center;padding:10px;width:40px;text-align:center}.bx-suggest-toggler:hover,.bx-suggest-toggler:focus{cursor:pointer;background:#005da1}.bx-suggest-toggler:hover label,.bx-suggest-toggler:focus label{background:#006fbe}.bx-suggest-toggler[bx-open] span{transform:rotate(90deg)}.bx-suggest-toggler[bx-open]+ .bx-suggest-box{display:block}.bx-suggest-box{display:none}.bx-suggest-wrapper{display:flex;flex-direction:column;gap:10px;margin:10px}.bx-suggest-note{font-size:11px;color:#8c8c8c;font-style:italic;font-weight:100}.bx-suggest-link{font-size:14px;display:inline-block;margin-top:4px;padding:4px}.bx-suggest-row{display:flex;flex-direction:row;gap:10px}.bx-suggest-row label{flex:1;overflow:overlay;border-radius:4px}.bx-suggest-row label .bx-suggest-label{background:#323232;padding:4px 10px;font-size:12px;text-align:left}.bx-suggest-row label .bx-suggest-value{padding:6px;font-size:14px}.bx-suggest-row label .bx-suggest-value.bx-suggest-change{background-color:var(--bx-warning-color)}.bx-suggest-row.bx-suggest-ok input{visibility:hidden}.bx-suggest-row.bx-suggest-ok .bx-suggest-label{background-color:#008114}.bx-suggest-row.bx-suggest-ok .bx-suggest-value{background-color:#13a72a}.bx-suggest-row.bx-suggest-change .bx-suggest-label{background-color:#a65e08}.bx-suggest-row.bx-suggest-change .bx-suggest-value{background-color:#d57f18}.bx-suggest-row.bx-suggest-change:hover label{cursor:pointer}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-label{background-color:#995707}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-value{background-color:#bd7115}.bx-suggest-row.bx-suggest-change input:not(:checked) + label{opacity:.5}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-label{background-color:#2a2a2a}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-value{background-color:#393939}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label{opacity:1}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-label{background-color:#202020}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-value{background-color:#303030}.bx-sub-content-box{background:#161616;padding:10px;box-shadow:0 0 12px #0f0f0f inset;border-radius:10px}.bx-settings-row .bx-sub-content-box{background:#202020;padding:12px;box-shadow:0 0 4px #000 inset;border-radius:6px}.bx-controller-extra-settings[data-has-gamepad=true] > :first-child{display:none}.bx-controller-extra-settings[data-has-gamepad=true] > :last-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :first-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :last-child{display:none}.bx-controller-extra-settings .bx-controller-extra-wrapper{flex:1;min-width:1px}.bx-controller-extra-settings .bx-sub-content-box{flex:1;text-align:left;display:flex;flex-direction:column;margin-top:10px}.bx-controller-extra-settings .bx-sub-content-box > label{font-size:14px}.bx-preset-row{display:flex;gap:8px}.bx-preset-row .bx-select{flex:1}.bx-toast{user-select:none;-webkit-user-select:none;position:fixed;left:50%;top:24px;transform:translate(-50%,0);background:#000;border-radius:16px;color:#fff;z-index:var(--bx-toast-z-index);font-family:var(--bx-normal-font);border:2px solid #fff;display:flex;align-items:center;opacity:0;overflow:clip;transition:opacity .2s ease-in}.bx-toast.bx-show{opacity:.85}.bx-toast.bx-hide{opacity:0;pointer-events:none}.bx-toast-msg{font-size:14px;display:inline-block;padding:12px 16px;white-space:pre}.bx-toast-status{font-weight:bold;font-size:14px;text-transform:uppercase;display:inline-block;background:#515863;padding:12px 16px;color:#fff;white-space:pre}.bx-wait-time-box{position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);color:#fff;z-index:var(--bx-wait-time-box-z-index);padding:12px;border-radius:0 0 0 8px}.bx-wait-time-box label{display:block;text-transform:uppercase;text-align:right;font-size:12px;font-weight:bold;margin:0}.bx-wait-time-box span{display:block;font-family:var(--bx-monospaced-font);text-align:right;font-size:16px;margin-bottom:10px}.bx-wait-time-box span:last-of-type{margin-bottom:0}.bx-remote-play-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:420px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:20px}.bx-remote-play-container > .bx-button{display:table;margin:0 0 0 auto}.bx-remote-play-settings{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2d2d2d}.bx-remote-play-settings > div{display:flex}.bx-remote-play-settings label{flex:1}.bx-remote-play-settings label p{margin:4px 0 0;padding:0;color:#888;font-size:12px}.bx-remote-play-resolution{display:block}.bx-remote-play-resolution input[type="radio"]{accent-color:var(--bx-primary-button-color);margin-right:6px}.bx-remote-play-resolution input[type="radio"]:focus{accent-color:var(--bx-primary-button-hover-color)}.bx-remote-play-device-wrapper{display:flex;margin-bottom:12px}.bx-remote-play-device-wrapper:last-child{margin-bottom:2px}.bx-remote-play-device-info{flex:1;padding:4px 0}.bx-remote-play-device-name{font-size:20px;font-weight:bold;display:inline-block;vertical-align:middle}.bx-remote-play-console-type{font-size:12px;background:#004c87;color:#fff;display:inline-block;border-radius:14px;padding:2px 10px;margin-left:8px;vertical-align:middle}.bx-remote-play-power-state{color:#888;font-size:12px}.bx-remote-play-connect-button{min-height:100%;margin:4px 0}.bx-remote-play-buttons{display:flex;justify-content:space-between}select.bx-select{min-height:30px}div.bx-select{display:flex;align-items:center;flex:0 1 auto;gap:8px}div.bx-select select{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}div.bx-select select:disabled ~ button{display:none}div.bx-select select:disabled ~ div{background:#131416;color:#fff;pointer-events:none}div.bx-select select:disabled ~ div .bx-select-indicators{visibility:hidden}div.bx-select > div,div.bx-select button.bx-select-value{min-width:120px;text-align:left;line-height:24px;vertical-align:middle;background:#fff;color:#000;border-radius:4px;padding:2px 8px;display:flex;flex:1;flex-direction:column}div.bx-select > div{min-height:24px;box-sizing:content-box}div.bx-select > div input{display:inline-block;margin-right:8px}div.bx-select > div label{margin-bottom:0;font-size:14px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}div.bx-select > div label span{display:block;font-size:10px;font-weight:bold;text-align:left;line-height:initial;white-space:pre}div.bx-select button.bx-select-value{border:none;cursor:pointer;min-height:30px;font-size:.9rem;align-items:center}div.bx-select button.bx-select-value > div{display:flex;width:100%}div.bx-select button.bx-select-value span{flex:1;text-align:left;display:inline-block}div.bx-select button.bx-select-value input{margin:0 4px;accent-color:var(--bx-primary-button-color);pointer-events:none}div.bx-select button.bx-select-value:hover input,div.bx-select button.bx-select-value:focus input{accent-color:var(--bx-danger-button-color)}div.bx-select button.bx-select-value:hover::after,div.bx-select button.bx-select-value:focus::after{border-color:#4d4d4d !important}div.bx-select button.bx-button{border:none;height:24px;width:24px;padding:0;line-height:24px;color:#fff;border-radius:4px;font-weight:bold;font-size:12px;font-family:var(--bx-monospaced-font);flex-shrink:0}div.bx-select button.bx-button span{line-height:unset}.bx-select-indicators{display:flex;height:4px;gap:2px;margin-bottom:2px}.bx-select-indicators span{content:\' \';display:inline-block;flex:1;background:#cfcfcf;border-radius:4px}.bx-select-indicators span[data-highlighted]{background:#9c9c9c}.bx-select-indicators span[data-selected]{background:#aacfe7}.bx-select-indicators span[data-highlighted][data-selected]{background:#5fa3d0}.bx-guide-home-achievements-progress{display:flex;gap:10px;flex-direction:row}.bx-guide-home-achievements-progress .bx-button{margin-bottom:0 !important}html[data-xds-platform=tv] .bx-guide-home-achievements-progress{flex-direction:column}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress{flex-direction:row}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress > button:first-of-type{flex:1}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress > button:last-of-type{width:40px}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress > button:last-of-type span{display:none}.bx-guide-home-buttons > div{display:flex;flex-direction:row;gap:12px}html[data-xds-platform=tv] .bx-guide-home-buttons > div{flex-direction:column}html[data-xds-platform=tv] .bx-guide-home-buttons > div button{margin-bottom:0 !important}html:not([data-xds-platform=tv]) .bx-guide-home-buttons > div button span{display:none}.bx-guide-home-buttons[data-is-playing="true"] button[data-state=\'normal\']{display:none}.bx-guide-home-buttons[data-is-playing="false"] button[data-state=\'playing\']{display:none}div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]{overflow:visible}.bx-stream-menu-button-on{fill:#000 !important;background-color:#2d2d2d !important;color:#000 !important}.bx-stream-refresh-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px) !important}body[data-media-type=default] .bx-stream-refresh-button{left:calc(env(safe-area-inset-left, 0px) + 11px) !important}body[data-media-type=tv] .bx-stream-refresh-button{top:calc(var(--gds-focus-borderSize) + 80px) !important}.bx-stream-home-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px * 2) !important}body[data-media-type=default] .bx-stream-home-button{left:calc(env(safe-area-inset-left, 0px) + 12px) !important}body[data-media-type=tv] .bx-stream-home-button{top:calc(var(--gds-focus-borderSize) + 80px * 2) !important}div[data-testid=media-container]{display:flex}div[data-testid=media-container].bx-taking-screenshot:before{animation:bx-anim-taking-screenshot .5s ease;content:\' \';position:absolute;width:100%;height:100%;z-index:var(--bx-screenshot-animation-z-index)}#game-stream video{margin:auto;align-self:center;background:#000}#game-stream canvas{position:absolute;align-self:center;margin:auto;left:0;right:0}#gamepass-dialog-root div[class^=Guide-module__guide] .bx-button{overflow:visible;margin-bottom:12px}@-moz-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-webkit-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-o-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}.bx-number-stepper{text-align:center}.bx-number-stepper > div{display:flex;align-items:center}.bx-number-stepper > div span{flex:1;display:inline-block;min-width:40px;font-family:var(--bx-monospaced-font);font-size:13px;margin:0 4px}.bx-number-stepper > div button{flex-shrink:0;border:none;width:24px;height:24px;margin:0;line-height:24px;background-color:var(--bx-default-button-color);color:#fff;border-radius:4px;font-weight:bold;font-size:14px;font-family:var(--bx-monospaced-font)}@media (hover:hover){.bx-number-stepper > div button:hover{background-color:var(--bx-default-button-hover-color)}}.bx-number-stepper > div button:active{background-color:var(--bx-default-button-hover-color)}.bx-number-stepper > div button:disabled + span{font-family:var(--bx-title-font)}.bx-number-stepper input[type="range"]{display:block;margin:8px 0 2px auto;min-width:180px;width:100%;color:#959595 !important}.bx-number-stepper input[type=range]:disabled,.bx-number-stepper button:disabled{display:none}.bx-number-stepper[data-disabled=true] input[type=range],.bx-number-stepper[disabled=true] input[type=range],.bx-number-stepper[data-disabled=true] button,.bx-number-stepper[disabled=true] button{display:none}#bx-game-bar{z-index:var(--bx-game-bar-z-index);position:fixed;bottom:0;width:40px;height:90px;overflow:visible;cursor:pointer}#bx-game-bar > svg{display:none;pointer-events:none;position:absolute;height:28px;margin-top:16px}@media (hover:hover){#bx-game-bar:hover > svg{display:block}}#bx-game-bar .bx-game-bar-container{opacity:0;position:absolute;display:flex;overflow:hidden;background:rgba(26,27,30,0.91);box-shadow:0 0 6px #1c1c1c;transition:opacity .1s ease-in}#bx-game-bar .bx-game-bar-container.bx-show{opacity:.9}#bx-game-bar .bx-game-bar-container.bx-show + svg{display:none !important}#bx-game-bar .bx-game-bar-container.bx-hide{opacity:0;pointer-events:none}#bx-game-bar .bx-game-bar-container button{width:60px;height:60px;border-radius:0}#bx-game-bar .bx-game-bar-container button svg{width:28px;height:28px;transition:transform .08s ease 0s}#bx-game-bar .bx-game-bar-container button:hover{border-radius:0}#bx-game-bar .bx-game-bar-container button:active svg{transform:scale(.75)}#bx-game-bar .bx-game-bar-container button.bx-activated{background-color:#fff}#bx-game-bar .bx-game-bar-container button.bx-activated svg{filter:invert(1)}#bx-game-bar .bx-game-bar-container div[data-activated] button{display:none}#bx-game-bar .bx-game-bar-container div[data-activated=\'false\'] button:first-of-type{display:block}#bx-game-bar .bx-game-bar-container div[data-activated=\'true\'] button:last-of-type{display:block}#bx-game-bar[data-position="bottom-left"]{left:0;direction:ltr}#bx-game-bar[data-position="bottom-left"] .bx-game-bar-container{border-radius:0 10px 10px 0}#bx-game-bar[data-position="bottom-right"]{right:0;direction:rtl}#bx-game-bar[data-position="bottom-right"] .bx-game-bar-container{direction:ltr;border-radius:10px 0 0 10px}.bx-badges{margin-left:0;user-select:none;-webkit-user-select:none}.bx-badge{border:none;display:inline-block;line-height:24px;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;font-weight:400;margin:0 8px 8px 0;box-shadow:0 0 6px #000;border-radius:4px}.bx-badge-name{background-color:#2d3036;border-radius:4px 0 0 4px}.bx-badge-name svg{width:16px;height:16px}.bx-badge-value{background-color:#808080;border-radius:0 4px 4px 0}.bx-badge-name,.bx-badge-value{display:inline-block;padding:0 8px;line-height:30px;vertical-align:bottom}.bx-badge-battery[data-charging=true] span:first-of-type::after{content:\' ⚡️\'}div[class^=StreamMenu-module__container] .bx-badges{position:absolute;max-width:500px}#gamepass-dialog-root .bx-badges{position:fixed;top:60px;left:460px;max-width:500px}@media (min-width:568px) and (max-height:480px){#gamepass-dialog-root .bx-badges{position:unset;top:unset;left:unset;margin:8px 0}}.bx-stats-bar{display:flex;flex-direction:row;gap:8px;user-select:none;-webkit-user-select:none;position:fixed;top:0;background-color:#000;color:#fff;font-family:var(--bx-monospaced-font);font-size:.9rem;padding-left:8px;z-index:var(--bx-stats-bar-z-index);text-wrap:nowrap}.bx-stats-bar[data-stats*="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats*="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats*="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats*="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats*="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats*="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats*="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats*="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats*="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats*="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats*="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats*="[ul]"] > .bx-stat-ul{display:inline-flex;align-items:baseline}.bx-stats-bar[data-stats$="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats$="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats$="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats$="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats$="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats$="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats$="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats$="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats$="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats$="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats$="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats$="[ul]"] > .bx-stat-ul{border-right:none}.bx-stats-bar::before{display:none;content:\'👀\';vertical-align:middle;margin-right:8px}.bx-stats-bar[data-display=glancing]::before{display:inline-block}.bx-stats-bar[data-position=top-left]{left:0;border-radius:0 0 4px 0}.bx-stats-bar[data-position=top-right]{right:0;border-radius:0 0 0 4px}.bx-stats-bar[data-position=top-center]{transform:translate(-50%,0);left:50%;border-radius:0 0 4px 4px}.bx-stats-bar[data-transparent=true]{background:none;filter:drop-shadow(1px 0 0 rgba(0,0,0,0.941)) drop-shadow(-1px 0 0 rgba(0,0,0,0.941)) drop-shadow(0 1px 0 rgba(0,0,0,0.941)) drop-shadow(0 -1px 0 rgba(0,0,0,0.941))}.bx-stats-bar > div{display:none;border-right:1px solid #fff;padding-right:8px}.bx-stats-bar label{margin:0 8px 0 0;font-family:var(--bx-title-font);font-size:70%;font-weight:bold;vertical-align:middle;cursor:help}.bx-stats-bar span{min-width:60px;display:inline-block;text-align:right;vertical-align:middle}.bx-stats-bar span[data-grade=good]{color:#6bffff}.bx-stats-bar span[data-grade=ok]{color:#fff16b}.bx-stats-bar span[data-grade=bad]{color:#ff5f5f}.bx-stats-bar span:first-of-type{min-width:22px}.bx-mkb-settings{display:flex;flex-direction:column;flex:1;padding-bottom:10px;overflow:hidden}.bx-mkb-pointer-lock-msg{user-select:none;-webkit-user-select:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);margin:auto;background:#151515;z-index:var(--bx-mkb-pointer-lock-msg-z-index);color:#fff;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem;padding:12px;border-radius:8px;align-items:center;box-shadow:0 0 6px #000;min-width:300px;opacity:.9;display:flex;flex-direction:column;gap:10px}.bx-mkb-pointer-lock-msg:hover{opacity:1}.bx-mkb-pointer-lock-msg > p{margin:0;width:100%;font-size:22px;margin-bottom:4px;font-weight:bold;text-align:left}.bx-mkb-pointer-lock-msg > div{width:100%;display:flex;flex-direction:row;gap:10px}.bx-mkb-pointer-lock-msg > div button:first-of-type{flex-shrink:1}.bx-mkb-pointer-lock-msg > div button:last-of-type{flex-grow:1}.bx-mkb-key-row{display:flex;margin-bottom:10px;align-items:center;gap:20px}.bx-mkb-key-row label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center}.bx-mkb-settings.bx-editing .bx-mkb-key-row button{background:#393939;border-radius:4px;border:none}.bx-mkb-settings.bx-editing .bx-mkb-key-row button:hover{background:#333;cursor:pointer}.bx-mkb-action-buttons > div{text-align:right;display:none}.bx-mkb-action-buttons button{margin-left:8px}.bx-mkb-settings:not(.bx-editing) .bx-mkb-action-buttons > div:first-child{display:block}.bx-mkb-settings.bx-editing .bx-mkb-action-buttons > div:last-child{display:block}.bx-mkb-note{display:block;margin:0 0 10px;font-size:12px;text-align:center}button.bx-binding-button{flex:1;min-height:38px;border:none;border-radius:4px;font-size:14px;color:#fff;display:flex;align-items:center;align-self:center;padding:0 6px}button.bx-binding-button:disabled{background:#131416;padding:0 8px}button.bx-binding-button:not(:disabled){border:2px solid transparent;border-top:none;border-bottom:4px solid #252525;background:#3b3b3b;cursor:pointer}button.bx-binding-button:not(:disabled):hover,button.bx-binding-button:not(:disabled).bx-focusable:focus{background:#20b217;border-bottom-color:#186c13}button.bx-binding-button:not(:disabled):active{background:#16900f;border-bottom:3px solid #0c4e08;border-left-width:2px;border-right-width:2px}button.bx-binding-button:not(:disabled).bx-focusable:focus::after{top:-6px;left:-8px;right:-8px;bottom:-10px}.bx-settings-row .bx-binding-button-wrapper button.bx-binding-button{min-width:60px}.bx-product-details-buttons{display:flex;gap:10px;flex-direction:row}.bx-product-details-buttons button{max-width:max-content;margin:10px 0 0 0;display:flex}@media (min-width:568px) and (max-height:480px){.bx-product-details-buttons{flex-direction:column}.bx-product-details-buttons button{margin:8px 0 0 10px}}', PREF_HIDE_SECTIONS = getPref("uiHideSections"), selectorToHide = [];
+ let css = ':root{--bx-title-font:Bahnschrift,Arial,Helvetica,sans-serif;--bx-title-font-semibold:Bahnschrift Semibold,Arial,Helvetica,sans-serif;--bx-normal-font:"Segoe UI",Arial,Helvetica,sans-serif;--bx-monospaced-font:Consolas,"Courier New",Courier,monospace;--bx-promptfont-font:promptfont;--bx-button-height:40px;--bx-default-button-color:#2d3036;--bx-default-button-rgb:45,48,54;--bx-default-button-hover-color:#515863;--bx-default-button-hover-rgb:81,88,99;--bx-default-button-active-color:#222428;--bx-default-button-active-rgb:34,36,40;--bx-default-button-disabled-color:#8e8e8e;--bx-default-button-disabled-rgb:142,142,142;--bx-primary-button-color:#008746;--bx-primary-button-rgb:0,135,70;--bx-primary-button-hover-color:#04b358;--bx-primary-button-hover-rgb:4,179,88;--bx-primary-button-active-color:#044e2a;--bx-primary-button-active-rgb:4,78,42;--bx-primary-button-disabled-color:#448262;--bx-primary-button-disabled-rgb:68,130,98;--bx-warning-button-color:#c16e04;--bx-warning-button-rgb:193,110,4;--bx-warning-button-hover-color:#fa9005;--bx-warning-button-hover-rgb:250,144,5;--bx-warning-button-active-color:#965603;--bx-warning-button-active-rgb:150,86,3;--bx-warning-button-disabled-color:#a2816c;--bx-warning-button-disabled-rgb:162,129,108;--bx-danger-button-color:#c10404;--bx-danger-button-rgb:193,4,4;--bx-danger-button-hover-color:#e61d1d;--bx-danger-button-hover-rgb:230,29,29;--bx-danger-button-active-color:#a26c6c;--bx-danger-button-active-rgb:162,108,108;--bx-danger-button-disabled-color:#df5656;--bx-danger-button-disabled-rgb:223,86,86;--bx-fullscreen-text-z-index:9999;--bx-toast-z-index:6000;--bx-key-binding-dialog-z-index:5010;--bx-key-binding-dialog-overlay-z-index:5000;--bx-stats-bar-z-index:4010;--bx-navigation-dialog-z-index:3010;--bx-navigation-dialog-overlay-z-index:3000;--bx-mkb-pointer-lock-msg-z-index:2000;--bx-game-bar-z-index:1000;--bx-screenshot-animation-z-index:200;--bx-wait-time-box-z-index:100}@font-face{font-family:\'promptfont\';src:url("https://redphx.github.io/better-xcloud/fonts/promptfont.otf")}div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]){opacity:0;pointer-events:none !important;position:absolute;top:-9999px;left:-9999px}@media screen and (max-width:640px){header a[href="/play"]{display:none}}.bx-full-width{width:100% !important}.bx-full-height{height:100% !important}.bx-no-scroll{overflow:hidden !important}.bx-hide-scroll-bar{scrollbar-width:none}.bx-hide-scroll-bar::-webkit-scrollbar{display:none}.bx-gone{display:none !important}.bx-offscreen{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}.bx-hidden{visibility:hidden !important}.bx-invisible{opacity:0}.bx-unclickable{pointer-events:none}.bx-pixel{width:1px !important;height:1px !important}.bx-no-margin{margin:0 !important}.bx-no-padding{padding:0 !important}.bx-prompt{font-family:var(--bx-promptfont-font) !important}.bx-line-through{text-decoration:line-through !important}.bx-normal-case{text-transform:none !important}.bx-normal-link{text-transform:none !important;text-align:left !important;font-weight:400 !important;font-family:var(--bx-normal-font) !important}select[multiple]{overflow:auto}#headerArea,#uhfSkipToMain,.uhf-footer{display:none}div[class*=NotFocusedDialog]{position:absolute !important;top:-9999px !important;left:-9999px !important;width:0 !important;height:0 !important}#game-stream video:not([src]){visibility:hidden}div[class*=SupportedInputsBadge]:not(:has(:nth-child(2))),div[class*=SupportedInputsBadge] svg:first-of-type{display:none}.bx-game-tile-wait-time{position:absolute;top:0;left:0;z-index:1;background:rgba(0,0,0,0.549);display:flex;border-radius:4px 0 4px 0;align-items:center;padding:4px 8px}.bx-game-tile-wait-time svg{width:14px;height:16px;margin-right:2px}.bx-game-tile-wait-time span{display:inline-block;height:16px;line-height:16px;font-size:12px;font-weight:bold;margin-left:2px}.bx-fullscreen-text{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);z-index:var(--bx-fullscreen-text-z-index);line-height:100vh;color:#fff;text-align:center;font-weight:400;font-family:var(--bx-normal-font);font-size:1.3rem;user-select:none;-webkit-user-select:none}#root section[class*=DeviceCodePage-module__page]{margin-left:20px !important;margin-right:20px !important;margin-top:20px !important;max-width:800px !important}#root div[class*=DeviceCodePage-module__back]{display:none}.bx-blink-me{animation:bx-blinker 1s linear infinite}@-moz-keyframes bx-blinker{100%{opacity:0}}@-webkit-keyframes bx-blinker{100%{opacity:0}}@-o-keyframes bx-blinker{100%{opacity:0}}@keyframes bx-blinker{100%{opacity:0}}.bx-button{--button-rgb:var(--bx-default-button-rgb);--button-hover-rgb:var(--bx-default-button-hover-rgb);--button-active-rgb:var(--bx-default-button-active-rgb);--button-disabled-rgb:var(--bx-default-button-disabled-rgb);background-color:rgb(var(--button-rgb));user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;border:none;font-weight:400;height:var(--bx-button-height);border-radius:4px;padding:0 8px;text-transform:uppercase;cursor:pointer;overflow:hidden}.bx-button:not([disabled]):active{background-color:rgb(var(--button-active-rgb))}.bx-button:focus{outline:none !important}.bx-button:not([disabled]):not(:active):hover,.bx-button:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button:disabled{cursor:default;background-color:rgb(var(--button-disabled-rgb))}.bx-button.bx-ghost{background-color:transparent}.bx-button.bx-ghost:not([disabled]):not(:active):hover,.bx-button.bx-ghost:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button.bx-primary{--button-rgb:var(--bx-primary-button-rgb)}.bx-button.bx-primary:not([disabled]):active{--button-active-rgb:var(--bx-primary-button-active-rgb)}.bx-button.bx-primary:not([disabled]):not(:active):hover,.bx-button.bx-primary:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-primary-button-hover-rgb)}.bx-button.bx-primary:disabled{--button-disabled-rgb:var(--bx-primary-button-disabled-rgb)}.bx-button.bx-warning{--button-rgb:var(--bx-warning-button-rgb)}.bx-button.bx-warning:not([disabled]):active{--button-active-rgb:var(--bx-warning-button-active-rgb)}.bx-button.bx-warning:not([disabled]):not(:active):hover,.bx-button.bx-warning:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-warning-button-hover-rgb)}.bx-button.bx-warning:disabled{--button-disabled-rgb:var(--bx-warning-button-disabled-rgb)}.bx-button.bx-danger{--button-rgb:var(--bx-danger-button-rgb)}.bx-button.bx-danger:not([disabled]):active{--button-active-rgb:var(--bx-danger-button-active-rgb)}.bx-button.bx-danger:not([disabled]):not(:active):hover,.bx-button.bx-danger:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-danger-button-hover-rgb)}.bx-button.bx-danger:disabled{--button-disabled-rgb:var(--bx-danger-button-disabled-rgb)}.bx-button.bx-frosted{--button-alpha:.2;background-color:rgba(var(--button-rgb), var(--button-alpha));backdrop-filter:blur(4px) brightness(1.5)}.bx-button.bx-frosted:not([disabled]):not(:active):hover,.bx-button.bx-frosted:not([disabled]):not(:active).bx-focusable:focus{background-color:rgba(var(--button-hover-rgb), var(--button-alpha))}.bx-button.bx-drop-shadow{box-shadow:0 0 4px rgba(0,0,0,0.502)}.bx-button.bx-tall{height:calc(var(--bx-button-height) * 1.5) !important}.bx-button.bx-circular{border-radius:var(--bx-button-height);width:var(--bx-button-height);height:var(--bx-button-height)}.bx-button svg{display:inline-block;width:16px;height:var(--bx-button-height)}.bx-button span{display:inline-block;line-height:var(--bx-button-height);vertical-align:middle;color:#fff;overflow:hidden;white-space:nowrap}.bx-button span:not(:only-child){margin-left:10px}.bx-button.bx-button-multi-lines{height:auto;text-align:left;padding:10px 0}.bx-button.bx-button-multi-lines span{line-height:unset;display:block}.bx-button.bx-button-multi-lines span:last-of-type{text-transform:none;font-weight:normal;font-family:"Segoe Sans Variable Text";font-size:12px;margin-top:4px}.bx-focusable{position:relative;overflow:visible}.bx-focusable::after{border:2px solid transparent;border-radius:10px}.bx-focusable:focus::after{content:\'\';border-color:#fff;position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px}html[data-active-input=touch] .bx-focusable:focus::after,html[data-active-input=mouse] .bx-focusable:focus::after{border-color:transparent !important}.bx-focusable.bx-circular::after{border-radius:var(--bx-button-height)}a.bx-button{display:inline-block}a.bx-button.bx-full-width{text-align:center}button.bx-inactive{pointer-events:none;opacity:.2;background:transparent !important}.bx-header-remote-play-button{height:auto;margin-right:8px !important}.bx-header-remote-play-button svg{width:24px;height:24px}.bx-header-settings-button{line-height:30px;font-size:14px;text-transform:uppercase;position:relative}.bx-header-settings-button[data-update-available]::before{content:\'🌟\' !important;line-height:var(--bx-button-height);display:inline-block;margin-left:4px}.bx-key-binding-dialog-overlay{position:fixed;inset:0;z-index:var(--bx-key-binding-dialog-overlay-z-index);background:#000;opacity:50%}.bx-key-binding-dialog{display:flex;flex-flow:column;max-height:90vh;position:fixed;top:50%;left:50%;margin-right:-50%;transform:translate(-50%,-50%);min-width:420px;padding:20px;border-radius:8px;z-index:var(--bx-key-binding-dialog-z-index);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-normal-font);box-shadow:0 0 6px #000;user-select:none;-webkit-user-select:none}.bx-key-binding-dialog *:focus{outline:none !important}.bx-key-binding-dialog h2{margin-bottom:12px;color:#fff;display:block;font-family:var(--bx-title-font);font-size:32px;font-weight:400;line-height:var(--bx-button-height)}.bx-key-binding-dialog > div{overflow:auto;padding:2px 0}.bx-key-binding-dialog > button{padding:8px 32px;margin:10px auto 0;border:none;border-radius:4px;display:block;background-color:#2d3036;text-align:center;color:#fff;text-transform:uppercase;font-family:var(--bx-title-font);font-weight:400;line-height:18px;font-size:14px}@media (hover:hover){.bx-key-binding-dialog > button:hover{background-color:#515863}}.bx-key-binding-dialog > button:focus{background-color:#515863}.bx-key-binding-dialog ul{margin-bottom:1rem}.bx-key-binding-dialog ul li{display:none}.bx-key-binding-dialog ul[data-flags*="[1]"] > li[data-flag="1"],.bx-key-binding-dialog ul[data-flags*="[2]"] > li[data-flag="2"],.bx-key-binding-dialog ul[data-flags*="[4]"] > li[data-flag="4"],.bx-key-binding-dialog ul[data-flags*="[8]"] > li[data-flag="8"]{display:list-item}@media screen and (max-width:450px){.bx-key-binding-dialog{min-width:100%}}.bx-navigation-dialog{position:absolute;z-index:var(--bx-navigation-dialog-z-index);font-family:var(--bx-title-font)}.bx-navigation-dialog *:focus{outline:none !important}.bx-navigation-dialog select:disabled{-webkit-appearance:none;text-align-last:right;text-align:right;color:#fff;background:#131416;border:none;border-radius:4px;padding:0 5px}.bx-navigation-dialog-overlay{position:fixed;background:rgba(11,11,11,0.89);top:0;left:0;right:0;bottom:0;z-index:var(--bx-navigation-dialog-overlay-z-index)}.bx-navigation-dialog-overlay[data-is-playing="true"]{background:transparent}.bx-centered-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:450px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:20px;max-height:95vh;flex-direction:column;overflow:hidden;display:flex;flex-direction:column}.bx-centered-dialog .bx-dialog-title{display:flex;flex-direction:row;align-items:center;margin-bottom:10px}.bx-centered-dialog .bx-dialog-title p{padding:0;margin:0;flex:1;font-size:1.2rem;font-weight:bold}.bx-centered-dialog .bx-dialog-title button{flex-shrink:0}.bx-centered-dialog .bx-dialog-content{flex:1;overflow:auto;overflow-x:hidden}.bx-centered-dialog .bx-dialog-preset-tools{display:flex;margin-bottom:12px;gap:6px}.bx-centered-dialog .bx-dialog-preset-tools select{flex:1}.bx-centered-dialog input,.bx-settings-dialog input{accent-color:var(--bx-primary-button-color)}.bx-centered-dialog input:focus,.bx-settings-dialog input:focus{accent-color:var(--bx-danger-button-color)}.bx-centered-dialog select:disabled,.bx-settings-dialog select:disabled{-webkit-appearance:none;background:transparent;text-align-last:right;border:none;color:#fff}.bx-centered-dialog select option:disabled,.bx-settings-dialog select option:disabled{display:none}.bx-centered-dialog input[type=checkbox]:focus,.bx-settings-dialog input[type=checkbox]:focus,.bx-centered-dialog select:focus,.bx-settings-dialog select:focus{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}.bx-centered-dialog a,.bx-settings-dialog a{color:#1c9d1c;text-decoration:none}.bx-centered-dialog a:hover,.bx-settings-dialog a:hover,.bx-centered-dialog a:focus,.bx-settings-dialog a:focus{color:#5dc21e}.bx-centered-dialog label,.bx-settings-dialog label{margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-note{margin-top:10px;font-size:14px;text-align:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt{flex-shrink:0;font-size:32px;margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt::first-letter{letter-spacing:6px}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions{flex:1;position:relative}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select{width:100%;height:100%;min-height:38px;display:block}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select:first-of-type{position:absolute;top:0;left:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select:last-of-type{opacity:0;z-index:calc(var(--bx-settings-z-index) + 1)}.bx-controller-shortcuts-manager-container select:disabled{text-align:left;text-align-last:left}.bx-keyboard-shortcuts-manager-container{display:flex;flex-direction:column;gap:16px}.bx-keyboard-shortcuts-manager-container fieldset{background:#2a2a2a;border:1px solid #2a2a2a;border-radius:4px;padding:4px}.bx-keyboard-shortcuts-manager-container legend{width:auto;padding:4px 8px;margin:0 4px 4px;background:#004f87;box-shadow:0 2px 0 #071e3d;border-radius:4px;font-size:14px;font-weight:bold;text-transform:uppercase}.bx-keyboard-shortcuts-manager-container .bx-settings-row{background:none}.bx-settings-dialog{display:flex;position:fixed;top:0;right:0;bottom:0;opacity:.98;user-select:none;-webkit-user-select:none}.bx-settings-dialog .bx-focusable::after{border-radius:4px}.bx-settings-dialog .bx-focusable:focus::after{top:0;left:0;right:0;bottom:0}.bx-settings-dialog .bx-settings-reload-note{font-size:.8rem;display:block;padding:8px;font-style:italic;font-weight:normal;height:var(--bx-button-height)}.bx-settings-tabs-container{position:fixed;width:48px;max-height:100vh;display:flex;flex-direction:column}.bx-settings-tabs-container > div:last-of-type{display:flex;flex-direction:column;align-items:end}.bx-settings-tabs-container > div:last-of-type button{flex-shrink:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-top:8px;height:unset;padding:8px 10px}.bx-settings-tabs-container > div:last-of-type button svg{width:16px;height:16px}.bx-settings-tabs{display:flex;flex-direction:column;border-radius:0 0 0 8px;box-shadow:0 0 6px #000;overflow:overlay;flex:1}.bx-settings-tabs svg{width:24px;height:24px;padding:10px;flex-shrink:0;box-sizing:content-box;background:#131313;cursor:pointer;border-left:4px solid #1e1e1e}.bx-settings-tabs svg.bx-active{background:#222;border-color:#008746}.bx-settings-tabs svg:not(.bx-active):hover{background:#2f2f2f;border-color:#484848}.bx-settings-tabs svg:focus{border-color:#fff}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]{background:var(--bx-danger-button-color) !important}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]:hover{background:var(--bx-danger-button-hover-color) !important}.bx-settings-tab-contents{flex-direction:column;padding:10px;margin-left:48px;width:450px;max-width:calc(100vw - tabsWidth);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-title-font);text-align:center;box-shadow:0 0 6px #000;overflow:overlay;z-index:1}.bx-settings-tab-contents > div[data-tab-group=mkb]{display:flex;flex-direction:column;height:100%;overflow:hidden}.bx-settings-tab-contents .bx-top-buttons{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}.bx-settings-tab-contents .bx-top-buttons .bx-button{display:block}.bx-settings-tab-contents h2{margin:16px 0 8px 0;display:flex;align-items:center}.bx-settings-tab-contents h2:first-of-type{margin-top:0}.bx-settings-tab-contents h2 span{display:inline-block;font-size:20px;font-weight:bold;text-align:left;flex:1;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-height:var(--bx-button-height);align-content:center}@media (max-width:500px){.bx-settings-tab-contents{width:calc(100vw - 48px)}}.bx-settings-row{display:flex;gap:10px;padding:16px 10px;margin:0;background:#2a2a2a;border-bottom:1px solid #343434}.bx-settings-row:hover,.bx-settings-row:focus-within{background-color:#242424}.bx-settings-row:not(:has(> input[type=checkbox])){flex-wrap:wrap}.bx-settings-row > span.bx-settings-label{font-size:14px;display:block;text-align:left;align-self:center;margin-bottom:0 !important;flex:1}.bx-settings-row > span.bx-settings-label + *{margin:0 0 0 auto}.bx-settings-row[data-multi-lines="true"]{flex-direction:column}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label{align-self:start}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label + *{margin:unset}.bx-settings-dialog-note{display:block;color:#afafb0;font-size:12px;font-weight:lighter;font-style:italic}.bx-settings-dialog-note:not(:has(a)){margin-top:4px}.bx-settings-dialog-note a{display:inline-block;padding:4px}.bx-settings-custom-user-agent{display:block;width:100%;padding:6px}.bx-donation-link{display:block;text-align:center;text-decoration:none;height:20px;line-height:20px;font-size:14px;margin-top:10px;margin-bottom:10px}.bx-debug-info button{margin-top:10px}.bx-debug-info pre{margin-top:10px;cursor:copy;color:#fff;padding:8px;border:1px solid #2d2d2d;background:#212121;white-space:break-spaces;text-align:left}.bx-debug-info pre:hover{background:#272727}.bx-settings-app-version{margin-top:10px;text-align:center;color:#747474;font-size:12px}.bx-note-unsupported{display:block;font-size:12px;font-style:italic;font-weight:normal;color:#828282}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row){border-top-left-radius:6px;border-top-right-radius:6px}.bx-settings-tab-contents > div .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-radius:6px}.bx-suggest-toggler{text-align:left;display:flex;border-radius:4px;overflow:hidden;background:#003861}.bx-suggest-toggler label{flex:1;padding:10px;background:#004f87}.bx-suggest-toggler span{display:inline-block;align-self:center;padding:10px;width:40px;text-align:center}.bx-suggest-toggler:hover,.bx-suggest-toggler:focus{cursor:pointer;background:#005da1}.bx-suggest-toggler:hover label,.bx-suggest-toggler:focus label{background:#006fbe}.bx-suggest-toggler[bx-open] span{transform:rotate(90deg)}.bx-suggest-toggler[bx-open]+ .bx-suggest-box{display:block}.bx-suggest-box{display:none}.bx-suggest-wrapper{display:flex;flex-direction:column;gap:10px;margin:10px}.bx-suggest-note{font-size:11px;color:#8c8c8c;font-style:italic;font-weight:100}.bx-suggest-link{font-size:14px;display:inline-block;margin-top:4px;padding:4px}.bx-suggest-row{display:flex;flex-direction:row;gap:10px}.bx-suggest-row label{flex:1;overflow:overlay;border-radius:4px}.bx-suggest-row label .bx-suggest-label{background:#323232;padding:4px 10px;font-size:12px;text-align:left}.bx-suggest-row label .bx-suggest-value{padding:6px;font-size:14px}.bx-suggest-row label .bx-suggest-value.bx-suggest-change{background-color:var(--bx-warning-color)}.bx-suggest-row.bx-suggest-ok input{visibility:hidden}.bx-suggest-row.bx-suggest-ok .bx-suggest-label{background-color:#008114}.bx-suggest-row.bx-suggest-ok .bx-suggest-value{background-color:#13a72a}.bx-suggest-row.bx-suggest-change .bx-suggest-label{background-color:#a65e08}.bx-suggest-row.bx-suggest-change .bx-suggest-value{background-color:#d57f18}.bx-suggest-row.bx-suggest-change:hover label{cursor:pointer}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-label{background-color:#995707}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-value{background-color:#bd7115}.bx-suggest-row.bx-suggest-change input:not(:checked) + label{opacity:.5}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-label{background-color:#2a2a2a}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-value{background-color:#393939}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label{opacity:1}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-label{background-color:#202020}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-value{background-color:#303030}.bx-sub-content-box{background:#161616;padding:10px;box-shadow:0 0 12px #0f0f0f inset;border-radius:10px}.bx-settings-row .bx-sub-content-box{background:#202020;padding:12px;box-shadow:0 0 4px #000 inset;border-radius:6px}.bx-controller-extra-settings[data-has-gamepad=true] > :first-child{display:none}.bx-controller-extra-settings[data-has-gamepad=true] > :last-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :first-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :last-child{display:none}.bx-controller-extra-settings .bx-controller-extra-wrapper{flex:1;min-width:1px}.bx-controller-extra-settings .bx-sub-content-box{flex:1;text-align:left;display:flex;flex-direction:column;margin-top:10px}.bx-controller-extra-settings .bx-sub-content-box > label{font-size:14px}.bx-preset-row{display:flex;gap:8px}.bx-preset-row .bx-select{flex:1}.bx-toast{user-select:none;-webkit-user-select:none;position:fixed;left:50%;top:24px;transform:translate(-50%,0);background:#000;border-radius:16px;color:#fff;z-index:var(--bx-toast-z-index);font-family:var(--bx-normal-font);border:2px solid #fff;display:flex;align-items:center;opacity:0;overflow:clip;transition:opacity .2s ease-in}.bx-toast.bx-show{opacity:.85}.bx-toast.bx-hide{opacity:0;pointer-events:none}.bx-toast-msg{font-size:14px;display:inline-block;padding:12px 16px;white-space:pre}.bx-toast-status{font-weight:bold;font-size:14px;text-transform:uppercase;display:inline-block;background:#515863;padding:12px 16px;color:#fff;white-space:pre}.bx-wait-time-box{position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);color:#fff;z-index:var(--bx-wait-time-box-z-index);padding:12px;border-radius:0 0 0 8px}.bx-wait-time-box label{display:block;text-transform:uppercase;text-align:right;font-size:12px;font-weight:bold;margin:0}.bx-wait-time-box span{display:block;font-family:var(--bx-monospaced-font);text-align:right;font-size:16px;margin-bottom:10px}.bx-wait-time-box span:last-of-type{margin-bottom:0}.bx-remote-play-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:420px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:20px}.bx-remote-play-container > .bx-button{display:table;margin:0 0 0 auto}.bx-remote-play-settings{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2d2d2d}.bx-remote-play-settings > div{display:flex}.bx-remote-play-settings label{flex:1}.bx-remote-play-settings label p{margin:4px 0 0;padding:0;color:#888;font-size:12px}.bx-remote-play-resolution{display:block}.bx-remote-play-resolution input[type="radio"]{accent-color:var(--bx-primary-button-color);margin-right:6px}.bx-remote-play-resolution input[type="radio"]:focus{accent-color:var(--bx-primary-button-hover-color)}.bx-remote-play-device-wrapper{display:flex;margin-bottom:12px}.bx-remote-play-device-wrapper:last-child{margin-bottom:2px}.bx-remote-play-device-info{flex:1;padding:4px 0}.bx-remote-play-device-name{font-size:20px;font-weight:bold;display:inline-block;vertical-align:middle}.bx-remote-play-console-type{font-size:12px;background:#004c87;color:#fff;display:inline-block;border-radius:14px;padding:2px 10px;margin-left:8px;vertical-align:middle}.bx-remote-play-power-state{color:#888;font-size:12px}.bx-remote-play-connect-button{min-height:100%;margin:4px 0}.bx-remote-play-buttons{display:flex;justify-content:space-between}select.bx-select{min-height:30px}div.bx-select{display:flex;align-items:center;flex:0 1 auto;gap:8px}div.bx-select select{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}div.bx-select select:disabled ~ button{display:none}div.bx-select select:disabled ~ div{background:#131416;color:#fff;pointer-events:none}div.bx-select select:disabled ~ div .bx-select-indicators{visibility:hidden}div.bx-select > div,div.bx-select button.bx-select-value{min-width:120px;text-align:left;line-height:24px;vertical-align:middle;background:#fff;color:#000;border-radius:4px;padding:2px 8px;display:flex;flex:1;flex-direction:column}div.bx-select > div{min-height:24px;box-sizing:content-box}div.bx-select > div input{display:inline-block;margin-right:8px}div.bx-select > div label{margin-bottom:0;font-size:14px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}div.bx-select > div label span{display:block;font-size:10px;font-weight:bold;text-align:left;line-height:initial;white-space:pre}div.bx-select button.bx-select-value{border:none;cursor:pointer;min-height:30px;font-size:.9rem;align-items:center}div.bx-select button.bx-select-value > div{display:flex;width:100%}div.bx-select button.bx-select-value span{flex:1;text-align:left;display:inline-block}div.bx-select button.bx-select-value input{margin:0 4px;accent-color:var(--bx-primary-button-color);pointer-events:none}div.bx-select button.bx-select-value:hover input,div.bx-select button.bx-select-value:focus input{accent-color:var(--bx-danger-button-color)}div.bx-select button.bx-select-value:hover::after,div.bx-select button.bx-select-value:focus::after{border-color:#4d4d4d !important}div.bx-select button.bx-button{border:none;height:24px;width:24px;padding:0;line-height:24px;color:#fff;border-radius:4px;font-weight:bold;font-size:12px;font-family:var(--bx-monospaced-font);flex-shrink:0}div.bx-select button.bx-button span{line-height:unset}.bx-select-indicators{display:flex;height:4px;gap:2px;margin-bottom:2px}.bx-select-indicators span{content:\' \';display:inline-block;flex:1;background:#cfcfcf;border-radius:4px}.bx-select-indicators span[data-highlighted]{background:#9c9c9c}.bx-select-indicators span[data-selected]{background:#aacfe7}.bx-select-indicators span[data-highlighted][data-selected]{background:#5fa3d0}.bx-guide-home-achievements-progress{display:flex;gap:10px;flex-direction:row}.bx-guide-home-achievements-progress .bx-button{margin-bottom:0 !important}html[data-xds-platform=tv] .bx-guide-home-achievements-progress{flex-direction:column}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress{flex-direction:row}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress > button:first-of-type{flex:1}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress > button:last-of-type{width:40px}html:not([data-xds-platform=tv]) .bx-guide-home-achievements-progress > button:last-of-type span{display:none}.bx-guide-home-buttons > div{display:flex;flex-direction:row;gap:12px}html[data-xds-platform=tv] .bx-guide-home-buttons > div{flex-direction:column}html[data-xds-platform=tv] .bx-guide-home-buttons > div button{margin-bottom:0 !important}html:not([data-xds-platform=tv]) .bx-guide-home-buttons > div button span{display:none}.bx-guide-home-buttons[data-is-playing="true"] button[data-state=\'normal\']{display:none}.bx-guide-home-buttons[data-is-playing="false"] button[data-state=\'playing\']{display:none}div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]{overflow:visible}.bx-stream-menu-button-on{fill:#000 !important;background-color:#2d2d2d !important;color:#000 !important}.bx-stream-refresh-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px) !important}body[data-media-type=default] .bx-stream-refresh-button{left:calc(env(safe-area-inset-left, 0px) + 11px) !important}body[data-media-type=tv] .bx-stream-refresh-button{top:calc(var(--gds-focus-borderSize) + 80px) !important}.bx-stream-home-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px * 2) !important}body[data-media-type=default] .bx-stream-home-button{left:calc(env(safe-area-inset-left, 0px) + 12px) !important}body[data-media-type=tv] .bx-stream-home-button{top:calc(var(--gds-focus-borderSize) + 80px * 2) !important}div[data-testid=media-container]{display:flex}div[data-testid=media-container].bx-taking-screenshot:before{animation:bx-anim-taking-screenshot .5s ease;content:\' \';position:absolute;width:100%;height:100%;z-index:var(--bx-screenshot-animation-z-index)}#game-stream video{margin:auto;align-self:center;background:#000}#game-stream canvas{position:absolute;align-self:center;margin:auto;left:0;right:0}#gamepass-dialog-root div[class^=Guide-module__guide] .bx-button{overflow:visible;margin-bottom:12px}@-moz-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-webkit-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-o-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}.bx-number-stepper{text-align:center}.bx-number-stepper > div{display:flex;align-items:center}.bx-number-stepper > div span{flex:1;display:inline-block;min-width:40px;font-family:var(--bx-monospaced-font);font-size:13px;margin:0 4px}.bx-number-stepper > div button{flex-shrink:0;border:none;width:24px;height:24px;margin:0;line-height:24px;background-color:var(--bx-default-button-color);color:#fff;border-radius:4px;font-weight:bold;font-size:14px;font-family:var(--bx-monospaced-font)}@media (hover:hover){.bx-number-stepper > div button:hover{background-color:var(--bx-default-button-hover-color)}}.bx-number-stepper > div button:active{background-color:var(--bx-default-button-hover-color)}.bx-number-stepper > div button:disabled + span{font-family:var(--bx-title-font)}.bx-number-stepper input[type="range"]{display:block;margin:8px 0 2px auto;min-width:180px;width:100%;color:#959595 !important}.bx-number-stepper input[type=range]:disabled,.bx-number-stepper button:disabled{display:none}.bx-number-stepper[data-disabled=true] input[type=range],.bx-number-stepper[disabled=true] input[type=range],.bx-number-stepper[data-disabled=true] button,.bx-number-stepper[disabled=true] button{display:none}#bx-game-bar{z-index:var(--bx-game-bar-z-index);position:fixed;bottom:0;width:40px;height:90px;overflow:visible;cursor:pointer}#bx-game-bar > svg{display:none;pointer-events:none;position:absolute;height:28px;margin-top:16px}@media (hover:hover){#bx-game-bar:hover > svg{display:block}}#bx-game-bar .bx-game-bar-container{opacity:0;position:absolute;display:flex;overflow:hidden;background:rgba(26,27,30,0.91);box-shadow:0 0 6px #1c1c1c;transition:opacity .1s ease-in}#bx-game-bar .bx-game-bar-container.bx-show{opacity:.9}#bx-game-bar .bx-game-bar-container.bx-show + svg{display:none !important}#bx-game-bar .bx-game-bar-container.bx-hide{opacity:0;pointer-events:none}#bx-game-bar .bx-game-bar-container button{width:60px;height:60px;border-radius:0}#bx-game-bar .bx-game-bar-container button svg{width:28px;height:28px;transition:transform .08s ease 0s}#bx-game-bar .bx-game-bar-container button:hover{border-radius:0}#bx-game-bar .bx-game-bar-container button:active svg{transform:scale(.75)}#bx-game-bar .bx-game-bar-container button.bx-activated{background-color:#fff}#bx-game-bar .bx-game-bar-container button.bx-activated svg{filter:invert(1)}#bx-game-bar .bx-game-bar-container div[data-activated] button{display:none}#bx-game-bar .bx-game-bar-container div[data-activated=\'false\'] button:first-of-type{display:block}#bx-game-bar .bx-game-bar-container div[data-activated=\'true\'] button:last-of-type{display:block}#bx-game-bar[data-position="bottom-left"]{left:0;direction:ltr}#bx-game-bar[data-position="bottom-left"] .bx-game-bar-container{border-radius:0 10px 10px 0}#bx-game-bar[data-position="bottom-right"]{right:0;direction:rtl}#bx-game-bar[data-position="bottom-right"] .bx-game-bar-container{direction:ltr;border-radius:10px 0 0 10px}.bx-badges{margin-left:0;user-select:none;-webkit-user-select:none}.bx-badge{border:none;display:inline-block;line-height:24px;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;font-weight:400;margin:0 8px 8px 0;box-shadow:0 0 6px #000;border-radius:4px}.bx-badge-name{background-color:#2d3036;border-radius:4px 0 0 4px}.bx-badge-name svg{width:16px;height:16px}.bx-badge-value{background-color:#808080;border-radius:0 4px 4px 0}.bx-badge-name,.bx-badge-value{display:inline-block;padding:0 8px;line-height:30px;vertical-align:bottom}.bx-badge-battery[data-charging=true] span:first-of-type::after{content:\' ⚡️\'}div[class^=StreamMenu-module__container] .bx-badges{position:absolute;max-width:500px}#gamepass-dialog-root .bx-badges{position:fixed;top:60px;left:460px;max-width:500px}@media (min-width:568px) and (max-height:480px){#gamepass-dialog-root .bx-badges{position:unset;top:unset;left:unset;margin:8px 0}}.bx-stats-bar{display:flex;flex-direction:row;gap:8px;user-select:none;-webkit-user-select:none;position:fixed;top:0;background-color:#000;color:#fff;font-family:var(--bx-monospaced-font);font-size:.9rem;padding-left:8px;z-index:var(--bx-stats-bar-z-index);text-wrap:nowrap}.bx-stats-bar[data-stats*="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats*="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats*="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats*="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats*="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats*="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats*="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats*="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats*="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats*="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats*="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats*="[ul]"] > .bx-stat-ul{display:inline-flex;align-items:baseline}.bx-stats-bar[data-stats$="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats$="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats$="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats$="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats$="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats$="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats$="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats$="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats$="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats$="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats$="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats$="[ul]"] > .bx-stat-ul{border-right:none}.bx-stats-bar::before{display:none;content:\'👀\';vertical-align:middle;margin-right:8px}.bx-stats-bar[data-display=glancing]::before{display:inline-block}.bx-stats-bar[data-position=top-left]{left:0;border-radius:0 0 4px 0}.bx-stats-bar[data-position=top-right]{right:0;border-radius:0 0 0 4px}.bx-stats-bar[data-position=top-center]{transform:translate(-50%,0);left:50%;border-radius:0 0 4px 4px}.bx-stats-bar[data-transparent=true]{background:none;filter:drop-shadow(1px 0 0 rgba(0,0,0,0.941)) drop-shadow(-1px 0 0 rgba(0,0,0,0.941)) drop-shadow(0 1px 0 rgba(0,0,0,0.941)) drop-shadow(0 -1px 0 rgba(0,0,0,0.941))}.bx-stats-bar > div{display:none;border-right:1px solid #fff;padding-right:8px}.bx-stats-bar label{margin:0 8px 0 0;font-family:var(--bx-title-font);font-size:70%;font-weight:bold;vertical-align:middle;cursor:help}.bx-stats-bar span{min-width:60px;display:inline-block;text-align:right;vertical-align:middle}.bx-stats-bar span[data-grade=good]{color:#6bffff}.bx-stats-bar span[data-grade=ok]{color:#fff16b}.bx-stats-bar span[data-grade=bad]{color:#ff5f5f}.bx-stats-bar span:first-of-type{min-width:22px}.bx-mkb-settings{display:flex;flex-direction:column;flex:1;padding-bottom:10px;overflow:hidden}.bx-mkb-pointer-lock-msg{user-select:none;-webkit-user-select:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);margin:auto;background:#151515;z-index:var(--bx-mkb-pointer-lock-msg-z-index);color:#fff;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem;padding:12px;border-radius:8px;align-items:center;box-shadow:0 0 6px #000;min-width:300px;opacity:.9;display:flex;flex-direction:column;gap:10px}.bx-mkb-pointer-lock-msg:hover{opacity:1}.bx-mkb-pointer-lock-msg > p{margin:0;width:100%;font-size:22px;margin-bottom:4px;font-weight:bold;text-align:left}.bx-mkb-pointer-lock-msg > div{width:100%;display:flex;flex-direction:row;gap:10px}.bx-mkb-pointer-lock-msg > div button:first-of-type{flex-shrink:1}.bx-mkb-pointer-lock-msg > div button:last-of-type{flex-grow:1}.bx-mkb-key-row{display:flex;margin-bottom:10px;align-items:center;gap:20px}.bx-mkb-key-row label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center}.bx-mkb-settings.bx-editing .bx-mkb-key-row button{background:#393939;border-radius:4px;border:none}.bx-mkb-settings.bx-editing .bx-mkb-key-row button:hover{background:#333;cursor:pointer}.bx-mkb-action-buttons > div{text-align:right;display:none}.bx-mkb-action-buttons button{margin-left:8px}.bx-mkb-settings:not(.bx-editing) .bx-mkb-action-buttons > div:first-child{display:block}.bx-mkb-settings.bx-editing .bx-mkb-action-buttons > div:last-child{display:block}.bx-mkb-note{display:block;margin:0 0 10px;font-size:12px;text-align:center}button.bx-binding-button{flex:1;min-height:38px;border:none;border-radius:4px;font-size:14px;color:#fff;display:flex;align-items:center;align-self:center;padding:0 6px}button.bx-binding-button:disabled{background:#131416;padding:0 8px}button.bx-binding-button:not(:disabled){border:2px solid transparent;border-top:none;border-bottom:4px solid #252525;background:#3b3b3b;cursor:pointer}button.bx-binding-button:not(:disabled):hover,button.bx-binding-button:not(:disabled).bx-focusable:focus{background:#20b217;border-bottom-color:#186c13}button.bx-binding-button:not(:disabled):active{background:#16900f;border-bottom:3px solid #0c4e08;border-left-width:2px;border-right-width:2px}button.bx-binding-button:not(:disabled).bx-focusable:focus::after{top:-6px;left:-8px;right:-8px;bottom:-10px}.bx-settings-row .bx-binding-button-wrapper button.bx-binding-button{min-width:60px}.bx-product-details-buttons{display:flex;gap:10px;flex-direction:row}.bx-product-details-buttons button{max-width:max-content;margin:10px 0 0 0;display:flex}@media (min-width:568px) and (max-height:480px){.bx-product-details-buttons{flex-direction:column}.bx-product-details-buttons button{margin:8px 0 0 10px}}', PREF_HIDE_SECTIONS = getPref("ui.hideSections"), selectorToHide = [];
  if (PREF_HIDE_SECTIONS.includes("news")) selectorToHide.push("#BodyContent > div[class*=CarouselRow-module]");
- if (getPref("byogDisabled")) selectorToHide.push("#BodyContent > div[class*=ByogRow-module__container___]");
+ if (getPref("feature.byog.disabled")) selectorToHide.push("#BodyContent > div[class*=ByogRow-module__container___]");
  if (PREF_HIDE_SECTIONS.includes("all-games")) selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__gridContainer]"), selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__rowHeader]");
  if (PREF_HIDE_SECTIONS.includes("most-popular")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/popular"])');
  if (PREF_HIDE_SECTIONS.includes("touch")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/touch"])');
- if (getPref("blockSocialFeatures")) selectorToHide.push("#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]");
+ if (getPref("block.social")) selectorToHide.push("#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]");
  if (selectorToHide) css += selectorToHide.join(",") + "{ display: none; }";
- if (getPref("uiReduceAnimations")) css += "div[class*=GameCard-module__gameTitleInnerWrapper],div[class*=GameCard-module__card],div[class*=ScrollArrows-module]{transition:none !important}";
- if (getPref("uiHideSystemMenuIcon")) css += "div[class*=Grip-module__container]{visibility:hidden}@media (hover:hover){button[class*=GripHandle-module__container]:hover div[class*=Grip-module__container]{visibility:visible}}button[class*=GripHandle-module__container][aria-expanded=true] div[class*=Grip-module__container]{visibility:visible}button[class*=GripHandle-module__container][aria-expanded=false]{background-color:transparent !important}div[class*=StreamHUD-module__buttonsContainer]{padding:0 !important}";
- if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getPref("uiSimplifyStreamMenu")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";
+ if (getPref("ui.reduceAnimations")) css += "div[class*=GameCard-module__gameTitleInnerWrapper],div[class*=GameCard-module__card],div[class*=ScrollArrows-module]{transition:none !important}";
+ if (getPref("ui.systemMenu.hideHandle")) css += "div[class*=Grip-module__container]{visibility:hidden}@media (hover:hover){button[class*=GripHandle-module__container]:hover div[class*=Grip-module__container]{visibility:visible}}button[class*=GripHandle-module__container][aria-expanded=true] div[class*=Grip-module__container]{visibility:visible}button[class*=GripHandle-module__container][aria-expanded=false]{background-color:transparent !important}div[class*=StreamHUD-module__buttonsContainer]{padding:0 !important}";
+ if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getPref("ui.streamMenu.simplify")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";
  else css += "body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) + 30px)}body:not([data-media-type=tv]) .bx-badges{top:calc(var(--streamMenuItemSize) + 20px)}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]{min-width:auto !important;width:100px !important}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]:nth-child(n+2){margin-left:10px !important}body:not([data-media-type=tv]) div[class*=MenuItem-module__label]{margin-left:8px !important;margin-right:8px !important}";
- if (getPref("uiHideScrollbar")) css += "html{scrollbar-width:none}body::-webkit-scrollbar{display:none}";
+ if (getPref("ui.hideScrollbar")) css += "html{scrollbar-width:none}body::-webkit-scrollbar{display:none}";
  let $style = CE("style", {}, css);
  document.documentElement.appendChild($style);
 }
@@ -7968,7 +8018,7 @@ function preloadFonts() {
 class MouseCursorHider {
  static instance;
  static getInstance() {
-  if (typeof MouseCursorHider.instance === "undefined") if (!getPref("mkbEnabled") && getPref("mkbHideIdleCursor")) MouseCursorHider.instance = new MouseCursorHider;
+  if (typeof MouseCursorHider.instance === "undefined") if (!getPref("mkb.enabled") && getPref("mkb.cursor.hideIdle")) MouseCursorHider.instance = new MouseCursorHider;
    else MouseCursorHider.instance = null;
   return MouseCursorHider.instance;
  }
@@ -8189,12 +8239,12 @@ class WebGL2Player {
   this.animFrameId = frameCallback(animate);
  }
  setupShaders() {
-  BxLogger.info(this.LOG_TAG, "Setting up", getPref("videoPowerPreference"));
+  BxLogger.info(this.LOG_TAG, "Setting up", getPref("video.player.powerPreference"));
   let gl = this.$canvas.getContext("webgl2", {
    isBx: !0,
    antialias: !0,
    alpha: !1,
-   powerPreference: getPref("videoPowerPreference")
+   powerPreference: getPref("video.player.powerPreference")
   });
   this.gl = gl, gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferWidth);
   let vShader = gl.createShader(gl.VERTEX_SHADER);
@@ -8281,7 +8331,7 @@ class StreamPlayer {
   return filters.join(" ");
  }
  resizePlayer() {
-  let PREF_RATIO = getPref("videoRatio"), $video = this.$video, isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport, $webGL2Canvas;
+  let PREF_RATIO = getPref("video.ratio"), $video = this.$video, isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport, $webGL2Canvas;
   if (this.playerType == "webgl2") $webGL2Canvas = this.webGL2Player?.getCanvas();
   let targetWidth, targetHeight, targetObjectFit;
   if (PREF_RATIO.includes(":")) {
@@ -8327,7 +8377,7 @@ class StreamPlayer {
   } else {
    let filters = this.getVideoPlayerFilterStyle(), videoCss = "";
    if (filters) videoCss += `filter: ${filters} !important;`;
-   if (getPref("screenshotApplyFilters")) ScreenshotManager.getInstance().updateCanvasFilters(filters);
+   if (getPref("screenshot.applyFilters")) ScreenshotManager.getInstance().updateCanvasFilters(filters);
    let css = "";
    if (videoCss) css = `#game-stream video { ${videoCss} }`;
    this.$videoCss.textContent = css;
@@ -8345,16 +8395,16 @@ class StreamPlayer {
  }
 }
 function patchVideoApi() {
- let PREF_SKIP_SPLASH_VIDEO = getPref("uiSkipSplashVideo"), showFunc = function() {
+ let PREF_SKIP_SPLASH_VIDEO = getPref("ui.splashVideo.skip"), showFunc = function() {
   if (this.style.visibility = "visible", !this.videoWidth) return;
   let playerOptions = {
-   processing: getPref("videoProcessing"),
-   sharpness: getPref("videoSharpness"),
-   saturation: getPref("videoSaturation"),
-   contrast: getPref("videoContrast"),
-   brightness: getPref("videoBrightness")
+   processing: getPref("video.processing"),
+   sharpness: getPref("video.processing.sharpness"),
+   saturation: getPref("video.saturation"),
+   contrast: getPref("video.contrast"),
+   brightness: getPref("video.brightness")
   };
-  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("videoPlayerType"), playerOptions), BxEvent.dispatch(window, BxEvent.STREAM_PLAYING, {
+  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("video.player.type"), playerOptions), BxEvent.dispatch(window, BxEvent.STREAM_PLAYING, {
    $video: this
   });
  }, nativePlay = HTMLMediaElement.prototype.play;
@@ -8369,7 +8419,7 @@ function patchVideoApi() {
  };
 }
 function patchRtcCodecs() {
- if (getPref("streamCodecProfile") === "default") return;
+ if (getPref("stream.video.codecProfile") === "default") return;
  if (typeof RTCRtpTransceiver === "undefined" || !("setCodecPreferences" in RTCRtpTransceiver.prototype)) return !1;
 }
 function patchRtcPeerConnection() {
@@ -8380,7 +8430,7 @@ function patchRtcPeerConnection() {
    dataChannel
   }), dataChannel;
  };
- let maxVideoBitrateDef = getPrefDefinition("streamMaxVideoBitrate"), maxVideoBitrate = getPref("streamMaxVideoBitrate"), codec = getPref("streamCodecProfile");
+ let maxVideoBitrateDef = getPrefDefinition("stream.video.maxBitrate"), maxVideoBitrate = getPref("stream.video.maxBitrate"), codec = getPref("stream.video.codecProfile");
  if (codec !== "default" || maxVideoBitrate < maxVideoBitrateDef.max) {
   let nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
@@ -8408,7 +8458,7 @@ function patchAudioContext() {
   let ctx = new OrgAudioContext(options);
   return BxLogger.info("patchAudioContext", ctx, options), ctx.createGain = function() {
    let gainNode = nativeCreateGain.apply(this);
-   return gainNode.gain.value = getPref("audioVolume") / 100, STATES.currentStream.audioGainNode = gainNode, gainNode;
+   return gainNode.gain.value = getPref("audio.volume") / 100, STATES.currentStream.audioGainNode = gainNode, gainNode;
   }, STATES.currentStream.audioContext = ctx, ctx;
  };
 }
@@ -8630,7 +8680,7 @@ class RendererAction extends BaseGameBarAction {
 class GameBar {
  static instance;
  static getInstance() {
-  if (typeof GameBar.instance === "undefined") if (getPref("gameBarPosition") !== "off") GameBar.instance = new GameBar;
+  if (typeof GameBar.instance === "undefined") if (getPref("gameBar.position") !== "off") GameBar.instance = new GameBar;
    else GameBar.instance = null;
   return GameBar.instance;
  }
@@ -8642,10 +8692,10 @@ class GameBar {
  actions = [];
  constructor() {
   BxLogger.info(this.LOG_TAG, "constructor()");
-  let $container, position = getPref("gameBarPosition"), $gameBar = CE("div", { id: "bx-game-bar", class: "bx-gone", "data-position": position }, $container = CE("div", { class: "bx-game-bar-container bx-offscreen" }), createSvgIcon(position === "bottom-left" ? BxIcon.CARET_RIGHT : BxIcon.CARET_LEFT));
+  let $container, position = getPref("gameBar.position"), $gameBar = CE("div", { id: "bx-game-bar", class: "bx-gone", "data-position": position }, $container = CE("div", { class: "bx-game-bar-container bx-offscreen" }), createSvgIcon(position === "bottom-left" ? BxIcon.CARET_RIGHT : BxIcon.CARET_LEFT));
   if (this.actions = [
    new ScreenshotAction,
-   ...STATES.userAgent.capabilities.touch && getPref("touchControllerMode") !== "off" ? [new TouchControlAction] : [],
+   ...STATES.userAgent.capabilities.touch && getPref("touchController.mode") !== "off" ? [new TouchControlAction] : [],
    new SpeakerAction,
    new RendererAction,
    new MicrophoneAction,
@@ -9119,7 +9169,7 @@ document.addEventListener("readystatechange", (e) => {
  if (document.readyState !== "interactive") return;
  if (STATES.isSignedIn = !!window.xbcUser?.isSignedIn, STATES.isSignedIn) RemotePlayManager.getInstance()?.initialize();
  else window.setTimeout(HeaderSection.watchHeader, 2000);
- if (getPref("uiHideSections").includes("friends")) {
+ if (getPref("ui.hideSections").includes("friends")) {
   let $parent = document.querySelector("div[class*=PlayWithFriendsSkeleton]")?.closest("div[class*=HomePage-module]");
   $parent && ($parent.style.display = "none");
  }
@@ -9140,7 +9190,7 @@ window.addEventListener(BxEvent.STREAM_LOADING, (e) => {
  if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
  else STATES.currentStream.titleSlug = "remote-play";
 });
-getPref("loadingScreenGameArt") && window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
+getPref("loadingScreen.gameArt.show") && window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
 window.addEventListener(BxEvent.STREAM_STARTING, (e) => {
  LoadingScreen.hide();
  {
@@ -9155,7 +9205,7 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
   if (gameBar) gameBar.reset(), gameBar.enable(), gameBar.showBar();
   KeyboardShortcutHandler.getInstance().start();
   let $video = e.$video;
-  ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), getPref("localCoOpEnabled") && BxExposed.toggleLocalCoOp(getPref("localCoOpEnabled"));
+  ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), getPref("localCoOp.enabled") && BxExposed.toggleLocalCoOp(getPref("localCoOp.enabled"));
  }
  updateVideoPlayer();
 });
@@ -9193,14 +9243,14 @@ window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, (e) => {
  ScreenshotManager.getInstance().takeScreenshot();
 });
 function main() {
- if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkbMode") === "on") {
-  let customList = getPref("forceNativeMkbGames");
+ if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkb.mode") === "on") {
+  let customList = getPref("nativeMkb.forcedGames");
   BX_FLAGS.ForceNativeMkbTitles.push(...customList);
  }
- if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), AppInterface && patchPointerLockApi(), getPref("audioEnableVolumeControl") && patchAudioContext(), getPref("blockTracking")) patchMeControl(), disableAdobeAudienceManager();
- if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getPref("xhomeEnabled")) RemotePlayManager.detect();
- if (getPref("touchControllerMode") === "all") TouchController.setup();
- if (getPref("mkbEnabled") && AppInterface) STATES.pointerServerPort = AppInterface.startPointerServer() || 9269, BxLogger.info("startPointerServer", "Port", STATES.pointerServerPort.toString());
- if (getPref("uiGameCardShowWaitTime") && GameTile.setup(), EmulatedMkbHandler.setupEvents(), getPref("uiShowControllerStatus")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));
+ if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), AppInterface && patchPointerLockApi(), getPref("audio.volume.booster.enabled") && patchAudioContext(), getPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
+ if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getPref("xhome.enabled")) RemotePlayManager.detect();
+ if (getPref("touchController.mode") === "all") TouchController.setup();
+ if (getPref("mkb.enabled") && AppInterface) STATES.pointerServerPort = AppInterface.startPointerServer() || 9269, BxLogger.info("startPointerServer", "Port", STATES.pointerServerPort.toString());
+ if (getPref("ui.gameCard.waitTime.show") && GameTile.setup(), EmulatedMkbHandler.setupEvents(), getPref("ui.controllerStatus.show")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));
 }
 main();

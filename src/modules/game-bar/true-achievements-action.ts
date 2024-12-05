@@ -1,6 +1,6 @@
 import { BxIcon } from "@/utils/bx-icon";
 import { createButton, ButtonStyle } from "@/utils/html";
-import { BaseGameBarAction } from "./action-base";
+import { BaseGameBarAction } from "./base-action";
 import { TrueAchievements } from "@/utils/true-achievements";
 
 export class TrueAchievementsAction extends BaseGameBarAction {
@@ -12,11 +12,11 @@ export class TrueAchievementsAction extends BaseGameBarAction {
         this.$content = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.TRUE_ACHIEVEMENTS,
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
         });
     }
 
-    onClick(e: Event) {
+    onClick = (e: Event) => {
         super.onClick(e);
         TrueAchievements.getInstance().open(false);
     }

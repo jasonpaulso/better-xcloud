@@ -34,6 +34,26 @@ export function showGamepadToast(gamepad: Gamepad) {
     Toast.show(text, status, {instant: false});
 }
 
-export function updatePollingRate() {
-    window.BX_CONTROLLER_POLLING_RATE = getPref(PrefKey.CONTROLLER_POLLING_RATE);
+export function getUniqueGamepadNames() {
+    const gamepads = window.navigator.getGamepads();
+    const names: string[] = [];
+
+    for (const gamepad of gamepads) {
+        if (gamepad?.connected && gamepad.id !== VIRTUAL_GAMEPAD_ID) {
+            !names.includes(gamepad.id) && names.push(gamepad.id);
+        }
+    }
+
+    return names;
+}
+
+export function hasGamepad() {
+    const gamepads = window.navigator.getGamepads();
+    for (const gamepad of gamepads) {
+        if (gamepad?.connected) {
+            return true;
+        }
+    }
+
+    return false;
 }

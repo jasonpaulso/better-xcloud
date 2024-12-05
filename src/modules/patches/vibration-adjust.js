@@ -1,15 +1,16 @@
-if (!window.BX_ENABLE_CONTROLLER_VIBRATION) {
-    return void(0);
-}
+const gamepad = e.gamepad;
+if (gamepad?.connected) {
+    const gamepadSettings = window.BX_STREAM_SETTINGS.controllers[gamepad.id];
+    if (gamepadSettings) {
+        const intensity = gamepadSettings.vibrationIntensity;
 
-const intensity = window.BX_VIBRATION_INTENSITY;
-if (intensity === 0) {
-    return void(0);
-}
-
-if (intensity < 1) {
-    e.leftMotorPercent *= intensity;
-    e.rightMotorPercent *= intensity;
-    e.leftTriggerMotorPercent *= intensity;
-    e.rightTriggerMotorPercent *= intensity;
+        if (intensity === 0) {
+            return void(e.repeat = 0);
+        } else if (intensity < 1) {
+            e.leftMotorPercent *= intensity;
+            e.rightMotorPercent *= intensity;
+            e.leftTriggerMotorPercent *= intensity;
+            e.rightTriggerMotorPercent *= intensity;
+        }
+    }
 }

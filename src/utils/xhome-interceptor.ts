@@ -5,9 +5,10 @@ import { NATIVE_FETCH } from "./bx-flags";
 import { STATES } from "./global";
 import { patchIceCandidates } from "./network";
 import { PrefKey } from "@/enums/pref-keys";
-import { getPref, StreamResolution, StreamTouchController } from "./settings-storages/global-settings-storage";
+import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
+import { StreamResolution, TouchControllerMode } from "@/enums/pref-values";
 
 export class XhomeInterceptor {
     private static consoleAddrs: RemotePlayConsoleAddresses = {};
@@ -109,7 +110,7 @@ export class XhomeInterceptor {
     private static async handleInputConfigs(request: Request | URL, opts: {[index: string]: any}) {
         const response = await NATIVE_FETCH(request);
 
-        if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) !== StreamTouchController.ALL) {
+        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.ALL) {
             return response;
         }
 
@@ -150,7 +151,7 @@ export class XhomeInterceptor {
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }
-        headers.authorization = `Bearer ${RemotePlayManager.getInstance().xcloudToken}`;
+        headers.authorization = `Bearer ${RemotePlayManager.getInstance()!.getXcloudToken()}`;
 
         const index = request.url.indexOf('.xboxlive.com');
         request = new Request('https://wus.core.gssv-play-prod' + request.url.substring(index), {
@@ -187,12 +188,21 @@ export class XhomeInterceptor {
             headers[pair[0]] = pair[1];
         }
         // Add xHome token to headers
-        headers.authorization = `Bearer ${RemotePlayManager.getInstance().xhomeToken}`;
+        headers.authorization = `Bearer ${RemotePlayManager.getInstance()!.getXhomeToken()}`;
 
         // Patch resolution
         const deviceInfo = XhomeInterceptor.BASE_DEVICE_INFO;
-        if (getPref(PrefKey.REMOTE_PLAY_RESOLUTION) === StreamResolution.DIM_720P) {
-            deviceInfo.dev.os.name = 'android';
+        const resolution = getPref<StreamResolution>(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION);
+        switch (resolution) {
+            case StreamResolution.DIM_1080P_HQ:
+                deviceInfo.dev.os.name = 'tizen';
+                break;
+            case StreamResolution.DIM_720P:
+                deviceInfo.dev.os.name = 'android';
+                break;
+            default:
+                deviceInfo.dev.os.name = 'windows';
+                break;
         }
 
         headers['x-ms-device-info'] = JSON.stringify(deviceInfo);

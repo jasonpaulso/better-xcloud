@@ -1,22 +1,34 @@
 import { CE, createSvgIcon } from "@utils/html";
-import { ScreenshotAction } from "./action-screenshot";
-import { TouchControlAction } from "./action-touch-control";
+import { ScreenshotAction } from "./screenshot-action";
+import { TouchControlAction } from "./touch-control-action";
 import { BxEvent } from "@utils/bx-event";
 import { BxIcon } from "@utils/bx-icon";
-import type { BaseGameBarAction } from "./action-base";
+import type { BaseGameBarAction } from "./base-action";
 import { STATES } from "@utils/global";
-import { MicrophoneAction } from "./action-microphone";
+import { MicrophoneAction } from "./microphone-action";
 import { PrefKey } from "@/enums/pref-keys";
-import { getPref, StreamTouchController, type GameBarPosition } from "@/utils/settings-storages/global-settings-storage";
-import { TrueAchievementsAction } from "./action-true-achievements";
-import { SpeakerAction } from "./action-speaker";
-import { RendererAction } from "./action-renderer";
+import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { TrueAchievementsAction } from "./true-achievements-action";
+import { SpeakerAction } from "./speaker-action";
+import { RendererAction } from "./renderer-action";
 import { BxLogger } from "@/utils/bx-logger";
+import { GameBarPosition, TouchControllerMode } from "@/enums/pref-values";
 
 
 export class GameBar {
-    private static instance: GameBar;
-    public static getInstance = () => GameBar.instance ?? (GameBar.instance = new GameBar());
+    private static instance: GameBar | null | undefined;
+    public static getInstance(): typeof GameBar['instance'] {
+        if (typeof GameBar.instance === 'undefined') {
+            if (getPref<GameBarPosition>(PrefKey.GAME_BAR_POSITION) !== GameBarPosition.OFF) {
+                GameBar.instance = new GameBar();
+            } else {
+                GameBar.instance = null;
+            }
+        }
+
+        return GameBar.instance;
+    }
+
     private readonly LOG_TAG = 'GameBar';
 
     private static readonly VISIBLE_DURATION = 2000;
@@ -33,7 +45,7 @@ export class GameBar {
 
         let $container;
 
-        const position = getPref(PrefKey.GAME_BAR_POSITION) as GameBarPosition;
+        const position = getPref<GameBarPosition>(PrefKey.GAME_BAR_POSITION);
 
         const $gameBar = CE('div', {id: 'bx-game-bar', class: 'bx-gone', 'data-position': position},
             $container = CE('div', {class: 'bx-game-bar-container bx-offscreen'}),
@@ -42,7 +54,7 @@ export class GameBar {
 
         this.actions = [
             new ScreenshotAction(),
-            ...(STATES.userAgent.capabilities.touch && (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) !== StreamTouchController.OFF) ? [new TouchControlAction()] : []),
+            ...(STATES.userAgent.capabilities.touch && (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF) ? [new TouchControlAction()] : []),
             new SpeakerAction(),
             new RendererAction(),
             new MicrophoneAction(),
@@ -69,10 +81,10 @@ export class GameBar {
         });
 
         // Hide game bar after clicking on an action
-        window.addEventListener(BxEvent.GAME_BAR_ACTION_ACTIVATED, this.hideBar.bind(this));
+        window.addEventListener(BxEvent.GAME_BAR_ACTION_ACTIVATED, this.hideBar);
 
-        $container.addEventListener('pointerover', this.clearHideTimeout.bind(this));
-        $container.addEventListener('pointerout', this.beginHideTimeout.bind(this));
+        $container.addEventListener('pointerover', this.clearHideTimeout);
+        $container.addEventListener('pointerout', this.beginHideTimeout);
 
         // Add animation when hiding game bar
         $container.addEventListener('transitionend', e => {
@@ -84,16 +96,15 @@ export class GameBar {
         this.$container = $container;
 
         // Enable/disable Game Bar when playing/pausing
-        getPref(PrefKey.GAME_BAR_POSITION) !== 'off' && window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, ((e: Event) => {
+        position !== GameBarPosition.OFF && window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, ((e: Event) => {
             // Toggle Game bar
             if (STATES.isPlaying) {
-                const mode = (e as any).mode;
-                mode !== 'none' ? this.disable() : this.enable();
+                window.BX_STREAM_SETTINGS.xCloudPollingMode !== 'none' ? this.disable() : this.enable();
             }
         }).bind(this));
     }
 
-    private beginHideTimeout() {
+    private beginHideTimeout = () => {
         this.clearHideTimeout();
 
         this.timeoutId = window.setTimeout(() => {
@@ -102,7 +113,7 @@ export class GameBar {
         }, GameBar.VISIBLE_DURATION);
     }
 
-    private clearHideTimeout() {
+    private clearHideTimeout = () => {
         this.timeoutId && clearTimeout(this.timeoutId);
         this.timeoutId = null;
     }
@@ -123,7 +134,7 @@ export class GameBar {
         this.beginHideTimeout();
     }
 
-    hideBar() {
+    hideBar = () => {
         this.clearHideTimeout();
         this.$container.classList.replace('bx-show', 'bx-hide');
     }

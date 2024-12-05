@@ -1,7 +1,12 @@
-.bx-select {
+select.bx-select {
+    min-height: 30px;
+}
+
+div.bx-select {
     display: flex;
     align-items: center;
     flex: 0 1 auto;
+    gap: 8px;
 
     select {
         // Render offscreen instead of "display: none" so we could get its size
@@ -9,23 +14,41 @@
         top: -9999px !important;
         left: -9999px !important;
         visibility: hidden !important;
+
+        &:disabled {
+            & ~ button {
+                display: none;
+            }
+
+            & ~ div {
+                background: #131416;
+                color: white;
+                pointer-events: none;
+
+                .bx-select-indicators {
+                    visibility: hidden;
+                }
+            }
+        }
     }
 
     > div, button.bx-select-value {
         min-width: 120px;
         text-align: left;
-        margin: 0 8px;
         line-height: 24px;
         vertical-align: middle;
         background: #fff;
         color: #000;
         border-radius: 4px;
         padding: 2px 8px;
+        display: flex;
         flex: 1;
+        flex-direction: column;
     }
 
     > div {
-        display: inline-block;
+        min-height: 24px;
+        box-sizing: content-box;
 
         input {
             display: inline-block;
@@ -36,6 +59,9 @@
             margin-bottom: 0;
             font-size: 14px;
             width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
 
             span {
                 display: block;
@@ -43,17 +69,22 @@
                 font-weight: bold;
                 text-align: left;
                 line-height: initial;
+                white-space: pre;
             }
         }
     }
 
     button.bx-select-value {
         border: none;
-        display: inline-flex;
         cursor: pointer;
         min-height: 30px;
         font-size: 0.9rem;
         align-items: center;
+
+        > div {
+            display: flex;
+            width: 100%;
+        }
 
         span {
             flex: 1;
@@ -94,6 +125,33 @@
 
         span {
             line-height: unset;
+        }
+    }
+}
+
+.bx-select-indicators {
+    display: flex;
+    height: 4px;
+    gap: 2px;
+    margin-bottom: 2px;
+
+    span {
+        content: ' ';
+        display: inline-block;
+        flex: 1;
+        background: #cfcfcf;
+        border-radius: 4px;
+
+        &[data-highlighted] {
+            background: #9c9c9c;
+        }
+
+        &[data-selected] {
+            background: #aacfe7;
+        }
+
+        &[data-highlighted][data-selected] {
+            background: #5fa3d0;
         }
     }
 }

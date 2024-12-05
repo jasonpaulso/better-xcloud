@@ -1,5 +1,6 @@
 import { UserAgentProfile } from "@enums/user-agent";
 import { BX_FLAGS } from "./bx-flags";
+import { StorageKey } from "@/enums/pref-keys";
 
 type UserAgentConfig = {
     profile: UserAgentProfile,
@@ -18,7 +19,7 @@ if (!!(window as any).chrome || window.navigator.userAgent.includes('Chrome')) {
 }
 
 export class UserAgent {
-    static readonly STORAGE_KEY = 'better_xcloud_user_agent';
+    static readonly STORAGE_KEY = StorageKey.USER_AGENT;
     static #config: UserAgentConfig;
 
     static #isMobile: boolean | null = null;

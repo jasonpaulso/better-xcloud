@@ -1,24 +1,28 @@
 import type { BxIcon } from "@utils/bx-icon";
 import { setNearby } from "./navigation-utils";
 import type { NavigationNearbyElements } from "@/modules/ui/dialog/navigation-dialog";
+import type { PresetRecord, AllPresets } from "@/types/presets";
+import { t } from "./translation";
 
 export enum ButtonStyle {
     PRIMARY = 1,
-    DANGER = 2,
-    GHOST = 4,
-    FROSTED = 8,
-    DROP_SHADOW = 16,
-    FOCUSABLE = 32,
-    FULL_WIDTH = 64,
-    FULL_HEIGHT = 128,
-    TALL = 256,
-    CIRCULAR = 512,
-    NORMAL_CASE = 1024,
-    NORMAL_LINK = 2048,
+    WARNING = 1 << 1,
+    DANGER = 1 << 2,
+    GHOST = 1 << 3,
+    FROSTED = 1 << 4,
+    DROP_SHADOW = 1 << 5,
+    FOCUSABLE = 1 << 6,
+    FULL_WIDTH = 1 << 7,
+    FULL_HEIGHT = 1 << 8,
+    TALL = 1 << 9,
+    CIRCULAR = 1 << 10,
+    NORMAL_CASE = 1 << 11,
+    NORMAL_LINK = 1 << 12,
 }
 
 const ButtonStyleClass = {
     [ButtonStyle.PRIMARY]: 'bx-primary',
+    [ButtonStyle.WARNING]: 'bx-warning',
     [ButtonStyle.DANGER]: 'bx-danger',
     [ButtonStyle.GHOST]: 'bx-ghost',
     [ButtonStyle.FROSTED]: 'bx-frosted',
@@ -32,22 +36,34 @@ const ButtonStyleClass = {
     [ButtonStyle.NORMAL_LINK]: 'bx-normal-link',
 }
 
-export type BxButton = {
-    style?: ButtonStyle;
-    url?: string;
-    classes?: string[];
-    icon?: typeof BxIcon;
-    label?: string;
-    title?: string;
-    disabled?: boolean;
-    onClick?: EventListener;
-    tabIndex?: number;
-    attributes?: {[key: string]: any},
-}
+export type BxButtonOptions = Partial<{
+    style: ButtonStyle;
+    url: string;
+    classes: string[];
+    icon: typeof BxIcon;
+    label: string;
+    secondaryText: HTMLElement | string;
+    title: string;
+    disabled: boolean;
+    onClick: EventListener;
+    tabIndex: number;
+    attributes: {[key: string]: any},
+}>;
+
+export type SettingsRowOptions = Partial<{
+    multiLines: boolean;
+    $note: HTMLElement;
+}>;
 
 // Quickly create a tree of elements without having to use innerHTML
 type CreateElementOptions = {
     [index: string]: any;
+    _on?: {
+        [ key: string ]: (e: Event) => void;
+    };
+    _dataset?: {
+        [ key: string ]: string | number;
+    };
     _nearby?: NavigationNearbyElements;
 };
 
@@ -65,9 +81,23 @@ function createElement<T=HTMLElement>(elmName: string, props: CreateElementOptio
         $elm = document.createElement(elmName);
     }
 
-    if (props['_nearby']) {
-        setNearby($elm, props['_nearby']);
-        delete props['_nearby'];
+    if (props._nearby) {
+        setNearby($elm, props._nearby);
+        delete props._nearby;
+    }
+
+    if (props._on) {
+        for (const name in props._on) {
+            $elm.addEventListener(name, props._on[name]);
+        }
+        delete props._on;
+    }
+
+    if (props._dataset) {
+        for (const name in props._dataset) {
+            $elm.dataset[name] = props._dataset[name] as string;
+        }
+        delete props._dataset;
     }
 
     for (const key in props) {
@@ -75,33 +105,25 @@ function createElement<T=HTMLElement>(elmName: string, props: CreateElementOptio
             continue;
         }
 
+        const value = props[key];
         if (hasNs) {
-            $elm.setAttributeNS(null, key, props[key]);
+            $elm.setAttributeNS(null, key, value);
         } else {
-            if (key === 'on') {
-                for (const eventName in props[key]) {
-                    $elm.addEventListener(eventName, props[key][eventName]);
-                }
-            } else {
-                $elm.setAttribute(key, props[key]);
-            }
+            $elm.setAttribute(key, value);
         }
     }
 
     for (let i = 2, size = arguments.length; i < size; i++) {
         const arg = arguments[i];
 
-        if (arg instanceof Node) {
-            $elm.appendChild(arg);
-        } else if (arg !== null && arg !== false && typeof arg !== 'undefined') {
-            $elm.appendChild(document.createTextNode(arg));
+        if (arg !== null && arg !== false && typeof arg !== 'undefined') {
+            $elm.append(arg);
         }
     }
 
     return $elm as T;
 }
 
-export const CE = createElement;
 
 const domParser = new DOMParser();
 export function createSvgIcon(icon: typeof BxIcon) {
@@ -110,16 +132,26 @@ export function createSvgIcon(icon: typeof BxIcon) {
 
 const ButtonStyleIndices = Object.keys(ButtonStyleClass).map(i => parseInt(i));
 
-export function createButton<T=HTMLButtonElement>(options: BxButton): T {
+export function createButton<T=HTMLButtonElement>(options: BxButtonOptions): T {
     let $btn;
+
+    // Create base button element
     if (options.url) {
-        $btn = CE<HTMLAnchorElement>('a', {'class': 'bx-button'});
-        $btn.href = options.url;
-        $btn.target = '_blank';
+        $btn = CE<HTMLAnchorElement>('a', {
+            class: 'bx-button',
+            href: options.url,
+            target: '_blank',
+        });
     } else {
-        $btn = CE<HTMLButtonElement>('button', {'class': 'bx-button', type: 'button'});
+        $btn = CE<HTMLButtonElement>('button', {
+            class: 'bx-button',
+            type: 'button',
+        });
+
+        options.disabled && ($btn.disabled = true);
     }
 
+    // Add button styles
     const style = (options.style || 0) as number;
     if (style) {
         let index: keyof typeof ButtonStyleClass;
@@ -133,9 +165,13 @@ export function createButton<T=HTMLButtonElement>(options: BxButton): T {
     options.icon && $btn.appendChild(createSvgIcon(options.icon));
     options.label && $btn.appendChild(CE('span', {}, options.label));
     options.title && $btn.setAttribute('title', options.title);
-    options.disabled && (($btn as HTMLButtonElement).disabled = true);
     options.onClick && $btn.addEventListener('click', options.onClick);
     $btn.tabIndex = typeof options.tabIndex === 'number' ? options.tabIndex : 0;
+
+    if (options.secondaryText) {
+        $btn.classList.add('bx-button-multi-lines');
+        $btn.appendChild(CE('span', {}, options.secondaryText));
+    }
 
     for (const key in options.attributes) {
         if (!$btn.hasOwnProperty(key)) {
@@ -144,6 +180,41 @@ export function createButton<T=HTMLButtonElement>(options: BxButton): T {
     }
 
     return $btn as T;
+}
+
+export function createSettingRow(label: string, $control: HTMLElement | false | undefined, options: SettingsRowOptions={}) {
+    let $label: HTMLElement;
+
+    const $row = CE<HTMLLabelElement>('label', { class: 'bx-settings-row' },
+        $label = CE('span', {class: 'bx-settings-label'},
+            label,
+            options.$note,
+        ),
+        $control,
+    );
+
+    // Make link inside <label> focusable
+    const $link = $label.querySelector('a');
+    if ($link) {
+        $link.classList.add('bx-focusable');
+        setNearby($label, {
+            focus: $link,
+        });
+    }
+
+    setNearby($row, {
+        orientation: options.multiLines ? 'vertical' : 'horizontal',
+    });
+
+    if (options.multiLines) {
+        $row.dataset.multiLines = 'true';
+    }
+
+    if ($control instanceof HTMLElement && $control.id) {
+        $row.htmlFor = $control.id;
+    }
+
+    return $row;
 }
 
 export function getReactProps($elm: HTMLElement): any | null {
@@ -169,10 +240,12 @@ export function isElementVisible($elm: HTMLElement): boolean {
     return (rect.x >= 0 || rect.y >= 0) && !!rect.width && !!rect.height;
 }
 
-export const CTN = document.createTextNode.bind(document);
-window.BX_CE = createElement;
 
 export function removeChildElements($parent: HTMLElement) {
+    if ($parent instanceof HTMLDivElement && $parent.classList.contains('bx-select')) {
+        $parent = $parent.querySelector('select')!;
+    }
+
     while ($parent.firstElementChild) {
         $parent.firstElementChild.remove();
     }
@@ -188,6 +261,39 @@ export function clearDataSet($elm: HTMLElement) {
     Object.keys($elm.dataset).forEach(key => {
         delete $elm.dataset[key];
     });
+}
+
+export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectElement, allPresets: AllPresets<T>, selectedValue: number | null, addOffValue=false) {
+    removeChildElements($select);
+
+    if (addOffValue) {
+        const $option = CE<HTMLOptionElement>('option', { value: 0 }, t('off'));
+        $option.selected = selectedValue === 0;
+
+        $select.appendChild($option);
+    }
+
+    // Render options
+    const groups = {
+        default: t('default'),
+        custom: t('custom'),
+    };
+
+    let key: keyof typeof groups;
+    for (key in groups) {
+        const $optGroup = CE('optgroup', { label: groups[key] });
+        for (const id of allPresets[key]) {
+            const record = allPresets.data[id];
+            const $option = CE<HTMLOptionElement>('option', { value: record.id }, record.name);
+            $option.selected = selectedValue === record.id;
+
+            $optGroup.appendChild($option);
+        }
+
+        if ($optGroup.hasChildNodes()) {
+            $select.appendChild($optGroup);
+        }
+    }
 }
 
 // https://stackoverflow.com/a/20732091
@@ -228,3 +334,10 @@ export function secondsToHms(seconds: number) {
 
     return output.join(' ');
 }
+
+export function escapeCssSelector(name: string) {
+    return name.replaceAll('.', '-');
+}
+
+export const CE = createElement;
+window.BX_CE = createElement;

@@ -31,42 +31,6 @@
         font-weight: normal;
         height: var(--bx-button-height);
     }
-
-    input {
-        accent-color: var(--bx-primary-button-color);
-
-        &:focus {
-            accent-color: var(--bx-danger-button-color);
-        }
-    }
-
-    select:disabled {
-        -webkit-appearance: none;
-        background: transparent;
-        text-align-last: right;
-        border: none;
-        color: #fff;
-    }
-
-    select option:disabled {
-        display: none;
-    }
-
-    input[type=checkbox],
-    select {
-        &:focus {
-            filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
-        }
-    }
-
-    a {
-        color: #1c9d1c;
-        text-decoration: none;
-
-        &:hover, &:focus {
-            color: #5dc21e;
-        }
-    }
 }
 
 .bx-settings-tabs-container {
@@ -170,69 +134,6 @@
         overflow: hidden;
     }
 
-    > div[data-tab-group=shortcuts] {
-        > div {
-            &[data-has-gamepad=true] {
-                > div:first-of-type {
-                    display: none;
-                }
-
-                > div:last-of-type {
-                    display: block;
-                }
-            }
-
-            &[data-has-gamepad=false] {
-                > div:first-of-type {
-                    display: block;
-                }
-
-                > div:last-of-type {
-                    display: none;
-                }
-            }
-        }
-
-        .bx-shortcut-profile {
-            width: 100%;
-            height: 36px;
-            display: block;
-        }
-
-        .bx-shortcut-note {
-            margin-top: 10px;
-            font-size: 14px;
-        }
-
-        .bx-shortcut-row {
-            display: flex;
-            margin-bottom: 10px;
-
-            label.bx-prompt {
-                flex: 1;
-                font-size: 26px;
-                margin-bottom: 0;
-            }
-
-            .bx-shortcut-actions {
-                flex: 2;
-                position: relative;
-
-                select {
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    display: block;
-
-                    &:last-of-type {
-                        opacity: 0;
-                        z-index: calc(var(--bx-settings-z-index) + 1);
-                    }
-                }
-            }
-        }
-    }
-
     .bx-top-buttons {
         display: flex;
         flex-direction: column;
@@ -262,6 +163,8 @@
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
+            min-height: var(--bx-button-height);
+            align-content: center;
         }
     }
 }
@@ -306,6 +209,18 @@
             margin: 0 0 0 auto;
         }
     }
+
+    &[data-multi-lines="true"] {
+        flex-direction: column;
+
+        > span.bx-settings-label {
+            align-self: start;
+
+            + * {
+                margin: unset;
+            }
+        }
+    }
 }
 
 .bx-settings-dialog-note {
@@ -339,6 +254,7 @@
     line-height: 20px;
     font-size: 14px;
     margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .bx-debug-info {
@@ -378,24 +294,26 @@
 }
 
 .bx-settings-tab-contents {
+    border-radius-size = 6px;
+
     > div {
         // Label at the beginning
         *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row) {
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
+            border-top-left-radius: border-radius-size;
+            border-top-right-radius: border-radius-size;
         }
 
         // Label at the end
         .bx-settings-row:not(:has(+ .bx-settings-row)) {
             border: none;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
+            border-bottom-left-radius: border-radius-size;
+            border-bottom-right-radius: border-radius-size;
         }
 
         // Single label
         *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)) {
             border: none;
-            border-radius: 10px;
+            border-radius: border-radius-size;
         }
     }
 }
@@ -409,7 +327,6 @@
 
     label {
         flex: 1;
-        margin-bottom: 0;
         padding: 10px;
         background: #004f87;
     }
@@ -444,10 +361,6 @@
 
 .bx-suggest-box {
     display: none;
-    background: #161616;
-    padding: 10px;
-    box-shadow: 0px 0px 12px #0f0f0f inset;
-    border-radius: 10px;
 }
 
 .bx-suggest-wrapper {
@@ -561,5 +474,67 @@
                 }
             }
         }
+    }
+}
+
+.bx-sub-content-box {
+    background: #161616;
+    padding: 10px;
+    box-shadow: 0px 0px 12px #0f0f0f inset;
+    border-radius: 10px;
+
+    .bx-settings-row & {
+        background: #202020;
+        padding: 12px;
+        box-shadow: 0 0 4px #000000 inset;
+        border-radius: 6px;
+    }
+}
+
+.bx-controller-extra-settings {
+    &[data-has-gamepad=true] {
+        > :first-child {
+            display: none;
+        }
+
+        > :last-child {
+            display: block;
+        }
+    }
+
+    &[data-has-gamepad=false] {
+        > :first-child {
+            display: block;
+        }
+
+        > :last-child {
+            display: none;
+        }
+    }
+
+    .bx-controller-extra-wrapper {
+        flex: 1;
+        min-width: 1px;
+    }
+
+    .bx-sub-content-box {
+        flex: 1;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        margin-top: 10px;
+
+        > label {
+            font-size: 14px;
+        }
+    }
+}
+
+.bx-preset-row {
+    display: flex;
+    gap: 8px;
+
+    .bx-select {
+        flex: 1;
     }
 }

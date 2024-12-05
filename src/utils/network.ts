@@ -66,10 +66,10 @@ function updateIceCandidates(candidates: any, options: {preferIpv6Server: boolea
 
     const newCandidate = (candidate: string) => {
         return {
-            'candidate': candidate,
-            'messageType': 'iceCandidate',
-            'sdpMLineIndex': '0',
-            'sdpMid': '0',
+            candidate: candidate,
+            messageType: 'iceCandidate',
+            sdpMLineIndex: '0',
+            sdpMid: '0',
         };
     };
 
@@ -105,7 +105,7 @@ export async function patchIceCandidates(request: Request, consoleAddrs?: Remote
     }
 
     const options = {
-        preferIpv6Server: getPref(PrefKey.PREFER_IPV6_SERVER),
+        preferIpv6Server: getPref(PrefKey.SERVER_PREFER_IPV6),
         consoleAddrs: consoleAddrs,
     };
 

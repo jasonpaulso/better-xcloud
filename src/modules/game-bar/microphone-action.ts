@@ -1,8 +1,8 @@
 import { BxEvent } from "@utils/bx-event";
 import { BxIcon } from "@utils/bx-icon";
 import { createButton, ButtonStyle, CE } from "@utils/html";
-import { BaseGameBarAction } from "./action-base";
-import { MicrophoneShortcut, MicrophoneState } from "../shortcuts/shortcut-microphone";
+import { BaseGameBarAction } from "./base-action";
+import { MicrophoneShortcut, MicrophoneState } from "../shortcuts/microphone-shortcut";
 
 
 export class MicrophoneAction extends BaseGameBarAction {
@@ -14,14 +14,14 @@ export class MicrophoneAction extends BaseGameBarAction {
         const $btnDefault = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.MICROPHONE,
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
             classes: ['bx-activated'],
         });
 
         const $btnMuted = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.MICROPHONE_MUTED,
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
         });
 
         this.$content = CE('div', {}, $btnMuted, $btnDefault);
@@ -36,7 +36,7 @@ export class MicrophoneAction extends BaseGameBarAction {
         });
     }
 
-    onClick(e: Event) {
+    onClick = (e: Event) => {
         super.onClick(e);
         const enabled = MicrophoneShortcut.toggle(false);
         this.$content.dataset.activated = enabled.toString();

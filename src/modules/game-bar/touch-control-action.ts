@@ -1,7 +1,7 @@
 import { BxIcon } from "@utils/bx-icon";
 import { createButton, ButtonStyle, CE } from "@utils/html";
 import { TouchController } from "@modules/touch-controller";
-import { BaseGameBarAction } from "./action-base";
+import { BaseGameBarAction } from "./base-action";
 import { t } from "@utils/translation";
 
 export class TouchControlAction extends BaseGameBarAction {
@@ -14,21 +14,21 @@ export class TouchControlAction extends BaseGameBarAction {
             style: ButtonStyle.GHOST,
             icon: BxIcon.TOUCH_CONTROL_ENABLE,
             title: t('show-touch-controller'),
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
         });
 
         const $btnDisable = createButton({
             style: ButtonStyle.GHOST,
             icon: BxIcon.TOUCH_CONTROL_DISABLE,
             title: t('hide-touch-controller'),
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
             classes: ['bx-activated'],
         });
 
         this.$content = CE('div', {}, $btnEnable, $btnDisable);
     }
 
-    onClick(e: Event) {
+    onClick = (e: Event) => {
         super.onClick(e);
         const isVisible = TouchController.toggleVisibility();
         this.$content.dataset.activated = (!isVisible).toString();

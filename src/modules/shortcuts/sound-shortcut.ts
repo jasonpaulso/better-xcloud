@@ -13,11 +13,11 @@ export enum SpeakerState {
 
 export class SoundShortcut {
     static adjustGainNodeVolume(amount: number): number {
-        if (!getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL)) {
+        if (!getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED)) {
             return 0;
         }
 
-        const currentValue = getPref(PrefKey.AUDIO_VOLUME);
+        const currentValue = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME);
         let nearestValue: number;
 
         if (amount > 0) {  // Increase
@@ -47,9 +47,9 @@ export class SoundShortcut {
     }
 
     static muteUnmute() {
-        if (getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL) && STATES.currentStream.audioGainNode) {
+        if (getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && STATES.currentStream.audioGainNode) {
             const gainValue = STATES.currentStream.audioGainNode.gain.value;
-            const settingValue = getPref(PrefKey.AUDIO_VOLUME);
+            const settingValue = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME);
 
             let targetValue: number;
             if (settingValue === 0) {  // settingValue is 0 => set to 100
@@ -73,7 +73,7 @@ export class SoundShortcut {
 
             BxEvent.dispatch(window, BxEvent.SPEAKER_STATE_CHANGED, {
                 speakerState: targetValue === 0 ? SpeakerState.MUTED : SpeakerState.ENABLED,
-            })
+            });
             return;
         }
 

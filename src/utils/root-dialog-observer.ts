@@ -14,7 +14,6 @@ export class RootDialogObserver {
         icon: BxIcon.CREATE_SHORTCUT,
         label: t('create-shortcut'),
         style: ButtonStyle.FOCUSABLE | ButtonStyle.GHOST | ButtonStyle.FULL_WIDTH | ButtonStyle.NORMAL_CASE | ButtonStyle.NORMAL_LINK,
-        tabIndex: 0,
         onClick: e => {
             window.BX_EXPOSED.dialogRoutes?.closeAll();
 
@@ -27,7 +26,6 @@ export class RootDialogObserver {
         icon: BxIcon.DOWNLOAD,
         label: t('wallpaper'),
         style: ButtonStyle.FOCUSABLE | ButtonStyle.GHOST | ButtonStyle.FULL_WIDTH | ButtonStyle.NORMAL_CASE | ButtonStyle.NORMAL_LINK,
-        tabIndex: 0,
         onClick: e => {
             window.BX_EXPOSED.dialogRoutes?.closeAll();
 

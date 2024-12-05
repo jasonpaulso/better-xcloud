@@ -4,7 +4,7 @@ import { BxIcon } from "@utils/bx-icon";
 import { getPreferredServerRegion } from "@utils/region";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { t } from "@utils/translation";
-import { SettingsNavigationDialog } from "./dialog/settings-dialog";
+import { SettingsDialog } from "./dialog/settings-dialog";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { BxLogger } from "@/utils/bx-logger";
@@ -29,14 +29,14 @@ export class HeaderSection {
             icon: BxIcon.REMOTE_PLAY,
             title: t('remote-play'),
             style: ButtonStyle.GHOST | ButtonStyle.FOCUSABLE | ButtonStyle.CIRCULAR,
-            onClick: e => RemotePlayManager.getInstance().togglePopup(),
+            onClick: e => RemotePlayManager.getInstance()?.togglePopup(),
         });
 
         this.$btnSettings = createButton({
             classes: ['bx-header-settings-button'],
             label: '???',
             style: ButtonStyle.FROSTED | ButtonStyle.DROP_SHADOW | ButtonStyle.FOCUSABLE | ButtonStyle.FULL_HEIGHT,
-            onClick: e => SettingsNavigationDialog.getInstance().show(),
+            onClick: e => SettingsDialog.getInstance().show(),
         });
 
         this.$buttonsWrapper = CE('div', {},
@@ -50,7 +50,7 @@ export class HeaderSection {
             return;
         }
 
-        const PREF_LATEST_VERSION = getPref(PrefKey.LATEST_VERSION);
+        const PREF_LATEST_VERSION = getPref<VersionLatest>(PrefKey.VERSION_LATEST);
 
         // Setup Settings button
         const $btnSettings = this.$btnSettings;
@@ -69,7 +69,7 @@ export class HeaderSection {
         $parent.appendChild(this.$buttonsWrapper);
     }
 
-    private checkHeader() {
+    private checkHeader = () => {
         let $target = document.querySelector('#PageContent div[class*=EdgewaterHeader-module__rightSectionSpacing]');
         if (!$target) {
             $target = document.querySelector('div[class^=UnsupportedMarketPage-module__buttons]');
@@ -90,7 +90,7 @@ export class HeaderSection {
         this.observer && this.observer.disconnect();
         this.observer = new MutationObserver(mutationList => {
             this.timeoutId && clearTimeout(this.timeoutId);
-            this.timeoutId = window.setTimeout(this.checkHeader.bind(this), 2000);
+            this.timeoutId = window.setTimeout(this.checkHeader, 2000);
         });
         this.observer.observe($root, {subtree: true, childList: true});
 

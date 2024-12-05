@@ -4,10 +4,12 @@ import { BxLogger } from "@utils/bx-logger";
 import { patchSdpBitrate, setCodecPreferences } from "./sdp";
 import { StreamPlayer, type StreamPlayerOptions } from "@/modules/stream-player";
 import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
+import { getPref, getPrefDefinition } from "./settings-storages/global-settings-storage";
+import { CodecProfile } from "@/enums/pref-values";
+import type { SettingDefinition } from "@/types/setting-definition";
 
 export function patchVideoApi() {
-    const PREF_SKIP_SPLASH_VIDEO = getPref(PrefKey.SKIP_SPLASH_VIDEO);
+    const PREF_SKIP_SPLASH_VIDEO = getPref(PrefKey.UI_SKIP_SPLASH_VIDEO);
 
     // Show video player when it's ready
     const showFunc = function(this: HTMLVideoElement) {
@@ -57,7 +59,7 @@ export function patchVideoApi() {
 
 
 export function patchRtcCodecs() {
-    const codecProfile = getPref(PrefKey.STREAM_CODEC_PROFILE);
+    const codecProfile = getPref<CodecProfile>(PrefKey.STREAM_CODEC_PROFILE);
     if (codecProfile === 'default') {
         return;
     }
@@ -80,20 +82,21 @@ export function patchRtcPeerConnection() {
         return dataChannel;
     }
 
-    const maxVideoBitrate = getPref(PrefKey.BITRATE_VIDEO_MAX);
-    const codec = getPref(PrefKey.STREAM_CODEC_PROFILE);
+    const maxVideoBitrateDef = getPrefDefinition(PrefKey.STREAM_MAX_VIDEO_BITRATE) as Extract<SettingDefinition, { min: number }>;
+    const maxVideoBitrate = getPref<VideoMaxBitrate>(PrefKey.STREAM_MAX_VIDEO_BITRATE);
+    const codec = getPref<CodecProfile>(PrefKey.STREAM_CODEC_PROFILE);
 
-    if (codec !== 'default' || maxVideoBitrate > 0) {
+    if (codec !== CodecProfile.DEFAULT || maxVideoBitrate < maxVideoBitrateDef.max) {
         const nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
         RTCPeerConnection.prototype.setLocalDescription = function(description?: RTCLocalSessionDescriptionInit): Promise<void> {
             // Set preferred codec profile
-            if (codec !== 'default') {
+            if (codec !== CodecProfile.DEFAULT) {
                 arguments[0].sdp = setCodecPreferences(arguments[0].sdp, codec);
             }
 
-            // set maximum bitrate
+            // Set maximum bitrate
             try {
-                if (maxVideoBitrate > 0 && description) {
+                if (maxVideoBitrate < maxVideoBitrateDef.max && description) {
                     arguments[0].sdp = patchSdpBitrate(arguments[0].sdp, Math.round(maxVideoBitrate / 1000));
                 }
             } catch (e) {
@@ -133,7 +136,7 @@ export function patchAudioContext() {
 
         ctx.createGain = function() {
             const gainNode = nativeCreateGain.apply(this);
-            gainNode.gain.value = getPref(PrefKey.AUDIO_VOLUME) / 100;
+            gainNode.gain.value = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME) / 100;
 
             STATES.currentStream.audioGainNode = gainNode;
             return gainNode;

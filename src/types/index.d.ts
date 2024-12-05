@@ -5,20 +5,6 @@ type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends read
 
 type PartialRecord<K extends keyof any, T> = Partial<Record<K, T>>;
 
-interface Window {
-    AppInterface: any;
-    BX_FLAGS?: BxFlags;
-    BX_CE: (elmName: string, props: {[index: string]: any}={}) => HTMLElement;
-    BX_EXPOSED: any;
-
-    BX_VIBRATION_INTENSITY: number;
-    BX_CONTROLLER_POLLING_RATE: number;
-    BX_ENABLE_CONTROLLER_VIBRATION: boolean;
-    BX_ENABLE_DEVICE_VIBRATION: boolean;
-
-    BX_REMOTE_PLAY_CONFIG: BxStates.remotePlay.config;
-}
-
 interface NavigatorBattery extends Navigator {
     getBattery: () => Promise<{
         charging: boolean;
@@ -38,7 +24,7 @@ type ServerRegion = {
 
 type BxStates = {
     supportedRegion: boolean;
-    serverRegions: Record<string, ServerRegion>;
+    serverRegions: Record<ServerRegionName, ServerRegion>;
     selectedRegion: any;
     gsToken: string;
     isSignedIn: boolean;
@@ -49,6 +35,9 @@ type BxStates = {
         capabilities: {
             touch: boolean;
             batteryApi: boolean;
+            deviceVibration: boolean;
+            mkb: boolean;
+            emulatedNativeMkb: boolean;
         };
     };
 

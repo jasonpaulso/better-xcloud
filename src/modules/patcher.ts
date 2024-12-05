@@ -1,6 +1,5 @@
-import { AppInterface, SCRIPT_VERSION, STATES } from "@utils/global";
+import { SCRIPT_VERSION, STATES } from "@utils/global";
 import { BX_FLAGS } from "@utils/bx-flags";
-import { VibrationManager } from "@modules/vibration-manager";
 import { BxLogger } from "@utils/bx-logger";
 import { hashCode, renderString } from "@utils/utils";
 import { BxEvent } from "@/utils/bx-event";
@@ -13,13 +12,14 @@ import codeRemotePlayEnable from "./patches/remote-play-enable.js" with { type: 
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
 import { FeatureGates } from "@/utils/feature-gates.js";
-import { UiSection } from "@/enums/ui-sections.js";
-import { PrefKey } from "@/enums/pref-keys.js";
-import { getPref, StreamTouchController } from "@/utils/settings-storages/global-settings-storage";
-import { GamePassCloudGallery } from "@/enums/game-pass-gallery.js";
-import { t } from "@/utils/translation.js";
+import { PrefKey, StorageKey } from "@/enums/pref-keys.js";
+import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
+import { t } from "@/utils/translation";
+import { NativeMkbMode, TouchControllerMode, UiLayout, UiSection } from "@/enums/pref-values";
 
-type PatchArray = (keyof typeof PATCHES)[];
+type PathName = keyof typeof PATCHES;
+type PatchArray = PathName[];
 
 class PatcherUtils {
     static indexOf(txt: string, searchString: string, startIndex: number, maxRange: number): number {
@@ -117,7 +117,7 @@ const PATCHES = {
             return false;
         }
 
-        const layout = getPref(PrefKey.UI_LAYOUT) === 'tv' ? 'tv' : 'default';
+        const layout = getPref<UiLayout>(PrefKey.UI_LAYOUT) === UiLayout.TV ? UiLayout.TV : UiLayout.DEFAULT;
         return str.replace(text, `?"${layout}":"${layout}"`);
     },
 
@@ -211,7 +211,7 @@ const PATCHES = {
 
         // Patch polling rate
         const tmp = str.substring(setTimeoutIndex, setTimeoutIndex + 150);
-        const tmpPatched = tmp.replaceAll('Math.max(0,4-', 'Math.max(0,window.BX_CONTROLLER_POLLING_RATE-');
+        const tmpPatched = tmp.replaceAll('Math.max(0,4-', 'Math.max(0,window.BX_STREAM_SETTINGS.controllerPollingRate - ');
         str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched);
 
         // Block gamepad stats collecting
@@ -268,7 +268,6 @@ logFunc(logTag, '//', logMessage);
             return false;
         }
 
-        VibrationManager.updateGlobalVars();
         str = str.replaceAll(text, text + codeVibrationAdjust);
         return str;
     },
@@ -419,9 +418,9 @@ if (window.BX_EXPOSED.stopTakRendering) {
         }
 
         let autoOffCode = '';
-        if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.OFF) {
+        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
             autoOffCode = 'return;';
-        } else if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER_AUTO_OFF)) {
+        } else if (getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) {
             autoOffCode = `
 const gamepads = window.navigator.getGamepads();
 let gamepadFound = false;
@@ -476,7 +475,7 @@ e.guideUI = null;
 `;
 
         // Remove the TAK Edit button when the touch controller is disabled
-        if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.OFF) {
+        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
             newCode += 'e.canShowTakHUD = false;';
         }
 
@@ -491,7 +490,8 @@ e.guideUI = null;
         }
 
         const newCode = `
-BxEvent.dispatch(window, BxEvent.XCLOUD_POLLING_MODE_CHANGED, {mode: e.toLowerCase()});
+window.BX_STREAM_SETTINGS.xCloudPollingMode = e.toLowerCase();
+BxEvent.dispatch(window, BxEvent.XCLOUD_POLLING_MODE_CHANGED);
 `;
         str = str.replace(text, text + newCode);
         return str;
@@ -587,7 +587,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
             return false;
         }
 
-        const opacity = (getPref(PrefKey.STREAM_TOUCH_CONTROLLER_DEFAULT_OPACITY) / 100).toFixed(1);
+        const opacity = (getPref<TouchControllerDefaultOpacity>(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) / 100).toFixed(1);
         const newCode = `opacityMultiplier: ${opacity}`;
         str = str.replace(text, newCode);
         return str;
@@ -648,7 +648,16 @@ true` + text;
     },
 
     enableNativeMkb(str: string) {
-        let text = 'e.mouseSupported&&e.keyboardSupported&&e.fullscreenSupported;';
+        // l = t.mouseSupported && t.keyboardSupported && t.fullscreenSupported;
+        let index = str.indexOf('.mouseSupported&&');
+        if (index < 0) {
+            return false;
+        }
+
+        // Get the variable name "t"
+        const varName = str.charAt(index - 1);
+        // Find the full text
+        let text = `${varName}.mouseSupported&&${varName}.keyboardSupported&&${varName}.fullscreenSupported;`;
         if ((!str.includes(text))) {
             return false;
         }
@@ -827,7 +836,7 @@ true` + text;
             return false;
         }
 
-        const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS) as UiSection[];
+        const PREF_HIDE_SECTIONS = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
         const siglIds: GamePassCloudGallery[] = [];
 
         const sections: PartialRecord<UiSection, GamePassCloudGallery> = {
@@ -906,31 +915,19 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
     // product-details-page.js#2388, 24.17.20
     detectProductDetailsPage(str: string) {
         let index = str.indexOf('{location:"ProductDetailPage",');
+        index >= 0 && (index = PatcherUtils.lastIndexOf('return', str, index, 200));
+
         if (index < 0) {
             return false;
         }
 
-        index = str.indexOf('return', index - 40);
-        if (index < 0) {
-            return false;
-        }
-
-        str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, {component: "product-details"});' + str.substring(index);
+        str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, { component: "product-details" });' + str.substring(index);
         return str;
     },
 
     detectBrowserRouterReady(str: string) {
-        let text = 'BrowserRouter:()=>';
-        if (!str.includes(text)) {
-            return false;
-        }
-
         let index = str.indexOf('{history:this.history,');
-        if (index < 0) {
-            return false;
-        }
-
-        index = PatcherUtils.lastIndexOf(str, 'return', index, 100);
+        index >= 0 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 100));
         if (index < 0) {
             return false;
         }
@@ -998,10 +995,8 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
 };
 
 let PATCH_ORDERS: PatchArray = [
-    ...(getPref(PrefKey.NATIVE_MKB_ENABLED) === 'on' ? [
+    ...(getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
-        'patchMouseAndKeyboardEnabled',
-        'disableNativeRequestPointerLock',
         'exposeInputSink',
     ] : []),
 
@@ -1023,19 +1018,19 @@ let PATCH_ORDERS: PatchArray = [
     'guideAchievementsDefaultLocked',
 
     'enableTvRoutes',
-    AppInterface && 'detectProductDetailsPage',
+    // AppInterface && 'detectProductDetailsPage',
 
+    'supportLocalCoOp',
     'overrideStorageGetSettings',
     getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentlyFocusedInteractable',
 
-    getPref(PrefKey.UI_LAYOUT) !== 'default' && 'websiteLayout',
-    getPref(PrefKey.LOCAL_CO_OP_ENABLED) && 'supportLocalCoOp',
+    getPref<UiLayout>(PrefKey.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
     getPref(PrefKey.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',
 
-    getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
-    getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
-    getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
-    (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.NATIVE_MKB) || getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.MOST_POPULAR)) && 'ignoreSiglSections',
+    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
+    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
+    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
+    (getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.NATIVE_MKB) || getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.MOST_POPULAR)) && 'ignoreSiglSections',
 
     ...(STATES.userAgent.capabilities.touch ? [
         'disableTouchContextMenu',
@@ -1064,9 +1059,11 @@ let PATCH_ORDERS: PatchArray = [
         'enableConsoleLogging',
         'enableXcloudLogger',
     ] : []),
-].filter(item => !!item);
+].filter((item): item is string => !!item) as PatchArray;
 
 // Only when playing
+// TODO: check this
+// @ts-ignore
 let PLAYING_PATCH_ORDERS: PatchArray = [
     'patchXcloudTitleInfo',
     'disableGamepadDisconnectedScreen',
@@ -1078,18 +1075,18 @@ let PLAYING_PATCH_ORDERS: PatchArray = [
     // 'exposeEventTarget',
 
     // Patch volume control for normal stream
-    getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL) && !getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'patchAudioMediaStream',
+    getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && !getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'patchAudioMediaStream',
     // Patch volume control for combined audio+video stream
-    getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL) && getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'patchCombinedAudioVideoMediaStream',
+    getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'patchCombinedAudioVideoMediaStream',
 
     // Skip feedback dialog
-    getPref(PrefKey.STREAM_DISABLE_FEEDBACK_DIALOG) && 'skipFeedbackDialog',
+    getPref(PrefKey.UI_DISABLE_FEEDBACK_DIALOG) && 'skipFeedbackDialog',
 
     ...(STATES.userAgent.capabilities.touch ? [
-        getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL && 'patchShowSensorControls',
-        getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL && 'exposeTouchLayoutManager',
-        (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.OFF || getPref(PrefKey.STREAM_TOUCH_CONTROLLER_AUTO_OFF) || !STATES.userAgent.capabilities.touch) && 'disableTakRenderer',
-        getPref(PrefKey.STREAM_TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
+        getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'patchShowSensorControls',
+        getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
+        (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF) || !STATES.userAgent.capabilities.touch) && 'disableTakRenderer',
+        getPref<TouchControllerDefaultOpacity>(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
         'patchBabylonRendererClass',
     ] : []),
 
@@ -1103,7 +1100,13 @@ let PLAYING_PATCH_ORDERS: PatchArray = [
         'patchRemotePlayMkb',
         'remotePlayConnectMode',
     ] : []),
-].filter(item => !!item);
+
+    // Native MKB
+    ...(getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+        'patchMouseAndKeyboardEnabled',
+        'disableNativeRequestPointerLock',
+    ] : []),
+].filter((item): item is string => !!item);
 
 const ALL_PATCHES = [...PATCH_ORDERS, ...PLAYING_PATCH_ORDERS];
 
@@ -1138,7 +1141,7 @@ export class Patcher {
 
             const orgFunc = this;
             const newFunc = (a: any, item: any) => {
-                Patcher.patch(item);
+                Patcher.checkChunks(item);
                 orgFunc(a, item);
             }
 
@@ -1147,20 +1150,22 @@ export class Patcher {
         };
     }
 
-    static patch(item: [[number], { [key: string]: () => {} }]) {
+    static checkChunks(item: [[number], { [key: string]: () => {} }]) {
         // !!! Use "caches" as variable name will break touch controller???
         // console.log('patch', '-----');
         let patchesToCheck: PatchArray;
         let appliedPatches: PatchArray;
 
+        const chunkData = item[1];
         const patchesMap: Record<string, PatchArray> = {};
         const patcherCache = PatcherCache.getInstance();
 
-        for (let id in item[1]) {
+        for (const chunkId in chunkData) {
             appliedPatches = [];
 
-            const cachedPatches = patcherCache.getPatches(id);
+            const cachedPatches = patcherCache.getPatches(chunkId);
             if (cachedPatches) {
+                // clone cachedPatches
                 patchesToCheck = cachedPatches.slice(0);
                 patchesToCheck.push(...PATCH_ORDERS);
             } else {
@@ -1172,7 +1177,7 @@ export class Patcher {
                 continue;
             }
 
-            const func = item[1][id];
+            const func = chunkData[chunkId];
             const funcStr = func.toString();
             let patchedFuncStr = funcStr;
 
@@ -1211,7 +1216,7 @@ export class Patcher {
             // Apply patched functions
             if (modified) {
                 try {
-                    item[1][id] = eval(patchedFuncStr);
+                    chunkData[chunkId] = eval(patchedFuncStr);
                 } catch (e: unknown) {
                     if (e instanceof Error) {
                         BxLogger.error(LOG_TAG, 'Error', appliedPatches, e.message, patchedFuncStr);
@@ -1221,7 +1226,7 @@ export class Patcher {
 
             // Save to cache
             if (appliedPatches.length) {
-                patchesMap[id] = appliedPatches;
+                patchesMap[chunkId] = appliedPatches;
             }
         }
 
@@ -1239,10 +1244,10 @@ export class PatcherCache {
     private static instance: PatcherCache;
     public static getInstance = () => PatcherCache.instance ?? (PatcherCache.instance = new PatcherCache());
 
-    private readonly KEY_CACHE = 'better_xcloud_patches_cache';
-    private readonly KEY_SIGNATURE = 'better_xcloud_patches_cache_signature';
+    private readonly KEY_CACHE = StorageKey.PATCHES_CACHE;
+    private readonly KEY_SIGNATURE = StorageKey.PATCHES_SIGNATURE;
 
-    private CACHE: any;
+    private CACHE!: { [key: string]: PatchArray };
 
     private isInitialized = false;
 

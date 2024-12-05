@@ -1,9 +1,9 @@
-import { StreamPlayerType } from "@enums/stream-player";
 import { AppInterface, STATES } from "./global";
 import { CE } from "./html";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import { BxLogger } from "./bx-logger";
+import { StreamPlayerType } from "@/enums/pref-values";
 
 
 export class ScreenshotManager {

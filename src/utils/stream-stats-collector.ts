@@ -4,21 +4,7 @@ import { STATES } from "./global";
 import { humanFileSize, secondsToHm } from "./html";
 import { getPref } from "./settings-storages/global-settings-storage";
 import { BxLogger } from "./bx-logger";
-
-export enum StreamStat {
-    PING = 'ping',
-    JITTER = 'jit',
-    FPS = 'fps',
-    BITRATE = 'btr',
-    DECODE_TIME = 'dt',
-    PACKETS_LOST = 'pl',
-    FRAMES_LOST = 'fl',
-    DOWNLOAD = 'dl',
-    UPLOAD = 'ul',
-    PLAYTIME = 'play',
-    BATTERY = 'batt',
-    CLOCK = 'time',
-};
+import { StreamStat } from "@/enums/pref-values";
 
 export type StreamStatGrade = '' | 'bad' | 'ok' | 'good';
 
@@ -125,7 +111,7 @@ export class StreamStatsCollector {
         [StreamStat.FPS]: {
             current: 0,
             toString() {
-                const maxFps = getPref(PrefKey.VIDEO_MAX_FPS);
+                const maxFps = getPref<VideoMaxFps>(PrefKey.VIDEO_MAX_FPS);
                 return maxFps < 60 ? `${maxFps}/${this.current}` : this.current.toString();
             },
         },

@@ -29,7 +29,7 @@ export class XcloudApi {
             const response = await NATIVE_FETCH(`${baseUri}/v2/titles`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${STATES.gsToken}`,
+                    Authorization: `Bearer ${STATES.gsToken}`,
                     'Content-Type': 'application/json',
                 },
 
@@ -63,7 +63,7 @@ export class XcloudApi {
             const response = await NATIVE_FETCH(`${baseUri}/v1/waittime/${id}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${STATES.gsToken}`,
+                    Authorization: `Bearer ${STATES.gsToken}`,
                 },
             });
 

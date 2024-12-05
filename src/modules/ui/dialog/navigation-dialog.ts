@@ -1,9 +1,8 @@
-import { GamepadKey } from "@/enums/mkb";
+import { GamepadKey } from "@/enums/gamepad";
 import { PrefKey } from "@/enums/pref-keys";
 import { VIRTUAL_GAMEPAD_ID } from "@/modules/mkb/mkb-handler";
 import { BxEvent } from "@/utils/bx-event";
 import { BxLogger } from "@/utils/bx-logger";
-import { STATES } from "@/utils/global";
 import { CE, isElementVisible } from "@/utils/html";
 import { setNearby } from "@/utils/navigation-utils";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
@@ -40,13 +39,22 @@ export abstract class NavigationDialog {
 
     abstract $container: HTMLElement;
     dialogManager: NavigationDialogManager;
+    onMountedCallbacks: Array<() => void> = [];
 
     constructor() {
         this.dialogManager = NavigationDialogManager.getInstance();
     }
 
-    show() {
-        NavigationDialogManager.getInstance().show(this);
+    isCancellable(): boolean {
+        return true;
+    }
+
+    isOverlayVisible(): boolean {
+        return true;
+    }
+
+    show(configs={}, clearStack=false) {
+        NavigationDialogManager.getInstance().show(this, configs, clearStack);
 
         const $currentFocus = this.getFocusedElement();
         // If not focusing on any element
@@ -73,8 +81,12 @@ export abstract class NavigationDialog {
         return null;
     }
 
-    onBeforeMount(): void {}
-    onMounted(): void {}
+    onBeforeMount(configs={}): void {}
+    onMounted(configs={}): void {
+        for (const callback of this.onMountedCallbacks) {
+            callback.call(this);
+        }
+    }
     onBeforeUnmount(): void {}
     onUnmounted(): void {}
 
@@ -119,12 +131,12 @@ export class NavigationDialogManager {
     };
 
     private static readonly SIBLING_PROPERTY_MAP = {
-        'horizontal': {
+        horizontal: {
             [NavigationDirection.LEFT]: 'previousElementSibling',
             [NavigationDirection.RIGHT]: 'nextElementSibling',
         },
 
-        'vertical': {
+        vertical: {
             [NavigationDirection.UP]: 'previousElementSibling',
             [NavigationDirection.DOWN]: 'nextElementSibling',
         },
@@ -137,6 +149,7 @@ export class NavigationDialogManager {
     private $overlay: HTMLElement;
     private $container: HTMLElement;
     private dialog: NavigationDialog | null = null;
+    private dialogsStack: Array<NavigationDialog> = [];
 
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
@@ -145,7 +158,8 @@ export class NavigationDialogManager {
         this.$overlay.addEventListener('click', e => {
             e.preventDefault();
             e.stopPropagation();
-            this.hide();
+
+            this.dialog?.isCancellable() && this.hide();
         });
 
         document.documentElement.appendChild(this.$overlay);
@@ -214,9 +228,16 @@ export class NavigationDialogManager {
         };
     }
 
+    private updateActiveInput(input: 'keyboard' | 'gamepad' | 'mouse') {
+        // Set <html>'s activeInput
+        document.documentElement.dataset.activeInput = input;
+    }
+
     handleEvent(event: Event) {
         switch (event.type) {
             case 'keydown':
+                this.updateActiveInput('keyboard');
+
                 const $target = event.target as HTMLElement;
                 const keyboardEvent = event as KeyboardEvent;
                 const keyCode = keyboardEvent.code || keyboardEvent.key;
@@ -259,7 +280,7 @@ export class NavigationDialogManager {
         return this.$container && !this.$container.classList.contains('bx-gone');
     }
 
-    private pollGamepad() {
+    private pollGamepad = () => {
         const gamepads = window.navigator.getGamepads();
 
         for (const gamepad of gamepads) {
@@ -365,15 +386,17 @@ export class NavigationDialogManager {
                 return;
             }
 
+            this.updateActiveInput('gamepad');
+
+            if (this.handleGamepad(gamepad, releasedButton)) {
+                return;
+            }
+
             if (releasedButton === GamepadKey.A) {
                 document.activeElement && document.activeElement.dispatchEvent(new MouseEvent('click', {bubbles: true}));
                 return;
             } else if (releasedButton === GamepadKey.B) {
                 this.hide();
-                return;
-            }
-
-            if (this.handleGamepad(gamepad, releasedButton)) {
                 return;
             }
         }
@@ -413,7 +436,7 @@ export class NavigationDialogManager {
         this.gamepadHoldingIntervalId = null;
     }
 
-    show(dialog: NavigationDialog) {
+    show(dialog: NavigationDialog, configs={}, clearStack=false) {
         this.clearGamepadHoldingInterval();
 
         BxEvent.dispatch(window, BxEvent.XCLOUD_DIALOG_SHOWN);
@@ -424,20 +447,21 @@ export class NavigationDialogManager {
         // Lock scroll bar
         document.body.classList.add('bx-no-scroll');
 
-        // Show overlay
-        this.$overlay.classList.remove('bx-gone');
-        if (STATES.isPlaying) {
-            this.$overlay.classList.add('bx-invisible');
-        }
-
         // Unmount current dialog
         this.unmountCurrentDialog();
 
+        // Add to dialogs stack
+        this.dialogsStack.push(dialog);
+
         // Setup new dialog
         this.dialog = dialog;
-        dialog.onBeforeMount();
+        dialog.onBeforeMount(configs);
         this.$container.appendChild(dialog.getContent());
-        dialog.onMounted();
+        dialog.onMounted(configs);
+
+        // Show overlay
+        this.$overlay.classList.remove('bx-gone');
+        this.$overlay.classList.toggle('bx-invisible', !dialog.isOverlayVisible());
 
         // Show content
         this.$container.classList.remove('bx-gone');
@@ -468,11 +492,24 @@ export class NavigationDialogManager {
         // Stop gamepad polling
         this.stopGamepadPolling();
 
+        // Remove current dialog and everything after it from dialogs stack
+        if (this.dialog) {
+            const dialogIndex = this.dialogsStack.indexOf(this.dialog);
+            if (dialogIndex > -1) {
+                this.dialogsStack = this.dialogsStack.slice(0, dialogIndex);
+            }
+        }
+
         // Unmount dialog
         this.unmountCurrentDialog();
 
         // Enable xCloud's navigation polling
         (window as any).BX_EXPOSED.disableGamepadPolling = false;
+
+        // Show the last dialog in dialogs stack
+        if (this.dialogsStack.length) {
+            this.dialogsStack[this.dialogsStack.length - 1].show();
+        }
     }
 
     focus($elm: NavigationElement | null): boolean {
@@ -624,7 +661,7 @@ export class NavigationDialogManager {
     private startGamepadPolling() {
         this.stopGamepadPolling();
 
-        this.gamepadPollingIntervalId = window.setInterval(this.pollGamepad.bind(this), NavigationDialogManager.GAMEPAD_POLLING_INTERVAL);
+        this.gamepadPollingIntervalId = window.setInterval(this.pollGamepad, NavigationDialogManager.GAMEPAD_POLLING_INTERVAL);
     }
 
     private stopGamepadPolling() {

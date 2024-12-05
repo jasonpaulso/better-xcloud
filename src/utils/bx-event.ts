@@ -21,6 +21,9 @@ export namespace BxEvent {
     export const STREAM_WEBRTC_CONNECTED = 'bx-stream-webrtc-connected';
     export const STREAM_WEBRTC_DISCONNECTED = 'bx-stream-webrtc-disconnected';
 
+    export const MKB_UPDATED = 'bx-mkb-updated';
+    export const KEYBOARD_SHORTCUTS_UPDATED = 'bx-keyboard-shortcuts-updated';
+
     // export const STREAM_EVENT_TARGET_READY = 'bx-stream-event-target-ready';
     export const STREAM_SESSION_READY = 'bx-stream-session-ready';
 
@@ -34,10 +37,12 @@ export namespace BxEvent {
     export const XCLOUD_SERVERS_UNAVAILABLE = 'bx-servers-unavailable';
 
     export const DATA_CHANNEL_CREATED = 'bx-data-channel-created';
+    export const DEVICE_VIBRATION_CHANGED = 'bx-device-vibration-changed';
 
     export const GAME_BAR_ACTION_ACTIVATED = 'bx-game-bar-action-activated';
     export const MICROPHONE_STATE_CHANGED = 'bx-microphone-state-changed';
     export const SPEAKER_STATE_CHANGED = 'bx-speaker-state-changed';
+    export const VIDEO_VISIBILITY_CHANGED = 'bx-video-visibility-changed';
 
     export const CAPTURE_SCREENSHOT = 'bx-capture-screenshot';
 
@@ -45,6 +50,8 @@ export namespace BxEvent {
     export const POINTER_LOCK_EXITED = 'bx-pointer-lock-exited';
 
     export const NAVIGATION_FOCUS_CHANGED = 'bx-nav-focus-changed';
+
+    export const GH_PAGES_FORCE_NATIVE_MKB_UPDATED = 'bx-gh-pages-force-native-mkb-updated';
 
     // xCloud Dialog events
     export const XCLOUD_DIALOG_SHOWN = 'bx-xcloud-dialog-shown';

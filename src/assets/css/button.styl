@@ -67,6 +67,24 @@
         }
     }
 
+    &.bx-warning {
+        --button-rgb: var(--bx-warning-button-rgb);
+
+        &:not([disabled]):active {
+            --button-active-rgb: var(--bx-warning-button-active-rgb);
+        }
+
+        &:not([disabled]):not(:active) {
+            &:hover, &.bx-focusable:focus {
+                --button-hover-rgb: var(--bx-warning-button-hover-rgb);
+            }
+        }
+
+        &:disabled {
+            --button-disabled-rgb: var(--bx-warning-button-disabled-rgb);
+        }
+    }
+
     &.bx-danger {
         --button-rgb: var(--bx-danger-button-rgb);
 
@@ -107,6 +125,7 @@
 
     &.bx-circular {
         border-radius: var(--bx-button-height);
+        width: var(--bx-button-height);
         height: var(--bx-button-height);
     }
 
@@ -128,6 +147,25 @@
 
         &:not(:only-child) {
             margin-left: 10px;
+        }
+    }
+
+    &.bx-button-multi-lines {
+        height: auto;
+        text-align: left;
+        padding: 10px 0;
+
+        span {
+            line-height: unset;
+            display: block;
+
+            &:last-of-type {
+                    text-transform: none;
+                    font-weight: normal;
+                    font-family: "Segoe Sans Variable Text";
+                    font-size: 12px;
+                    margin-top: 4px;
+            }
         }
     }
 }

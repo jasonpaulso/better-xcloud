@@ -8,11 +8,12 @@ import { RemotePlayConsoleState, RemotePlayManager } from "@/modules/remote-play
 import { BxSelectElement } from "@/web-components/bx-select";
 import { BxEvent } from "@/utils/bx-event";
 import { BxLogger } from "@/utils/bx-logger";
+import { StreamResolution } from "@/enums/pref-values";
 
 
-export class RemotePlayNavigationDialog extends NavigationDialog {
-    private static instance: RemotePlayNavigationDialog;
-    public static getInstance = () => RemotePlayNavigationDialog.instance ?? (RemotePlayNavigationDialog.instance = new RemotePlayNavigationDialog());
+export class RemotePlayDialog extends NavigationDialog {
+    private static instance: RemotePlayDialog;
+    public static getInstance = () => RemotePlayDialog.instance ?? (RemotePlayDialog.instance = new RemotePlayDialog());
     private readonly LOG_TAG = 'RemotePlayNavigationDialog';
 
     private readonly STATE_LABELS: Record<RemotePlayConsoleState, string> = {
@@ -35,21 +36,18 @@ export class RemotePlayNavigationDialog extends NavigationDialog {
 
         const $settingNote = CE('p', {});
 
-        const currentResolution = getPref(PrefKey.REMOTE_PLAY_RESOLUTION);
+        const currentResolution = getPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION);
         let $resolutions : HTMLSelectElement | NavigationElement = CE<HTMLSelectElement>('select', {},
-            CE('option', {value: '1080p'}, '1080p'),
-            CE('option', {value: '720p'}, '720p'),
+            CE('option', { value: StreamResolution.DIM_720P }, '720p'),
+            CE('option', { value: StreamResolution.DIM_1080P }, '1080p'),
         );
 
-        if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
-            $resolutions = BxSelectElement.wrap($resolutions as HTMLSelectElement);
-        }
-
+        $resolutions = BxSelectElement.create($resolutions as HTMLSelectElement);
         $resolutions.addEventListener('input', (e: Event) => {
             const value = (e.target as HTMLSelectElement).value;
 
             $settingNote.textContent = value === '1080p' ? '✅ ' + t('can-stream-xbox-360-games') : '❌ ' + t('cant-stream-xbox-360-games');
-            setPref(PrefKey.REMOTE_PLAY_RESOLUTION, value);
+            setPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION, value);
         });
 
         ($resolutions as any).value = currentResolution;
@@ -67,7 +65,7 @@ export class RemotePlayNavigationDialog extends NavigationDialog {
         $fragment.appendChild($qualitySettings);
 
         // Render consoles list
-        const manager = RemotePlayManager.getInstance();
+        const manager = RemotePlayManager.getInstance()!;
         const consoles = manager.getConsoles();
 
         for (let con of consoles) {

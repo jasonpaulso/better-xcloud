@@ -4,8 +4,9 @@ import { t } from "@utils/translation"
 import { STATES } from "@utils/global"
 import { PrefKey } from "@/enums/pref-keys"
 import { getPref } from "@/utils/settings-storages/global-settings-storage"
-import { StreamStat, StreamStatsCollector, type StreamStatGrade } from "@/utils/stream-stats-collector"
+import { StreamStatsCollector, type StreamStatGrade } from "@/utils/stream-stats-collector"
 import { BxLogger } from "@/utils/bx-logger"
+import { StreamStat } from "@/enums/pref-values"
 
 
 export class StreamStats {
@@ -87,7 +88,7 @@ export class StreamStats {
         this.$container.classList.remove('bx-gone');
         this.$container.dataset.display = glancing ? 'glancing' : 'fixed';
 
-        this.intervalId = window.setInterval(this.update.bind(this), this.REFRESH_INTERVAL);
+        this.intervalId = window.setInterval(this.update, this.REFRESH_INTERVAL);
     }
 
     async stop(glancing=false) {
@@ -157,7 +158,7 @@ export class StreamStats {
         this.quickGlanceObserver = null;
     }
 
-    private async update(forceUpdate=false) {
+    private update = async (forceUpdate=false) => {
         if ((!forceUpdate && this.isHidden()) || !STATES.currentStream.peerConnection) {
             this.destroy();
             return;
@@ -191,7 +192,7 @@ export class StreamStats {
     }
 
     refreshStyles() {
-        const PREF_ITEMS = getPref(PrefKey.STATS_ITEMS);
+        const PREF_ITEMS = getPref<StreamStat[]>(PrefKey.STATS_ITEMS);
 
         const $container = this.$container;
         $container.dataset.stats = '[' + PREF_ITEMS.join('][') + ']';
@@ -202,7 +203,7 @@ export class StreamStats {
     }
 
     hideSettingsUi() {
-        if (this.isGlancing() && !getPref(PrefKey.STATS_QUICK_GLANCE)) {
+        if (this.isGlancing() && !getPref(PrefKey.STATS_QUICK_GLANCE_ENABLED)) {
             this.stop();
         }
     }
@@ -230,7 +231,7 @@ export class StreamStats {
 
     static setupEvents() {
         window.addEventListener(BxEvent.STREAM_PLAYING, e => {
-            const PREF_STATS_QUICK_GLANCE = getPref(PrefKey.STATS_QUICK_GLANCE);
+            const PREF_STATS_QUICK_GLANCE = getPref(PrefKey.STATS_QUICK_GLANCE_ENABLED);
             const PREF_STATS_SHOW_WHEN_PLAYING = getPref(PrefKey.STATS_SHOW_WHEN_PLAYING);
 
             const streamStats = StreamStats.getInstance();

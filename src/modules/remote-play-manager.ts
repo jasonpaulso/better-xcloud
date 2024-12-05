@@ -1,4 +1,4 @@
-import { STATES, AppInterface } from "@utils/global";
+import { STATES } from "@utils/global";
 import { Toast } from "@utils/toast";
 import { BxEvent } from "@utils/bx-event";
 import { t } from "@utils/translation";
@@ -7,7 +7,7 @@ import { BxLogger } from "@utils/bx-logger";
 import { HeaderSection } from "./ui/header";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
-import { RemotePlayNavigationDialog } from "./ui/dialog/remote-play-dialog";
+import { RemotePlayDialog } from "./ui/dialog/remote-play-dialog";
 
 export const enum RemotePlayConsoleState {
     ON = 'On',
@@ -34,8 +34,18 @@ type RemotePlayConsole = {
 };
 
 export class RemotePlayManager {
-    private static instance: RemotePlayManager;
-    public static getInstance = () => RemotePlayManager.instance ?? (RemotePlayManager.instance = new RemotePlayManager());
+    private static instance: RemotePlayManager | null | undefined;
+    public static getInstance(): typeof RemotePlayManager['instance'] {
+        if (typeof RemotePlayManager.instance === 'undefined') {
+            if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
+                RemotePlayManager.instance = new RemotePlayManager();
+            } else {
+                RemotePlayManager.instance = null;
+            }
+        }
+
+        return RemotePlayManager.instance;
+    }
     private readonly LOG_TAG = 'RemotePlayManager';
 
     private isInitialized = false;
@@ -57,7 +67,7 @@ export class RemotePlayManager {
 
         this.isInitialized = true;
 
-        this.getXhomeToken(() => {
+        this.requestXhomeToken(() => {
             this.getConsolesList(() => {
                 BxLogger.info(this.LOG_TAG, 'Consoles', this.consoles);
 
@@ -67,15 +77,15 @@ export class RemotePlayManager {
         });
     }
 
-    get xcloudToken() {
+    getXcloudToken() {
         return this.XCLOUD_TOKEN;
     }
 
-    set xcloudToken(token: string) {
+    setXcloudToken(token: string) {
         this.XCLOUD_TOKEN = token;
     }
 
-    get xhomeToken() {
+    getXhomeToken() {
         return this.XHOME_TOKEN;
     }
 
@@ -84,7 +94,7 @@ export class RemotePlayManager {
     }
 
 
-    private getXhomeToken(callback: any) {
+    private requestXhomeToken(callback: any) {
         if (this.XHOME_TOKEN) {
             callback();
             return;
@@ -142,7 +152,7 @@ export class RemotePlayManager {
         const options = {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${this.XHOME_TOKEN}`,
+                    Authorization: `Bearer ${this.XHOME_TOKEN}`,
                 },
             };
 
@@ -176,7 +186,7 @@ export class RemotePlayManager {
 
     play(serverId: string, resolution?: string) {
         if (resolution) {
-            setPref(PrefKey.REMOTE_PLAY_RESOLUTION, resolution);
+            setPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION, resolution);
         }
 
         STATES.remotePlay.config = {
@@ -198,14 +208,16 @@ export class RemotePlayManager {
             return;
         }
 
+        /*
         // Show native dialog in Android app
         if (AppInterface && AppInterface.showRemotePlayDialog) {
             AppInterface.showRemotePlayDialog(JSON.stringify(this.consoles));
             (document.activeElement as HTMLElement).blur();
             return;
         }
+        */
 
-        RemotePlayNavigationDialog.getInstance().show();
+        RemotePlayDialog.getInstance().show();
     }
 
     static detect() {

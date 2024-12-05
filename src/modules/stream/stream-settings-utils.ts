@@ -1,16 +1,17 @@
-import { StreamPlayerType, StreamVideoProcessing } from "@enums/stream-player";
 import { STATES } from "@utils/global";
 import { UserAgent } from "@utils/user-agent";
 import type { StreamPlayerOptions } from "../stream-player";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
+import { StreamVideoProcessing, StreamPlayerType } from "@/enums/pref-values";
+import { escapeCssSelector } from "@/utils/html";
 
 export function onChangeVideoPlayerType() {
-    const playerType = getPref(PrefKey.VIDEO_PLAYER_TYPE);
-    const $videoProcessing = document.getElementById(`bx_setting_${PrefKey.VIDEO_PROCESSING}`) as HTMLSelectElement;
-    const $videoSharpness = document.getElementById(`bx_setting_${PrefKey.VIDEO_SHARPNESS}`) as HTMLElement;
-    const $videoPowerPreference = document.getElementById(`bx_setting_${PrefKey.VIDEO_POWER_PREFERENCE}`) as HTMLElement;
-    const $videoMaxFps = document.getElementById(`bx_setting_${PrefKey.VIDEO_MAX_FPS}`) as HTMLElement;
+    const playerType = getPref<StreamPlayerType>(PrefKey.VIDEO_PLAYER_TYPE);
+    const $videoProcessing = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_PROCESSING)}`) as HTMLSelectElement;
+    const $videoSharpness = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_SHARPNESS)}`) as HTMLElement;
+    const $videoPowerPreference = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_POWER_PREFERENCE)}`) as HTMLElement;
+    const $videoMaxFps = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_MAX_FPS)}`) as HTMLElement;
 
     if (!$videoProcessing) {
         return;

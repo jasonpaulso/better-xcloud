@@ -1,7 +1,6 @@
 import type { PrefKey } from "@/enums/pref-keys";
-import type { NumberStepperParams, SettingDefinitions } from "@/types/setting-definition";
+import type { NumberStepperParams, SettingAction, SettingDefinitions } from "@/types/setting-definition";
 import { BxEvent } from "../bx-event";
-import { SettingElementType } from "../setting-element";
 import { t } from "../translation";
 import { SCRIPT_VARIANT } from "../global";
 
@@ -43,6 +42,12 @@ export class BaseSettingsStore {
         }
 
         const settings = JSON.parse(this.storage.getItem(this.storageKey) || '{}');
+
+        // Validate setting values
+        for (const key in settings) {
+            settings[key] = this.validateValue('get', key as PrefKey, settings[key]);
+        }
+
         this._settings = settings;
 
         return settings;
@@ -58,35 +63,34 @@ export class BaseSettingsStore {
         return this.definitions[key];
     }
 
-    getSetting(key: PrefKey, checkUnsupported = true) {
-        if (typeof key === 'undefined') {
-            debugger;
-            return;
-        }
-
+    getSetting<T=boolean>(key: PrefKey, checkUnsupported = true): T {
         const definition = this.definitions[key];
 
         // Return default value if build variant is different
         if (definition.requiredVariants && !definition.requiredVariants.includes(SCRIPT_VARIANT)) {
-            return definition.default;
+            return definition.default as T;
         }
 
         // Return default value if the feature is not supported
         if (checkUnsupported && definition.unsupported) {
-            return definition.default;
+            if ('unsupportedValue' in definition) {
+                return definition.unsupportedValue as T;
+            } else {
+                return definition.default as T;
+            }
         }
 
         if (!(key in this.settings)) {
-            this.settings[key] = this.validateValue(key, null);
+            this.settings[key] = this.validateValue('get', key, null);
         }
 
-        return this.settings[key];
+        return this.settings[key] as T;
     }
 
-    setSetting(key: PrefKey, value: any, emitEvent = false) {
-        value = this.validateValue(key, value);
+    setSetting<T=any>(key: PrefKey, value: T, emitEvent = false) {
+        value = this.validateValue('set', key, value);
 
-        this.settings[key] = value;
+        this.settings[key] = this.validateValue('get', key, value);
         this.saveSettings();
 
         emitEvent && BxEvent.dispatch(window, BxEvent.SETTINGS_CHANGED, {
@@ -102,7 +106,7 @@ export class BaseSettingsStore {
         this.storage.setItem(this.storageKey, JSON.stringify(this.settings));
     }
 
-    private validateValue(key: PrefKey, value: any) {
+    private validateValue(action: SettingAction, key: PrefKey, value: any) {
         const def = this.definitions[key];
         if (!def) {
             return value;
@@ -110,6 +114,11 @@ export class BaseSettingsStore {
 
         if (typeof value === 'undefined' || value === null) {
             value = def.default;
+        }
+
+        // Transform value before validating
+        if (def.transformValue && action === 'get') {
+            value = def.transformValue.get.call(def, value);
         }
 
         if ('min' in def) {
@@ -120,8 +129,10 @@ export class BaseSettingsStore {
             value = Math.min(def.max!, value);
         }
 
-        if ('options' in def && !(value in def.options!)) {
-            value = def.default;
+        if ('options' in def) {
+            if (!(value in def.options)) {
+                value = def.default;
+            }
         } else if ('multipleOptions' in def) {
             if (value.length) {
                 const validOptions = Object.keys(def.multipleOptions!);
@@ -135,6 +146,11 @@ export class BaseSettingsStore {
             }
         }
 
+        // Transform value before setting
+        if (def.transformValue && action === 'set') {
+            value = def.transformValue.set.call(def, value);
+        }
+
         return value;
     }
 
@@ -144,10 +160,13 @@ export class BaseSettingsStore {
 
     getValueText(key: PrefKey, value: any): string {
         const definition = this.definitions[key];
-        if (definition.type === SettingElementType.NUMBER_STEPPER) {
+        if ('min' in definition) {
             const params = (definition as any).params as NumberStepperParams;
             if (params.customTextValue) {
-                const text = params.customTextValue(value);
+                if (definition.transformValue) {
+                    value = definition.transformValue.get.call(definition, value);
+                }
+                const text = params.customTextValue(value, definition.min, definition.max);
                 if (text) {
                     return text;
                 }

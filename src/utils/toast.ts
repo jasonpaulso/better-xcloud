@@ -65,7 +65,7 @@ export class Toast {
         this.isShowing = true;
 
         this.timeoutId && clearTimeout(this.timeoutId);
-        this.timeoutId = window.setTimeout(this.hide.bind(this), this.DURATION);
+        this.timeoutId = window.setTimeout(this.hide, this.DURATION);
 
         // Get values from item
         const [msg, status, options] = this.stack.shift()!;
@@ -88,7 +88,7 @@ export class Toast {
         classList.add('bx-show');
     }
 
-    private hide() {
+    private hide = () => {
         this.timeoutId = null;
 
         const classList = this.$wrapper.classList;

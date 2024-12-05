@@ -1,5 +1,7 @@
+import { StorageKey } from "@/enums/pref-keys";
 import { NATIVE_FETCH } from "./bx-flags";
 import { BxLogger } from "./bx-logger";
+import { GhPagesUtils } from "./gh-pages";
 
 export const SUPPORTED_LANGUAGES = {
     'en-US': 'English (US)',
@@ -57,6 +59,9 @@ const Texts = {
     "clarity-boost": "Clarity boost",
     "clarity-boost-warning": "These settings don't work when the Clarity Boost mode is ON",
     "clear": "Clear",
+    "clear-data": "Clear data",
+    "clear-data-confirm": "Do you want to clear all Better xCloud settings and data?",
+    "clear-data-success": "Data cleared! Refresh the page to apply the changes.",
     "clock": "Clock",
     "close": "Close",
     "close-app": "Close app",
@@ -77,6 +82,7 @@ const Texts = {
     "controller-friendly-ui": "Controller-friendly UI",
     "controller-shortcuts": "Controller shortcuts",
     "controller-shortcuts-connect-note": "Connect a controller to use this feature",
+    "controller-shortcuts-in-game": "In-game controller shortcuts",
     "controller-shortcuts-xbox-note": "Button to open the Guide menu",
     "controller-vibration": "Controller vibration",
     "copy": "Copy",
@@ -91,6 +97,7 @@ const Texts = {
     "device-vibration": "Device vibration",
     "device-vibration-not-using-gamepad": "On when not using gamepad",
     "disable": "Disable",
+    "disable-byog-feature": "Disable \"Stream your own game\" feature",
     "disable-home-context-menu": "Disable context menu in Home page",
     "disable-post-stream-feedback-dialog": "Disable post-stream feedback dialog",
     "disable-social-features": "Disable social features",
@@ -112,6 +119,7 @@ const Texts = {
     "experimental": "Experimental",
     "export": "Export",
     "fast": "Fast",
+    "force-native-mkb-games": "Force native Mouse & Keyboard for these games",
     "fortnite-allow-stw-mode": "Allows playing \"Save the World\" mode on mobile",
     "fortnite-force-console-version": "Fortnite: force console version",
     "game-bar": "Game Bar",
@@ -137,7 +145,9 @@ const Texts = {
     "install-android": "Better xCloud app for Android",
     "japan": "Japan",
     "jitter": "Jitter",
+    "keyboard-key": "Keyboard key",
     "keyboard-shortcuts": "Keyboard shortcuts",
+    "keyboard-shortcuts-in-game": "In-game keyboard shortcuts",
     "korea": "Korea",
     "language": "Language",
     "large": "Large",
@@ -147,6 +157,7 @@ const Texts = {
     "loading-screen": "Loading screen",
     "local-co-op": "Local co-op",
     "lowest-quality": "Lowest quality",
+    "manage": "Manage",
     "map-mouse-to": "Map mouse to",
     "max-fps": "Max FPS",
     "may-not-work-properly": "May not work properly!",
@@ -154,17 +165,18 @@ const Texts = {
     "microphone": "Microphone",
     "mkb-adjust-ingame-settings": "You may also need to adjust the in-game sensitivity & deadzone settings",
     "mkb-click-to-activate": "Click to activate",
-    "mkb-disclaimer": "Using this feature when playing online could be viewed as cheating",
+    "mkb-disclaimer": "This could be viewed as cheating when playing online",
+    "modifiers-note": "To use more than one key, include Ctrl, Alt or Shift in your shortcut. Command key is not allowed.",
     "mouse-and-keyboard": "Mouse & Keyboard",
+    "mouse-click": "Mouse click",
     "mouse-wheel": "Mouse wheel",
-    "msfs2020-force-native-mkb": "MSFS2020: force native M&KB support",
     "muted": "Muted",
     "name": "Name",
     "native-mkb": "Native Mouse & Keyboard",
     "new": "New",
     "new-version-available": [
         (e: any) => `Version ${e.version} available`,
-        ,
+        (e: any) => `Versió ${e.version} disponible`,
         ,
         (e: any) => `Version ${e.version} verfügbar`,
         (e: any) => `Versi ${e.version} tersedia`,
@@ -184,8 +196,10 @@ const Texts = {
         (e: any) => `已可更新為 ${e.version} 版`,
     ],
     "no-consoles-found": "No consoles found",
+    "no-controllers-connected": "No controllers connected",
     "normal": "Normal",
     "off": "Off",
+    "official": "Official",
     "on": "On",
     "only-supports-some-games": "Only supports some games",
     "opacity": "Opacity",
@@ -264,6 +278,7 @@ const Texts = {
     "screen": "Screen",
     "screenshot-apply-filters": "Apply video filters to screenshots",
     "section-all-games": "All games",
+    "section-byog": "Stream your own game",
     "section-most-popular": "Most popular",
     "section-native-mkb": "Play with mouse & keyboard",
     "section-news": "News",
@@ -293,6 +308,7 @@ const Texts = {
     "small": "Small",
     "smart-tv": "Smart TV",
     "sound": "Sound",
+    "standard": "Standard",
     "standby": "Standby",
     "stat-bitrate": "Bitrate",
     "stat-decode-time": "Decode time",
@@ -357,6 +373,8 @@ const Texts = {
     "unknown": "Unknown",
     "unlimited": "Unlimited",
     "unmuted": "Unmuted",
+    "unofficial": "Unofficial",
+    "unofficial-game-list": "Unofficial game list",
     "unsharp-masking": "Unsharp masking",
     "upload": "Upload",
     "uploaded": "Uploaded",
@@ -369,6 +387,7 @@ const Texts = {
     "vibration-status": "Vibration",
     "video": "Video",
     "virtual-controller": "Virtual controller",
+    "virtual-controller-slot": "Virtual controller slot",
     "visual-quality": "Visual quality",
     "visual-quality-high": "High",
     "visual-quality-low": "Low",
@@ -376,57 +395,57 @@ const Texts = {
     "volume": "Volume",
     "wait-time-countdown": "Countdown",
     "wait-time-estimated": "Estimated finish time",
+    "waiting-for-input": "Waiting for input...",
     "wallpaper": "Wallpaper",
     "webgl2": "WebGL2",
 };
 
 export class Translations {
-    static readonly #EN_US = 'en-US';
-    static readonly #KEY_LOCALE = 'better_xcloud_locale';
-    static readonly #KEY_TRANSLATIONS = 'better_xcloud_translations';
+    private static readonly EN_US = 'en-US';
+    private static readonly KEY_LOCALE = StorageKey.LOCALE;
+    private static readonly KEY_TRANSLATIONS = StorageKey.LOCALE_TRANSLATIONS;
 
-    static #enUsIndex = -1;
-    static #selectedLocaleIndex = -1;
-    static #selectedLocale: keyof typeof SUPPORTED_LANGUAGES = 'en-US';
+    private static selectedLocaleIndex = -1;
+    private static selectedLocale: keyof typeof SUPPORTED_LANGUAGES = 'en-US';
 
-    static #supportedLocales = Object.keys(SUPPORTED_LANGUAGES);
-    static #foreignTranslations: any = {};
+    private static supportedLocales = Object.keys(SUPPORTED_LANGUAGES);
+    private static foreignTranslations: any = {};
+
+    private static enUsIndex = Translations.supportedLocales.indexOf(Translations.EN_US);
 
     static async init() {
-        Translations.#enUsIndex = Translations.#supportedLocales.indexOf(Translations.#EN_US);
-
         Translations.refreshLocale();
-        await Translations.#loadTranslations();
+        await Translations.loadTranslations();
     }
 
     static refreshLocale(newLocale?: string) {
         let locale;
         if (newLocale) {
-            localStorage.setItem(Translations.#KEY_LOCALE, newLocale);
+            localStorage.setItem(Translations.KEY_LOCALE, newLocale);
             locale = newLocale;
         } else {
-            locale = localStorage.getItem(Translations.#KEY_LOCALE);
+            locale = localStorage.getItem(Translations.KEY_LOCALE);
         }
-        const supportedLocales = Translations.#supportedLocales;
+        const supportedLocales = Translations.supportedLocales;
 
         if (!locale) {
             // Get browser's locale
-            locale = window.navigator.language || Translations.#EN_US;
+            locale = window.navigator.language || Translations.EN_US;
             if (supportedLocales.indexOf(locale) === -1) {
-                locale = Translations.#EN_US;
+                locale = Translations.EN_US;
             }
-            localStorage.setItem(Translations.#KEY_LOCALE, locale);
+            localStorage.setItem(Translations.KEY_LOCALE, locale);
         }
 
-        Translations.#selectedLocale = locale as keyof typeof SUPPORTED_LANGUAGES;
-        Translations.#selectedLocaleIndex = supportedLocales.indexOf(locale);
+        Translations.selectedLocale = locale as keyof typeof SUPPORTED_LANGUAGES;
+        Translations.selectedLocaleIndex = supportedLocales.indexOf(locale);
     }
 
     static get<T=string>(key: keyof typeof Texts, values?: any): T {
         let text = null;
 
-        if (Translations.#foreignTranslations && Translations.#selectedLocale !== Translations.#EN_US) {
-            text = Translations.#foreignTranslations[key];
+        if (Translations.foreignTranslations && Translations.selectedLocale !== Translations.EN_US) {
+            text = Translations.foreignTranslations[key];
         }
 
         if (!text) {
@@ -435,7 +454,7 @@ export class Translations {
 
         let translation: unknown;
         if (Array.isArray(text)) {
-            translation = text[Translations.#selectedLocaleIndex] || text[Translations.#enUsIndex];
+            translation = text[Translations.selectedLocaleIndex] || text[Translations.enUsIndex];
             return (translation as any)(values);
         }
 
@@ -443,44 +462,44 @@ export class Translations {
         return translation as T;
     }
 
-    static async #loadTranslations() {
-        if (Translations.#selectedLocale === Translations.#EN_US) {
+    private static async loadTranslations() {
+        if (Translations.selectedLocale === Translations.EN_US) {
             return;
         }
 
         try {
-            Translations.#foreignTranslations = JSON.parse(window.localStorage.getItem(Translations.#KEY_TRANSLATIONS)!);
+            Translations.foreignTranslations = JSON.parse(window.localStorage.getItem(Translations.KEY_TRANSLATIONS)!);
         } catch(e) {}
 
-        if (!Translations.#foreignTranslations) {
-            await this.downloadTranslations(Translations.#selectedLocale);
+        if (!Translations.foreignTranslations) {
+            await this.downloadTranslations(Translations.selectedLocale);
         }
     }
 
     static async updateTranslations(async=false) {
         // Don't have to download en-US
-        if (Translations.#selectedLocale === Translations.#EN_US) {
-            localStorage.removeItem(Translations.#KEY_TRANSLATIONS);
+        if (Translations.selectedLocale === Translations.EN_US) {
+            localStorage.removeItem(Translations.KEY_TRANSLATIONS);
             return;
         }
 
         if (async) {
-            Translations.downloadTranslationsAsync(Translations.#selectedLocale);
+            Translations.downloadTranslationsAsync(Translations.selectedLocale);
         } else {
-            await Translations.downloadTranslations(Translations.#selectedLocale);
+            await Translations.downloadTranslations(Translations.selectedLocale);
         }
     }
 
     static async downloadTranslations(locale: string) {
         try {
-            const resp = await NATIVE_FETCH(`https://raw.githubusercontent.com/redphx/better-xcloud/gh-pages/translations/${locale}.json`);
+            const resp = await NATIVE_FETCH(GhPagesUtils.getUrl(`translations/${locale}.json`));
             const translations = await resp.json();
 
             // Prevent saving incorrect translations
-            let currentLocale = localStorage.getItem(Translations.#KEY_LOCALE);
+            let currentLocale = localStorage.getItem(Translations.KEY_LOCALE);
             if (currentLocale === locale) {
-                window.localStorage.setItem(Translations.#KEY_TRANSLATIONS, JSON.stringify(translations));
-                Translations.#foreignTranslations = translations;
+                window.localStorage.setItem(Translations.KEY_TRANSLATIONS, JSON.stringify(translations));
+                Translations.foreignTranslations = translations;
             }
             return true;
         } catch (e) {
@@ -491,16 +510,16 @@ export class Translations {
     }
 
     static downloadTranslationsAsync(locale: string) {
-        NATIVE_FETCH(`https://raw.githubusercontent.com/redphx/better-xcloud/gh-pages/translations/${locale}.json`)
+        NATIVE_FETCH(GhPagesUtils.getUrl(`translations/${locale}.json`))
             .then(resp => resp.json())
             .then(translations => {
-                window.localStorage.setItem(Translations.#KEY_TRANSLATIONS, JSON.stringify(translations));
-                Translations.#foreignTranslations = translations;
+                window.localStorage.setItem(Translations.KEY_TRANSLATIONS, JSON.stringify(translations));
+                Translations.foreignTranslations = translations;
             });
     }
 
     static switchLocale(locale: string) {
-        localStorage.setItem(Translations.#KEY_LOCALE, locale);
+        localStorage.setItem(Translations.KEY_LOCALE, locale);
     }
 }
 

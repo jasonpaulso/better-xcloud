@@ -11,7 +11,8 @@ import { patchIceCandidates } from "./network";
 import { getPreferredServerRegion } from "./region";
 import { BypassServerIps } from "@/enums/bypass-servers";
 import { PrefKey } from "@/enums/pref-keys";
-import { getPref, StreamResolution, StreamTouchController } from "./settings-storages/global-settings-storage";
+import { getPref } from "./settings-storages/global-settings-storage";
+import { NativeMkbMode, StreamResolution, TouchControllerMode } from "@/enums/pref-values";
 
 export class XcloudInterceptor {
     private static readonly SERVER_EXTRA_INFO: Record<string, [string, ServerContinent]> = {
@@ -41,8 +42,48 @@ export class XcloudInterceptor {
         WestEurope: ['🇪🇺', 'europe'],
     };
 
+    private static readonly BASE_DEVICE_INFO = {
+        appInfo: {
+            env: {
+                clientAppId: window.location.host,
+                clientAppType: 'browser',
+                clientAppVersion: '24.17.36',
+                clientSdkVersion: '10.1.14',
+                httpEnvironment: 'prod',
+                sdkInstallId: '',
+            },
+        },
+
+        dev: {
+            displayInfo: {
+                dimensions: {
+                    widthInPixels: 1920,
+                    heightInPixels: 1080,
+                },
+                pixelDensity: {
+                    dpiX: 1,
+                    dpiY: 1,
+                },
+            },
+            hw: {
+                make: 'Microsoft',
+                model: 'unknown',
+                sdktype: 'web',
+            },
+            os: {
+                name: 'windows',
+                ver: '22631.2715',
+                platform: 'desktop',
+            },
+            browser: {
+                browserName: 'chrome',
+                browserVersion: '125.0',
+            },
+        },
+    };
+
     private static async handleLogin(request: RequestInfo | URL, init?: RequestInit) {
-        const bypassServer = getPref(PrefKey.SERVER_BYPASS_RESTRICTION);
+        const bypassServer = getPref<string>(PrefKey.SERVER_BYPASS_RESTRICTION);
         if (bypassServer !== 'off') {
             const ip = BypassServerIps[bypassServer as keyof typeof BypassServerIps];
             ip && (request as Request).headers.set('X-Forwarded-For', ip);
@@ -58,7 +99,7 @@ export class XcloudInterceptor {
         const obj = await response.clone().json();
 
         // Store xCloud token
-        RemotePlayManager.getInstance().xcloudToken = obj.gsToken;
+        RemotePlayManager.getInstance()?.setXcloudToken(obj.gsToken);
 
         // Get server list
         const serverRegex = /\/\/(\w+)\./;
@@ -108,8 +149,8 @@ export class XcloudInterceptor {
     private static async handlePlay(request: RequestInfo | URL, init?: RequestInit) {
         BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
 
-        const PREF_STREAM_TARGET_RESOLUTION = getPref(PrefKey.STREAM_TARGET_RESOLUTION);
-        const PREF_STREAM_PREFERRED_LOCALE = getPref(PrefKey.STREAM_PREFERRED_LOCALE);
+        const PREF_STREAM_TARGET_RESOLUTION = getPref<StreamResolution>(PrefKey.STREAM_RESOLUTION);
+        const PREF_STREAM_PREFERRED_LOCALE = getPref<StreamPreferredLocale>(PrefKey.STREAM_PREFERRED_LOCALE);
 
         const url = (typeof request === 'string') ? request : (request as Request).url;
         const parsedUrl = new URL(url);
@@ -127,9 +168,31 @@ export class XcloudInterceptor {
         const clone = (request as Request).clone();
         const body = await clone.json();
 
+        const headers: {[index: string]: string} = {};
+        for (const pair of (clone.headers as any).entries()) {
+            headers[pair[0]] = pair[1];
+        }
+
         // Force stream's resolution
         if (PREF_STREAM_TARGET_RESOLUTION !== 'auto') {
-            const osName = (PREF_STREAM_TARGET_RESOLUTION === StreamResolution.DIM_720P) ? 'android' : 'windows';
+            let osName;
+            switch (PREF_STREAM_TARGET_RESOLUTION) {
+                case StreamResolution.DIM_1080P_HQ:
+                    osName = 'tizen';
+
+                    const deviceInfo = XcloudInterceptor.BASE_DEVICE_INFO;
+                    deviceInfo.dev.os.name = 'tizen';
+                    headers['x-ms-device-info'] = JSON.stringify(deviceInfo);
+
+                    break;
+                case StreamResolution.DIM_1080P:
+                    osName = 'windows';
+                    break;
+                default:
+                    osName = 'android';
+                    break
+            }
+
             body.settings.osName = osName;
         }
 
@@ -140,6 +203,7 @@ export class XcloudInterceptor {
 
         const newRequest = new Request(request, {
             body: JSON.stringify(body),
+            headers: headers,
         });
 
         return NATIVE_FETCH(newRequest);
@@ -148,7 +212,7 @@ export class XcloudInterceptor {
     private static async handleWaitTime(request: RequestInfo | URL, init?: RequestInit) {
         const response = await NATIVE_FETCH(request, init);
 
-        if (getPref(PrefKey.UI_LOADING_SCREEN_WAIT_TIME)) {
+        if (getPref(PrefKey.LOADING_SCREEN_SHOW_WAIT_TIME)) {
             const json = await response.clone().json();
             if (json.estimatedAllocationTimeInSeconds > 0) {
                 // Setup wait time overlay
@@ -165,7 +229,7 @@ export class XcloudInterceptor {
         }
 
         // Touch controller for all games
-        if (isFullVersion() && getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
+        if (isFullVersion() && getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
             const titleInfo = STATES.currentStream.titleInfo;
             if (titleInfo?.details.hasTouchSupport) {
                 TouchController.disable();
@@ -191,11 +255,11 @@ export class XcloudInterceptor {
 
         let overrideMkb: boolean | null = null;
 
-        if (getPref(PrefKey.NATIVE_MKB_ENABLED) === 'on' || (STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId))) {
+        if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON || (STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId))) {
             overrideMkb = true;
         }
 
-        if (getPref(PrefKey.NATIVE_MKB_ENABLED) === 'off') {
+        if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
             overrideMkb = false;
         }
 

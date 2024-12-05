@@ -3,11 +3,11 @@ import { isFullVersion } from "@macros/build" with {type: "macro"};
 import { CE } from "@/utils/html";
 import { WebGL2Player } from "./player/webgl2-player";
 import { ScreenshotManager } from "@/utils/screenshot-manager";
-import { StreamPlayerType, StreamVideoProcessing } from "@enums/stream-player";
 import { STATES } from "@/utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { BX_FLAGS } from "@/utils/bx-flags";
+import { StreamPlayerType, StreamVideoProcessing, VideoRatio } from "@/enums/pref-values";
 
 export type StreamPlayerOptions = Partial<{
     processing: string,
@@ -99,7 +99,7 @@ export class StreamPlayer {
     }
 
     private resizePlayer() {
-        const PREF_RATIO = getPref(PrefKey.VIDEO_RATIO);
+        const PREF_RATIO = getPref<VideoRatio>(PrefKey.VIDEO_RATIO);
         const $video = this.$video;
         const isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport;
 

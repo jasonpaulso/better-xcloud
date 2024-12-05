@@ -7,7 +7,7 @@ import { BxExposed } from "@utils/bx-exposed";
 import { t } from "@utils/translation";
 import { interceptHttpRequests } from "@utils/network";
 import { CE } from "@utils/html";
-import { showGamepadToast, updatePollingRate } from "@utils/gamepad";
+import { showGamepadToast } from "@utils/gamepad";
 import { EmulatedMkbHandler } from "@modules/mkb/mkb-handler";
 import { StreamBadges } from "@modules/stream/stream-badges";
 import { StreamStats } from "@modules/stream/stream-stats";
@@ -19,7 +19,6 @@ import { checkForUpdate, disablePwa, productTitleToSlug } from "@utils/utils";
 import { Patcher } from "@modules/patcher";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { onHistoryChanged, patchHistoryMethod } from "@utils/history";
-import { VibrationManager } from "@modules/vibration-manager";
 import { disableAdobeAudienceManager, patchAudioContext, patchCanvasContext, patchMeControl, patchPointerLockApi, patchRtcCodecs, patchRtcPeerConnection, patchVideoApi } from "@utils/monkey-patches";
 import { AppInterface, STATES } from "@utils/global";
 import { BxLogger } from "@utils/bx-logger";
@@ -28,19 +27,23 @@ import { ScreenshotManager } from "./utils/screenshot-manager";
 import { NativeMkbHandler } from "./modules/mkb/native-mkb-handler";
 import { GuideMenu } from "./modules/ui/guide-menu";
 import { updateVideoPlayer } from "./modules/stream/stream-settings-utils";
-import { UiSection } from "./enums/ui-sections";
+import { NativeMkbMode, TouchControllerMode, UiSection } from "./enums/pref-values";
 import { HeaderSection } from "./modules/ui/header";
 import { GameTile } from "./modules/ui/game-tile";
 import { ProductDetailsPage } from "./modules/ui/product-details";
 import { NavigationDialogManager } from "./modules/ui/dialog/navigation-dialog";
 import { PrefKey } from "./enums/pref-keys";
-import { getPref, StreamTouchController } from "./utils/settings-storages/global-settings-storage";
-import { SettingsNavigationDialog } from "./modules/ui/dialog/settings-dialog";
+import { getPref } from "./utils/settings-storages/global-settings-storage";
+import { SettingsDialog } from "./modules/ui/dialog/settings-dialog";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
 import { StreamStatsCollector } from "./utils/stream-stats-collector";
 import { RootDialogObserver } from "./utils/root-dialog-observer";
+import { StreamSettings } from "./utils/stream-settings";
+import { KeyboardShortcutHandler } from "./modules/mkb/keyboard-shortcut-handler";
+import { GhPagesUtils } from "./utils/gh-pages";
+import { DeviceVibrationManager } from "./modules/device-vibration-manager";
 
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
@@ -160,14 +163,14 @@ document.addEventListener('readystatechange', e => {
 
     if (STATES.isSignedIn) {
         // Preload Remote Play
-        getPref(PrefKey.REMOTE_PLAY_ENABLED) && RemotePlayManager.getInstance().initialize();
+        RemotePlayManager.getInstance()?.initialize();
     } else {
         // Show Settings button in the header when not signed in
         window.setTimeout(HeaderSection.watchHeader, 2000);
     }
 
     // Hide "Play with Friends" skeleton section
-    if (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS)) {
+    if (getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS)) {
         const $parent = document.querySelector('div[class*=PlayWithFriendsSkeleton]')?.closest<HTMLElement>('div[class*=HomePage-module]');
         $parent && ($parent.style.display = 'none');
     }
@@ -194,7 +197,7 @@ window.addEventListener(BxEvent.XCLOUD_SERVERS_UNAVAILABLE, e => {
     // Open Settings dialog on Unsupported page
     const $unsupportedPage = document.querySelector<HTMLElement>('div[class^=UnsupportedMarketPage-module__container]');
     if ($unsupportedPage) {
-        SettingsNavigationDialog.getInstance().show();
+        SettingsDialog.getInstance().show();
     }
 }, {once: true});
 
@@ -213,34 +216,48 @@ window.addEventListener(BxEvent.STREAM_LOADING, e => {
 });
 
 // Setup loading screen
-getPref(PrefKey.UI_LOADING_SCREEN_GAME_ART) && window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
+getPref(PrefKey.LOADING_SCREEN_GAME_ART) && window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
 
 window.addEventListener(BxEvent.STREAM_STARTING, e => {
     // Hide loading screen
     LoadingScreen.hide();
 
-    // Start hiding cursor
-    if (!getPref(PrefKey.MKB_ENABLED) && getPref(PrefKey.MKB_HIDE_IDLE_CURSOR)) {
-        MouseCursorHider.start();
-        MouseCursorHider.hide();
+    if (isFullVersion()) {
+        // Start hiding cursor
+        const cursorHider = MouseCursorHider.getInstance();
+        if (cursorHider) {
+            cursorHider.start();
+            cursorHider.hide();
+        }
     }
 });
 
 window.addEventListener(BxEvent.STREAM_PLAYING, e => {
+    window.BX_STREAM_SETTINGS = StreamSettings.settings;
+    StreamSettings.refreshAllSettings();
+
     STATES.isPlaying = true;
     StreamUiHandler.observe();
 
-    if (isFullVersion() && getPref(PrefKey.GAME_BAR_POSITION) !== 'off') {
-        const gameBar = GameBar.getInstance();
-        gameBar.reset();
-        gameBar.enable();
-        gameBar.showBar();
-    }
-
     if (isFullVersion()) {
+        const gameBar = GameBar.getInstance();
+        if (gameBar) {
+            gameBar.reset();
+            gameBar.enable();
+            gameBar.showBar();
+        }
+
+        // Setup Keyboard shortcuts
+        KeyboardShortcutHandler.getInstance().start();
+
+        // Setup screenshot
         const $video = (e as any).$video as HTMLVideoElement;
         ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight);
+
+        // Setup local co-op
+        getPref(PrefKey.LOCAL_CO_OP_ENABLED) && BxExposed.toggleLocalCoOp(getPref(PrefKey.LOCAL_CO_OP_ENABLED));
     }
+
 
     updateVideoPlayer();
 });
@@ -294,9 +311,13 @@ function unload() {
     }
 
     if (isFullVersion()) {
+        KeyboardShortcutHandler.getInstance().stop();
+
         // Stop MKB listeners
-        EmulatedMkbHandler.getInstance().destroy();
-        NativeMkbHandler.getInstance().destroy();
+        EmulatedMkbHandler.getInstance()?.destroy();
+        NativeMkbHandler.getInstance()?.destroy();
+
+        DeviceVibrationManager.getInstance()?.reset();
     }
 
     // Destroy StreamPlayer
@@ -312,9 +333,10 @@ function unload() {
     StreamBadges.getInstance().destroy();
 
     if (isFullVersion()) {
-        MouseCursorHider.stop();
+        MouseCursorHider.getInstance()?.stop();
         TouchController.reset();
-        (getPref(PrefKey.GAME_BAR_POSITION) !== 'off') && GameBar.getInstance().disable();
+
+        GameBar.getInstance()?.disable();
     }
 }
 
@@ -329,9 +351,14 @@ isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
 
 
 function main() {
-    if (getPref(PrefKey.GAME_MSFS2020_FORCE_NATIVE_MKB)) {
-        BX_FLAGS.ForceNativeMkbTitles.push('9PMQDM08SNK9');
+    GhPagesUtils.fetchLatestCommit();
+
+    if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON) {
+        const customList = getPref<string[]>(PrefKey.FORCE_NATIVE_MKB_GAMES);
+        BX_FLAGS.ForceNativeMkbTitles.push(...customList);
     }
+
+    StreamSettings.setup();
 
     // Monkey patches
     patchRtcPeerConnection();
@@ -341,7 +368,7 @@ function main() {
     patchCanvasContext();
     isFullVersion() && AppInterface && patchPointerLockApi();
 
-    getPref(PrefKey.AUDIO_ENABLE_VOLUME_CONTROL) && patchAudioContext();
+    getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && patchAudioContext();
 
     if (getPref(PrefKey.BLOCK_TRACKING)) {
         patchMeControl();
@@ -359,10 +386,9 @@ function main() {
     StreamStats.setupEvents();
 
     if (isFullVersion()) {
-        updatePollingRate();
         STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
 
-        VibrationManager.initialSetup();
+        DeviceVibrationManager.getInstance();
 
         // Check for Update
         BX_FLAGS.CheckForUpdate && checkForUpdate();
@@ -375,7 +401,7 @@ function main() {
             RemotePlayManager.detect();
         }
 
-        if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
+        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
             TouchController.setup();
         }
 
@@ -392,7 +418,7 @@ function main() {
     }
 
     // Show a toast when connecting/disconecting controller
-    if (getPref(PrefKey.CONTROLLER_SHOW_CONNECTION_STATUS)) {
+    if (getPref(PrefKey.UI_CONTROLLER_SHOW_STATUS)) {
         window.addEventListener('gamepadconnected', e => showGamepadToast(e.gamepad));
         window.addEventListener('gamepaddisconnected', e => showGamepadToast(e.gamepad));
     }

@@ -21,7 +21,7 @@ export class TrueAchievements {
             url: '#',
             icon: BxIcon.TRUE_ACHIEVEMENTS,
             style: ButtonStyle.FOCUSABLE | ButtonStyle.GHOST | ButtonStyle.FULL_WIDTH | ButtonStyle.NORMAL_LINK,
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
         });
 
         this.$button = createButton<HTMLAnchorElement>({
@@ -29,7 +29,7 @@ export class TrueAchievements {
             title: t('true-achievements'),
             icon: BxIcon.TRUE_ACHIEVEMENTS,
             style: ButtonStyle.FOCUSABLE,
-            onClick: this.onClick.bind(this),
+            onClick: this.onClick,
         });
 
         this.$hiddenLink = CE<HTMLAnchorElement>('a', {
@@ -37,7 +37,7 @@ export class TrueAchievements {
         });
     }
 
-    private onClick(e: Event) {
+    private onClick = (e: Event) => {
         e.preventDefault();
 
         // Close all xCloud's dialogs

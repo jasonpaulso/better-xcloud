@@ -115,6 +115,7 @@ export class WebGL2Player {
             }
 
             this.animFrameId = frameCallback(animate);
+
             let draw = true;
 
             // Don't draw when FPS is 0

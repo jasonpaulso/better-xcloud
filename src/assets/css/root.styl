@@ -24,22 +24,24 @@ button_color(name, normal, hover, active, disabled)
 
     button_color('default', #2d3036, #515863, #222428, #8e8e8e);
     button_color('primary', #008746, #04b358, #044e2a, #448262);
+    button_color('warning', #c16e04, #fa9005, #965603, #a2816c);
     button_color('danger', #c10404, #e61d1d, #a26c6c, #df5656);
 
-    --bx-fullscreen-text-z-index: 99999;
-    --bx-toast-z-index: 60000;
-    --bx-dialog-z-index: 50000;
+    --bx-fullscreen-text-z-index: 9999;
+    --bx-toast-z-index: 6000;
+    --bx-key-binding-dialog-z-index: 5010;
+    --bx-key-binding-dialog-overlay-z-index: 5000;
 
-    --bx-dialog-overlay-z-index: 40200;
-    --bx-stats-bar-z-index: 40100;
-    --bx-mkb-pointer-lock-msg-z-index: 40000;
+    --bx-stats-bar-z-index: 4010;
 
-    --bx-navigation-dialog-z-index: 30100;
-    --bx-navigation-dialog-overlay-z-index: 30000;
+    --bx-navigation-dialog-z-index: 3010;
+    --bx-navigation-dialog-overlay-z-index: 3000;
 
-    --bx-game-bar-z-index: 10000;
-    --bx-screenshot-animation-z-index: 9000;
-    --bx-wait-time-box-z-index: 1000;
+    --bx-mkb-pointer-lock-msg-z-index: 2000;
+
+    --bx-game-bar-z-index: 1000;
+    --bx-screenshot-animation-z-index: 200;
+    --bx-wait-time-box-z-index: 100;
 }
 
 @font-face {
@@ -120,7 +122,7 @@ div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module
 }
 
 .bx-prompt {
-    font-family: var(--bx-promptfont-font);
+    font-family: var(--bx-promptfont-font) !important;
 }
 
 .bx-line-through {
@@ -225,4 +227,14 @@ div[class*=SupportedInputsBadge] {
     div[class*=DeviceCodePage-module__back] {
         display: none;
     }
+}
+
+.bx-blink-me {
+  animation: bx-blinker 1s linear infinite;
+}
+
+@keyframes bx-blinker {
+  100% {
+    opacity: 0;
+  }
 }

@@ -4,17 +4,21 @@ import { getPref } from "./settings-storages/global-settings-storage";
 
 
 export function getPreferredServerRegion(shortName = false): string | null {
-    let preferredRegion = getPref(PrefKey.SERVER_REGION);
-    if (preferredRegion in STATES.serverRegions) {
-        if (shortName && STATES.serverRegions[preferredRegion].shortName) {
-            return STATES.serverRegions[preferredRegion].shortName;
+    let preferredRegion = getPref<ServerRegionName>(PrefKey.SERVER_REGION);
+    const serverRegions = STATES.serverRegions;
+
+    // Return preferred region
+    if (preferredRegion in serverRegions) {
+        if (shortName && serverRegions[preferredRegion].shortName) {
+            return serverRegions[preferredRegion].shortName;
         } else {
             return preferredRegion;
         }
     }
 
-    for (let regionName in STATES.serverRegions) {
-        const region = STATES.serverRegions[regionName];
+    // Get default region
+    for (let regionName in serverRegions) {
+        const region = serverRegions[regionName];
         if (!region.isDefault) {
             continue;
         }

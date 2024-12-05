@@ -85,7 +85,7 @@ if (btnHome) {
 
             this.inputSink.onGamepadInput(performance.now() - intervalMs, fakeGamepadMappings);
         } else {
-            intervalMs = window.BX_CONTROLLER_POLLING_RATE;
+            intervalMs = window.BX_STREAM_SETTINGS.controllerPollingRate;
         }
     }
 

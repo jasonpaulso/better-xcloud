@@ -5,7 +5,7 @@ import { BxEvent } from "@utils/bx-event.ts";
 import { t } from "@utils/translation.ts";
 import { StreamBadges } from "./stream-badges.ts";
 import { StreamStats } from "./stream-stats.ts";
-import { SettingsNavigationDialog } from "../ui/dialog/settings-dialog.ts";
+import { SettingsDialog } from "../ui/dialog/settings-dialog.ts";
 
 
 export class StreamUiHandler {
@@ -161,7 +161,7 @@ export class StreamUiHandler {
                 e.preventDefault();
 
                 // Show Stream Settings dialog
-                SettingsNavigationDialog.getInstance().show();
+                SettingsDialog.getInstance().show();
             });
 
             StreamUiHandler.$btnStreamSettings = $btnStreamSettings;

@@ -5,6 +5,7 @@ import { STATES } from "@utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { compressCss } from "@macros/build" with {type: "macro"};
+import { LoadingScreenRocket } from "@/enums/pref-values";
 
 export class LoadingScreen {
     private static $bgStyle: HTMLElement;
@@ -36,7 +37,7 @@ export class LoadingScreen {
 
         LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl);
 
-        if (getPref(PrefKey.UI_LOADING_SCREEN_ROCKET) === 'hide') {
+        if (getPref<LoadingScreenRocket>(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE) {
             LoadingScreen.hideRocket();
         }
     }
@@ -88,7 +89,7 @@ export class LoadingScreen {
 
     static setupWaitTime(waitTime: number) {
         // Hide rocket when queing
-        if (getPref(PrefKey.UI_LOADING_SCREEN_ROCKET) === 'hide-queue') {
+        if (getPref<LoadingScreenRocket>(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE_QUEUE) {
             LoadingScreen.hideRocket();
         }
 
@@ -108,14 +109,14 @@ export class LoadingScreen {
 
         let $waitTimeBox = LoadingScreen.$waitTimeBox;
         if (!$waitTimeBox) {
-            $waitTimeBox = CE('div', {'class': 'bx-wait-time-box'},
-                                    CE('label', {}, t('server')),
-                                    CE('span', {}, getPreferredServerRegion()),
-                                    CE('label', {}, t('wait-time-estimated')),
-                                    $estimated = CE('span', {}),
-                                    CE('label', {}, t('wait-time-countdown')),
-                                    $countDown = CE('span', {}),
-                                   );
+            $waitTimeBox = CE('div', { class: 'bx-wait-time-box' },
+                CE('label', {}, t('server')),
+                CE('span', {}, getPreferredServerRegion()),
+                CE('label', {}, t('wait-time-estimated')),
+                $estimated = CE('span', {}),
+                CE('label', {}, t('wait-time-countdown')),
+                $countDown = CE('span', {}),
+            );
 
             document.documentElement.appendChild($waitTimeBox);
             LoadingScreen.$waitTimeBox = $waitTimeBox;
@@ -145,7 +146,7 @@ export class LoadingScreen {
         LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle);
         LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add('bx-gone');
 
-        if (getPref(PrefKey.UI_LOADING_SCREEN_GAME_ART) && LoadingScreen.$bgStyle) {
+        if (getPref(PrefKey.LOADING_SCREEN_GAME_ART) && LoadingScreen.$bgStyle) {
             const $rocketBg = document.querySelector('#game-stream rect[width="800"]');
             $rocketBg && $rocketBg.addEventListener('transitionend', e => {
                 LoadingScreen.$bgStyle.textContent += compressCss(`
