@@ -6413,7 +6413,8 @@ class SettingsDialog extends NavigationDialog {
    $note,
    multiLines: setting.multiLines
   });
-  $row.htmlFor = `bx_setting_${escapeCssSelector(pref)}`, $row.dataset.type = settingTabContent.group, $tabContent.appendChild($row), !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
+  if (pref) $row.htmlFor = `bx_setting_${escapeCssSelector(pref)}`;
+  $row.dataset.type = settingTabContent.group, $tabContent.appendChild($row), !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
  }
  renderSettingsSection(settingTab, sections) {
   let $tabContent = CE("div", {

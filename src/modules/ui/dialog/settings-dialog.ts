@@ -1007,7 +1007,9 @@ export class SettingsDialog extends NavigationDialog {
             $note,
             multiLines: setting.multiLines,
         });
-        $row.htmlFor = `bx_setting_${escapeCssSelector(pref!)}`;
+        if (pref) {
+            $row.htmlFor = `bx_setting_${escapeCssSelector(pref)}`;
+        }
         $row.dataset.type = settingTabContent.group;
 
         $tabContent.appendChild($row);
