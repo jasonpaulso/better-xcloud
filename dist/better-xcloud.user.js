@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.0.0-beta-2
+// @version      6.0.0-beta-3
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -107,7 +107,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.0-beta-2", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.0-beta-3", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -1304,7 +1304,8 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    options: {
     auto: t("default"),
     "720p": "720p",
-    "1080p": "1080p"
+    "1080p": "1080p",
+    "1080p-hq": "1080p (HQ)"
    },
    suggest: {
     lowest: "720p",
@@ -1901,8 +1902,9 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    requiredVariants: "full",
    default: "1080p",
    options: {
+    "720p": "720p",
     "1080p": "1080p",
-    "720p": "720p"
+    "1080p-hq": "1080p (HQ)"
    }
   },
   gameFortniteForceConsole: {
@@ -7259,7 +7261,14 @@ class XhomeInterceptor {
    headers[pair[0]] = pair[1];
   headers.authorization = `Bearer ${RemotePlayManager.getInstance().getXhomeToken()}`;
   let deviceInfo = XhomeInterceptor.BASE_DEVICE_INFO;
-  if (getPref("xhomeStreamResolution") === "720p") deviceInfo.dev.os.name = "android";
+  switch (getPref("xhomeStreamResolution")) {
+   case "1080p-hq":
+    deviceInfo.dev.os.name = "tizen";
+    break;
+   case "720p":
+    deviceInfo.dev.os.name = "android";
+    break;
+  }
   headers["x-ms-device-info"] = JSON.stringify(deviceInfo);
   let opts = {
    method: clone.method,
@@ -7649,6 +7658,44 @@ class XcloudInterceptor {
   UKSouth: ["🇬🇧", "europe"],
   WestEurope: ["🇪🇺", "europe"]
  };
+ static BASE_DEVICE_INFO = {
+  appInfo: {
+   env: {
+    clientAppId: window.location.host,
+    clientAppType: "browser",
+    clientAppVersion: "24.17.36",
+    clientSdkVersion: "10.1.14",
+    httpEnvironment: "prod",
+    sdkInstallId: ""
+   }
+  },
+  dev: {
+   displayInfo: {
+    dimensions: {
+     widthInPixels: 1920,
+     heightInPixels: 1080
+    },
+    pixelDensity: {
+     dpiX: 1,
+     dpiY: 1
+    }
+   },
+   hw: {
+    make: "Microsoft",
+    model: "unknown",
+    sdktype: "web"
+   },
+   os: {
+    name: "windows",
+    ver: "22631.2715",
+    platform: "desktop"
+   },
+   browser: {
+    browserName: "chrome",
+    browserVersion: "125.0"
+   }
+  }
+ };
  static async handleLogin(request, init) {
   let bypassServer = getPref("serverBypassRestriction");
   if (bypassServer !== "off") {
@@ -7687,14 +7734,30 @@ class XcloudInterceptor {
    }
   }
   StreamBadges.getInstance().setRegion(badgeRegion);
-  let body = await request.clone().json();
+  let clone = request.clone(), body = await clone.json(), headers = {};
+  for (let pair of clone.headers.entries())
+   headers[pair[0]] = pair[1];
   if (PREF_STREAM_TARGET_RESOLUTION !== "auto") {
-   let osName = PREF_STREAM_TARGET_RESOLUTION === "720p" ? "android" : "windows";
+   let osName;
+   switch (PREF_STREAM_TARGET_RESOLUTION) {
+    case "1080p-hq":
+     osName = "tizen";
+     let deviceInfo = XcloudInterceptor.BASE_DEVICE_INFO;
+     deviceInfo.dev.os.name = "tizen", headers["x-ms-device-info"] = JSON.stringify(deviceInfo);
+     break;
+    case "1080p":
+     osName = "windows";
+     break;
+    default:
+     osName = "android";
+     break;
+   }
    body.settings.osName = osName;
   }
   if (PREF_STREAM_PREFERRED_LOCALE !== "default") body.settings.locale = PREF_STREAM_PREFERRED_LOCALE;
   let newRequest = new Request(request, {
-   body: JSON.stringify(body)
+   body: JSON.stringify(body),
+   headers
   });
   return NATIVE_FETCH(newRequest);
  }
