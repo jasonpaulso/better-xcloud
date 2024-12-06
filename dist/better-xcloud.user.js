@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.0.0
+// @version      6.0.1-beta-1
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -107,7 +107,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.0", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.1-beta-1", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -4063,8 +4063,16 @@ class PatcherUtils {
  static replaceWith(txt, index, fromString, toString) {
   return txt.substring(0, index) + toString + txt.substring(index + fromString.length);
  }
+ static filterPatches(patches) {
+  return patches.filter((item2) => !!item2);
+ }
+ static patchBeforePageLoad(str, page) {
+  let text = `chunkName:()=>"${page}-page",`;
+  if (!str.includes(text)) return !1;
+  return str = str.replace("requireAsync(e){", `requireAsync(e){window.BX_EXPOSED.beforePageLoad("${page}");`), str = str.replace("requireSync(e){", `requireSync(e){window.BX_EXPOSED.beforePageLoad("${page}");`), str;
+ }
 }
-var ENDING_CHUNKS_PATCH_NAME = "loadingEndingChunks", LOG_TAG2 = "Patcher", PATCHES = {
+var LOG_TAG2 = "Patcher", PATCHES = {
  disableAiTrack(str) {
   let text = ".track=function(", index = str.indexOf(text);
   if (index < 0) return !1;
@@ -4195,11 +4203,6 @@ logFunc(logTag, '//', logMessage);
   if (!str.includes(text)) return !1;
   let newCode = "e.enableTouchInput = true;";
   return str = str.replace(text, text + newCode), str;
- },
- loadingEndingChunks(str) {
-  let text = '"FamilySagaManager"';
-  if (!str.includes(text)) return !1;
-  return BxLogger.info(LOG_TAG2, "Remaining patches:", PATCH_ORDERS), PATCH_ORDERS = PATCH_ORDERS.concat(PLAYING_PATCH_ORDERS), str;
  },
  disableStreamGate(str) {
   let index = str.indexOf('case"partially-ready":');
@@ -4471,10 +4474,10 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   if (index < 0) return !1;
   return index = str.indexOf("{", index) + 1, str = str.substring(0, index) + set_currently_focused_interactable_default + str.substring(index), str;
  },
- detectProductDetailsPage(str) {
+ detectProductDetailPage(str) {
   let index = str.indexOf('{location:"ProductDetailPage",');
-  if (index >= 0 && (index = PatcherUtils.lastIndexOf("return", str, index, 200)), index < 0) return !1;
-  return str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, { component: "product-details" });' + str.substring(index), str;
+  if (index >= 0 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
+  return str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, { component: "product-detail" });' + str.substring(index), str;
  },
  detectBrowserRouterReady(str) {
   let index = str.indexOf("{history:this.history,");
@@ -4501,8 +4504,17 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   let text = "=window.__PRELOADED_STATE__;";
   if (!str.includes(text)) return !1;
   return str = str.replace(text, "=window.BX_EXPOSED.modifyPreloadedState(window.__PRELOADED_STATE__);"), str;
+ },
+ homePageBeforeLoad(str) {
+  return PatcherUtils.patchBeforePageLoad(str, "home");
+ },
+ productDetailPageBeforeLoad(str) {
+  return PatcherUtils.patchBeforePageLoad(str, "product-detail");
+ },
+ streamPageBeforeLoad(str) {
+  return PatcherUtils.patchBeforePageLoad(str, "stream");
  }
-}, PATCH_ORDERS = [
+}, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...getPref("nativeMkb.mode") === "on" ? [
   "enableNativeMkb",
   "exposeInputSink"
@@ -4517,6 +4529,9 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  "patchGamepadPolling",
  "exposeStreamSession",
  "exposeDialogRoutes",
+ "homePageBeforeLoad",
+ "productDetailPageBeforeLoad",
+ "streamPageBeforeLoad",
  "guideAchievementsDefaultLocked",
  "enableTvRoutes",
  "supportLocalCoOp",
@@ -4524,10 +4539,6 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  getPref("ui.gameCard.waitTime.show") && "patchSetCurrentlyFocusedInteractable",
  getPref("ui.layout") !== "default" && "websiteLayout",
  getPref("game.fortnite.forceConsole") && "forceFortniteConsole",
- getPref("ui.hideSections").includes("friends") && "ignorePlayWithFriendsSection",
- getPref("ui.hideSections").includes("all-games") && "ignoreAllGamesSection",
- getPref("ui.hideSections").includes("touch") && "ignorePlayWithTouchSection",
- (getPref("ui.hideSections").includes("native-mkb") || getPref("ui.hideSections").includes("most-popular")) && "ignoreSiglSections",
  ...STATES.userAgent.capabilities.touch ? [
   "disableTouchContextMenu"
  ] : [],
@@ -4550,7 +4561,12 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   "enableConsoleLogging",
   "enableXcloudLogger"
  ] : []
-].filter((item2) => !!item2), PLAYING_PATCH_ORDERS = [
+]), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+ getPref("ui.hideSections").includes("friends") && "ignorePlayWithFriendsSection",
+ getPref("ui.hideSections").includes("all-games") && "ignoreAllGamesSection",
+ STATES.browser.capabilities.touch && getPref("ui.hideSections").includes("touch") && "ignorePlayWithTouchSection",
+ (getPref("ui.hideSections").includes("native-mkb") || getPref("ui.hideSections").includes("most-popular")) && "ignoreSiglSections"
+]), STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  "patchXcloudTitleInfo",
  "disableGamepadDisconnectedScreen",
  "patchStreamHud",
@@ -4562,7 +4578,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  ...STATES.userAgent.capabilities.touch ? [
   getPref("touchController.mode") === "all" && "patchShowSensorControls",
   getPref("touchController.mode") === "all" && "exposeTouchLayoutManager",
-  (getPref("touchController.mode") === "off" || getPref("touchController.autoOff") || !STATES.userAgent.capabilities.touch) && "disableTakRenderer",
+  (getPref("touchController.mode") === "off" || getPref("touchController.autoOff")) && "disableTakRenderer",
   getPref("touchController.opacity.default") !== 100 && "patchTouchControlDefaultOpacity",
   "patchBabylonRendererClass"
  ] : [],
@@ -4577,9 +4593,21 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   "patchMouseAndKeyboardEnabled",
   "disableNativeRequestPointerLock"
  ] : []
-].filter((item2) => !!item2), ALL_PATCHES = [...PATCH_ORDERS, ...PLAYING_PATCH_ORDERS];
+]), PRODUCT_DETAIL_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+ AppInterface && "detectProductDetailPage"
+]), ALL_PATCHES = [...PATCH_ORDERS, ...HOME_PAGE_PATCH_ORDERS, ...STREAM_PAGE_PATCH_ORDERS, ...PRODUCT_DETAIL_PAGE_PATCH_ORDERS];
 class Patcher {
- static #patchFunctionBind() {
+ static remainingPatches = {
+  home: HOME_PAGE_PATCH_ORDERS,
+  stream: STREAM_PAGE_PATCH_ORDERS,
+  "product-detail": PRODUCT_DETAIL_PAGE_PATCH_ORDERS
+ };
+ static patchPage(page) {
+  let remaining = Patcher.remainingPatches[page];
+  if (!remaining) return;
+  PATCH_ORDERS = PATCH_ORDERS.concat(remaining), delete Patcher.remainingPatches[page];
+ }
+ static patchNativeBind() {
   let nativeBind = Function.prototype.bind;
   Function.prototype.bind = function() {
    let valid = !1;
@@ -4587,7 +4615,7 @@ class Patcher {
     if (arguments[1] === 0 || typeof arguments[1] === "function") valid = !0;
    }
    if (!valid) return nativeBind.apply(this, arguments);
-   if (PatcherCache.getInstance().init(), typeof arguments[1] === "function") BxLogger.info(LOG_TAG2, "Restored Function.prototype.bind()"), Function.prototype.bind = nativeBind;
+   if (typeof arguments[1] === "function") BxLogger.info(LOG_TAG2, "Restored Function.prototype.bind()"), Function.prototype.bind = nativeBind;
    let orgFunc = this, newFunc = (a, item2) => {
     Patcher.checkChunks(item2), orgFunc(a, item2);
    };
@@ -4609,7 +4637,7 @@ class Patcher {
     if (!PATCHES[patchName]) continue;
     let tmpStr = PATCHES[patchName].call(null, patchedFuncStr);
     if (!tmpStr) continue;
-    modified = !0, patchedFuncStr = tmpStr, BxLogger.info(LOG_TAG2, `✅ ${patchName}`), appliedPatches.push(patchName), patchesToCheck.splice(patchIndex, 1), patchIndex--, PATCH_ORDERS = PATCH_ORDERS.filter((item2) => item2 != patchName);
+    modified = !0, patchedFuncStr = tmpStr, BxLogger.info(LOG_TAG2, `✅ ${patchName}`), appliedPatches.push(patchName), patchesToCheck.splice(patchIndex, 1), patchIndex--, PATCH_ORDERS = PATCH_ORDERS.filter((item2) => item2 != patchName), BxLogger.info(LOG_TAG2, "Remaining patches", PATCH_ORDERS);
    }
    if (modified) try {
      chunkData[chunkId] = eval(patchedFuncStr);
@@ -4621,7 +4649,7 @@ class Patcher {
   if (Object.keys(patchesMap).length) patcherCache.saveToCache(patchesMap);
  }
  static init() {
-  Patcher.#patchFunctionBind();
+  Patcher.patchNativeBind();
  }
 }
 class PatcherCache {
@@ -4630,7 +4658,14 @@ class PatcherCache {
  KEY_CACHE = "BetterXcloud.Patches.Cache";
  KEY_SIGNATURE = "BetterXcloud.Patches.Cache.Signature";
  CACHE;
- isInitialized = !1;
+ constructor() {
+  this.checkSignature(), this.CACHE = JSON.parse(window.localStorage.getItem(this.KEY_CACHE) || "{}"), BxLogger.info(LOG_TAG2, "Cache", this.CACHE);
+  let pathName = window.location.pathname;
+  if (pathName.includes("/play/launch/")) Patcher.patchPage("stream");
+  else if (pathName.includes("/play/games/")) Patcher.patchPage("product-detail");
+  else if (pathName.endsWith("/play") || pathName.endsWith("/play/")) Patcher.patchPage("home");
+  PATCH_ORDERS = this.cleanupPatches(PATCH_ORDERS), STREAM_PAGE_PATCH_ORDERS = this.cleanupPatches(STREAM_PAGE_PATCH_ORDERS), PRODUCT_DETAIL_PAGE_PATCH_ORDERS = this.cleanupPatches(PRODUCT_DETAIL_PAGE_PATCH_ORDERS), BxLogger.info(LOG_TAG2, "PATCH_ORDERS", PATCH_ORDERS.slice(0));
+ }
  getSignature() {
   let scriptVersion = SCRIPT_VERSION, patches = JSON.stringify(ALL_PATCHES), webVersion = "", $link = document.querySelector('link[data-chunk="client"][href*="/client."]');
   if ($link) {
@@ -4665,12 +4700,6 @@ class PatcherCache {
      if (!data.includes(patchName)) data.push(patchName);
   }
   window.localStorage.setItem(this.KEY_CACHE, JSON.stringify(this.CACHE));
- }
- init() {
-  if (this.isInitialized) return;
-  if (this.isInitialized = !0, this.checkSignature(), this.CACHE = JSON.parse(window.localStorage.getItem(this.KEY_CACHE) || "{}"), BxLogger.info(LOG_TAG2, this.CACHE), window.location.pathname.includes("/play/")) PATCH_ORDERS.push(...PLAYING_PATCH_ORDERS);
-  else PATCH_ORDERS.push(ENDING_CHUNKS_PATCH_NAME);
-  PATCH_ORDERS = this.cleanupPatches(PATCH_ORDERS), PLAYING_PATCH_ORDERS = this.cleanupPatches(PLAYING_PATCH_ORDERS), BxLogger.info(LOG_TAG2, PATCH_ORDERS.slice(0)), BxLogger.info(LOG_TAG2, PLAYING_PATCH_ORDERS.slice(0));
  }
 }
 class BxNumberStepper extends HTMLInputElement {
@@ -6936,7 +6965,10 @@ var BxExposed = {
   / {2,}/g,
   / /g
  ],
- toggleLocalCoOp: (enable) => {}
+ toggleLocalCoOp(enable) {},
+ beforePageLoad: (page) => {
+  BxLogger.info("beforePageLoad", page), Patcher.patchPage(page);
+ }
 };
 function localRedirect(path) {
  let url = window.location.href.substring(0, 31) + path, $pageContent = document.getElementById("PageContent");
@@ -9214,7 +9246,7 @@ window.addEventListener(BxEvent.STREAM_ERROR_PAGE, (e) => {
  BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
 });
 window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, (e) => {
- if (e.component === "product-details") ProductDetailsPage.injectButtons();
+ if (e.component === "product-detail") ProductDetailsPage.injectButtons();
 });
 window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e) => {
  let dataChannel = e.dataChannel;

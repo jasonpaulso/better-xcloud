@@ -12,7 +12,7 @@ import { STATES, AppInterface, deepClone, SCRIPT_VERSION, STORAGE, SCRIPT_VARIAN
 import { t, Translations } from "@/utils/translation";
 import { BxSelectElement } from "@/web-components/bx-select";
 import { setNearby } from "@/utils/navigation-utils";
-import { PatcherCache } from "@/modules/patcher";
+import { PatcherCache } from "@/modules/patcher/patcher";
 import { UserAgentProfile } from "@/enums/user-agent";
 import { UserAgent } from "@/utils/user-agent";
 import { BX_FLAGS } from "@/utils/bx-flags";

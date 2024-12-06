@@ -11,6 +11,7 @@ import { getPref } from "./settings-storages/global-settings-storage";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { TouchController } from "@/modules/touch-controller";
 import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
+import { Patcher, type PatchPage } from "@/modules/patcher/patcher";
 
 export enum SupportedInputType {
     CONTROLLER = 'Controller',
@@ -208,5 +209,10 @@ export const BxExposed = {
         / /g,
     ],
 
-    toggleLocalCoOp: (enable: boolean) => {},
+    toggleLocalCoOp(enable: boolean) {},
+
+    beforePageLoad: isFullVersion() ? (page: PatchPage) => {
+        BxLogger.info('beforePageLoad', page);
+        Patcher.patchPage(page);
+    } : () => {},
 };

@@ -1,4 +1,4 @@
-import { SCRIPT_VERSION, STATES } from "@utils/global";
+import { AppInterface, SCRIPT_VERSION, STATES } from "@utils/global";
 import { BX_FLAGS } from "@utils/bx-flags";
 import { BxLogger } from "@utils/bx-logger";
 import { hashCode, renderString } from "@utils/utils";
@@ -17,39 +17,12 @@ import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { t } from "@/utils/translation";
 import { NativeMkbMode, TouchControllerMode, UiLayout, UiSection } from "@/enums/pref-values";
+import { PatcherUtils } from "./patcher-utils.js";
 
-type PathName = keyof typeof PATCHES;
-type PatchArray = PathName[];
+export type PatchName = keyof typeof PATCHES;
+export type PatchArray = PatchName[];
+export type PatchPage = 'home' | 'stream' | 'product-detail';
 
-class PatcherUtils {
-    static indexOf(txt: string, searchString: string, startIndex: number, maxRange: number): number {
-        const index = txt.indexOf(searchString, startIndex);
-        if (index < 0 || (maxRange && index - startIndex > maxRange)) {
-            return -1;
-        }
-
-        return index;
-    }
-
-    static lastIndexOf(txt: string, searchString: string, startIndex: number, maxRange: number): number {
-        const index = txt.lastIndexOf(searchString, startIndex);
-        if (index < 0 || (maxRange && startIndex - index > maxRange)) {
-            return -1;
-        }
-
-        return index;
-    }
-
-    static insertAt(txt: string, index: number, insertString: string): string {
-        return txt.substring(0, index) + insertString + txt.substring(index);
-    }
-
-    static replaceWith(txt: string, index: number, fromString: string, toString: string): string {
-        return txt.substring(0, index) + toString + txt.substring(index + fromString.length);
-    }
-}
-
-const ENDING_CHUNKS_PATCH_NAME = 'loadingEndingChunks';
 const LOG_TAG = 'Patcher';
 
 const PATCHES = {
@@ -311,19 +284,6 @@ logFunc(logTag, '//', logMessage);
         const newCode = 'e.enableTouchInput = true;';
 
         str = str.replace(text, text + newCode);
-        return str;
-    },
-
-    // Add patches that are only needed when start playing
-    loadingEndingChunks(str: string) {
-        let text = '"FamilySagaManager"';
-        if (!str.includes(text)) {
-            return false;
-        }
-
-        BxLogger.info(LOG_TAG, 'Remaining patches:', PATCH_ORDERS);
-        PATCH_ORDERS = PATCH_ORDERS.concat(PLAYING_PATCH_ORDERS);
-
         return str;
     },
 
@@ -719,30 +679,6 @@ true` + text;
         return str;
     },
 
-    /*
-    (x.AW, {
-        path: V.LoginDeviceCode.path,
-        exact: !0,
-        render: () => (0, n.jsx)(qe, {
-            children: (0, n.jsx)(Et.R, {})
-        })
-    }, V.LoginDeviceCode.name),
-
-    const qe = e => {
-        let {
-            children: t
-        } = e;
-        const {
-            isTV: a,
-            isSupportedTVBrowser: r
-        } = (0, T.d)();
-        return a && r ? (0, n.jsx)(n.Fragment, {
-            children: t
-        }) : (0, n.jsx)(x.l_, {
-            to: V.Home.getLink()
-        })
-    };
-    */
     enableTvRoutes(str: string) {
         let index = str.indexOf('.LoginDeviceCode.path,');
         if (index < 0) {
@@ -912,16 +848,15 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
         return str;
     },
 
-    // product-details-page.js#2388, 24.17.20
-    detectProductDetailsPage(str: string) {
+    detectProductDetailPage(str: string) {
         let index = str.indexOf('{location:"ProductDetailPage",');
-        index >= 0 && (index = PatcherUtils.lastIndexOf('return', str, index, 200));
+        index >= 0 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 200));
 
         if (index < 0) {
             return false;
         }
 
-        str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, { component: "product-details" });' + str.substring(index);
+        str = str.substring(0, index) + 'BxEvent.dispatch(window, BxEvent.XCLOUD_RENDERING_COMPONENT, { component: "product-detail" });' + str.substring(index);
         return str;
     },
 
@@ -992,9 +927,21 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
         str = str.replace(text, '=window.BX_EXPOSED.modifyPreloadedState(window.__PRELOADED_STATE__);');
         return str;
     },
+
+    homePageBeforeLoad(str: string) {
+        return PatcherUtils.patchBeforePageLoad(str, 'home');
+    },
+
+    productDetailPageBeforeLoad(str: string) {
+        return PatcherUtils.patchBeforePageLoad(str, 'product-detail');
+    },
+
+    streamPageBeforeLoad(str: string) {
+        return PatcherUtils.patchBeforePageLoad(str, 'stream');
+    },
 };
 
-let PATCH_ORDERS: PatchArray = [
+let PATCH_ORDERS = PatcherUtils.filterPatches([
     ...(getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
         'exposeInputSink',
@@ -1015,10 +962,13 @@ let PATCH_ORDERS: PatchArray = [
     'exposeStreamSession',
     'exposeDialogRoutes',
 
+    'homePageBeforeLoad',
+    'productDetailPageBeforeLoad',
+    'streamPageBeforeLoad',
+
     'guideAchievementsDefaultLocked',
 
     'enableTvRoutes',
-    // AppInterface && 'detectProductDetailsPage',
 
     'supportLocalCoOp',
     'overrideStorageGetSettings',
@@ -1026,11 +976,6 @@ let PATCH_ORDERS: PatchArray = [
 
     getPref<UiLayout>(PrefKey.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
     getPref(PrefKey.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',
-
-    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
-    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
-    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
-    (getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.NATIVE_MKB) || getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.MOST_POPULAR)) && 'ignoreSiglSections',
 
     ...(STATES.userAgent.capabilities.touch ? [
         'disableTouchContextMenu',
@@ -1059,12 +1004,19 @@ let PATCH_ORDERS: PatchArray = [
         'enableConsoleLogging',
         'enableXcloudLogger',
     ] : []),
-].filter((item): item is string => !!item) as PatchArray;
+]);
+
+let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
+    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
+    STATES.browser.capabilities.touch && getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
+    (getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.NATIVE_MKB) || getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.MOST_POPULAR)) && 'ignoreSiglSections',
+]);
 
 // Only when playing
 // TODO: check this
 // @ts-ignore
-let PLAYING_PATCH_ORDERS: PatchArray = [
+let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     'patchXcloudTitleInfo',
     'disableGamepadDisconnectedScreen',
     'patchStreamHud',
@@ -1085,7 +1037,7 @@ let PLAYING_PATCH_ORDERS: PatchArray = [
     ...(STATES.userAgent.capabilities.touch ? [
         getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'patchShowSensorControls',
         getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
-        (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF) || !STATES.userAgent.capabilities.touch) && 'disableTakRenderer',
+        (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
         getPref<TouchControllerDefaultOpacity>(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
         'patchBabylonRendererClass',
     ] : []),
@@ -1106,12 +1058,32 @@ let PLAYING_PATCH_ORDERS: PatchArray = [
         'patchMouseAndKeyboardEnabled',
         'disableNativeRequestPointerLock',
     ] : []),
-].filter((item): item is string => !!item);
+]);
 
-const ALL_PATCHES = [...PATCH_ORDERS, ...PLAYING_PATCH_ORDERS];
+let PRODUCT_DETAIL_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+    AppInterface && 'detectProductDetailPage',
+]);
+
+const ALL_PATCHES = [...PATCH_ORDERS, ...HOME_PAGE_PATCH_ORDERS, ...STREAM_PAGE_PATCH_ORDERS, ...PRODUCT_DETAIL_PAGE_PATCH_ORDERS];
 
 export class Patcher {
-    static #patchFunctionBind() {
+    private static remainingPatches: { [key in PatchPage]: PatchArray } = {
+        home: HOME_PAGE_PATCH_ORDERS,
+        stream: STREAM_PAGE_PATCH_ORDERS,
+        'product-detail': PRODUCT_DETAIL_PAGE_PATCH_ORDERS,
+    };
+
+    static patchPage(page: PatchPage) {
+        const remaining = Patcher.remainingPatches[page];
+        if (!remaining) {
+            return;
+        }
+
+        PATCH_ORDERS = PATCH_ORDERS.concat(remaining);
+        delete Patcher.remainingPatches[page];
+    }
+
+    private static patchNativeBind() {
         const nativeBind = Function.prototype.bind;
         Function.prototype.bind = function() {
             let valid = false;
@@ -1131,8 +1103,6 @@ export class Patcher {
                 // @ts-ignore
                 return nativeBind.apply(this, arguments);
             }
-
-            PatcherCache.getInstance().init();
 
             if (typeof arguments[1] === 'function') {
                 BxLogger.info(LOG_TAG, 'Restored Function.prototype.bind()');
@@ -1211,6 +1181,7 @@ export class Patcher {
                 patchesToCheck.splice(patchIndex, 1);
                 patchIndex--;
                 PATCH_ORDERS = PATCH_ORDERS.filter(item => item != patchName);
+                BxLogger.info(LOG_TAG, 'Remaining patches', PATCH_ORDERS);
             }
 
             // Apply patched functions
@@ -1236,7 +1207,7 @@ export class Patcher {
     }
 
     static init() {
-        Patcher.#patchFunctionBind();
+        Patcher.patchNativeBind();
     }
 }
 
@@ -1249,7 +1220,29 @@ export class PatcherCache {
 
     private CACHE!: { [key: string]: PatchArray };
 
-    private isInitialized = false;
+    private constructor() {
+        this.checkSignature();
+
+        // Read cache from storage
+        this.CACHE = JSON.parse(window.localStorage.getItem(this.KEY_CACHE) || '{}');
+        BxLogger.info(LOG_TAG, 'Cache', this.CACHE);
+
+        const pathName = window.location.pathname;
+        if (pathName.includes('/play/launch/')) {
+            Patcher.patchPage('stream');
+        } else if (pathName.includes('/play/games/')) {
+            Patcher.patchPage('product-detail');
+        } else if (pathName.endsWith('/play') || pathName.endsWith('/play/')) {
+            Patcher.patchPage('home');
+        }
+
+        // Remove cached patches from PATCH_ORDERS & PLAYING_PATCH_ORDERS
+        PATCH_ORDERS = this.cleanupPatches(PATCH_ORDERS);
+        STREAM_PAGE_PATCH_ORDERS = this.cleanupPatches(STREAM_PAGE_PATCH_ORDERS);
+        PRODUCT_DETAIL_PAGE_PATCH_ORDERS = this.cleanupPatches(PRODUCT_DETAIL_PAGE_PATCH_ORDERS);
+
+        BxLogger.info(LOG_TAG, 'PATCH_ORDERS', PATCH_ORDERS.slice(0));
+    }
 
     /**
      * Get patch's signature
@@ -1332,31 +1325,5 @@ export class PatcherCache {
 
         // Save to storage
         window.localStorage.setItem(this.KEY_CACHE, JSON.stringify(this.CACHE));
-    }
-
-    init() {
-        if (this.isInitialized) {
-            return;
-        }
-        this.isInitialized = true;
-
-        this.checkSignature();
-
-        // Read cache from storage
-        this.CACHE = JSON.parse(window.localStorage.getItem(this.KEY_CACHE) || '{}');
-        BxLogger.info(LOG_TAG, this.CACHE);
-
-        if (window.location.pathname.includes('/play/')) {
-            PATCH_ORDERS.push(...PLAYING_PATCH_ORDERS);
-        } else {
-            PATCH_ORDERS.push(ENDING_CHUNKS_PATCH_NAME);
-        }
-
-        // Remove cached patches from PATCH_ORDERS & PLAYING_PATCH_ORDERS
-        PATCH_ORDERS = this.cleanupPatches(PATCH_ORDERS);
-        PLAYING_PATCH_ORDERS = this.cleanupPatches(PLAYING_PATCH_ORDERS);
-
-        BxLogger.info(LOG_TAG, PATCH_ORDERS.slice(0));
-        BxLogger.info(LOG_TAG, PLAYING_PATCH_ORDERS.slice(0));
     }
 }

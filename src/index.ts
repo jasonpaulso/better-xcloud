@@ -16,7 +16,7 @@ import { LoadingScreen } from "@modules/loading-screen";
 import { MouseCursorHider } from "@modules/mkb/mouse-cursor-hider";
 import { TouchController } from "@modules/touch-controller";
 import { checkForUpdate, disablePwa, productTitleToSlug } from "@utils/utils";
-import { Patcher } from "@modules/patcher";
+import { Patcher } from "@/modules/patcher/patcher";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { onHistoryChanged, patchHistoryMethod } from "@utils/history";
 import { disableAdobeAudienceManager, patchAudioContext, patchCanvasContext, patchMeControl, patchPointerLockApi, patchRtcCodecs, patchRtcPeerConnection, patchVideoApi } from "@utils/monkey-patches";
@@ -266,9 +266,9 @@ window.addEventListener(BxEvent.STREAM_ERROR_PAGE, e => {
     BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
 });
 
-window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, e => {
+isFullVersion() && window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, e => {
     const component = (e as any).component;
-    if (component === 'product-details') {
+    if (component === 'product-detail') {
         ProductDetailsPage.injectButtons();
     }
 });

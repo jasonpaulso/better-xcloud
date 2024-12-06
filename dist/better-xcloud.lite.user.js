@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud (Lite)
 // @namespace    https://github.com/redphx
-// @version      6.0.0
+// @version      6.0.1-beta-1
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -105,7 +105,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.0", SCRIPT_VARIANT = "lite", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.1-beta-1", SCRIPT_VARIANT = "lite", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -4775,7 +4775,8 @@ var BxExposed = {
   / {2,}/g,
   / /g
  ],
- toggleLocalCoOp: (enable) => {}
+ toggleLocalCoOp(enable) {},
+ beforePageLoad: () => {}
 };
 function localRedirect(path) {
  let url = window.location.href.substring(0, 31) + path, $pageContent = document.getElementById("PageContent");
@@ -6159,35 +6160,6 @@ function patchCanvasContext() {
   return nativeGetContext.apply(this, [contextType, contextAttributes]);
  };
 }
-class ProductDetailsPage {
- static $btnShortcut = AppInterface && createButton({
-  icon: BxIcon.CREATE_SHORTCUT,
-  label: t("create-shortcut"),
-  style: 64,
-  onClick: (e) => {
-   AppInterface.createShortcut(window.location.pathname.substring(6));
-  }
- });
- static $btnWallpaper = AppInterface && createButton({
-  icon: BxIcon.DOWNLOAD,
-  label: t("wallpaper"),
-  style: 64,
-  onClick: (e) => {
-   let details = parseDetailsPath(window.location.pathname);
-   details && AppInterface.downloadWallpapers(details.titleSlug, details.productId);
-  }
- });
- static injectTimeoutId = null;
- static injectButtons() {
-  if (!AppInterface) return;
-  ProductDetailsPage.injectTimeoutId && clearTimeout(ProductDetailsPage.injectTimeoutId), ProductDetailsPage.injectTimeoutId = window.setTimeout(() => {
-   let $container = document.querySelector("div[class*=ActionButtons-module__container]");
-   if ($container && $container.parentElement) $container.parentElement.appendChild(CE("div", {
-     class: "bx-product-details-buttons"
-    }, BX_FLAGS.DeviceInfo.deviceType === "android" && ProductDetailsPage.$btnShortcut, ProductDetailsPage.$btnWallpaper));
-  }, 500);
- }
-}
 class StreamUiHandler {
  static $btnStreamSettings;
  static $btnStreamStats;
@@ -6421,9 +6393,6 @@ window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
 });
 window.addEventListener(BxEvent.STREAM_ERROR_PAGE, (e) => {
  BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
-});
-window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, (e) => {
- if (e.component === "product-details") ProductDetailsPage.injectButtons();
 });
 window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e) => {
  let dataChannel = e.dataChannel;
