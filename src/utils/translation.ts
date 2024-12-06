@@ -27,6 +27,11 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
+    "top": "Top",
+    "top-half": "Top half",
+    "center": "Center",
+    "bottom": "Bottom",
+    "bottom-half": "Bottom half",
     "activate": "Activate",
     "activated": "Activated",
     "active": "Active",

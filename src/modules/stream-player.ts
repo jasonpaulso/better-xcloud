@@ -7,7 +7,7 @@ import { STATES } from "@/utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { BX_FLAGS } from "@/utils/bx-flags";
-import { StreamPlayerType, StreamVideoProcessing, VideoRatio } from "@/enums/pref-values";
+import { StreamPlayerType, StreamVideoProcessing, VideoPosition, VideoRatio } from "@/enums/pref-values";
 
 export type StreamPlayerOptions = Partial<{
     processing: string,
@@ -39,13 +39,12 @@ export class StreamPlayer {
     private setupVideoElements() {
         this.$videoCss = document.getElementById('bx-video-css') as HTMLStyleElement;
         if (this.$videoCss) {
-            this.$usmMatrix = this.$videoCss.querySelector('#bx-filter-usm-matrix') as any;
             return;
         }
 
         const $fragment = document.createDocumentFragment();
 
-        this.$videoCss = CE<HTMLStyleElement>('style', {id: 'bx-video-css'});
+        this.$videoCss = CE<HTMLStyleElement>('style', { id: 'bx-video-css' });
         $fragment.appendChild(this.$videoCss);
 
         // Setup SVG filters
@@ -140,6 +139,23 @@ export class StreamPlayer {
 
             $video.dataset.width = width.toString();
             $video.dataset.height = height.toString();
+
+            // Set position
+            const $parent = $video.parentElement!;
+            const position = getPref<VideoPosition>(PrefKey.VIDEO_POSITION);
+            $parent.style.removeProperty('padding-top');
+
+            $parent.dataset.position = position;
+            if (position === VideoPosition.TOP_HALF || position === VideoPosition.BOTTOM_HALF) {
+                let padding = Math.floor((window.innerHeight - height) / 4);
+                if (padding > 0) {
+                    if (position === VideoPosition.BOTTOM_HALF) {
+                        padding *= 3;
+                    }
+
+                    $parent.style.paddingTop = padding + 'px';
+                }
+            }
 
             // Update size
             targetWidth = `${width}px`;

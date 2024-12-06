@@ -47,7 +47,39 @@ body[data-media-type=tv] .bx-stream-home-button {
 }
 
 div[data-testid=media-container] {
-    display: flex;
+    &[data-position=center] {
+        display: flex;
+    }
+
+    &[data-position=top] {
+        video, canvas {
+            top: 0;
+        }
+    }
+
+    &[data-position=bottom] {
+        video, canvas {
+            bottom: 0;
+        }
+    }
+}
+
+
+#game-stream {
+    video {
+        margin: auto;
+        align-self: center;
+        background: #000;
+        position: absolute;
+    }
+
+    canvas {
+        position: absolute;
+        align-self: center;
+        margin: auto;
+        left: 0;
+        right: 0;
+    }
 
     &.bx-taking-screenshot:before {
         animation: bx-anim-taking-screenshot 0.5s ease;
@@ -57,21 +89,6 @@ div[data-testid=media-container] {
         height: 100%;
         z-index: var(--bx-screenshot-animation-z-index);
     }
-}
-
-
-#game-stream video {
-    margin: auto;
-    align-self: center;
-    background: #000;
-}
-
-#game-stream canvas {
-    position: absolute;
-    align-self: center;
-    margin: auto;
-    left: 0;
-    right: 0;
 }
 
 #gamepass-dialog-root div[class^=Guide-module__guide] {

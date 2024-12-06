@@ -93,6 +93,7 @@ export const enum PrefKey {
     VIDEO_BRIGHTNESS = 'video.brightness',
     VIDEO_CONTRAST = 'video.contrast',
     VIDEO_SATURATION = 'video.saturation',
+    VIDEO_POSITION = 'video.position',
 
     AUDIO_MIC_ON_PLAYING = 'audio.mic.onPlaying',
     AUDIO_VOLUME_CONTROL_ENABLED = 'audio.volume.booster.enabled',

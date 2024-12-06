@@ -71,7 +71,6 @@ export function updateVideoPlayer() {
     streamPlayer.setPlayerType(getPref(PrefKey.VIDEO_PLAYER_TYPE));
     streamPlayer.updateOptions(options);
     streamPlayer.refreshPlayer();
-
 }
 
 window.addEventListener('resize', updateVideoPlayer);

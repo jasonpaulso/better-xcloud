@@ -8,7 +8,7 @@ import { CE } from "../html";
 import { t, SUPPORTED_LANGUAGES } from "../translation";
 import { UserAgent } from "../user-agent";
 import { BaseSettingsStore as BaseSettingsStorage } from "./base-settings-storage";
-import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat } from "@/enums/pref-values";
+import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat, VideoPosition } from "@/enums/pref-values";
 import { MkbMappingDefaultPresetId } from "../local-db/mkb-mapping-presets-table";
 import { KeyboardShortcutDefaultId } from "../local-db/keyboard-shortcuts-table";
 import { GhPagesUtils } from "../gh-pages";
@@ -681,10 +681,10 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         },
         [PrefKey.VIDEO_RATIO]: {
             label: t('aspect-ratio'),
-            note: t('aspect-ratio-note'),
+            note: STATES.browser.capabilities.touch ? t('aspect-ratio-note') : undefined,
             default: VideoRatio['16:9'],
             options: {
-                [VideoRatio['16:9']]: '16:9',
+                [VideoRatio['16:9']]: `16:9 (${t('default')})`,
                 [VideoRatio['18:9']]: '18:9',
                 [VideoRatio['21:9']]: '21:9',
                 [VideoRatio['16:10']]: '16:10',
@@ -694,6 +694,19 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 //'cover': 'Cover',
             },
         },
+        [PrefKey.VIDEO_POSITION]: {
+            label: t('position'),
+            note: STATES.browser.capabilities.touch ? t('aspect-ratio-note') : undefined,
+            default: VideoPosition.CENTER,
+            options: {
+                [VideoPosition.TOP]: t('top'),
+                [VideoPosition.TOP_HALF]: t('top-half'),
+                [VideoPosition.CENTER]: `${t('center')} (${t('default')})`,
+                [VideoPosition.BOTTOM_HALF]: t('bottom-half'),
+                [VideoPosition.BOTTOM]: t('bottom'),
+            },
+        },
+
         [PrefKey.VIDEO_SATURATION]: {
             label: t('saturation'),
             default: 100,
@@ -745,7 +758,6 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 ticks: 100,
             },
         },
-
 
         [PrefKey.STATS_ITEMS]: {
             label: t('stats'),

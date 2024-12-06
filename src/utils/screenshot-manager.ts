@@ -59,8 +59,11 @@ export class ScreenshotManager {
             return;
         }
 
-        $player.parentElement!.addEventListener('animationend', this.onAnimationEnd, { once: true });
-        $player.parentElement!.classList.add('bx-taking-screenshot');
+        const $gameStream = $player.closest('#game-stream');
+        if ($gameStream) {
+            $gameStream.addEventListener('animationend', this.onAnimationEnd, { once: true });
+            $gameStream.classList.add('bx-taking-screenshot');
+        }
 
         const canvasContext = this.canvasContext;
 

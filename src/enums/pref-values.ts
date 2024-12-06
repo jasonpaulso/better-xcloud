@@ -93,6 +93,14 @@ export const enum VideoRatio {
     FILL = 'fill',
 }
 
+export const enum VideoPosition {
+    CENTER = 'center',
+    TOP = 'top',
+    TOP_HALF = 'top-half',
+    BOTTOM = 'bottom',
+    BOTTOM_HALF = 'bottom-half',
+}
+
 export const enum StreamPlayerType {
     VIDEO = 'default',
     WEBGL2 = 'webgl2',

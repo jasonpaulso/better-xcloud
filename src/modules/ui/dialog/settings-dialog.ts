@@ -476,6 +476,9 @@ export class SettingsDialog extends NavigationDialog {
             pref: PrefKey.VIDEO_RATIO,
             onChange: updateVideoPlayer,
         }, {
+            pref: PrefKey.VIDEO_POSITION,
+            onChange: updateVideoPlayer,
+        }, {
             pref: PrefKey.VIDEO_SHARPNESS,
             onChange: updateVideoPlayer,
         }, {
