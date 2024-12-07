@@ -27,11 +27,6 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
-    "top": "Top",
-    "top-half": "Top half",
-    "center": "Center",
-    "bottom": "Bottom",
-    "bottom-half": "Bottom half",
     "activate": "Activate",
     "activated": "Activated",
     "active": "Active",
@@ -52,6 +47,8 @@ const Texts = {
     "better-xcloud": "Better xCloud",
     "bitrate-audio-maximum": "Maximum audio bitrate",
     "bitrate-video-maximum": "Maximum video bitrate",
+    "bottom": "Bottom",
+    "bottom-half": "Bottom half",
     "bottom-left": "Bottom-left",
     "bottom-right": "Bottom-right",
     "brazil": "Brazil",
@@ -61,6 +58,7 @@ const Texts = {
     "can-stream-xbox-360-games": "Can stream Xbox 360 games",
     "cancel": "Cancel",
     "cant-stream-xbox-360-games": "Can't stream Xbox 360 games",
+    "center": "Center",
     "clarity-boost": "Clarity boost",
     "clarity-boost-warning": "These settings don't work when the Clarity Boost mode is ON",
     "clear": "Clear",
@@ -344,7 +342,9 @@ const Texts = {
     "tc-standard-layout-style": "Standard layout's button style",
     "text-size": "Text size",
     "toggle": "Toggle",
+    "top": "Top",
     "top-center": "Top-center",
+    "top-half": "Top half",
     "top-left": "Top-left",
     "top-right": "Top-right",
     "touch-control-layout": "Touch control layout",
