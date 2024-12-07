@@ -406,7 +406,7 @@ function main() {
         }
 
         // Start PointerProviderServer
-        if (getPref(PrefKey.MKB_ENABLED) && AppInterface) {
+        if (AppInterface && (getPref(PrefKey.MKB_ENABLED) || getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) {
             STATES.pointerServerPort = AppInterface.startPointerServer() || 9269;
             BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString());
         }
