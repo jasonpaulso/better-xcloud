@@ -162,3 +162,5 @@ type XboxAchievement = {
         name: string;
     }
 };
+
+type OsName = 'windows' | 'tizen' | 'android';

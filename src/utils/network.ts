@@ -11,6 +11,7 @@ import { XcloudInterceptor } from "./xcloud-interceptor";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
+import { StreamResolution } from "@/enums/pref-values";
 
 type RequestType = 'xcloud' | 'xhome';
 
@@ -119,6 +120,7 @@ export async function patchIceCandidates(request: Request, consoleAddrs?: Remote
 
     return response;
 }
+
 
 export function interceptHttpRequests() {
     let BLOCKED_URLS: string[] = [];
@@ -282,4 +284,46 @@ export function interceptHttpRequests() {
 
         return XcloudInterceptor.handle(request, init);
     }
+}
+
+
+export function generateMsDeviceInfo(osName: OsName) {
+    return {
+        appInfo: {
+            env: {
+                clientAppId: window.location.host,
+                clientAppType: 'browser',
+                clientAppVersion: '26.1.97',
+                clientSdkVersion: '10.3.7',
+                httpEnvironment: 'prod',
+                sdkInstallId: '',
+            },
+        },
+        dev: {
+            os: { name: osName, ver: '22631.2715', platform: 'desktop' },
+            hw: { make: 'Microsoft', model: 'unknown', sdktype: 'web' },
+            browser: { browserName: 'chrome', browserVersion: '130.0' },
+            displayInfo: {
+                dimensions: { widthInPixels: 1920, heightInPixels: 1080 },
+                pixelDensity: { dpiX: 1, dpiY: 1 },
+            },
+        },
+    };
+}
+
+export function getOsNameFromResolution(resolution: StreamResolution): OsName {
+    let osName: OsName;
+    switch (resolution) {
+        case StreamResolution.DIM_1080P_HQ:
+            osName = 'tizen';
+            break;
+        case StreamResolution.DIM_1080P:
+            osName = 'windows';
+            break;
+        default:
+            osName = 'android';
+            break;
+    }
+
+    return osName;
 }

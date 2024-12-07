@@ -7,7 +7,7 @@ import { TouchController } from "@modules/touch-controller";
 import { BxEvent } from "./bx-event";
 import { NATIVE_FETCH, BX_FLAGS } from "./bx-flags";
 import { STATES } from "./global";
-import { patchIceCandidates } from "./network";
+import { generateMsDeviceInfo, getOsNameFromResolution, patchIceCandidates } from "./network";
 import { getPreferredServerRegion } from "./region";
 import { BypassServerIps } from "@/enums/bypass-servers";
 import { PrefKey } from "@/enums/pref-keys";
@@ -40,46 +40,6 @@ export class XcloudInterceptor {
         SwedenCentral: ['🇸🇪', 'europe'],
         UKSouth: ['🇬🇧', 'europe'],
         WestEurope: ['🇪🇺', 'europe'],
-    };
-
-    private static readonly BASE_DEVICE_INFO = {
-        appInfo: {
-            env: {
-                clientAppId: window.location.host,
-                clientAppType: 'browser',
-                clientAppVersion: '24.17.36',
-                clientSdkVersion: '10.1.14',
-                httpEnvironment: 'prod',
-                sdkInstallId: '',
-            },
-        },
-
-        dev: {
-            displayInfo: {
-                dimensions: {
-                    widthInPixels: 1920,
-                    heightInPixels: 1080,
-                },
-                pixelDensity: {
-                    dpiX: 1,
-                    dpiY: 1,
-                },
-            },
-            hw: {
-                make: 'Microsoft',
-                model: 'unknown',
-                sdktype: 'web',
-            },
-            os: {
-                name: 'windows',
-                ver: '22631.2715',
-                platform: 'desktop',
-            },
-            browser: {
-                browserName: 'chrome',
-                browserVersion: '125.0',
-            },
-        },
     };
 
     private static async handleLogin(request: RequestInfo | URL, init?: RequestInit) {
@@ -175,24 +135,8 @@ export class XcloudInterceptor {
 
         // Force stream's resolution
         if (PREF_STREAM_TARGET_RESOLUTION !== 'auto') {
-            let osName;
-            switch (PREF_STREAM_TARGET_RESOLUTION) {
-                case StreamResolution.DIM_1080P_HQ:
-                    osName = 'tizen';
-
-                    const deviceInfo = XcloudInterceptor.BASE_DEVICE_INFO;
-                    deviceInfo.dev.os.name = 'tizen';
-                    headers['x-ms-device-info'] = JSON.stringify(deviceInfo);
-
-                    break;
-                case StreamResolution.DIM_1080P:
-                    osName = 'windows';
-                    break;
-                default:
-                    osName = 'android';
-                    break
-            }
-
+            const osName = getOsNameFromResolution(PREF_STREAM_TARGET_RESOLUTION);
+            headers['x-ms-device-info'] = JSON.stringify(generateMsDeviceInfo(osName));
             body.settings.osName = osName;
         }
 

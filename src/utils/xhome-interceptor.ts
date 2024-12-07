@@ -3,7 +3,7 @@ import { BxEvent } from "./bx-event";
 import { SupportedInputType } from "./bx-exposed";
 import { NATIVE_FETCH } from "./bx-flags";
 import { STATES } from "./global";
-import { patchIceCandidates } from "./network";
+import { generateMsDeviceInfo, getOsNameFromResolution, patchIceCandidates } from "./network";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
@@ -12,46 +12,6 @@ import { StreamResolution, TouchControllerMode } from "@/enums/pref-values";
 
 export class XhomeInterceptor {
     private static consoleAddrs: RemotePlayConsoleAddresses = {};
-
-    private static readonly BASE_DEVICE_INFO = {
-        appInfo: {
-            env: {
-                clientAppId: window.location.host,
-                clientAppType: 'browser',
-                clientAppVersion: '24.17.36',
-                clientSdkVersion: '10.1.14',
-                httpEnvironment: 'prod',
-                sdkInstallId: '',
-            },
-        },
-
-        dev: {
-            displayInfo: {
-                dimensions: {
-                    widthInPixels: 1920,
-                    heightInPixels: 1080,
-                },
-                pixelDensity: {
-                    dpiX: 1,
-                    dpiY: 1,
-                },
-            },
-            hw: {
-                make: 'Microsoft',
-                model: 'unknown',
-                sdktype: 'web',
-            },
-            os: {
-                name: 'windows',
-                ver: '22631.2715',
-                platform: 'desktop',
-            },
-            browser: {
-                browserName: 'chrome',
-                browserVersion: '125.0',
-            },
-        },
-    };
 
     private static async handleLogin(request: Request) {
         try {
@@ -191,21 +151,8 @@ export class XhomeInterceptor {
         headers.authorization = `Bearer ${RemotePlayManager.getInstance()!.getXhomeToken()}`;
 
         // Patch resolution
-        const deviceInfo = XhomeInterceptor.BASE_DEVICE_INFO;
-        const resolution = getPref<StreamResolution>(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION);
-        switch (resolution) {
-            case StreamResolution.DIM_1080P_HQ:
-                deviceInfo.dev.os.name = 'tizen';
-                break;
-            case StreamResolution.DIM_720P:
-                deviceInfo.dev.os.name = 'android';
-                break;
-            default:
-                deviceInfo.dev.os.name = 'windows';
-                break;
-        }
-
-        headers['x-ms-device-info'] = JSON.stringify(deviceInfo);
+        const osName = getOsNameFromResolution(getPref<StreamResolution>(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION));
+        headers['x-ms-device-info'] = JSON.stringify(generateMsDeviceInfo(osName));
 
         const opts: Record<string, any> = {
             method: clone.method,

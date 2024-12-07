@@ -40,6 +40,7 @@ export class RemotePlayDialog extends NavigationDialog {
         let $resolutions : HTMLSelectElement | NavigationElement = CE<HTMLSelectElement>('select', {},
             CE('option', { value: StreamResolution.DIM_720P }, '720p'),
             CE('option', { value: StreamResolution.DIM_1080P }, '1080p'),
+            // CE('option', { value: StreamResolution.DIM_1080P_HQ }, `1080p (HQ) ${t('experimental')}`),
         );
 
         $resolutions = BxSelectElement.create($resolutions as HTMLSelectElement);
