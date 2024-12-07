@@ -9,7 +9,7 @@ declare global {
     interface Window {
         AppInterface: any;
         BX_FLAGS?: BxFlags;
-        BX_CE: (elmName: string, props: {[index: string]: any}={}) => HTMLElement;
+        BX_CE: (elmName: string, props: { [index: string]: any }={}) => HTMLElement;
         BX_EXPOSED: typeof BxExposed & Partial<{
             shouldShowSensorControls: boolean;
             stopTakRendering: boolean;

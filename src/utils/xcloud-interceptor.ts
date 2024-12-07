@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { LoadingScreen } from "@modules/loading-screen";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
@@ -116,7 +116,7 @@ export class XcloudInterceptor {
 
             let match = serverRegex.exec(region.baseUri);
             if (match) {
-                shortName = match[1];
+                shortName = match[1] as string;
                 if (serverExtra[regionName]) {
                     shortName = serverExtra[regionName][0] + ' ' + shortName;
                     region.contintent = serverExtra[regionName][1];
@@ -155,10 +155,10 @@ export class XcloudInterceptor {
         const url = (typeof request === 'string') ? request : (request as Request).url;
         const parsedUrl = new URL(url);
 
-        let badgeRegion: string = parsedUrl.host.split('.', 1)[0];
+        let badgeRegion: string = parsedUrl.host.split('.', 1)[0] as string;
         for (let regionName in STATES.serverRegions) {
             const region = STATES.serverRegions[regionName];
-            if (parsedUrl.origin == region.baseUri) {
+            if (region && parsedUrl.origin === region.baseUri) {
                 badgeRegion = regionName;
                 break;
             }
@@ -168,7 +168,7 @@ export class XcloudInterceptor {
         const clone = (request as Request).clone();
         const body = await clone.json();
 
-        const headers: {[index: string]: string} = {};
+        const headers: { [index: string]: string } = {};
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }

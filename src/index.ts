@@ -1,4 +1,4 @@
-import { compressCss, isFullVersion } from "@macros/build" with {type: "macro"};
+import { compressCss, isFullVersion } from "@macros/build" with { type: "macro" };
 
 import "@utils/global";
 import { BxEvent } from "@utils/bx-event";
@@ -199,7 +199,7 @@ window.addEventListener(BxEvent.XCLOUD_SERVERS_UNAVAILABLE, e => {
     if ($unsupportedPage) {
         SettingsDialog.getInstance().show();
     }
-}, {once: true});
+}, { once: true });
 
 window.addEventListener(BxEvent.XCLOUD_SERVERS_READY, e => {
     STATES.isSignedIn = true;

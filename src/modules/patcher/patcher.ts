@@ -480,6 +480,10 @@ BxEvent.dispatch(window, BxEvent.XCLOUD_POLLING_MODE_CHANGED);
 
         // Get param name
         const params = str.substring(index, backetIndex).match(/\(([^)]+)\)/)![1];
+        if (!params) {
+            return false;
+        }
+
         const titleInfoVar = params.split(',')[0];
 
         const newCode = `
@@ -502,6 +506,10 @@ BxLogger.info('patchXcloudTitleInfo', ${titleInfoVar});
 
         // Get param name
         const params = str.substring(index, backetIndex).match(/\(([^)]+)\)/)![1];
+        if (!params) {
+            return false;
+        }
+
         const configsVar = params.split(',')[1];
 
         const newCode = `

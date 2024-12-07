@@ -37,7 +37,7 @@ export class SoundShortcut {
         SoundShortcut.setGainNodeVolume(newValue);
 
         // Show toast
-        Toast.show(`${t('stream')} ❯ ${t('volume')}`, newValue + '%', {instant: true});
+        Toast.show(`${t('stream')} ❯ ${t('volume')}`, newValue + '%', { instant: true });
 
         return newValue;
     }
@@ -69,7 +69,7 @@ export class SoundShortcut {
             }
 
             SoundShortcut.setGainNodeVolume(targetValue);
-            Toast.show(`${t('stream')} ❯ ${t('volume')}`, status, {instant: true});
+            Toast.show(`${t('stream')} ❯ ${t('volume')}`, status, { instant: true });
 
             BxEvent.dispatch(window, BxEvent.SPEAKER_STATE_CHANGED, {
                 speakerState: targetValue === 0 ? SpeakerState.MUTED : SpeakerState.ENABLED,
@@ -82,7 +82,7 @@ export class SoundShortcut {
             $media.muted = !$media.muted;
 
             const status = $media.muted ? t('muted') : t('unmuted');
-            Toast.show(`${t('stream')} ❯ ${t('volume')}`, status, {instant: true});
+            Toast.show(`${t('stream')} ❯ ${t('volume')}`, status, { instant: true });
 
             BxEvent.dispatch(window, BxEvent.SPEAKER_STATE_CHANGED, {
                 speakerState: $media.muted ? SpeakerState.MUTED : SpeakerState.ENABLED,

@@ -90,7 +90,7 @@ export class XhomeInterceptor {
         XhomeInterceptor.consoleAddrs = {};
         for (const pair of pairs) {
             const [keyAddr, keyPort] = pair;
-            if (serverDetails[keyAddr]) {
+            if (keyAddr && keyPort && serverDetails[keyAddr]) {
                 const port = serverDetails[keyPort];
                 // Add port 9002 to the list of ports
                 const ports = new Set<number>();
@@ -107,7 +107,7 @@ export class XhomeInterceptor {
         return response;
     }
 
-    private static async handleInputConfigs(request: Request | URL, opts: {[index: string]: any}) {
+    private static async handleInputConfigs(request: Request | URL, opts: { [index: string]: any }) {
         const response = await NATIVE_FETCH(request);
 
         if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.ALL) {
@@ -147,7 +147,7 @@ export class XhomeInterceptor {
     private static async handleTitles(request: Request) {
         const clone = request.clone();
 
-        const headers: {[index: string]: any} = {};
+        const headers: { [index: string]: any } = {};
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }
@@ -183,7 +183,7 @@ export class XhomeInterceptor {
 
         const clone = request.clone();
 
-        const headers: {[index: string]: string} = {};
+        const headers: { [index: string]: string } = {};
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }

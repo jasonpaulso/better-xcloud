@@ -55,11 +55,11 @@ export class BaseLocalTable<T extends BaseRecord> {
         return this.call(table.get.bind(table), ...arguments);
     }
 
-    async getAll(): Promise<{[key: string]: T}> {
+    async getAll(): Promise<{ [key: string]: T }> {
         const table = await this.prepareTable();
         // @ts-ignore
         const all = await (this.call(table.getAll.bind(table), ...arguments) as Promise<T[]>);
-        const results: {[key: string]: T} = {};
+        const results: { [key: string]: T } = {};
 
         all.forEach(item => {
             results[item.id as T['id']] = item;

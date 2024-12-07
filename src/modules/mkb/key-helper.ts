@@ -95,7 +95,7 @@ export class KeyHelper {
         const tmp = str.split(':');
 
         const code = tmp[0] as KeyEventInfo['code'];
-        const modifiers = parseInt(tmp[1]);
+        const modifiers = parseInt(tmp[1] as string);
 
         return {
             code,

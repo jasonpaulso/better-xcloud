@@ -233,13 +233,13 @@ export class TouchController {
         let html = false;
         if (layout.author) {
             const author = `<b>${escapeHtml(layout.author)}</b>`;
-            msg = t('touch-control-layout-by', {name: author});
+            msg = t('touch-control-layout-by', { name: author });
             html = true;
         } else {
             msg = t('touch-control-layout');
         }
 
-        layoutChanged && Toast.show(msg, layout.name, {html: html});
+        layoutChanged && Toast.show(msg, layout.name, { html });
 
         window.setTimeout(() => {
             // Show gyroscope control in the "More options" dialog if this layout has gyroscope

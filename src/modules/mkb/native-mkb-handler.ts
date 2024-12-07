@@ -182,7 +182,7 @@ export class NativeMkbHandler extends MkbHandler {
         window.BX_EXPOSED.stopTakRendering = true;
         this.waitForMouseData(false);
 
-        Toast.show(t('native-mkb'), t('enabled'), {instant: true});
+        Toast.show(t('native-mkb'), t('enabled'), { instant: true });
     }
 
     stop() {

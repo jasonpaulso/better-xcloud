@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { MkbPresetKey, MouseConstant, MouseMapTo, WheelCode } from "@/enums/mkb";
 import { BxEvent } from "@utils/bx-event";
@@ -16,6 +16,8 @@ import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { GamepadKey, GamepadStick } from "@/enums/gamepad";
 import { MkbPopup } from "./mkb-popup";
 import type { MkbConvertedPresetData } from "@/types/presets";
+import { StreamSettings } from "@/utils/stream-settings";
+import { ShortcutAction } from "@/enums/shortcut-actions";
 
 const PointerToMouseButton = {
     1: 0,
@@ -168,7 +170,7 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     private popup: MkbPopup;
 
-    private STICK_MAP: {[key in GamepadKey]?: [GamepadKey[], number, number]} = {
+    private STICK_MAP: { [key in GamepadKey]?: [GamepadKey[], number, number] } = {
         [GamepadKey.LS_LEFT]: [this.LEFT_STICK_X, 0, -1],
         [GamepadKey.LS_RIGHT]: [this.LEFT_STICK_X, 0, 1],
         [GamepadKey.LS_UP]: [this.LEFT_STICK_Y, 1, -1],
@@ -529,7 +531,12 @@ export class EmulatedMkbHandler extends MkbHandler {
         MkbPopup.getInstance().reset();
 
         if (AppInterface) {
-            Toast.show(t('press-key-to-toggle-mkb', {key: `<b>F8</b>`}), t('virtual-controller'), {html: true});
+            const shortcutKey = StreamSettings.findKeyboardShortcut(ShortcutAction.MKB_TOGGLE);
+            if (shortcutKey) {
+                const msg = t('press-key-to-toggle-mkb', { key: `<b>${KeyHelper.codeToKeyName(shortcutKey)}</b>` });
+                Toast.show(msg, t('native-mkb'), { html: true });
+            }
+
             this.waitForMouseData(false);
         } else {
             this.waitForMouseData(true);
@@ -627,7 +634,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         this.waitForMouseData(true);
         this.mouseDataProvider?.stop();
 
-        // Toast.show(t('virtual-controller'), t('disabled'), {instant: true});
+        // Toast.show(t('virtual-controller'), t('disabled'), { instant: true });
     }
 
     static setupEvents() {

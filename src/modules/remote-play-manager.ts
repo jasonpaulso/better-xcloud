@@ -204,7 +204,7 @@ export class RemotePlayManager {
         }
 
         if (this.consoles.length === 0) {
-            Toast.show(t('no-consoles-found'), '', {instant: true});
+            Toast.show(t('no-consoles-found'), '', { instant: true });
             return;
         }
 

@@ -65,7 +65,7 @@ type KeyboardShortcutConvertedPresetData = KeyboardShortcutPresetData & {
 interface AllPresets<T extends PresetRecord> {
     default: Array<number>,
     custom: Array<number>,
-    data: {[key: string]: T},
+    data: { [key: string]: T },
 };
 
 interface AllPresetsData<T extends PresetRecord> {

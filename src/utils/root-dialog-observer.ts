@@ -89,7 +89,7 @@ export class RootDialogObserver {
                 }
             }
         });
-        observer.observe($root, {subtree: true, childList: true});
+        observer.observe($root, { subtree: true, childList: true });
     }
 
     public static waitForRootDialog() {
@@ -107,6 +107,6 @@ export class RootDialogObserver {
                 }
             };
         });
-        observer.observe(document.documentElement, {subtree: true, childList: true});
+        observer.observe(document.documentElement, { subtree: true, childList: true });
     }
 }

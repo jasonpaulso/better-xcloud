@@ -7,21 +7,21 @@ export class XcloudApi {
     public static getInstance = () => XcloudApi.instance ?? (XcloudApi.instance = new XcloudApi());
     private readonly LOG_TAG = 'XcloudApi';
 
-    private CACHE_TITLES: {[key: string]: XcloudTitleInfo} = {};
-    private CACHE_WAIT_TIME: {[key: string]: XcloudWaitTimeInfo} = {};
+    private CACHE_TITLES: { [key: string]: XcloudTitleInfo } = {};
+    private CACHE_WAIT_TIME: { [key: string]: XcloudWaitTimeInfo } = {};
 
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
     }
 
-    async getTitleInfo(id: string): Promise<XcloudTitleInfo | null> {
+    async getTitleInfo(id: string): Promise<XcloudTitleInfo | undefined> {
         if (id in this.CACHE_TITLES) {
             return this.CACHE_TITLES[id];
         }
 
         const baseUri = STATES.selectedRegion.baseUri;
         if (!baseUri || !STATES.gsToken) {
-            return null;
+            return;
         }
 
         let json;

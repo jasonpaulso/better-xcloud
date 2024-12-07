@@ -20,7 +20,7 @@ export class ScreenshotManager {
 
         this.$download = CE<HTMLAnchorElement>('a');
 
-        this.$canvas = CE<HTMLCanvasElement>('canvas', {'class': 'bx-gone'});
+        this.$canvas = CE<HTMLCanvasElement>('canvas', { class: 'bx-gone' });
         this.canvasContext = this.$canvas.getContext('2d', {
             alpha: false,
             willReadFrequently: false,

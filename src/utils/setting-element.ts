@@ -41,7 +41,7 @@ export class SettingElement {
         for (let value in setting.options) {
             const label = setting.options[value];
 
-            const $option = CE<HTMLOptionElement>('option', {value: value}, label);
+            const $option = CE<HTMLOptionElement>('option', { value }, label);
             $parent.appendChild($option);
         }
 
@@ -75,7 +75,7 @@ export class SettingElement {
         for (const value in setting.multipleOptions) {
             const label = setting.multipleOptions[value];
 
-            const $option = CE<HTMLOptionElement>('option', {value: value}, label) as HTMLOptionElement;
+            const $option = CE<HTMLOptionElement>('option', { value }, label) as HTMLOptionElement;
             $option.selected = currentValue.indexOf(value) > -1;
 
             $option.addEventListener('mousedown', function(e) {
@@ -111,7 +111,7 @@ export class SettingElement {
     }
 
     private static renderCheckbox(key: string, setting: PreferenceSetting, currentValue: any, onChange: any) {
-        const $control = CE('input', {type: 'checkbox', tabindex: 0}) as HTMLInputElement;
+        const $control = CE('input', { type: 'checkbox', tabindex: 0 }) as HTMLInputElement;
         $control.checked = currentValue;
 
         onChange && $control.addEventListener('input', e => {

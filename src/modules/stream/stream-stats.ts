@@ -209,7 +209,7 @@ export class StreamStats {
     }
 
     private async render() {
-        this.$container = CE('div', {class: 'bx-stats-bar bx-gone'});
+        this.$container = CE('div', { class: 'bx-stats-bar bx-gone' });
 
         let statKey: keyof typeof this.stats;
         for (statKey in this.stats) {

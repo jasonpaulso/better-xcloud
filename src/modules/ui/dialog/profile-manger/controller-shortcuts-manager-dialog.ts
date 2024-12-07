@@ -95,8 +95,8 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
         };
 
         const fragment = document.createDocumentFragment();
-        fragment.appendChild(CE('p', {class: 'bx-shortcut-note'},
-            CE('span', {class: 'bx-prompt'}, PrompFont.HOME),
+        fragment.appendChild(CE('p', { class: 'bx-shortcut-note' },
+            CE('span', { class: 'bx-prompt' }, PrompFont.HOME),
             ': ' + t('controller-shortcuts-xbox-note'),
         ));
 
@@ -109,8 +109,8 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
                     orientation: 'horizontal',
                 },
             });
-            const $label = CE('label', {class: 'bx-prompt'}, `${PrompFont.HOME}${prompt}`);
-            const $div = CE('div', {class: 'bx-shortcut-actions'});
+            const $label = CE('label', { class: 'bx-prompt' }, `${PrompFont.HOME}${prompt}`);
+            const $div = CE('div', { class: 'bx-shortcut-actions' });
 
             let $fakeSelect: HTMLSelectElement | null = null;
             if (!PREF_CONTROLLER_FRIENDLY_UI) {

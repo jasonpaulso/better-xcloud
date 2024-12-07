@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { CE } from "@/utils/html";
 import { WebGL2Player } from "./player/webgl2-player";
@@ -52,7 +52,7 @@ export class StreamPlayer {
             id: 'bx-video-filters',
             xmlns: 'http://www.w3.org/2000/svg',
             class: 'bx-gone',
-        }, CE('defs', {xmlns: 'http://www.w3.org/2000/svg'},
+        }, CE('defs', { xmlns: 'http://www.w3.org/2000/svg' },
             CE('filter', {
                     id: 'bx-filter-usm',
                     xmlns: 'http://www.w3.org/2000/svg',

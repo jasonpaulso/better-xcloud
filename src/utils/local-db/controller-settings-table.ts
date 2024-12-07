@@ -23,9 +23,13 @@ export class ControllerSettingsTable extends BaseLocalTable<ControllerSettingsRe
 
     async getControllersData() {
         const all = await this.getAll();
-        const results: {[key: string]: ControllerSettingsRecord['data']} = {};
+        const results:  { [key: string]: ControllerSettingsRecord['data'] } = {};
 
         for (const key in all) {
+            if (!all[key]) {
+                continue;
+            }
+
             const settings = all[key].data;
             // Pre-calculate virabtionIntensity
             settings.vibrationIntensity /= 100;

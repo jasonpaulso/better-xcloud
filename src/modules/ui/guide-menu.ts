@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { BxEvent } from "@/utils/bx-event";
 import { AppInterface, STATES } from "@/utils/global";
@@ -42,7 +42,7 @@ export class GuideMenu {
                     // Wait until the Guide dialog is closed
                     window.addEventListener(BxEvent.XCLOUD_DIALOG_DISMISSED, e => {
                         setTimeout(() => SettingsDialog.getInstance().show(), 50);
-                    }, {once: true});
+                    }, { once: true });
 
                     // Close all xCloud's dialogs
                     this.closeGuideMenu();
@@ -218,7 +218,7 @@ export class GuideMenu {
             for (index = 0; ($elm = $elm?.previousElementSibling); index++);
 
             if (index === 0) {
-                BxEvent.dispatch(window, BxEvent.XCLOUD_GUIDE_MENU_SHOWN, {where: GuideMenuTab.HOME});
+                BxEvent.dispatch(window, BxEvent.XCLOUD_GUIDE_MENU_SHOWN, { where: GuideMenuTab.HOME });
             }
         }
     }

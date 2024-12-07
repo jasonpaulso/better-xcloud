@@ -91,12 +91,12 @@ export class SuggestionsSetting {
         SuggestionsSetting.generateDefaultSuggestedSettings.call(this);
 
         // Start rendering
-        const $suggestedSettings = CE('div', {class: 'bx-suggest-wrapper'});
+        const $suggestedSettings = CE('div', { class: 'bx-suggest-wrapper' });
         const $select = CE<HTMLSelectElement>('select', {},
-            hasRecommendedSettings && CE('option', {value: 'recommended'}, t('recommended')),
-            !hasRecommendedSettings && CE('option', {value: 'highest'}, t('highest-quality')),
-            CE('option', {value: 'default'}, t('default')),
-            CE('option', {value: 'lowest'}, t('lowest-quality')),
+            hasRecommendedSettings && CE('option', { value: 'recommended' }, t('recommended')),
+            !hasRecommendedSettings && CE('option', { value: 'highest' }, t('highest-quality')),
+            CE('option', { value: 'default' }, t('default')),
+            CE('option', { value: 'lowest' }, t('lowest-quality')),
         );
         $select.addEventListener('input', e => {
             const profile = $select.value as SuggestedSettingProfile;
@@ -107,13 +107,13 @@ export class SuggestionsSetting {
 
             let note: HTMLElement | string | undefined;
             if (profile === 'recommended') {
-                note = t('recommended-settings-for-device', {device: recommendedDevice});
+                note = t('recommended-settings-for-device', { device: recommendedDevice });
             } else if (profile === 'highest') {
                 // Add note for "Highest quality" profile
                 note = '⚠️ ' + t('highest-quality-note');
             }
 
-            note && fragment.appendChild(CE('div', {class: 'bx-suggest-note'}, note));
+            note && fragment.appendChild(CE('div', { class: 'bx-suggest-note' }, note));
 
             const settings = this.suggestedSettings[profile];
             let prefKey: PrefKey;
@@ -265,7 +265,7 @@ export class SuggestionsSetting {
 
         // Get recommended settings from GitHub
         try {
-            let {brand, board, model} = androidInfo!;
+            let { brand, board, model } = androidInfo!;
             brand = normalize(brand);
             board = normalize(board);
             model = normalize(model);

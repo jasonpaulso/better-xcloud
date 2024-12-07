@@ -47,7 +47,7 @@ export type BxButtonOptions = Partial<{
     disabled: boolean;
     onClick: EventListener;
     tabIndex: number;
-    attributes: {[key: string]: any},
+    attributes: { [key: string]: any },
 }>;
 
 export type SettingsRowOptions = Partial<{
@@ -186,7 +186,7 @@ export function createSettingRow(label: string, $control: HTMLElement | false | 
     let $label: HTMLElement;
 
     const $row = CE<HTMLLabelElement>('label', { class: 'bx-settings-row' },
-        $label = CE('span', {class: 'bx-settings-label'},
+        $label = CE('span', { class: 'bx-settings-label' },
             label,
             options.$note,
         ),

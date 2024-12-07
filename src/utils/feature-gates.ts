@@ -3,7 +3,7 @@ import { BX_FLAGS } from "./bx-flags";
 import { getPref } from "./settings-storages/global-settings-storage";
 import { NativeMkbMode } from "@/enums/pref-values";
 
-export let FeatureGates: {[key: string]: boolean} = {
+export let FeatureGates: { [key: string]: boolean } = {
     PwaPrompt: false,
     EnableWifiWarnings: false,
     EnableUpdateRequiredPage: false,

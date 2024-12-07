@@ -21,7 +21,7 @@ export class MicrophoneShortcut {
 
         try {
             window.BX_EXPOSED.streamSession.tryEnableChatAsync(enableMic);
-            showToast && Toast.show(t('microphone'), t(enableMic ? 'unmuted': 'muted'), {instant: true});
+            showToast && Toast.show(t('microphone'), t(enableMic ? 'unmuted': 'muted'), { instant: true });
 
             return enableMic;
         } catch (e) {

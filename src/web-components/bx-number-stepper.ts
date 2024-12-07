@@ -123,7 +123,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
 
         if (options.ticks || options.exactTicks) {
             const markersId = `markers-${key}`;
-            const $markers = CE('datalist', {id: markersId});
+            const $markers = CE('datalist', { id: markersId });
             $range.setAttribute('list', markersId);
 
             if (options.exactTicks) {
@@ -140,7 +140,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
                 }
             } else {
                 for (let i = self.uiMin + options.ticks!; i < self.uiMax; i += options.ticks!) {
-                    $markers.appendChild(CE<HTMLOptionElement>('option', {value: i}));
+                    $markers.appendChild(CE<HTMLOptionElement>('option', { value: i }));
                 }
             }
             self.appendChild($markers);

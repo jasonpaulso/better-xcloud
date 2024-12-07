@@ -47,8 +47,8 @@ export class GameBar {
 
         const position = getPref<GameBarPosition>(PrefKey.GAME_BAR_POSITION);
 
-        const $gameBar = CE('div', {id: 'bx-game-bar', class: 'bx-gone', 'data-position': position},
-            $container = CE('div', {class: 'bx-game-bar-container bx-offscreen'}),
+        const $gameBar = CE('div', { id: 'bx-game-bar', class: 'bx-gone', 'data-position': position },
+            $container = CE('div', { class: 'bx-game-bar-container bx-offscreen' }),
             createSvgIcon(position === 'bottom-left' ? BxIcon.CARET_RIGHT : BxIcon.CARET_LEFT),
         );
 

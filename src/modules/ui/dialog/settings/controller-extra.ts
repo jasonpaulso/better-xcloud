@@ -65,7 +65,7 @@ export class ControllerExtraSettings extends HTMLElement {
             CE('div', { class: 'bx-controller-extra-wrapper' },
                 $selectControllers,
 
-                CE('div', {class: 'bx-sub-content-box'},
+                CE('div', { class: 'bx-sub-content-box' },
                     createSettingRow(
                         t('controller-shortcuts-in-game'),
                         CE('div', {

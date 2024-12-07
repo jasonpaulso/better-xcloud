@@ -267,7 +267,7 @@ export class StreamUiHandler {
             };
         });
 
-        observer.observe($screen, {subtree: true, childList: true});
+        observer.observe($screen, { subtree: true, childList: true });
         StreamUiHandler.observer = observer;
     }
 }

@@ -47,7 +47,7 @@ export const STATES: BxStates = {
     pointerServerPort: 9269,
 };
 
-export const STORAGE: {[key: string]: BaseSettingsStore} = {};
+export const STORAGE: { [key: string]: BaseSettingsStore } = {};
 
 export function deepClone(obj: any): typeof obj | {} {
     if (!obj) {

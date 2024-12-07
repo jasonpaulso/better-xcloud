@@ -1,5 +1,5 @@
 import { CE } from "@utils/html";
-import { compressCss, renderStylus } from "@macros/build" with {type: "macro"};
+import { compressCss, renderStylus } from "@macros/build" with { type: "macro" };
 import { UiSection } from "@/enums/pref-values";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";

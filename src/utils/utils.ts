@@ -102,11 +102,11 @@ export function roundToNearest(value: number, interval: number): number {
 export async function copyToClipboard(text: string, showToast=true): Promise<boolean> {
     try {
         await navigator.clipboard.writeText(text);
-        showToast && Toast.show('Copied to clipboard', '', {instant: true});
+        showToast && Toast.show('Copied to clipboard', '', { instant: true });
         return true;
     } catch (err) {
         console.error('Failed to copy: ', err);
-        showToast && Toast.show('Failed to copy', '', {instant: true});
+        showToast && Toast.show('Failed to copy', '', { instant: true });
     }
 
     return false;
@@ -128,10 +128,10 @@ export function parseDetailsPath(path: string) {
         return;
     }
 
-    const titleSlug = matches.groups.titleSlug.replaceAll('\%' + '7C', '-');
+    const titleSlug = matches.groups.titleSlug!.replaceAll('\%' + '7C', '-');
     const productId = matches.groups.productId;
 
-    return {titleSlug, productId};
+    return { titleSlug, productId };
 }
 
 export function clearAllData() {

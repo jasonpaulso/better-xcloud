@@ -260,6 +260,9 @@ export class BxSelectElement extends HTMLSelectElement {
         for (let i = 0; i < optionsList.length; i++) {
             const $option = optionsList[i];
             const $indicator = indicatorsList[i];
+            if (!$option || !$indicator) {
+                continue;
+            }
 
             clearDataSet($indicator);
             if ($option.selected) {
@@ -288,7 +291,7 @@ export class BxSelectElement extends HTMLSelectElement {
             visibleIndex: currentIndex,
         } = this;
 
-        const goNext = (e.target as any).closest('button') === $btnNext;
+        const goNext = (e.target as HTMLElement).closest('button') === $btnNext;
 
         let newIndex = goNext ? currentIndex + 1 : currentIndex - 1;
         if (newIndex > this.optionsList.length - 1) {

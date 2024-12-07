@@ -40,7 +40,7 @@ try {
 if (!BX_FLAGS.DeviceInfo.userAgent) BX_FLAGS.DeviceInfo.userAgent = window.navigator.userAgent;
 BxLogger.info("BxFlags", BX_FLAGS);
 var NATIVE_FETCH = window.fetch;
-var SMART_TV_UNIQUE_ID = "FC4A1DA2-711C-4E9C-BC7F-047AF8A672EA", CHROMIUM_VERSION = "123.0.0.0";
+var SMART_TV_UNIQUE_ID = "FC4A1DA2-711C-4E9C-BC7F-047AF8A672EA", CHROMIUM_VERSION = "125.0.0.0";
 if (!!window.chrome || window.navigator.userAgent.includes("Chrome")) {
  let match = window.navigator.userAgent.match(/\s(?:Chrome|Edg)\/([\d\.]+)/);
  if (match) CHROMIUM_VERSION = match[1];
@@ -2624,6 +2624,7 @@ class ControllerSettingsTable extends BaseLocalTable {
  async getControllersData() {
   let all = await this.getAll(), results = {};
   for (let key in all) {
+   if (!all[key]) continue;
    let settings = all[key].data;
    settings.vibrationIntensity /= 100, results[key] = settings;
   }
@@ -3200,8 +3201,14 @@ class EmulatedMkbHandler extends MkbHandler {
   else this.mouseDataProvider = new PointerLockMouseDataProvider(this);
   if (this.mouseDataProvider.init(), window.addEventListener("keydown", this.onKeyboardEvent), window.addEventListener("keyup", this.onKeyboardEvent), window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged), window.addEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this.onDialogShown), AppInterface) window.addEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.addEventListener(BxEvent.POINTER_LOCK_EXITED, this);
   else document.addEventListener("pointerlockchange", this.onPointerLockChange), document.addEventListener("pointerlockerror", this.onPointerLockError);
-  if (MkbPopup.getInstance().reset(), AppInterface) Toast.show(t("press-key-to-toggle-mkb", { key: "<b>F8</b>" }), t("virtual-controller"), { html: !0 }), this.waitForMouseData(!1);
-  else this.waitForMouseData(!0);
+  if (MkbPopup.getInstance().reset(), AppInterface) {
+   let shortcutKey = StreamSettings.findKeyboardShortcut("mkb.toggle");
+   if (shortcutKey) {
+    let msg = t("press-key-to-toggle-mkb", { key: `<b>${KeyHelper.codeToKeyName(shortcutKey)}</b>` });
+    Toast.show(msg, t("native-mkb"), { html: !0 });
+   }
+   this.waitForMouseData(!1);
+  } else this.waitForMouseData(!0);
  }
  destroy() {
   if (!this.initialized) return;
@@ -3418,7 +3425,7 @@ class NavigationDialogManager {
    if (this.gamepadLastStates[gamepad.index] = null, lastKeyPressed) return;
    if (this.updateActiveInput("gamepad"), this.handleGamepad(gamepad, releasedButton)) return;
    if (releasedButton === 0) {
-    document.activeElement && document.activeElement.dispatchEvent(new MouseEvent("click", { bubbles: !0 }));
+    document.activeElement?.dispatchEvent(new MouseEvent("click", { bubbles: !0 }));
     return;
    } else if (releasedButton === 1) {
     this.hide();
@@ -3869,6 +3876,7 @@ class BxSelectElement extends HTMLSelectElement {
   $btnPrev.classList.toggle("bx-inactive", disableButtons), $btnNext.classList.toggle("bx-inactive", disableButtons);
   for (let i = 0;i < optionsList.length; i++) {
    let $option2 = optionsList[i], $indicator = indicatorsList[i];
+   if (!$option2 || !$indicator) continue;
    if (clearDataSet($indicator), $option2.selected) $indicator.dataset.selected = "true";
    if ($option2.index === visibleIndex) $indicator.dataset.highlighted = "true";
   }
@@ -4031,7 +4039,7 @@ window.dispatchEvent(new GamepadEvent('gamepadconnected', { gamepad }));
 }
 };
 window.BX_EXPOSED.toggleLocalCoOp = this.toggleLocalCoOp.bind(this);`;
-var set_currently_focused_interactable_default = `e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, {element: e});`;
+var set_currently_focused_interactable_default = `e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, { element: e });`;
 var remote_play_enable_default = `connectMode: window.BX_REMOTE_PLAY_CONFIG ? "xhome-connect" : "cloud-connect",
 remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFIG.serverId) || '',`;
 var remote_play_keep_alive_default = `const msg = JSON.parse(e);
@@ -4329,7 +4337,9 @@ BxEvent.dispatch(window, BxEvent.XCLOUD_POLLING_MODE_CHANGED);
  patchXcloudTitleInfo(str) {
   let text = "async cloudConnect", index = str.indexOf(text);
   if (index < 0) return !1;
-  let backetIndex = str.indexOf("{", index), titleInfoVar = str.substring(index, backetIndex).match(/\(([^)]+)\)/)[1].split(",")[0], newCode = `
+  let backetIndex = str.indexOf("{", index), params = str.substring(index, backetIndex).match(/\(([^)]+)\)/)[1];
+  if (!params) return !1;
+  let titleInfoVar = params.split(",")[0], newCode = `
 ${titleInfoVar} = window.BX_EXPOSED.modifyTitleInfo(${titleInfoVar});
 BxLogger.info('patchXcloudTitleInfo', ${titleInfoVar});
 `;
@@ -4338,7 +4348,9 @@ BxLogger.info('patchXcloudTitleInfo', ${titleInfoVar});
  patchRemotePlayMkb(str) {
   let text = "async homeConsoleConnect", index = str.indexOf(text);
   if (index < 0) return !1;
-  let backetIndex = str.indexOf("{", index), configsVar = str.substring(index, backetIndex).match(/\(([^)]+)\)/)[1].split(",")[1], newCode = `
+  let backetIndex = str.indexOf("{", index), params = str.substring(index, backetIndex).match(/\(([^)]+)\)/)[1];
+  if (!params) return !1;
+  let configsVar = params.split(",")[1], newCode = `
 Object.assign(${configsVar}.inputConfiguration, {
   enableMouseInput: false,
   enableKeyboardInput: false,
@@ -7317,7 +7329,7 @@ class XhomeInterceptor {
   XhomeInterceptor.consoleAddrs = {};
   for (let pair of pairs) {
    let [keyAddr, keyPort] = pair;
-   if (serverDetails[keyAddr]) {
+   if (keyAddr && keyPort && serverDetails[keyAddr]) {
     let port = serverDetails[keyPort], ports = new Set;
     port && ports.add(port), ports.add(9002), XhomeInterceptor.consoleAddrs[serverDetails[keyAddr]] = Array.from(ports);
    }
@@ -7836,7 +7848,7 @@ class XcloudInterceptor {
   let PREF_STREAM_TARGET_RESOLUTION = getPref("stream.video.resolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("stream.locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
   for (let regionName in STATES.serverRegions) {
    let region = STATES.serverRegions[regionName];
-   if (parsedUrl.origin == region.baseUri) {
+   if (region && parsedUrl.origin === region.baseUri) {
     badgeRegion = regionName;
     break;
    }
@@ -8814,7 +8826,7 @@ class XcloudApi {
  async getTitleInfo(id) {
   if (id in this.CACHE_TITLES) return this.CACHE_TITLES[id];
   let baseUri = STATES.selectedRegion.baseUri;
-  if (!baseUri || !STATES.gsToken) return null;
+  if (!baseUri || !STATES.gsToken) return;
   let json;
   try {
    json = (await (await NATIVE_FETCH(`${baseUri}/v2/titles`, {
@@ -9048,7 +9060,7 @@ class XboxApi {
    let url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en&value=${xboxTitleId}&alternateId=XboxTitleId&fieldsTemplate=browse`, productTitle = (await (await NATIVE_FETCH(url)).json()).Products[0].LocalizedProperties[0].ProductTitle;
    return XboxApi.CACHED_TITLES[xboxTitleId] = productTitle, productTitle;
   } catch (e) {}
-  return null;
+  return;
  }
 }
 class RootDialogObserver {

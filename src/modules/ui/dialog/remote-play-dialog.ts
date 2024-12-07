@@ -32,7 +32,7 @@ export class RemotePlayDialog extends NavigationDialog {
     }
 
     private setupDialog() {
-        const $fragment = CE('div', {'class': 'bx-remote-play-container'});
+        const $fragment = CE('div', { class: 'bx-remote-play-container' });
 
         const $settingNote = CE('p', {});
 
@@ -69,13 +69,13 @@ export class RemotePlayDialog extends NavigationDialog {
         const consoles = manager.getConsoles();
 
         for (let con of consoles) {
-            const $child = CE('div', {class: 'bx-remote-play-device-wrapper'},
-                CE('div', {class: 'bx-remote-play-device-info'},
+            const $child = CE('div', { class: 'bx-remote-play-device-wrapper' },
+                CE('div', { class: 'bx-remote-play-device-info' },
                     CE('div', {},
-                        CE('span', {class: 'bx-remote-play-device-name'}, con.deviceName),
-                        CE('span', {class: 'bx-remote-play-console-type'}, con.consoleType.replace('Xbox', ''))
+                        CE('span', { class: 'bx-remote-play-device-name' }, con.deviceName),
+                        CE('span', { class: 'bx-remote-play-console-type' }, con.consoleType.replace('Xbox', ''))
                     ),
-                    CE('div', {class: 'bx-remote-play-power-state'}, this.STATE_LABELS[con.powerState]),
+                    CE('div', { class: 'bx-remote-play-power-state' }, this.STATE_LABELS[con.powerState]),
                 ),
 
                 // Connect button

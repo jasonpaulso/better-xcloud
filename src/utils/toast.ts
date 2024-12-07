@@ -24,9 +24,9 @@ export class Toast {
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
 
-        this.$wrapper = CE('div', {class: 'bx-toast bx-offscreen'},
-            this.$msg = CE('span', {class: 'bx-toast-msg'}),
-            this.$status = CE('span', {class: 'bx-toast-status'}),
+        this.$wrapper = CE('div', { class: 'bx-toast bx-offscreen' },
+            this.$msg = CE('span', { class: 'bx-toast-msg' }),
+            this.$status = CE('span', { class: 'bx-toast-status' }),
         );
 
         this.$wrapper.addEventListener('transitionend', e => {

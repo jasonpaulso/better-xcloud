@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { limitVideoPlayerFps, onChangeVideoPlayerType, updateVideoPlayer } from "@/modules/stream/stream-settings-utils";
 import { ButtonStyle, CE, createButton, createSettingRow, createSvgIcon, escapeCssSelector, type BxButtonOptions } from "@/utils/html";
@@ -39,7 +39,7 @@ type SettingTabSectionItem = Partial<{
     note: string | (() => HTMLElement);
     experimental: string;
     content: HTMLElement | (() => HTMLElement);
-    options: {[key: string]: string};
+    options: { [key: string]: string };
     unsupported: boolean;
     unsupportedNote: string;
     onChange: (e: any, value: number) => void;
@@ -112,7 +112,7 @@ export class SettingsDialog extends NavigationDialog {
                 if (!SCRIPT_VERSION.includes('beta') && PREF_LATEST_VERSION && PREF_LATEST_VERSION != SCRIPT_VERSION) {
                     // Show new version button
                     const opts = {
-                        label: '🌟 ' + t('new-version-available', {version: PREF_LATEST_VERSION}),
+                        label: '🌟 ' + t('new-version-available', { version: PREF_LATEST_VERSION }),
                         style: ButtonStyle.PRIMARY | ButtonStyle.FOCUSABLE | ButtonStyle.FULL_WIDTH,
                     } as BxButtonOptions;
 
@@ -549,7 +549,7 @@ export class SettingsDialog extends NavigationDialog {
 
                     // If there is no custom layouts -> show only Default option
                     if (!customLayouts) {
-                        $elm.appendChild(CE('option', {value: ''}, t('default')));
+                        $elm.appendChild(CE('option', { value: '' }, t('default')));
                         $elm.value = '';
                         $elm.dispatchEvent(new Event('input'));
                         return;
@@ -567,7 +567,7 @@ export class SettingsDialog extends NavigationDialog {
                             name = layout.name;
                         }
 
-                        const $option = CE('option', {value: key}, name);
+                        const $option = CE('option', { value: key }, name);
                         $fragment.appendChild($option);
                     }
 
@@ -859,7 +859,7 @@ export class SettingsDialog extends NavigationDialog {
 
             setting.options[value] = label;
 
-            const $option = CE<HTMLOptionElement>('option', {value: value}, label);
+            const $option = CE<HTMLOptionElement>('option', { value }, label);
             const continent = continents[region.contintent];
             if (!continent.children) {
                 continent.children = [];
@@ -1002,9 +1002,9 @@ export class SettingsDialog extends NavigationDialog {
 
         let $note;
         if (unsupportedNote) {
-            $note = CE('div', {class: 'bx-settings-dialog-note'}, unsupportedNote);
+            $note = CE('div', { class: 'bx-settings-dialog-note' }, unsupportedNote);
         } else if (note) {
-            $note = CE('div', {class: 'bx-settings-dialog-note'}, note);
+            $note = CE('div', { class: 'bx-settings-dialog-note' }, note);
         }
 
         const $row = createSettingRow(label, !prefDefinition?.unsupported && $control, {
@@ -1083,7 +1083,7 @@ export class SettingsDialog extends NavigationDialog {
 
             // Add note
             if (section.unsupportedNote) {
-                const $note = CE('b', {class: 'bx-note-unsupported'}, section.unsupportedNote);
+                const $note = CE('b', { class: 'bx-note-unsupported' }, section.unsupportedNote);
 
                 $tabContent.appendChild($note);
             }

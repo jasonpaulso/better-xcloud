@@ -4,7 +4,7 @@ import { t } from "@utils/translation";
 import { STATES } from "@utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
-import { compressCss } from "@macros/build" with {type: "macro"};
+import { compressCss } from "@macros/build" with { type: "macro" };
 import { LoadingScreenRocket } from "@/enums/pref-values";
 
 export class LoadingScreen {

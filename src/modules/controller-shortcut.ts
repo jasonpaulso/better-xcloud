@@ -3,8 +3,8 @@ import { ShortcutHandler } from "@/utils/shortcut-handler";
 
 
 export class ControllerShortcut {
-    private static buttonsCache: {[key: string]: boolean[]} = {};
-    private static buttonsStatus: {[key: string]: boolean[]} = {};
+    private static buttonsCache: { [key: string]: boolean[] } = {};
+    private static buttonsStatus: { [key: string]: boolean[] } = {};
 
     static reset(index: number) {
         ControllerShortcut.buttonsCache[index] = [];

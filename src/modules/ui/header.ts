@@ -92,7 +92,7 @@ export class HeaderSection {
             this.timeoutId && clearTimeout(this.timeoutId);
             this.timeoutId = window.setTimeout(this.checkHeader, 2000);
         });
-        this.observer.observe($root, {subtree: true, childList: true});
+        this.observer.observe($root, { subtree: true, childList: true });
 
         this.checkHeader();
     }

@@ -154,7 +154,7 @@ export class NavigationDialogManager {
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
 
-        this.$overlay = CE('div', {class: 'bx-navigation-dialog-overlay bx-gone'});
+        this.$overlay = CE('div', { class: 'bx-navigation-dialog-overlay bx-gone' });
         this.$overlay.addEventListener('click', e => {
             e.preventDefault();
             e.stopPropagation();
@@ -164,7 +164,7 @@ export class NavigationDialogManager {
 
         document.documentElement.appendChild(this.$overlay);
 
-        this.$container = CE('div', {class: 'bx-navigation-dialog bx-gone'});
+        this.$container = CE('div', { class: 'bx-navigation-dialog bx-gone' });
         document.documentElement.appendChild(this.$container);
 
         // Hide dialog when the Guide menu is shown
@@ -186,7 +186,7 @@ export class NavigationDialogManager {
                 // Find un-calculated <select> elements
                 this.calculateSelectBoxes($dialog);
             });
-            observer.observe(this.$container, {childList: true});
+            observer.observe(this.$container, { childList: true });
         }
     }
 
@@ -260,7 +260,7 @@ export class NavigationDialogManager {
                 } else if (keyCode === 'Enter' || keyCode === 'NumpadEnter' || keyCode === 'Space') {
                     if (!($target instanceof HTMLInputElement && $target.type === 'text')) {
                         handled = true;
-                        $target.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                        $target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
                     }
                 } else if (keyCode === 'Escape') {
                     handled = true;
@@ -393,7 +393,7 @@ export class NavigationDialogManager {
             }
 
             if (releasedButton === GamepadKey.A) {
-                document.activeElement && document.activeElement.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                document.activeElement?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
                 return;
             } else if (releasedButton === GamepadKey.B) {
                 this.hide();

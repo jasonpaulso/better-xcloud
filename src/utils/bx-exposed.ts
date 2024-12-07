@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { ControllerShortcut } from "@/modules/controller-shortcut";
 import { BxEvent } from "@utils/bx-event";

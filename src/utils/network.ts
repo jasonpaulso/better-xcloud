@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { BX_FLAGS, NATIVE_FETCH } from "@utils/bx-flags";
 import { TouchController } from "@modules/touch-controller";
@@ -39,7 +39,7 @@ function clearAllLogs() {
     clearDbLogs('XCloudAppLogs', 'logs');
 }
 
-function updateIceCandidates(candidates: any, options: {preferIpv6Server: boolean, consoleAddrs?: RemotePlayConsoleAddresses}) {
+function updateIceCandidates(candidates: any, options: { preferIpv6Server: boolean, consoleAddrs?: RemotePlayConsoleAddresses }) {
     const pattern = new RegExp(/a=candidate:(?<foundation>\d+) (?<component>\d+) UDP (?<priority>\d+) (?<ip>[^\s]+) (?<port>\d+) (?<the_rest>.*)/);
 
     const lst = [];
@@ -48,7 +48,7 @@ function updateIceCandidates(candidates: any, options: {preferIpv6Server: boolea
             continue;
         }
 
-        const groups: {[index: string]: string | number} = pattern.exec(item.candidate)!.groups!;
+        const groups: { [index: string]: string | number } = pattern.exec(item.candidate)!.groups!;
         lst.push(groups);
     }
 

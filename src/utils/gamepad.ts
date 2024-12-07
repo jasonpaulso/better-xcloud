@@ -31,7 +31,7 @@ export function showGamepadToast(gamepad: Gamepad) {
         status = t('disconnected');
     }
 
-    Toast.show(text, status, {instant: false});
+    Toast.show(text, status, { instant: false });
 }
 
 export function getUniqueGamepadNames() {

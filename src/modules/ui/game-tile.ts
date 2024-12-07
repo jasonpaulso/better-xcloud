@@ -28,7 +28,7 @@ export class GameTile {
         }
 
         if (typeof totalWaitTime === 'number' && isElementVisible($elm)) {
-            const $div = CE('div', {'class': 'bx-game-tile-wait-time'},
+            const $div = CE('div', { class: 'bx-game-tile-wait-time' },
                 createSvgIcon(BxIcon.PLAYTIME),
                 CE('span', {}, secondsToHms(totalWaitTime)),
             );

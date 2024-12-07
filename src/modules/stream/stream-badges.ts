@@ -1,4 +1,4 @@
-import { isLiteVersion } from "@macros/build" with {type: "macro"};
+import { isLiteVersion } from "@macros/build" with { type: "macro" };
 
 import { t } from "@utils/translation";
 import { BxEvent } from "@utils/bx-event";
@@ -118,9 +118,9 @@ export class StreamBadges {
             return $badge;
         }
 
-        $badge = CE('div', {class: 'bx-badge', title: badgeInfo.name},
-            CE('span', {class: 'bx-badge-name'}, createSvgIcon(badgeInfo.icon)),
-            CE('span', {class: 'bx-badge-value', style: `background-color: ${badgeInfo.color}`}, value),
+        $badge = CE('div', { class: 'bx-badge', title: badgeInfo.name },
+            CE('span', { class: 'bx-badge-name' }, createSvgIcon(badgeInfo.icon)),
+            CE('span', { class: 'bx-badge-value', style: `background-color: ${badgeInfo.color}` }, value),
         );
 
         if (name === StreamBadge.BATTERY) {
@@ -219,7 +219,7 @@ export class StreamBadges {
             this.serverInfo.audio ? this.badges.audio.$element : [StreamBadge.AUDIO, '?'],
         ];
 
-        const $container = CE('div', {class: 'bx-badges'});
+        const $container = CE('div', { class: 'bx-badges' });
 
         for (const item of BADGES) {
             if (!item) {
