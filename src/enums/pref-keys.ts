@@ -47,7 +47,7 @@ export const enum PrefKey {
     CONTROLLER_POLLING_RATE = 'controller.pollingRate',
 
     NATIVE_MKB_MODE = 'nativeMkb.mode',
-    FORCE_NATIVE_MKB_GAMES = 'nativeMkb.forcedGames',
+    NATIVE_MKB_FORCED_GAMES = 'nativeMkb.forcedGames',
     NATIVE_MKB_SCROLL_HORIZONTAL_SENSITIVITY = 'nativeMkb.scroll.sensitivityX',
     NATIVE_MKB_SCROLL_VERTICAL_SENSITIVITY = 'nativeMkb.scroll.sensitivityY',
 

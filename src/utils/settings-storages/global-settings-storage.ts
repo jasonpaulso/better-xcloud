@@ -424,7 +424,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.FORCE_NATIVE_MKB_GAMES]: {
+        [PrefKey.NATIVE_MKB_FORCED_GAMES]: {
             label: t('force-native-mkb-games'),
             default: [],
             unsupported: !AppInterface && UserAgent.isMobile(),
@@ -436,6 +436,9 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                         (setting as any).multipleOptions = GhPagesUtils.getNativeMkbCustomList();
                     });
                 }
+            },
+            params: {
+                size: 6,
             },
         },
 

@@ -231,8 +231,9 @@ export class SettingsDialog extends NavigationDialog {
         items: [
             PrefKey.NATIVE_MKB_MODE,
             {
-                pref: PrefKey.FORCE_NATIVE_MKB_GAMES,
+                pref: PrefKey.NATIVE_MKB_FORCED_GAMES,
                 multiLines: true,
+                note: CE('a', { href: 'https://github.com/redphx/better-xcloud/discussions/574', target: '_blank' }, t('unofficial-game-list')),
             },
 
             PrefKey.MKB_ENABLED,

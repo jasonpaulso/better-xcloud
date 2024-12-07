@@ -1514,6 +1514,9 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), window.addEventListener(BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED, (e) => {
       setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList();
      });
+   },
+   params: {
+    size: 6
    }
   },
   "nativeMkb.scroll.sensitivityX": {
@@ -3741,7 +3744,7 @@ class SettingElement {
   let $control = CE("select", {
    multiple: !0,
    tabindex: 0
-  }), size = params.size ? params.size : Object.keys(setting.multipleOptions).length;
+  }), totalOptions = Object.keys(setting.multipleOptions).length, size = params.size ? Math.min(params.size, totalOptions) : totalOptions;
   $control.setAttribute("size", size.toString());
   for (let value in setting.multipleOptions) {
    let label = setting.multipleOptions[value], $option = CE("option", { value }, label);
@@ -4078,7 +4081,8 @@ class SettingsDialog extends NavigationDialog {
    "nativeMkb.mode",
    {
     pref: "nativeMkb.forcedGames",
-    multiLines: !0
+    multiLines: !0,
+    note: CE("a", { href: "https://github.com/redphx/better-xcloud/discussions/574", target: "_blank" }, t("unofficial-game-list"))
    },
    "mkb.enabled",
    "mkb.cursor.hideIdle"
@@ -6445,7 +6449,7 @@ window.addEventListener("pagehide", (e) => {
  BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
 });
 function main() {
- if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkb.mode") === "on") {
+ if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkb.mode") !== "off") {
   let customList = getPref("nativeMkb.forcedGames");
   BX_FLAGS.ForceNativeMkbTitles.push(...customList);
  }

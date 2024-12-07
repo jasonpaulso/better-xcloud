@@ -353,8 +353,8 @@ isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
 function main() {
     GhPagesUtils.fetchLatestCommit();
 
-    if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON) {
-        const customList = getPref<string[]>(PrefKey.FORCE_NATIVE_MKB_GAMES);
+    if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
+        const customList = getPref<string[]>(PrefKey.NATIVE_MKB_FORCED_GAMES);
         BX_FLAGS.ForceNativeMkbTitles.push(...customList);
     }
 

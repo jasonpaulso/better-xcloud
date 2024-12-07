@@ -68,10 +68,11 @@ export class SettingElement {
             tabindex: 0,
         });
 
-        const size = params.size ? params.size : Object.keys(setting.multipleOptions!).length;
+        const totalOptions = Object.keys(setting.multipleOptions!).length;
+        const size = params.size ? Math.min(params.size, totalOptions) : totalOptions;
         $control.setAttribute('size', size.toString());
 
-        for (let value in setting.multipleOptions) {
+        for (const value in setting.multipleOptions) {
             const label = setting.multipleOptions[value];
 
             const $option = CE<HTMLOptionElement>('option', {value: value}, label) as HTMLOptionElement;
