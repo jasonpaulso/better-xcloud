@@ -8927,7 +8927,7 @@ class ProductDetailsPage {
    let $container = document.querySelector("div[class*=ActionButtons-module__container]");
    if ($container && $container.parentElement) $container.parentElement.appendChild(CE("div", {
      class: "bx-product-details-buttons"
-    }, BX_FLAGS.DeviceInfo.deviceType.startsWith("android") && ProductDetailsPage.$btnShortcut, ProductDetailsPage.$btnWallpaper));
+    }, ["android-handheld", "android"].includes(BX_FLAGS.DeviceInfo.deviceType) && ProductDetailsPage.$btnShortcut, ProductDetailsPage.$btnWallpaper));
   }, 500);
  }
 }

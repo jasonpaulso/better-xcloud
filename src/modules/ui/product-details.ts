@@ -40,7 +40,7 @@ export class ProductDetailsPage {
                 $container.parentElement.appendChild(CE('div', {
                     class: 'bx-product-details-buttons',
                 },
-                    BX_FLAGS.DeviceInfo.deviceType.startsWith('android') && ProductDetailsPage.$btnShortcut,
+                    ['android-handheld', 'android'].includes(BX_FLAGS.DeviceInfo.deviceType) && ProductDetailsPage.$btnShortcut,
                     ProductDetailsPage.$btnWallpaper,
                 ));
             }
