@@ -4545,6 +4545,11 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  },
  streamPageBeforeLoad(str) {
   return PatcherUtils.patchBeforePageLoad(str, "stream");
+ },
+ disableAbsoluteMouse(str) {
+  let text = "sendAbsoluteMouseCapableMessage(e){";
+  if (!str.includes(text)) return !1;
+  return str = str.replace(text, text + "return;"), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...getPref("nativeMkb.mode") === "on" ? [
@@ -4621,9 +4626,10 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   "patchRemotePlayMkb",
   "remotePlayConnectMode"
  ] : [],
- ...getPref("nativeMkb.mode") === "on" ? [
+ ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
   "patchMouseAndKeyboardEnabled",
-  "disableNativeRequestPointerLock"
+  "disableNativeRequestPointerLock",
+  "disableAbsoluteMouse"
  ] : []
 ]), PRODUCT_DETAIL_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  AppInterface && "detectProductDetailPage"

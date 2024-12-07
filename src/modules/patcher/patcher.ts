@@ -947,6 +947,16 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
     streamPageBeforeLoad(str: string) {
         return PatcherUtils.patchBeforePageLoad(str, 'stream');
     },
+
+    disableAbsoluteMouse(str: string) {
+        let text = 'sendAbsoluteMouseCapableMessage(e){';
+        if (!str.includes(text)) {
+            return false;
+        }
+
+        str = str.replace(text, text + 'return;');
+        return str;
+    }
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1062,9 +1072,10 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []),
 
     // Native MKB
-    ...(getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+    ...(AppInterface && getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'patchMouseAndKeyboardEnabled',
         'disableNativeRequestPointerLock',
+        'disableAbsoluteMouse',
     ] : []),
 ]);
 
