@@ -820,7 +820,7 @@ function renderPresetsList($select, allPresets, selectedValue, addOffValue = !1)
 var FILE_SIZE_UNITS = ["B", "KB", "MB", "GB", "TB"];
 function humanFileSize(size) {
  let i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
- return (size / Math.pow(1024, i)).toFixed(2) + " " + FILE_SIZE_UNITS[i];
+ return (size / Math.pow(1024, i)).toFixed(1) + " " + FILE_SIZE_UNITS[i];
 }
 function secondsToHm(seconds) {
  let h = Math.floor(seconds / 3600), m = Math.floor(seconds % 3600 / 60) + 1;
@@ -2109,7 +2109,7 @@ class StreamStatsCollector {
    current: 0,
    grades: [30, 40, 60],
    toString() {
-    return `${this.current.toFixed(2)}ms`;
+    return `${this.current.toFixed(1)}ms`;
    }
   },
   fps: {
@@ -2122,14 +2122,14 @@ class StreamStatsCollector {
   btr: {
    current: 0,
    toString() {
-    return `${this.current.toFixed(2)} Mbps`;
+    return `${this.current.toFixed(1)} Mbps`;
    }
   },
   fl: {
    received: 0,
    dropped: 0,
    toString() {
-    let framesDroppedPercentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(2);
+    let framesDroppedPercentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(1);
     return framesDroppedPercentage === "0.00" ? this.dropped.toString() : `${this.dropped} (${framesDroppedPercentage}%)`;
    }
   },
@@ -2137,7 +2137,7 @@ class StreamStatsCollector {
    received: 0,
    dropped: 0,
    toString() {
-    let packetsLostPercentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(2);
+    let packetsLostPercentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(1);
     return packetsLostPercentage === "0.00" ? this.dropped.toString() : `${this.dropped} (${packetsLostPercentage}%)`;
    }
   },
@@ -2146,7 +2146,7 @@ class StreamStatsCollector {
    total: 0,
    grades: [6, 9, 12],
    toString() {
-    return isNaN(this.current) ? "??ms" : `${this.current.toFixed(2)}ms`;
+    return isNaN(this.current) ? "??ms" : `${this.current.toFixed(1)}ms`;
    }
   },
   dl: {

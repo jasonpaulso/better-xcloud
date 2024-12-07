@@ -104,7 +104,7 @@ export class StreamStatsCollector {
             current: 0,
             grades: [30, 40, 60],
             toString() {
-                return `${this.current.toFixed(2)}ms`;
+                return `${this.current.toFixed(1)}ms`;
             },
         },
 
@@ -119,7 +119,7 @@ export class StreamStatsCollector {
         [StreamStat.BITRATE]: {
             current: 0,
             toString() {
-                return `${this.current.toFixed(2)} Mbps`;
+                return `${this.current.toFixed(1)} Mbps`;
             },
         },
 
@@ -127,7 +127,7 @@ export class StreamStatsCollector {
             received: 0,
             dropped: 0,
             toString() {
-                const framesDroppedPercentage = (this.dropped * 100 / ((this.dropped + this.received) || 1)).toFixed(2);
+                const framesDroppedPercentage = (this.dropped * 100 / ((this.dropped + this.received) || 1)).toFixed(1);
                 return framesDroppedPercentage === '0.00' ? this.dropped.toString() : `${this.dropped} (${framesDroppedPercentage}%)`;
             },
         },
@@ -136,7 +136,7 @@ export class StreamStatsCollector {
             received: 0,
             dropped: 0,
             toString() {
-                const packetsLostPercentage = (this.dropped * 100 / ((this.dropped + this.received) || 1)).toFixed(2);
+                const packetsLostPercentage = (this.dropped * 100 / ((this.dropped + this.received) || 1)).toFixed(1);
                 return packetsLostPercentage === '0.00' ? this.dropped.toString() : `${this.dropped} (${packetsLostPercentage}%)`;
             },
         },
@@ -146,7 +146,7 @@ export class StreamStatsCollector {
             total: 0,
             grades: [6, 9, 12],
             toString() {
-                return isNaN(this.current) ? '??ms' : `${this.current.toFixed(2)}ms`;
+                return isNaN(this.current) ? '??ms' : `${this.current.toFixed(1)}ms`;
             },
         },
 
