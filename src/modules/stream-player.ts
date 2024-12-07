@@ -180,6 +180,8 @@ export class StreamPlayer {
             $webGL2Canvas.style.width = targetWidth;
             $webGL2Canvas.style.height = targetHeight;
             $webGL2Canvas.style.objectFit = targetObjectFit;
+
+            $video.dispatchEvent(new Event('resize'));
         }
 
         // Update video dimensions
