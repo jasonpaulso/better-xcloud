@@ -5,7 +5,7 @@ import { t } from "@utils/translation.ts";
 import { StreamBadges } from "./stream-badges.ts";
 import { StreamStats } from "./stream-stats.ts";
 import { SettingsDialog } from "../ui/dialog/settings-dialog.ts";
-import { EventBus } from "@/utils/event-bus.ts";
+import { BxEventBus } from "@/utils/bx-event-bus.ts";
 
 
 export class StreamUiHandler {
@@ -243,7 +243,7 @@ export class StreamUiHandler {
 
                     // Error Page: .PureErrorPage.ErrorScreen
                     if (className.includes('PureErrorPage')) {
-                        EventBus.Stream.emit('stateError', {});
+                        BxEventBus.Stream.emit('stateError', {});
                         return;
                     }
 

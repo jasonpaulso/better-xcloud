@@ -6,7 +6,7 @@ import { getPref } from "@/utils/settings-storages/global-settings-storage"
 import { StreamStatsCollector, type StreamStatGrade } from "@/utils/stream-stats-collector"
 import { BxLogger } from "@/utils/bx-logger"
 import { StreamStat } from "@/enums/pref-values"
-import { EventBus } from "@/utils/event-bus"
+import { BxEventBus } from "@/utils/bx-event-bus"
 
 
 export class StreamStats {
@@ -230,7 +230,7 @@ export class StreamStats {
     }
 
     static setupEvents() {
-        EventBus.Stream.on('statePlaying', () => {
+        BxEventBus.Stream.on('statePlaying', () => {
             const PREF_STATS_QUICK_GLANCE = getPref(PrefKey.STATS_QUICK_GLANCE_ENABLED);
             const PREF_STATS_SHOW_WHEN_PLAYING = getPref(PrefKey.STATS_SHOW_WHEN_PLAYING);
 

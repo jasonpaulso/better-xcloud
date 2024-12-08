@@ -6,7 +6,7 @@ import type { MkbHandler } from "./base-mkb-handler";
 import { NativeMkbHandler } from "./native-mkb-handler";
 import { StreamSettings } from "@/utils/stream-settings";
 import { KeyHelper } from "./key-helper";
-import { EventBus } from "@/utils/event-bus";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 type MkbPopupType = 'virtual' | 'native';
 
@@ -24,7 +24,7 @@ export class MkbPopup {
     constructor() {
         this.render();
 
-        EventBus.Script.on('keyboardShortcutsUpdated', () => {
+        BxEventBus.Script.on('keyboardShortcutsUpdated', () => {
             const $newButton = this.createActivateButton();
             this.$btnActivate.replaceWith($newButton);
             this.$btnActivate = $newButton;

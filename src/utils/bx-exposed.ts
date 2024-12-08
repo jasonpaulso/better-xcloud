@@ -11,7 +11,7 @@ import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { TouchController } from "@/modules/touch-controller";
 import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
 import { Patcher, type PatchPage } from "@/modules/patcher/patcher";
-import { EventBus } from "./event-bus";
+import { BxEventBus } from "./bx-event-bus";
 
 export enum SupportedInputType {
     CONTROLLER = 'Controller',
@@ -139,7 +139,7 @@ export const BxExposed = {
 
         // Save this info in STATES
         STATES.currentStream.titleInfo = titleInfo;
-        EventBus.Script.emit('titleInfoReady', {});
+        BxEventBus.Script.emit('titleInfoReady', {});
 
         return titleInfo;
     },

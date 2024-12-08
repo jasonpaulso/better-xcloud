@@ -156,10 +156,10 @@ var BxEvent;
  BxEvent.dispatch = dispatch;
 })(BxEvent ||= {});
 window.BxEvent = BxEvent;
-class EventBus {
+class BxEventBus {
  listeners = new Map;
- static Script = new EventBus;
- static Stream = new EventBus;
+ static Script = new BxEventBus;
+ static Stream = new BxEventBus;
  on(event, callback) {
   if (!this.listeners.has(event)) this.listeners.set(event, new Set);
   this.listeners.get(event).add(callback), BX_FLAGS.Debug && BxLogger.warning("EventBus", "on", event, callback);
@@ -183,6 +183,7 @@ class EventBus {
    callback(payload);
  }
 }
+window.BxEventBus = BxEventBus;
 class GhPagesUtils {
  static fetchLatestCommit() {
   NATIVE_FETCH("https://api.github.com/repos/redphx/better-xcloud/branches/gh-pages", {
@@ -206,7 +207,7 @@ class GhPagesUtils {
  static getNativeMkbCustomList(update = !1) {
   let key = "BetterXcloud.GhPages.ForceNativeMkb";
   update && NATIVE_FETCH(GhPagesUtils.getUrl("native-mkb/ids.json")).then((response) => response.json()).then((json) => {
-   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), EventBus.Script.emit("listForcedNativeMkbUpdated", {});
+   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), BxEventBus.Script.emit("listForcedNativeMkbUpdated", {});
   });
   let info = JSON.parse(window.localStorage.getItem(key) || "{}");
   if (info.$schemaVersion !== 1) return window.localStorage.removeItem(key), {};
@@ -905,7 +906,7 @@ class BaseSettingsStore {
   return this.settings[key];
  }
  setSetting(key, value, emitEvent = !1) {
-  return value = this.validateValue("set", key, value), this.settings[key] = this.validateValue("get", key, value), this.saveSettings(), emitEvent && EventBus.Script.emit("settingChanged", {
+  return value = this.validateValue("set", key, value), this.settings[key] = this.validateValue("get", key, value), this.saveSettings(), emitEvent && BxEventBus.Script.emit("settingChanged", {
    storageKey: this.storageKey,
    settingKey: key,
    settingValue: value
@@ -1539,7 +1540,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    default: [],
    unsupported: !AppInterface && UserAgent.isMobile(),
    ready: (setting) => {
-    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), EventBus.Script.on("listForcedNativeMkbUpdated", () => {
+    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), BxEventBus.Script.on("listForcedNativeMkbUpdated", () => {
       setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList();
      });
    },
@@ -2168,7 +2169,7 @@ class StreamStatsCollector {
   } catch (e) {}
  }
  static setupEvents() {
-  EventBus.Stream.on("statePlaying", () => {
+  BxEventBus.Stream.on("statePlaying", () => {
    StreamStatsCollector.getInstance().reset();
   });
  }
@@ -2306,7 +2307,7 @@ class StreamStats {
   this.refreshStyles(), document.documentElement.appendChild(this.$container);
  }
  static setupEvents() {
-  EventBus.Stream.on("statePlaying", () => {
+  BxEventBus.Stream.on("statePlaying", () => {
    let PREF_STATS_QUICK_GLANCE = getPref("stats.quickGlance.enabled"), PREF_STATS_SHOW_WHEN_PLAYING = getPref("stats.showWhenPlaying"), streamStats = StreamStats.getInstance();
    if (PREF_STATS_SHOW_WHEN_PLAYING) streamStats.start();
    else if (PREF_STATS_QUICK_GLANCE) streamStats.quickGlanceSetup(), !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(!0);
@@ -2600,7 +2601,7 @@ class StreamSettings {
   if (!STATES.browser.capabilities.deviceVibration) return;
   let mode = StreamSettings.getPref("deviceVibration.mode"), intensity = 0;
   if (mode === "on" || mode === "auto" && !hasGamepad()) intensity = StreamSettings.getPref("deviceVibration.intensity") / 100;
-  StreamSettings.settings.deviceVibrationIntensity = intensity, EventBus.Script.emit("deviceVibrationUpdated", {});
+  StreamSettings.settings.deviceVibrationIntensity = intensity, BxEventBus.Script.emit("deviceVibrationUpdated", {});
  }
  static async refreshMkbSettings() {
   let settings = StreamSettings.settings, presetId = StreamSettings.getPref("mkb.p1.preset.mappingId"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
@@ -2614,12 +2615,12 @@ class StreamSettings {
     if (typeof keyName === "string") converted.mapping[keyName] = buttonIndex;
   }
   let mouse = converted.mouse;
-  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkb.p1.preset.mappingId", orgPreset.id), EventBus.Script.emit("mkbSettingUpdated", {});
+  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkb.p1.preset.mappingId", orgPreset.id), BxEventBus.Script.emit("mkbSettingUpdated", {});
  }
  static async refreshKeyboardShortcuts() {
   let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcuts.preset.inGameId");
   if (presetId === 0) {
-   settings.keyboardShortcuts = null, setPref("keyboardShortcuts.preset.inGameId", presetId), EventBus.Script.emit("keyboardShortcutsUpdated", {});
+   settings.keyboardShortcuts = null, setPref("keyboardShortcuts.preset.inGameId", presetId), BxEventBus.Script.emit("keyboardShortcutsUpdated", {});
    return;
   }
   let orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
@@ -2627,7 +2628,7 @@ class StreamSettings {
    let info = orgPresetData[action], key = `${info.code}:${info.modifiers || 0}`;
    converted[key] = action;
   }
-  settings.keyboardShortcuts = converted, setPref("keyboardShortcuts.preset.inGameId", orgPreset.id), EventBus.Script.emit("keyboardShortcutsUpdated", {});
+  settings.keyboardShortcuts = converted, setPref("keyboardShortcuts.preset.inGameId", orgPreset.id), BxEventBus.Script.emit("keyboardShortcutsUpdated", {});
  }
  static async refreshAllSettings() {
   window.BX_STREAM_SETTINGS = StreamSettings.settings, await StreamSettings.refreshControllerSettings(), await StreamSettings.refreshMkbSettings(), await StreamSettings.refreshKeyboardShortcuts();
@@ -2654,7 +2655,7 @@ class MkbPopup {
  $btnActivate;
  mkbHandler;
  constructor() {
-  this.render(), EventBus.Script.on("keyboardShortcutsUpdated", () => {
+  this.render(), BxEventBus.Script.on("keyboardShortcutsUpdated", () => {
    let $newButton = this.createActivateButton();
    this.$btnActivate.replaceWith($newButton), this.$btnActivate = $newButton;
   });
@@ -4278,7 +4279,7 @@ class SettingsDialog extends NavigationDialog {
    },
    onCreated: (setting, $elm) => {
     let $range = $elm.querySelector("input[type=range");
-    EventBus.Script.on("settingChanged", (payload) => {
+    BxEventBus.Script.on("settingChanged", (payload) => {
      let { storageKey, settingKey, settingValue } = payload;
      if (storageKey === "BetterXcloud" && settingKey === "audio.volume") $range.value = settingValue, BxEvent.dispatch($range, "input", { ignoreOnChange: !0 });
     });
@@ -5455,7 +5456,7 @@ class XcloudInterceptor {
    ip && request.headers.set("X-Forwarded-For", ip);
   }
   let response = await NATIVE_FETCH(request, init);
-  if (response.status !== 200) return EventBus.Script.emit("xcloudServerUnavailable", {}), response;
+  if (response.status !== 200) return BxEventBus.Script.emit("xcloudServerUnavailable", {}), response;
   let obj = await response.clone().json();
   RemotePlayManager.getInstance()?.setXcloudToken(obj.gsToken);
   let serverRegex = /\/\/(\w+)\./, serverExtra = XcloudInterceptor.SERVER_EXTRA_INFO, region;
@@ -5467,7 +5468,7 @@ class XcloudInterceptor {
     else region.contintent = "other";
    region.shortName = shortName.toUpperCase(), STATES.serverRegions[region.name] = Object.assign({}, region);
   }
-  EventBus.Script.emit("xcloudServerReady", {});
+  BxEventBus.Script.emit("xcloudServerReady", {});
   let preferredRegion = getPreferredServerRegion();
   if (preferredRegion && preferredRegion in STATES.serverRegions) {
    let tmp = Object.assign({}, STATES.serverRegions[preferredRegion]);
@@ -5476,7 +5477,7 @@ class XcloudInterceptor {
   return STATES.gsToken = obj.gsToken, response.json = () => Promise.resolve(obj), response;
  }
  static async handlePlay(request, init) {
-  EventBus.Stream.emit("stateLoading", {});
+  BxEventBus.Stream.emit("stateLoading", {});
   let PREF_STREAM_TARGET_RESOLUTION = getPref("stream.video.resolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("stream.locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
   for (let regionName in STATES.serverRegions) {
    let region = STATES.serverRegions[regionName];
@@ -5512,7 +5513,7 @@ class XcloudInterceptor {
   if (request.method !== "GET") return NATIVE_FETCH(request, init);
   let response = await NATIVE_FETCH(request, init), text = await response.clone().text();
   if (!text.length) return response;
-  EventBus.Stream.emit("stateStarting", {});
+  BxEventBus.Stream.emit("stateStarting", {});
   let obj = JSON.parse(text), overrides = JSON.parse(obj.clientStreamingConfigOverrides || "{}") || {};
   overrides.inputConfiguration = overrides.inputConfiguration || {}, overrides.inputConfiguration.enableVibration = !0;
   let overrideMkb = null;
@@ -5742,7 +5743,7 @@ function patchHistoryMethod(type) {
 }
 function onHistoryChanged(e) {
  if (e && e.arguments && e.arguments[0] && e.arguments[0].origin === "better-xcloud") return;
- window.setTimeout(RemotePlayManager.detect, 10), NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), EventBus.Stream.emit("stateStopped", {});
+ window.setTimeout(RemotePlayManager.detect, 10), NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), BxEventBus.Stream.emit("stateStopped", {});
 }
 function setCodecPreferences(sdp, preferredCodec) {
  let h264Pattern = /a=fmtp:(\d+).*profile-level-id=([0-9a-f]{6})/g, profilePrefix = preferredCodec === "high" ? "4d" : preferredCodec === "low" ? "420" : "42e", preferredCodecIds = [], matches = sdp.matchAll(h264Pattern) || [];
@@ -6098,7 +6099,7 @@ function patchVideoApi() {
    contrast: getPref("video.contrast"),
    brightness: getPref("video.brightness")
   };
-  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("video.player.type"), playerOptions), EventBus.Stream.emit("statePlaying", {
+  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("video.player.type"), playerOptions), BxEventBus.Stream.emit("statePlaying", {
    $video: this
   });
  }, nativePlay = HTMLMediaElement.prototype.play;
@@ -6297,7 +6298,7 @@ class StreamUiHandler {
      if (!($elm instanceof HTMLElement)) return;
      let className = $elm.className || "";
      if (className.includes("PureErrorPage")) {
-      EventBus.Stream.emit("stateError", {});
+      BxEventBus.Stream.emit("stateError", {});
       return;
      }
      if (className.startsWith("StreamMenu-module__container")) {
@@ -6418,25 +6419,25 @@ window.addEventListener(BxEvent.POPSTATE, onHistoryChanged);
 window.addEventListener("popstate", onHistoryChanged);
 window.history.pushState = patchHistoryMethod("pushState");
 window.history.replaceState = patchHistoryMethod("replaceState");
-EventBus.Script.on("xcloudServerUnavailable", () => {
- if (EventBus.Script.off("xcloudServerUnavailable", null), STATES.supportedRegion = !1, window.setTimeout(HeaderSection.watchHeader, 2000), document.querySelector("div[class^=UnsupportedMarketPage-module__container]")) SettingsDialog.getInstance().show();
+BxEventBus.Script.on("xcloudServerUnavailable", () => {
+ if (BxEventBus.Script.off("xcloudServerUnavailable", null), STATES.supportedRegion = !1, window.setTimeout(HeaderSection.watchHeader, 2000), document.querySelector("div[class^=UnsupportedMarketPage-module__container]")) SettingsDialog.getInstance().show();
 });
-EventBus.Script.on("xcloudServerReady", () => {
+BxEventBus.Script.on("xcloudServerReady", () => {
  STATES.isSignedIn = !0, window.setTimeout(HeaderSection.watchHeader, 2000);
 });
-EventBus.Stream.on("stateLoading", () => {
+BxEventBus.Stream.on("stateLoading", () => {
  if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
  else STATES.currentStream.titleSlug = "remote-play";
 });
-getPref("loadingScreen.gameArt.show") && EventBus.Script.on("titleInfoReady", LoadingScreen.setup);
-EventBus.Stream.on("stateStarting", () => {
+getPref("loadingScreen.gameArt.show") && BxEventBus.Script.on("titleInfoReady", LoadingScreen.setup);
+BxEventBus.Stream.on("stateStarting", () => {
  LoadingScreen.hide();
 });
-EventBus.Stream.on("statePlaying", (payload) => {
+BxEventBus.Stream.on("statePlaying", (payload) => {
  window.BX_STREAM_SETTINGS = StreamSettings.settings, StreamSettings.refreshAllSettings(), STATES.isPlaying = !0, StreamUiHandler.observe(), updateVideoPlayer();
 });
-EventBus.Stream.on("stateError", () => {
- EventBus.Stream.emit("stateStopped", {});
+BxEventBus.Stream.on("stateError", () => {
+ BxEventBus.Stream.emit("stateStopped", {});
 });
 window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e) => {
  let dataChannel = e.dataChannel;
@@ -6458,9 +6459,9 @@ function unload() {
  if (!STATES.isPlaying) return;
  STATES.currentStream.streamPlayer?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy();
 }
-EventBus.Stream.on("stateStopped", unload);
+BxEventBus.Stream.on("stateStopped", unload);
 window.addEventListener("pagehide", (e) => {
- EventBus.Stream.emit("stateStopped", {});
+ BxEventBus.Stream.emit("stateStopped", {});
 });
 function main() {
  if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkb.mode") !== "off") {

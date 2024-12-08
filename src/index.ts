@@ -44,7 +44,7 @@ import { StreamSettings } from "./utils/stream-settings";
 import { KeyboardShortcutHandler } from "./modules/mkb/keyboard-shortcut-handler";
 import { GhPagesUtils } from "./utils/gh-pages";
 import { DeviceVibrationManager } from "./modules/device-vibration-manager";
-import { EventBus } from "./utils/event-bus";
+import { BxEventBus } from "./utils/bx-event-bus";
 
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
@@ -191,8 +191,8 @@ window.addEventListener('popstate', onHistoryChanged);
 window.history.pushState = patchHistoryMethod('pushState');
 window.history.replaceState = patchHistoryMethod('replaceState');
 
-EventBus.Script.on('xcloudServerUnavailable', () => {
-    EventBus.Script.off('xcloudServerUnavailable', null);
+BxEventBus.Script.on('xcloudServerUnavailable', () => {
+    BxEventBus.Script.off('xcloudServerUnavailable', null);
 
     STATES.supportedRegion = false;
     window.setTimeout(HeaderSection.watchHeader, 2000);
@@ -204,12 +204,12 @@ EventBus.Script.on('xcloudServerUnavailable', () => {
     }
 });
 
-EventBus.Script.on('xcloudServerReady', () => {
+BxEventBus.Script.on('xcloudServerReady', () => {
     STATES.isSignedIn = true;
     window.setTimeout(HeaderSection.watchHeader, 2000);
 });
 
-EventBus.Stream.on('stateLoading', () => {
+BxEventBus.Stream.on('stateLoading', () => {
     // Get title ID for screenshot's name
     if (window.location.pathname.includes('/launch/') && STATES.currentStream.titleInfo) {
         STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
@@ -219,9 +219,9 @@ EventBus.Stream.on('stateLoading', () => {
 });
 
 // Setup loading screen
-getPref(PrefKey.LOADING_SCREEN_GAME_ART) && EventBus.Script.on('titleInfoReady', LoadingScreen.setup);
+getPref(PrefKey.LOADING_SCREEN_GAME_ART) && BxEventBus.Script.on('titleInfoReady', LoadingScreen.setup);
 
-EventBus.Stream.on('stateStarting', () => {
+BxEventBus.Stream.on('stateStarting', () => {
     // Hide loading screen
     LoadingScreen.hide();
 
@@ -235,7 +235,7 @@ EventBus.Stream.on('stateStarting', () => {
     }
 });
 
-EventBus.Stream.on('statePlaying', payload => {
+BxEventBus.Stream.on('statePlaying', payload => {
     window.BX_STREAM_SETTINGS = StreamSettings.settings;
     StreamSettings.refreshAllSettings();
 
@@ -265,8 +265,8 @@ EventBus.Stream.on('statePlaying', payload => {
     updateVideoPlayer();
 });
 
-EventBus.Stream.on('stateError', () => {
-    EventBus.Stream.emit('stateStopped', {});
+BxEventBus.Stream.on('stateError', () => {
+    BxEventBus.Stream.emit('stateStopped', {});
 });
 
 isFullVersion() && window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, e => {
@@ -343,9 +343,9 @@ function unload() {
     }
 }
 
-EventBus.Stream.on('stateStopped', unload);
+BxEventBus.Stream.on('stateStopped', unload);
 window.addEventListener('pagehide', e => {
-    EventBus.Stream.emit('stateStopped', {});
+    BxEventBus.Stream.emit('stateStopped', {});
 });
 
 isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {

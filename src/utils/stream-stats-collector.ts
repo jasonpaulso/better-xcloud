@@ -4,7 +4,7 @@ import { humanFileSize, secondsToHm } from "./html";
 import { getPref } from "./settings-storages/global-settings-storage";
 import { BxLogger } from "./bx-logger";
 import { StreamStat } from "@/enums/pref-values";
-import { EventBus } from "./event-bus";
+import { BxEventBus } from "./bx-event-bus";
 
 export type StreamStatGrade = '' | 'bad' | 'ok' | 'good';
 
@@ -310,7 +310,7 @@ export class StreamStatsCollector {
     }
 
     static setupEvents() {
-        EventBus.Stream.on('statePlaying', () => {
+        BxEventBus.Stream.on('statePlaying', () => {
             StreamStatsCollector.getInstance().reset();
         });
     }

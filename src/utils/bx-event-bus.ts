@@ -31,11 +31,11 @@ type StreamEvents = {
     stateError: {};
 };
 
-export class EventBus<TEvents extends Record<string, any>> {
+export class BxEventBus<TEvents extends Record<string, any>> {
     private listeners: Map<keyof TEvents, Set<EventCallback<any>>> = new Map();
 
-    static readonly Script = new EventBus<ScriptEvents>();
-    static readonly Stream = new EventBus<StreamEvents>();
+    static readonly Script = new BxEventBus<ScriptEvents>();
+    static readonly Stream = new BxEventBus<StreamEvents>();
 
     on<K extends keyof TEvents>(event: K, callback: EventCallback<TEvents[K]>): void {
         if (!this.listeners.has(event)) {
@@ -79,3 +79,5 @@ export class EventBus<TEvents extends Record<string, any>> {
         }
     }
 }
+
+window.BxEventBus = BxEventBus;

@@ -7,7 +7,7 @@ import { PrefKey } from "@/enums/pref-keys";
 import { getPref, getPrefDefinition } from "./settings-storages/global-settings-storage";
 import { CodecProfile } from "@/enums/pref-values";
 import type { SettingDefinition } from "@/types/setting-definition";
-import { EventBus } from "./event-bus";
+import { BxEventBus } from "./bx-event-bus";
 
 export function patchVideoApi() {
     const PREF_SKIP_SPLASH_VIDEO = getPref(PrefKey.UI_SKIP_SPLASH_VIDEO);
@@ -28,7 +28,7 @@ export function patchVideoApi() {
         } satisfies StreamPlayerOptions;
         STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref(PrefKey.VIDEO_PLAYER_TYPE), playerOptions);
 
-        EventBus.Stream.emit('statePlaying', {
+        BxEventBus.Stream.emit('statePlaying', {
             $video: this,
         })
     }

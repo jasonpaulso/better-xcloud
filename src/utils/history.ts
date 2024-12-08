@@ -2,7 +2,7 @@ import { BxEvent } from "@utils/bx-event";
 import { LoadingScreen } from "@modules/loading-screen";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { HeaderSection } from "@/modules/ui/header";
-import { EventBus } from "./event-bus";
+import { BxEventBus } from "./bx-event-bus";
 import { NavigationDialogManager } from "@/modules/ui/dialog/navigation-dialog";
 
 export function patchHistoryMethod(type: 'pushState' | 'replaceState') {
@@ -33,5 +33,5 @@ export function onHistoryChanged(e: PopStateEvent) {
     LoadingScreen.reset();
     window.setTimeout(HeaderSection.watchHeader, 2000);
 
-    EventBus.Stream.emit('stateStopped', {});
+    BxEventBus.Stream.emit('stateStopped', {});
 }

@@ -13,7 +13,7 @@ import { MkbPresetKey, MouseConstant } from "@/enums/mkb";
 import { KeyboardShortcutDefaultId, KeyboardShortcutsTable } from "./local-db/keyboard-shortcuts-table";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { KeyHelper } from "@/modules/mkb/key-helper";
-import { EventBus } from "./event-bus";
+import { BxEventBus } from "./bx-event-bus";
 
 
 export type StreamSettingsData = {
@@ -110,7 +110,7 @@ export class StreamSettings {
         }
 
         StreamSettings.settings.deviceVibrationIntensity = intensity;
-        EventBus.Script.emit('deviceVibrationUpdated', {});
+        BxEventBus.Script.emit('deviceVibrationUpdated', {});
     }
 
     static async refreshMkbSettings() {
@@ -148,7 +148,7 @@ export class StreamSettings {
         settings.mkbPreset = converted;
 
         setPref(PrefKey.MKB_P1_MAPPING_PRESET_ID, orgPreset.id);
-        EventBus.Script.emit('mkbSettingUpdated', {});
+        BxEventBus.Script.emit('mkbSettingUpdated', {});
     }
 
     static async refreshKeyboardShortcuts() {
@@ -159,7 +159,7 @@ export class StreamSettings {
             settings.keyboardShortcuts = null;
 
             setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId);
-            EventBus.Script.emit('keyboardShortcutsUpdated', {});
+            BxEventBus.Script.emit('keyboardShortcutsUpdated', {});
             return;
         }
 
@@ -179,7 +179,7 @@ export class StreamSettings {
         settings.keyboardShortcuts = converted;
 
         setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, orgPreset.id);
-        EventBus.Script.emit('keyboardShortcutsUpdated', {});
+        BxEventBus.Script.emit('keyboardShortcutsUpdated', {});
     }
 
     static async refreshAllSettings() {

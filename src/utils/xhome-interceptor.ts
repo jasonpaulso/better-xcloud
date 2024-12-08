@@ -9,7 +9,7 @@ import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { StreamResolution, TouchControllerMode } from "@/enums/pref-values";
-import { EventBus } from "./event-bus";
+import { BxEventBus } from "./bx-event-bus";
 
 export class XhomeInterceptor {
     private static consoleAddrs: RemotePlayConsoleAddresses = {};
@@ -36,7 +36,7 @@ export class XhomeInterceptor {
     }
 
     private static async handleConfiguration(request: Request | URL) {
-        EventBus.Stream.emit('stateStarting', {});
+        BxEventBus.Stream.emit('stateStarting', {});
 
         const response = await NATIVE_FETCH(request);
         const obj = await response.clone().json();
@@ -125,7 +125,7 @@ export class XhomeInterceptor {
     }
 
     private static async handlePlay(request: RequestInfo | URL) {
-        EventBus.Stream.emit('stateLoading', {});
+        BxEventBus.Stream.emit('stateLoading', {});
 
         const clone = (request as Request).clone();
         const body = await clone.json();

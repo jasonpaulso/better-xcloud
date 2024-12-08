@@ -2,7 +2,7 @@ import type { PrefKey, StorageKey } from "@/enums/pref-keys";
 import type { NumberStepperParams, SettingAction, SettingDefinitions } from "@/types/setting-definition";
 import { t } from "../translation";
 import { SCRIPT_VARIANT } from "../global";
-import { EventBus } from "../event-bus";
+import { BxEventBus } from "../bx-event-bus";
 
 export class BaseSettingsStore {
     private storage: Storage;
@@ -93,7 +93,7 @@ export class BaseSettingsStore {
         this.settings[key] = this.validateValue('get', key, value);
         this.saveSettings();
 
-        emitEvent && EventBus.Script.emit('settingChanged', {
+        emitEvent && BxEventBus.Script.emit('settingChanged', {
             storageKey: this.storageKey,
             settingKey: key,
             settingValue: value,

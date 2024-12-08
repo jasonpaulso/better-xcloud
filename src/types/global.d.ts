@@ -30,6 +30,7 @@ declare global {
         BX_FETCH: typeof window['fetch'];
 
         BxEvent: typeof BxEvent;
+        BxEventBus: typeof BxEventBus;
         BxLogger: typeof BxLogger;
         localRedirect: (path: stringn) => void;
         testTouchLayout: (layout: any) => void;
