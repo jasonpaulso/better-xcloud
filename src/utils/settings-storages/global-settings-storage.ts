@@ -652,7 +652,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
         [PrefKey.VIDEO_MAX_FPS]: {
-            label: t('max-fps'),
+            label: t('limit-fps'),
             default: 60,
             min: 10,
             max: 60,

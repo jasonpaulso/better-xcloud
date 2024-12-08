@@ -343,13 +343,13 @@ var SUPPORTED_LANGUAGES = {
  large: "Large",
  layout: "Layout",
  "left-stick": "Left stick",
+ "limit-fps": "Limit FPS",
  "load-failed-message": "Failed to run Better xCloud",
  "loading-screen": "Loading screen",
  "local-co-op": "Local co-op",
  "lowest-quality": "Lowest quality",
  manage: "Manage",
  "map-mouse-to": "Map mouse to",
- "max-fps": "Max FPS",
  "may-not-work-properly": "May not work properly!",
  menu: "Menu",
  microphone: "Microphone",
@@ -1707,7 +1707,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    }
   },
   "video.maxFps": {
-   label: t("max-fps"),
+   label: t("limit-fps"),
    default: 60,
    min: 10,
    max: 60,
