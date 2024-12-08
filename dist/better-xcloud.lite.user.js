@@ -5597,6 +5597,7 @@ function interceptHttpRequests() {
   "chat.xboxlive.com",
   "notificationinbox.xboxlive.com",
   "peoplehub.xboxlive.com",
+  "peoplehub-public.xboxlive.com",
   "rta.xboxlive.com",
   "userpresence.xboxlive.com",
   "xblmessaging.xboxlive.com",

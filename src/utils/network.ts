@@ -177,6 +177,7 @@ export function interceptHttpRequests() {
         'chat.xboxlive.com',
         'notificationinbox.xboxlive.com',
         'peoplehub.xboxlive.com',
+        'peoplehub-public.xboxlive.com',
         'rta.xboxlive.com',
         'userpresence.xboxlive.com',
         'xblmessaging.xboxlive.com',
@@ -192,7 +193,7 @@ export function interceptHttpRequests() {
         let url = (typeof request === 'string') ? request : (request as Request).url;
 
         // Check blocked URLs
-        for (let blocked of BLOCKED_URLS) {
+        for (const blocked of BLOCKED_URLS) {
             if (url.startsWith(blocked)) {
                 return new Response('{"acc":1,"webResult":{}}', {
                     status: 200,
@@ -201,7 +202,7 @@ export function interceptHttpRequests() {
             }
         }
 
-        // Ignore URLs
+        // Ignore domains
         const domain = (new URL(url)).hostname;
         if (IGNORED_DOMAINS.includes(domain)) {
             return NATIVE_FETCH(request, init);
