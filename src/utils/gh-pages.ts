@@ -53,7 +53,9 @@ export class GhPagesUtils {
                 if (json.$schemaVersion === supportedSchema) {
                     // Save to storage
                     window.localStorage.setItem(key, JSON.stringify(json));
-                    BxEventBus.Script.emit('listForcedNativeMkbUpdated', {});
+                    BxEventBus.Script.emit('listForcedNativeMkbUpdated', {
+                        data: json,
+                    });
                 }
             });
 

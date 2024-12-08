@@ -8,6 +8,7 @@ import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { TouchControllerStyleCustom, TouchControllerStyleStandard } from "@/enums/pref-values";
 import { GhPagesUtils } from "@/utils/gh-pages";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 const LOG_TAG = 'TouchController';
 
@@ -291,9 +292,9 @@ export class TouchController {
         const PREF_STYLE_STANDARD = getPref<TouchControllerStyleStandard>(PrefKey.TOUCH_CONTROLLER_STYLE_STANDARD);
         const PREF_STYLE_CUSTOM = getPref<TouchControllerStyleCustom>(PrefKey.TOUCH_CONTROLLER_STYLE_CUSTOM);
 
-        window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, e => {
-            const dataChannel = (e as any).dataChannel;
-            if (!dataChannel || dataChannel.label !== 'message') {
+        BxEventBus.Stream.on('dataChannelCreated', payload => {
+            const { dataChannel } = payload;
+            if (dataChannel?.label !== 'message') {
                 return;
             }
 

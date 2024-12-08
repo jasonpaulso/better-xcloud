@@ -277,9 +277,9 @@ isFullVersion() && window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, e
 });
 
 // Detect game change
-window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, e => {
-    const dataChannel = (e as any).dataChannel;
-    if (!dataChannel || dataChannel.label !== 'message') {
+BxEventBus.Stream.on('dataChannelCreated', payload => {
+    const { dataChannel } = payload;
+    if (dataChannel?.label !== 'message') {
         return;
     }
 
@@ -288,25 +288,28 @@ window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, e => {
             return;
         }
 
-        // Get xboxTitleId from message
-        if (msg.data.includes('/titleinfo')) {
-            const json = JSON.parse(JSON.parse(msg.data).content);
-            const xboxTitleId = parseInt(json.titleid, 16);
-            STATES.currentStream.xboxTitleId = xboxTitleId;
+        if (!msg.data.includes('/titleinfo')) {
+            return;
+        }
 
-            // Get titleSlug for Remote Play
-            if (STATES.remotePlay.isPlaying) {
-                STATES.currentStream.titleSlug = 'remote-play';
-                if (json.focused) {
-                    const productTitle = await XboxApi.getProductTitle(xboxTitleId);
-                    if (productTitle) {
-                        STATES.currentStream.titleSlug = productTitleToSlug(productTitle);
-                    }
+        // Get xboxTitleId from message
+        const json = JSON.parse(JSON.parse(msg.data).content);
+        const xboxTitleId = parseInt(json.titleid, 16);
+        STATES.currentStream.xboxTitleId = xboxTitleId;
+
+        // Get titleSlug for Remote Play
+        if (STATES.remotePlay.isPlaying) {
+            STATES.currentStream.titleSlug = 'remote-play';
+            if (json.focused) {
+                const productTitle = await XboxApi.getProductTitle(xboxTitleId);
+                if (productTitle) {
+                    STATES.currentStream.titleSlug = productTitleToSlug(productTitle);
                 }
             }
         }
     });
 });
+
 
 function unload() {
     if (!STATES.isPlaying) {

@@ -20,7 +20,11 @@ type ScriptEvents = {
     deviceVibrationUpdated: {};
 
     // GH pages
-    listForcedNativeMkbUpdated: {};
+    listForcedNativeMkbUpdated: {
+        data: {
+            data: any;
+        };
+    };
 };
 
 type StreamEvents = {
@@ -29,6 +33,8 @@ type StreamEvents = {
     statePlaying: { $video?: HTMLVideoElement };
     stateStopped: {};
     stateError: {};
+
+    dataChannelCreated: { dataChannel: RTCDataChannel };
 };
 
 export class BxEventBus<TEvents extends Record<string, any>> {

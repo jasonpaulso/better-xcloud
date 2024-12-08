@@ -141,7 +141,7 @@ function deepClone(obj) {
 }
 var BxEvent;
 ((BxEvent) => {
- BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.DATA_CHANNEL_CREATED = "bx-data-channel-created", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.XCLOUD_DIALOG_SHOWN = "bx-xcloud-dialog-shown", BxEvent.XCLOUD_DIALOG_DISMISSED = "bx-xcloud-dialog-dismissed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
+ BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.XCLOUD_DIALOG_SHOWN = "bx-xcloud-dialog-shown", BxEvent.XCLOUD_DIALOG_DISMISSED = "bx-xcloud-dialog-dismissed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
  function dispatch(target, eventName, data) {
   if (!target) return;
   if (!eventName) {
@@ -207,7 +207,9 @@ class GhPagesUtils {
  static getNativeMkbCustomList(update = !1) {
   let key = "BetterXcloud.GhPages.ForceNativeMkb";
   update && NATIVE_FETCH(GhPagesUtils.getUrl("native-mkb/ids.json")).then((response) => response.json()).then((json) => {
-   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), BxEventBus.Script.emit("listForcedNativeMkbUpdated", {});
+   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), BxEventBus.Script.emit("listForcedNativeMkbUpdated", {
+     data: json
+    });
   });
   let info = JSON.parse(window.localStorage.getItem(key) || "{}");
   if (info.$schemaVersion !== 1) return window.localStorage.removeItem(key), {};
@@ -1540,8 +1542,8 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    default: [],
    unsupported: !AppInterface && UserAgent.isMobile(),
    ready: (setting) => {
-    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), BxEventBus.Script.on("listForcedNativeMkbUpdated", () => {
-      setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList();
+    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), BxEventBus.Script.on("listForcedNativeMkbUpdated", (payload) => {
+      setting.multipleOptions = payload.data.data;
      });
    },
    params: {
@@ -6121,9 +6123,7 @@ function patchRtcPeerConnection() {
  let nativeCreateDataChannel = RTCPeerConnection.prototype.createDataChannel;
  RTCPeerConnection.prototype.createDataChannel = function() {
   let dataChannel = nativeCreateDataChannel.apply(this, arguments);
-  return BxEvent.dispatch(window, BxEvent.DATA_CHANNEL_CREATED, {
-   dataChannel
-  }), dataChannel;
+  return BxEventBus.Stream.emit("dataChannelCreated", { dataChannel }), dataChannel;
  };
  let maxVideoBitrateDef = getPrefDefinition("stream.video.maxBitrate"), maxVideoBitrate = getPref("stream.video.maxBitrate"), codec = getPref("stream.video.codecProfile");
  if (codec !== "default" || maxVideoBitrate < maxVideoBitrateDef.max) {
@@ -6443,18 +6443,17 @@ BxEventBus.Stream.on("statePlaying", (payload) => {
 BxEventBus.Stream.on("stateError", () => {
  BxEventBus.Stream.emit("stateStopped", {});
 });
-window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e) => {
- let dataChannel = e.dataChannel;
- if (!dataChannel || dataChannel.label !== "message") return;
+BxEventBus.Stream.on("dataChannelCreated", (payload) => {
+ let { dataChannel } = payload;
+ if (dataChannel?.label !== "message") return;
  dataChannel.addEventListener("message", async (msg) => {
   if (msg.origin === "better-xcloud" || typeof msg.data !== "string") return;
-  if (msg.data.includes("/titleinfo")) {
-   let json = JSON.parse(JSON.parse(msg.data).content), xboxTitleId = parseInt(json.titleid, 16);
-   if (STATES.currentStream.xboxTitleId = xboxTitleId, STATES.remotePlay.isPlaying) {
-    if (STATES.currentStream.titleSlug = "remote-play", json.focused) {
-     let productTitle = await XboxApi.getProductTitle(xboxTitleId);
-     if (productTitle) STATES.currentStream.titleSlug = productTitleToSlug(productTitle);
-    }
+  if (!msg.data.includes("/titleinfo")) return;
+  let json = JSON.parse(JSON.parse(msg.data).content), xboxTitleId = parseInt(json.titleid, 16);
+  if (STATES.currentStream.xboxTitleId = xboxTitleId, STATES.remotePlay.isPlaying) {
+   if (STATES.currentStream.titleSlug = "remote-play", json.focused) {
+    let productTitle = await XboxApi.getProductTitle(xboxTitleId);
+    if (productTitle) STATES.currentStream.titleSlug = productTitleToSlug(productTitle);
    }
   }
  });

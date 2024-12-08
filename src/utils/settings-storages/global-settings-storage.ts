@@ -432,8 +432,8 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 if (!setting.unsupported) {
                     (setting as any).multipleOptions = GhPagesUtils.getNativeMkbCustomList(true);
 
-                    BxEventBus.Script.on('listForcedNativeMkbUpdated', () => {
-                        (setting as any).multipleOptions = GhPagesUtils.getNativeMkbCustomList();
+                    BxEventBus.Script.on('listForcedNativeMkbUpdated', payload => {
+                        (setting as any).multipleOptions = payload.data.data;
                     });
                 }
             },

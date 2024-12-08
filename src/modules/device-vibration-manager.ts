@@ -1,5 +1,4 @@
 import { AppInterface, STATES } from "@utils/global";
-import { BxEvent } from "@utils/bx-event";
 import { StreamSettings } from "@/utils/stream-settings";
 import { BxEventBus } from "@/utils/bx-event-bus";
 
@@ -38,8 +37,8 @@ export class DeviceVibrationManager {
     constructor() {
         this.boundOnMessage = this.onMessage.bind(this);
 
-        window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, e => {
-            const dataChannel = (e as any).dataChannel as RTCDataChannel;
+        BxEventBus.Stream.on('dataChannelCreated', payload => {
+            const { dataChannel } = payload;
             if (dataChannel?.label === 'input') {
                 this.reset();
 

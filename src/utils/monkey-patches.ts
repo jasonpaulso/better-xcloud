@@ -76,10 +76,7 @@ export function patchRtcPeerConnection() {
         // @ts-ignore
         const dataChannel = nativeCreateDataChannel.apply(this, arguments);
 
-        BxEvent.dispatch(window, BxEvent.DATA_CHANNEL_CREATED, {
-                dataChannel: dataChannel,
-            });
-
+        BxEventBus.Stream.emit('dataChannelCreated', { dataChannel });
         return dataChannel;
     }
 

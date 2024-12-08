@@ -16,8 +16,6 @@ export namespace BxEvent {
     export const REMOTE_PLAY_READY = 'bx-remote-play-ready';
     export const REMOTE_PLAY_FAILED = 'bx-remote-play-failed';
 
-    export const DATA_CHANNEL_CREATED = 'bx-data-channel-created';
-
     export const GAME_BAR_ACTION_ACTIVATED = 'bx-game-bar-action-activated';
     export const MICROPHONE_STATE_CHANGED = 'bx-microphone-state-changed';
     export const SPEAKER_STATE_CHANGED = 'bx-speaker-state-changed';
