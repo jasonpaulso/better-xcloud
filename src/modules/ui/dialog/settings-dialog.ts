@@ -436,7 +436,7 @@ export class SettingsDialog extends NavigationDialog {
             onCreated: (setting: SettingTabSectionItem, $elm: HTMLElement) => {
                 const $range = $elm.querySelector<HTMLInputElement>('input[type=range')!;
 
-                BxEventBus.Script.on('settingChanged', payload => {
+                BxEventBus.Script.on('setting.changed', payload => {
                     const { storageKey, settingKey, settingValue } = payload;
                     if (storageKey === StorageKey.GLOBAL && settingKey === PrefKey.AUDIO_VOLUME) {
                         $range.value = settingValue;

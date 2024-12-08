@@ -518,7 +518,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         window.addEventListener('keyup', this.onKeyboardEvent);
 
         window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged);
-        window.addEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this.onDialogShown);
+        BxEventBus.Script.on('dialog.shown', this.onDialogShown);
 
         if (AppInterface) {
             // Android app doesn't support PointerLock API so we need to use a different method
@@ -569,7 +569,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         }
 
         window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged);
-        window.removeEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this.onDialogShown);
+        BxEventBus.Script.off('dialog.shown', this.onDialogShown);
 
         this.mouseDataProvider?.destroy();
 
@@ -640,7 +640,7 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     static setupEvents() {
         if (isFullVersion()) {
-            BxEventBus.Stream.on('statePlaying', () => {
+            BxEventBus.Stream.on('state.playing', () => {
                 if (STATES.currentStream.titleInfo?.details.hasMkbSupport) {
                     // Enable native MKB in Android app
                     NativeMkbHandler.getInstance()?.init();
@@ -650,7 +650,7 @@ export class EmulatedMkbHandler extends MkbHandler {
             });
 
             if (EmulatedMkbHandler.isAllowed()) {
-                BxEventBus.Script.on('mkbSettingUpdated', () => {
+                BxEventBus.Script.on('mkb.setting.updated', () => {
                     EmulatedMkbHandler.getInstance()?.refreshPresetData();
                 });
             }

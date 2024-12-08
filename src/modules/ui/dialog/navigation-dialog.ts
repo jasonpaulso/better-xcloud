@@ -2,6 +2,7 @@ import { GamepadKey } from "@/enums/gamepad";
 import { PrefKey } from "@/enums/pref-keys";
 import { VIRTUAL_GAMEPAD_ID } from "@/modules/mkb/mkb-handler";
 import { BxEvent } from "@/utils/bx-event";
+import { BxEventBus } from "@/utils/bx-event-bus";
 import { BxLogger } from "@/utils/bx-logger";
 import { CE, isElementVisible } from "@/utils/html";
 import { setNearby } from "@/utils/navigation-utils";
@@ -439,7 +440,7 @@ export class NavigationDialogManager {
     show(dialog: NavigationDialog, configs={}, clearStack=false) {
         this.clearGamepadHoldingInterval();
 
-        BxEvent.dispatch(window, BxEvent.XCLOUD_DIALOG_SHOWN);
+        BxEventBus.Script.emit('dialog.shown', {});
 
         // Stop xCloud's navigation polling
         window.BX_EXPOSED.disableGamepadPolling = true;
@@ -479,7 +480,7 @@ export class NavigationDialogManager {
         // Unlock scroll bar
         document.body.classList.remove('bx-no-scroll');
 
-        BxEvent.dispatch(window, BxEvent.XCLOUD_DIALOG_DISMISSED);
+        BxEventBus.Script.emit('dialog.dismissed', {});
 
         // Hide content
         this.$overlay.classList.add('bx-gone');

@@ -93,7 +93,7 @@ export class BaseSettingsStore {
         this.settings[key] = this.validateValue('get', key, value);
         this.saveSettings();
 
-        emitEvent && BxEventBus.Script.emit('settingChanged', {
+        emitEvent && BxEventBus.Script.emit('setting.changed', {
             storageKey: this.storageKey,
             settingKey: key,
             settingValue: value,

@@ -110,7 +110,7 @@ export class StreamSettings {
         }
 
         StreamSettings.settings.deviceVibrationIntensity = intensity;
-        BxEventBus.Script.emit('deviceVibrationUpdated', {});
+        BxEventBus.Script.emit('deviceVibration.updated', {});
     }
 
     static async refreshMkbSettings() {
@@ -148,7 +148,7 @@ export class StreamSettings {
         settings.mkbPreset = converted;
 
         setPref(PrefKey.MKB_P1_MAPPING_PRESET_ID, orgPreset.id);
-        BxEventBus.Script.emit('mkbSettingUpdated', {});
+        BxEventBus.Script.emit('mkb.setting.updated', {});
     }
 
     static async refreshKeyboardShortcuts() {
@@ -159,7 +159,7 @@ export class StreamSettings {
             settings.keyboardShortcuts = null;
 
             setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId);
-            BxEventBus.Script.emit('keyboardShortcutsUpdated', {});
+            BxEventBus.Script.emit('keyboardShortcuts.updated', {});
             return;
         }
 
@@ -179,7 +179,7 @@ export class StreamSettings {
         settings.keyboardShortcuts = converted;
 
         setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, orgPreset.id);
-        BxEventBus.Script.emit('keyboardShortcutsUpdated', {});
+        BxEventBus.Script.emit('keyboardShortcuts.updated', {});
     }
 
     static async refreshAllSettings() {

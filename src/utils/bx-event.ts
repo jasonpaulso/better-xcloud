@@ -28,10 +28,6 @@ export namespace BxEvent {
 
     export const NAVIGATION_FOCUS_CHANGED = 'bx-nav-focus-changed';
 
-    // xCloud Dialog events
-    export const XCLOUD_DIALOG_SHOWN = 'bx-xcloud-dialog-shown';
-    export const XCLOUD_DIALOG_DISMISSED = 'bx-xcloud-dialog-dismissed';
-
     export const XCLOUD_GUIDE_MENU_SHOWN = 'bx-xcloud-guide-menu-shown';
 
     export const XCLOUD_POLLING_MODE_CHANGED = 'bx-xcloud-polling-mode-changed';

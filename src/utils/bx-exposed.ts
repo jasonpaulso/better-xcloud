@@ -139,7 +139,7 @@ export const BxExposed = {
 
         // Save this info in STATES
         STATES.currentStream.titleInfo = titleInfo;
-        BxEventBus.Script.emit('titleInfoReady', {});
+        BxEventBus.Script.emit('titleInfo.ready', {});
 
         return titleInfo;
     },

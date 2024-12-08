@@ -1,26 +1,30 @@
 import type { PrefKey, StorageKey } from "@/enums/pref-keys";
 import { BX_FLAGS } from "./bx-flags";
 import { BxLogger } from "./bx-logger";
+import { AppInterface } from "./global";
 
 type EventCallback<T = any> = (payload: T) => void;
 
 type ScriptEvents = {
-    xcloudServerReady: {};
-    xcloudServerUnavailable: {};
+    'xcloud.server.ready': {};
+    'xcloud.server.unavailable': {};
 
-    titleInfoReady: {};
-    settingChanged: {
+    'dialog.shown': {},
+    'dialog.dismissed': {},
+
+    'titleInfo.ready': {};
+    'setting.changed': {
         storageKey: StorageKey;
         settingKey: PrefKey;
         settingValue: any;
     };
 
-    mkbSettingUpdated: {};
-    keyboardShortcutsUpdated: {};
-    deviceVibrationUpdated: {};
+    'mkb.setting.updated': {};
+    'keyboardShortcuts.updated': {};
+    'deviceVibration.updated': {};
 
     // GH pages
-    listForcedNativeMkbUpdated: {
+    'list.forcedNativeMkb.updated': {
         data: {
             data: any;
         };
@@ -28,20 +32,25 @@ type ScriptEvents = {
 };
 
 type StreamEvents = {
-    stateLoading: {};
-    stateStarting: {};
-    statePlaying: { $video?: HTMLVideoElement };
-    stateStopped: {};
-    stateError: {};
+    'state.loading': {};
+    'state.starting': {};
+    'state.playing': { $video?: HTMLVideoElement };
+    'state.stopped': {};
+    'state.error': {};
 
     dataChannelCreated: { dataChannel: RTCDataChannel };
 };
 
 export class BxEventBus<TEvents extends Record<string, any>> {
     private listeners: Map<keyof TEvents, Set<EventCallback<any>>> = new Map();
+    private group: string;
 
-    static readonly Script = new BxEventBus<ScriptEvents>();
-    static readonly Stream = new BxEventBus<StreamEvents>();
+    static readonly Script = new BxEventBus<ScriptEvents>('script');
+    static readonly Stream = new BxEventBus<StreamEvents>('stream');
+
+    constructor(group: string) {
+        this.group = group;
+    }
 
     on<K extends keyof TEvents>(event: K, callback: EventCallback<TEvents[K]>): void {
         if (!this.listeners.has(event)) {
@@ -50,6 +59,16 @@ export class BxEventBus<TEvents extends Record<string, any>> {
         this.listeners.get(event)!.add(callback);
 
         BX_FLAGS.Debug && BxLogger.warning('EventBus', 'on', event, callback);
+    }
+
+    once<K extends keyof TEvents>(event: string, callback: EventCallback<TEvents[K]>): void {
+        const wrapper = (...args: any[]) => {
+            // @ts-ignore
+            callback(...args);
+            this.off(event, wrapper);
+        };
+
+        this.on(event, wrapper);
     }
 
     off<K extends keyof TEvents>(event: K, callback: EventCallback<TEvents[K]> | null): void {
@@ -77,12 +96,13 @@ export class BxEventBus<TEvents extends Record<string, any>> {
     }
 
     emit<K extends keyof TEvents>(event: K, payload: TEvents[K]): void {
-        BX_FLAGS.Debug && BxLogger.warning('EventBus', 'emit', event, payload);
-
         const callbacks = this.listeners.get(event) || [];
         for (const callback of callbacks) {
             callback(payload);
         }
+
+        AppInterface && AppInterface.onEventBus(this.group + '.' + (event as string));
+        BX_FLAGS.Debug && BxLogger.warning('EventBus', 'emit', event, payload);
     }
 }
 

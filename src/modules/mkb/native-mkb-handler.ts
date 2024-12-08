@@ -12,6 +12,7 @@ import { KeyHelper } from "./key-helper";
 import { StreamSettings } from "@/utils/stream-settings";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { NativeMkbMode } from "@/enums/pref-values";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 type NativeMouseData = {
     X: number,
@@ -100,10 +101,6 @@ export class NativeMkbHandler extends MkbHandler {
                 this.onKeyboardEvent(event as KeyboardEvent);
                 break;
 
-            case BxEvent.XCLOUD_DIALOG_SHOWN:
-                this.onDialogShown();
-                break;
-
             case BxEvent.POINTER_LOCK_REQUESTED:
                 this.onPointerLockRequested(event);
                 break;
@@ -135,10 +132,10 @@ export class NativeMkbHandler extends MkbHandler {
 
         window.addEventListener('keyup', this);
 
-        window.addEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this);
         window.addEventListener(BxEvent.POINTER_LOCK_REQUESTED, this);
         window.addEventListener(BxEvent.POINTER_LOCK_EXITED, this);
         window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this);
+        BxEventBus.Script.on('dialog.shown', this.onDialogShown);
 
         const shortcutKey = StreamSettings.findKeyboardShortcut(ShortcutAction.MKB_TOGGLE);
         if (shortcutKey) {
@@ -199,10 +196,10 @@ export class NativeMkbHandler extends MkbHandler {
 
         window.removeEventListener('keyup', this);
 
-        window.removeEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this);
         window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this);
         window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this);
         window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this);
+        BxEventBus.Script.off('dialog.shown', this.onDialogShown);
 
         this.waitForMouseData(false);
         document.pointerLockElement && document.exitPointerLock();

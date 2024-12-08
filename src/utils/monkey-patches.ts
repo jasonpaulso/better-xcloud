@@ -28,7 +28,7 @@ export function patchVideoApi() {
         } satisfies StreamPlayerOptions;
         STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref(PrefKey.VIDEO_PLAYER_TYPE), playerOptions);
 
-        BxEventBus.Stream.emit('statePlaying', {
+        BxEventBus.Stream.emit('state.playing', {
             $video: this,
         })
     }

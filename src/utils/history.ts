@@ -33,5 +33,5 @@ export function onHistoryChanged(e: PopStateEvent) {
     LoadingScreen.reset();
     window.setTimeout(HeaderSection.watchHeader, 2000);
 
-    BxEventBus.Stream.emit('stateStopped', {});
+    BxEventBus.Stream.emit('state.stopped', {});
 }

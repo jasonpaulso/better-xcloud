@@ -243,7 +243,7 @@ export class StreamUiHandler {
 
                     // Error Page: .PureErrorPage.ErrorScreen
                     if (className.includes('PureErrorPage')) {
-                        BxEventBus.Stream.emit('stateError', {});
+                        BxEventBus.Stream.emit('state.error', {});
                         return;
                     }
 

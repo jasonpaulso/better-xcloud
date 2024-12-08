@@ -310,7 +310,7 @@ export class StreamStatsCollector {
     }
 
     static setupEvents() {
-        BxEventBus.Stream.on('statePlaying', () => {
+        BxEventBus.Stream.on('state.playing', () => {
             StreamStatsCollector.getInstance().reset();
         });
     }

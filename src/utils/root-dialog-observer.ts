@@ -1,5 +1,4 @@
 import { GuideMenu } from "@/modules/ui/guide-menu";
-import { BxEvent } from "./bx-event";
 import { BX_FLAGS } from "./bx-flags";
 import { BxLogger } from "./bx-logger";
 import { BxIcon } from "./bx-icon";
@@ -7,6 +6,7 @@ import { AppInterface } from "./global";
 import { createButton, ButtonStyle } from "./html";
 import { t } from "./translation";
 import { parseDetailsPath } from "./utils";
+import { BxEventBus } from "./bx-event-bus";
 
 
 export class RootDialogObserver {
@@ -85,7 +85,7 @@ export class RootDialogObserver {
                 const shown = !!($root.firstElementChild && $root.firstElementChild.childElementCount > 0);
                 if (shown !== beingShown) {
                     beingShown = shown;
-                    BxEvent.dispatch(window, shown ? BxEvent.XCLOUD_DIALOG_SHOWN : BxEvent.XCLOUD_DIALOG_DISMISSED);
+                    BxEventBus.Script.emit(shown ? 'dialog.shown' : 'dialog.dismissed', {});
                 }
             }
         });

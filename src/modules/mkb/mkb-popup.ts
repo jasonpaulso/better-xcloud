@@ -24,7 +24,7 @@ export class MkbPopup {
     constructor() {
         this.render();
 
-        BxEventBus.Script.on('keyboardShortcutsUpdated', () => {
+        BxEventBus.Script.on('keyboardShortcuts.updated', () => {
             const $newButton = this.createActivateButton();
             this.$btnActivate.replaceWith($newButton);
             this.$btnActivate = $newButton;

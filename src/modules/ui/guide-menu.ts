@@ -7,6 +7,7 @@ import { t } from "@/utils/translation";
 import { SettingsDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 export enum GuideMenuTab {
     HOME = 'home',
@@ -40,9 +41,9 @@ export class GuideMenu {
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
                 onClick: () => {
                     // Wait until the Guide dialog is closed
-                    window.addEventListener(BxEvent.XCLOUD_DIALOG_DISMISSED, e => {
+                    BxEventBus.Script.once('xcloudDialogDismissed', () => {
                         setTimeout(() => SettingsDialog.getInstance().show(), 50);
-                    }, { once: true });
+                    });
 
                     // Close all xCloud's dialogs
                     this.closeGuideMenu();

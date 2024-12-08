@@ -191,9 +191,7 @@ window.addEventListener('popstate', onHistoryChanged);
 window.history.pushState = patchHistoryMethod('pushState');
 window.history.replaceState = patchHistoryMethod('replaceState');
 
-BxEventBus.Script.on('xcloudServerUnavailable', () => {
-    BxEventBus.Script.off('xcloudServerUnavailable', null);
-
+BxEventBus.Script.once('xcloudServerUnavailable', () => {
     STATES.supportedRegion = false;
     window.setTimeout(HeaderSection.watchHeader, 2000);
 
@@ -204,12 +202,12 @@ BxEventBus.Script.on('xcloudServerUnavailable', () => {
     }
 });
 
-BxEventBus.Script.on('xcloudServerReady', () => {
+BxEventBus.Script.on('xcloud.server.ready', () => {
     STATES.isSignedIn = true;
     window.setTimeout(HeaderSection.watchHeader, 2000);
 });
 
-BxEventBus.Stream.on('stateLoading', () => {
+BxEventBus.Stream.on('state.loading', () => {
     // Get title ID for screenshot's name
     if (window.location.pathname.includes('/launch/') && STATES.currentStream.titleInfo) {
         STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
@@ -219,9 +217,9 @@ BxEventBus.Stream.on('stateLoading', () => {
 });
 
 // Setup loading screen
-getPref(PrefKey.LOADING_SCREEN_GAME_ART) && BxEventBus.Script.on('titleInfoReady', LoadingScreen.setup);
+getPref(PrefKey.LOADING_SCREEN_GAME_ART) && BxEventBus.Script.on('titleInfo.ready', LoadingScreen.setup);
 
-BxEventBus.Stream.on('stateStarting', () => {
+BxEventBus.Stream.on('state.starting', () => {
     // Hide loading screen
     LoadingScreen.hide();
 
@@ -235,7 +233,7 @@ BxEventBus.Stream.on('stateStarting', () => {
     }
 });
 
-BxEventBus.Stream.on('statePlaying', payload => {
+BxEventBus.Stream.on('state.playing', payload => {
     window.BX_STREAM_SETTINGS = StreamSettings.settings;
     StreamSettings.refreshAllSettings();
 
@@ -265,8 +263,8 @@ BxEventBus.Stream.on('statePlaying', payload => {
     updateVideoPlayer();
 });
 
-BxEventBus.Stream.on('stateError', () => {
-    BxEventBus.Stream.emit('stateStopped', {});
+BxEventBus.Stream.on('state.error', () => {
+    BxEventBus.Stream.emit('state.stopped', {});
 });
 
 isFullVersion() && window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, e => {
@@ -346,9 +344,9 @@ function unload() {
     }
 }
 
-BxEventBus.Stream.on('stateStopped', unload);
+BxEventBus.Stream.on('state.stopped', unload);
 window.addEventListener('pagehide', e => {
-    BxEventBus.Stream.emit('stateStopped', {});
+    BxEventBus.Stream.emit('state.stopped', {});
 });
 
 isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {

@@ -230,7 +230,7 @@ export class StreamStats {
     }
 
     static setupEvents() {
-        BxEventBus.Stream.on('statePlaying', () => {
+        BxEventBus.Stream.on('state.playing', () => {
             const PREF_STATS_QUICK_GLANCE = getPref(PrefKey.STATS_QUICK_GLANCE_ENABLED);
             const PREF_STATS_SHOW_WHEN_PLAYING = getPref(PrefKey.STATS_SHOW_WHEN_PLAYING);
 

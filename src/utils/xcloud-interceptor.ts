@@ -52,7 +52,7 @@ export class XcloudInterceptor {
         const response = await NATIVE_FETCH(request, init);
         if (response.status !== 200) {
             // Unsupported region
-            BxEventBus.Script.emit('xcloudServerUnavailable', {});
+            BxEventBus.Script.emit('xcloud.server.unavailable', {});
             return response;
         }
 
@@ -89,7 +89,7 @@ export class XcloudInterceptor {
             STATES.serverRegions[region.name] = Object.assign({}, region);
         }
 
-        BxEventBus.Script.emit('xcloudServerReady', {});
+        BxEventBus.Script.emit('xcloud.server.ready', {});
 
         const preferredRegion = getPreferredServerRegion();
         if (preferredRegion && preferredRegion in STATES.serverRegions) {
@@ -107,7 +107,7 @@ export class XcloudInterceptor {
     }
 
     private static async handlePlay(request: RequestInfo | URL, init?: RequestInit) {
-        BxEventBus.Stream.emit('stateLoading', {});
+        BxEventBus.Stream.emit('state.loading', {});
 
         const PREF_STREAM_TARGET_RESOLUTION = getPref<StreamResolution>(PrefKey.STREAM_RESOLUTION);
         const PREF_STREAM_PREFERRED_LOCALE = getPref<StreamPreferredLocale>(PrefKey.STREAM_PREFERRED_LOCALE);
@@ -189,7 +189,7 @@ export class XcloudInterceptor {
             return response;
         }
 
-        BxEventBus.Stream.emit('stateStarting', {});
+        BxEventBus.Stream.emit('state.starting', {});
 
         const obj = JSON.parse(text);
         let overrides = JSON.parse(obj.clientStreamingConfigOverrides || '{}') || {};

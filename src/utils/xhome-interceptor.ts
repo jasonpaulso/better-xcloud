@@ -36,7 +36,7 @@ export class XhomeInterceptor {
     }
 
     private static async handleConfiguration(request: Request | URL) {
-        BxEventBus.Stream.emit('stateStarting', {});
+        BxEventBus.Stream.emit('state.starting', {});
 
         const response = await NATIVE_FETCH(request);
         const obj = await response.clone().json();
@@ -125,7 +125,7 @@ export class XhomeInterceptor {
     }
 
     private static async handlePlay(request: RequestInfo | URL) {
-        BxEventBus.Stream.emit('stateLoading', {});
+        BxEventBus.Stream.emit('state.loading', {});
 
         const clone = (request as Request).clone();
         const body = await clone.json();
