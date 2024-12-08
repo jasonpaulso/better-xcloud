@@ -960,9 +960,10 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
-    ...(getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+    ...(AppInterface && getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
         'exposeInputSink',
+        'disableAbsoluteMouse',
     ] : []),
 
     'modifyPreloadedState',
@@ -1075,7 +1076,6 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     ...(AppInterface && getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'patchMouseAndKeyboardEnabled',
         'disableNativeRequestPointerLock',
-        'disableAbsoluteMouse',
     ] : []),
 ]);
 

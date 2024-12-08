@@ -2886,7 +2886,7 @@ class NativeMkbHandler extends MkbHandler {
   this.resetMouseInput(), this.enabled = !1, this.updateInputConfigurationAsync(!1), this.waitForMouseData(!0);
  }
  destroy() {
-  this.pointerClient?.stop(), window.removeEventListener("keyup", this), window.removeEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this), window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this), this.waitForMouseData(!1);
+  this.pointerClient?.stop(), this.stop(), window.removeEventListener("keyup", this), window.removeEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this), window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this), this.waitForMouseData(!1), document.pointerLockElement && document.exitPointerLock();
  }
  handleMouseMove(data) {
   this.sendMouseInput({
@@ -4552,9 +4552,10 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   return str = str.replace(text, text + "return;"), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
- ...getPref("nativeMkb.mode") === "on" ? [
+ ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
   "enableNativeMkb",
-  "exposeInputSink"
+  "exposeInputSink",
+  "disableAbsoluteMouse"
  ] : [],
  "modifyPreloadedState",
  "optimizeGameSlugGenerator",
@@ -4628,8 +4629,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  ] : [],
  ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
   "patchMouseAndKeyboardEnabled",
-  "disableNativeRequestPointerLock",
-  "disableAbsoluteMouse"
+  "disableNativeRequestPointerLock"
  ] : []
 ]), PRODUCT_DETAIL_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  AppInterface && "detectProductDetailPage"

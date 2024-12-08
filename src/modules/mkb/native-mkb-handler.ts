@@ -195,6 +195,8 @@ export class NativeMkbHandler extends MkbHandler {
 
     destroy(): void {
         this.pointerClient?.stop();
+        this.stop();
+
         window.removeEventListener('keyup', this);
 
         window.removeEventListener(BxEvent.XCLOUD_DIALOG_SHOWN, this);
@@ -203,6 +205,7 @@ export class NativeMkbHandler extends MkbHandler {
         window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this);
 
         this.waitForMouseData(false);
+        document.pointerLockElement && document.exitPointerLock();
     }
 
     handleMouseMove(data: MkbMouseMove): void {
