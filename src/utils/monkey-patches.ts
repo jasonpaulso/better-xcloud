@@ -210,7 +210,9 @@ export function patchMeControl() {
  * Disable Adobe Audience Manager (AAM)
  */
 export function disableAdobeAudienceManager() {
-    window.adobe = Object.freeze({});
+    Object.defineProperty(window, 'adobe', {
+        get() { return Object.freeze({}); }
+    });
 }
 
 /**
