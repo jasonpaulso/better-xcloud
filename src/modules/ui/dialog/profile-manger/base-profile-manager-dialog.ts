@@ -16,6 +16,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
 
     private $presets!: HTMLSelectElement;
     private $header!: HTMLElement;
+    private $defaultNote!: HTMLElement;
     protected $content!: HTMLElement;
 
     private $btnRename!: HTMLButtonElement;
@@ -36,6 +37,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
         const isDefaultPreset = this.currentPresetId <= 0;
         this.$btnRename.disabled = isDefaultPreset;
         this.$btnDelete.disabled = isDefaultPreset;
+        this.$defaultNote.classList.toggle('bx-gone', !isDefaultPreset);
     }
 
     private async renderPresetsList() {
@@ -121,7 +123,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
             createButton({
                 icon: BxIcon.NEW,
                 title: t('new'),
-                style: ButtonStyle.FOCUSABLE,
+                style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
                 onClick: async (e) => {
                     const newName = this.promptNewName(t('new'));
                     if (!newName) {
@@ -140,7 +142,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
             createButton({
                 icon: BxIcon.COPY,
                 title: t('copy'),
-                style: ButtonStyle.FOCUSABLE,
+                style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
                 onClick: async (e) => {
                     const preset = this.allPresets.data[this.currentPresetId];
 
@@ -168,7 +170,10 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
                     onClick: e => this.hide(),
                 }),
             ),
-            $header,
+            CE('div', {},
+                $header,
+                this.$defaultNote = CE('div', { class: 'bx-default-preset-note bx-gone' }, t('default-preset-note')),
+            ),
             CE('div', { class: 'bx-dialog-content bx-hide-scroll-bar' }, this.$content),
         );
     }

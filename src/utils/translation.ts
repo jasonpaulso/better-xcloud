@@ -94,6 +94,7 @@ const Texts = {
     "deadzone-counterweight": "Deadzone counterweight",
     "decrease": "Decrease",
     "default": "Default",
+    "default-preset-note": "You can't modify default presets. Create a new one to customize it.",
     "delete": "Delete",
     "device": "Device",
     "device-unsupported-touch": "Your device doesn't have touch support",
