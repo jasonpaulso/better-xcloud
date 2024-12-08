@@ -143,7 +143,7 @@ function deepClone(obj) {
 }
 var BxEvent;
 ((BxEvent) => {
- BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.TITLE_INFO_READY = "bx-title-info-ready", BxEvent.SETTINGS_CHANGED = "bx-settings-changed", BxEvent.STREAM_LOADING = "bx-stream-loading", BxEvent.STREAM_STARTING = "bx-stream-starting", BxEvent.STREAM_STARTED = "bx-stream-started", BxEvent.STREAM_PLAYING = "bx-stream-playing", BxEvent.STREAM_STOPPED = "bx-stream-stopped", BxEvent.STREAM_ERROR_PAGE = "bx-stream-error-page", BxEvent.STREAM_WEBRTC_CONNECTED = "bx-stream-webrtc-connected", BxEvent.STREAM_WEBRTC_DISCONNECTED = "bx-stream-webrtc-disconnected", BxEvent.MKB_UPDATED = "bx-mkb-updated", BxEvent.KEYBOARD_SHORTCUTS_UPDATED = "bx-keyboard-shortcuts-updated", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.XCLOUD_SERVERS_READY = "bx-servers-ready", BxEvent.XCLOUD_SERVERS_UNAVAILABLE = "bx-servers-unavailable", BxEvent.DATA_CHANNEL_CREATED = "bx-data-channel-created", BxEvent.DEVICE_VIBRATION_CHANGED = "bx-device-vibration-changed", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED = "bx-gh-pages-force-native-mkb-updated", BxEvent.XCLOUD_DIALOG_SHOWN = "bx-xcloud-dialog-shown", BxEvent.XCLOUD_DIALOG_DISMISSED = "bx-xcloud-dialog-dismissed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
+ BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.DATA_CHANNEL_CREATED = "bx-data-channel-created", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.XCLOUD_DIALOG_SHOWN = "bx-xcloud-dialog-shown", BxEvent.XCLOUD_DIALOG_DISMISSED = "bx-xcloud-dialog-dismissed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
  function dispatch(target, eventName, data) {
   if (!target) return;
   if (!eventName) {
@@ -185,6 +185,33 @@ var GamepadKeyName = {
  202: ["Right Stick Left", "↽"],
  203: ["Right Stick Right", "⇁"]
 };
+class EventBus {
+ listeners = new Map;
+ static Script = new EventBus;
+ static Stream = new EventBus;
+ on(event, callback) {
+  if (!this.listeners.has(event)) this.listeners.set(event, new Set);
+  this.listeners.get(event).add(callback), BX_FLAGS.Debug && BxLogger.warning("EventBus", "on", event, callback);
+ }
+ off(event, callback) {
+  if (BX_FLAGS.Debug && BxLogger.warning("EventBus", "off", event, callback), !callback) {
+   this.listeners.delete(event);
+   return;
+  }
+  let callbacks = this.listeners.get(event);
+  if (!callbacks) return;
+  if (callbacks.delete(callback), callbacks.size === 0) this.listeners.delete(event);
+ }
+ offAll() {
+  this.listeners.clear();
+ }
+ emit(event, payload) {
+  BX_FLAGS.Debug && BxLogger.warning("EventBus", "emit", event, payload);
+  let callbacks = this.listeners.get(event) || [];
+  for (let callback of callbacks)
+   callback(payload);
+ }
+}
 class GhPagesUtils {
  static fetchLatestCommit() {
   NATIVE_FETCH("https://api.github.com/repos/redphx/better-xcloud/branches/gh-pages", {
@@ -208,7 +235,7 @@ class GhPagesUtils {
  static getNativeMkbCustomList(update = !1) {
   let key = "BetterXcloud.GhPages.ForceNativeMkb";
   update && NATIVE_FETCH(GhPagesUtils.getUrl("native-mkb/ids.json")).then((response) => response.json()).then((json) => {
-   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), BxEvent.dispatch(window, BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED);
+   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), EventBus.Script.emit("listForcedNativeMkbUpdated", {});
   });
   let info = JSON.parse(window.localStorage.getItem(key) || "{}");
   if (info.$schemaVersion !== 1) return window.localStorage.removeItem(key), {};
@@ -953,7 +980,7 @@ class BaseSettingsStore {
   return this.settings[key];
  }
  setSetting(key, value, emitEvent = !1) {
-  return value = this.validateValue("set", key, value), this.settings[key] = this.validateValue("get", key, value), this.saveSettings(), emitEvent && BxEvent.dispatch(window, BxEvent.SETTINGS_CHANGED, {
+  return value = this.validateValue("set", key, value), this.settings[key] = this.validateValue("get", key, value), this.saveSettings(), emitEvent && EventBus.Script.emit("settingChanged", {
    storageKey: this.storageKey,
    settingKey: key,
    settingValue: value
@@ -1587,7 +1614,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    default: [],
    unsupported: !AppInterface && UserAgent.isMobile(),
    ready: (setting) => {
-    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), window.addEventListener(BxEvent.GH_PAGES_FORCE_NATIVE_MKB_UPDATED, (e) => {
+    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), EventBus.Script.on("listForcedNativeMkbUpdated", () => {
       setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList();
      });
    },
@@ -2250,7 +2277,7 @@ class StreamStatsCollector {
   } catch (e) {}
  }
  static setupEvents() {
-  window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
+  EventBus.Stream.on("statePlaying", () => {
    StreamStatsCollector.getInstance().reset();
   });
  }
@@ -2388,7 +2415,7 @@ class StreamStats {
   this.refreshStyles(), document.documentElement.appendChild(this.$container);
  }
  static setupEvents() {
-  window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
+  EventBus.Stream.on("statePlaying", () => {
    let PREF_STATS_QUICK_GLANCE = getPref("stats.quickGlance.enabled"), PREF_STATS_SHOW_WHEN_PLAYING = getPref("stats.showWhenPlaying"), streamStats = StreamStats.getInstance();
    if (PREF_STATS_SHOW_WHEN_PLAYING) streamStats.start();
    else if (PREF_STATS_QUICK_GLANCE) streamStats.quickGlanceSetup(), !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(!0);
@@ -2688,7 +2715,7 @@ class StreamSettings {
   if (!STATES.browser.capabilities.deviceVibration) return;
   let mode = StreamSettings.getPref("deviceVibration.mode"), intensity = 0;
   if (mode === "on" || mode === "auto" && !hasGamepad()) intensity = StreamSettings.getPref("deviceVibration.intensity") / 100;
-  StreamSettings.settings.deviceVibrationIntensity = intensity, BxEvent.dispatch(window, BxEvent.DEVICE_VIBRATION_CHANGED);
+  StreamSettings.settings.deviceVibrationIntensity = intensity, EventBus.Script.emit("deviceVibrationUpdated", {});
  }
  static async refreshMkbSettings() {
   let settings = StreamSettings.settings, presetId = StreamSettings.getPref("mkb.p1.preset.mappingId"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
@@ -2702,12 +2729,12 @@ class StreamSettings {
     if (typeof keyName === "string") converted.mapping[keyName] = buttonIndex;
   }
   let mouse = converted.mouse;
-  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkb.p1.preset.mappingId", orgPreset.id), BxEvent.dispatch(window, BxEvent.MKB_UPDATED);
+  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkb.p1.preset.mappingId", orgPreset.id), EventBus.Script.emit("mkbSettingUpdated", {});
  }
  static async refreshKeyboardShortcuts() {
   let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcuts.preset.inGameId");
   if (presetId === 0) {
-   settings.keyboardShortcuts = null, setPref("keyboardShortcuts.preset.inGameId", presetId), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
+   settings.keyboardShortcuts = null, setPref("keyboardShortcuts.preset.inGameId", presetId), EventBus.Script.emit("keyboardShortcutsUpdated", {});
    return;
   }
   let orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
@@ -2715,7 +2742,7 @@ class StreamSettings {
    let info = orgPresetData[action], key = `${info.code}:${info.modifiers || 0}`;
    converted[key] = action;
   }
-  settings.keyboardShortcuts = converted, setPref("keyboardShortcuts.preset.inGameId", orgPreset.id), BxEvent.dispatch(window, BxEvent.KEYBOARD_SHORTCUTS_UPDATED);
+  settings.keyboardShortcuts = converted, setPref("keyboardShortcuts.preset.inGameId", orgPreset.id), EventBus.Script.emit("keyboardShortcutsUpdated", {});
  }
  static async refreshAllSettings() {
   window.BX_STREAM_SETTINGS = StreamSettings.settings, await StreamSettings.refreshControllerSettings(), await StreamSettings.refreshMkbSettings(), await StreamSettings.refreshKeyboardShortcuts();
@@ -2742,7 +2769,7 @@ class MkbPopup {
  $btnActivate;
  mkbHandler;
  constructor() {
-  this.render(), window.addEventListener(BxEvent.KEYBOARD_SHORTCUTS_UPDATED, (e) => {
+  this.render(), EventBus.Script.on("keyboardShortcutsUpdated", () => {
    let $newButton = this.createActivateButton();
    this.$btnActivate.replaceWith($newButton), this.$btnActivate = $newButton;
   });
@@ -3237,11 +3264,11 @@ class EmulatedMkbHandler extends MkbHandler {
   this.waitForMouseData(!0), this.mouseDataProvider?.stop();
  }
  static setupEvents() {
-  if (window.addEventListener(BxEvent.STREAM_PLAYING, () => {
+  if (EventBus.Stream.on("statePlaying", () => {
    if (STATES.currentStream.titleInfo?.details.hasMkbSupport) NativeMkbHandler.getInstance()?.init();
    else EmulatedMkbHandler.getInstance()?.init();
   }), EmulatedMkbHandler.isAllowed())
-   window.addEventListener(BxEvent.MKB_UPDATED, () => {
+   EventBus.Script.on("mkbSettingUpdated", () => {
     EmulatedMkbHandler.getInstance()?.refreshPresetData();
    });
  }
@@ -4756,7 +4783,6 @@ class BxNumberStepper extends HTMLInputElement {
  $btnInc;
  $btnDec;
  $range;
- onInput;
  onRangeInput;
  onClick;
  onPointerUp;
@@ -4783,7 +4809,7 @@ class BxNumberStepper extends HTMLInputElement {
    class: options.hideSlider ? "bx-focusable" : "",
    tabindex: options.hideSlider ? 0 : -1
   }, "+")));
-  if (self.$text = $text, self.$btnInc = $btnInc, self.$btnDec = $btnDec, self.onChange = onChange, self.onInput = BxNumberStepper.onInput.bind(self), self.onRangeInput = BxNumberStepper.onRangeInput.bind(self), self.onClick = BxNumberStepper.onClick.bind(self), self.onPointerUp = BxNumberStepper.onPointerUp.bind(self), self.onPointerDown = BxNumberStepper.onPointerDown.bind(self), self.controlMin = min, self.controlMax = max, self.isHolding = !1, self.options = options, self.uiMin = options.reverse ? -max : min, self.uiMax = options.reverse ? -min : max, self.steps = Math.max(options.steps || 1, 1), BxNumberStepper.setValue.call(self, value), options.disabled) return $btnInc.disabled = !0, $btnInc.classList.add("bx-inactive"), $btnDec.disabled = !0, $btnDec.classList.add("bx-inactive"), self.disabled = !0, self;
+  if (self.$text = $text, self.$btnInc = $btnInc, self.$btnDec = $btnDec, self.onChange = onChange, self.onRangeInput = BxNumberStepper.onRangeInput.bind(self), self.onClick = BxNumberStepper.onClick.bind(self), self.onPointerUp = BxNumberStepper.onPointerUp.bind(self), self.onPointerDown = BxNumberStepper.onPointerDown.bind(self), self.controlMin = min, self.controlMax = max, self.isHolding = !1, self.options = options, self.uiMin = options.reverse ? -max : min, self.uiMax = options.reverse ? -min : max, self.steps = Math.max(options.steps || 1, 1), BxNumberStepper.setValue.call(self, value), options.disabled) return $btnInc.disabled = !0, $btnInc.classList.add("bx-inactive"), $btnDec.disabled = !0, $btnDec.classList.add("bx-inactive"), self.disabled = !0, self;
   if ($range = CE("input", {
    id: `bx_inp_setting_${key}`,
    type: "range",
@@ -4792,7 +4818,7 @@ class BxNumberStepper extends HTMLInputElement {
    value: options.reverse ? -value : value,
    step: self.steps,
    tabindex: 0
-  }), self.$range = $range, options.hideSlider && $range.classList.add("bx-gone"), $range.addEventListener("input", self.onRangeInput), self.addEventListener("input", self.onInput), self.appendChild($range), options.ticks || options.exactTicks) {
+  }), self.$range = $range, options.hideSlider && $range.classList.add("bx-gone"), self.addEventListener("input", self.onRangeInput), self.appendChild($range), options.ticks || options.exactTicks) {
    let markersId = `markers-${key}`, $markers = CE("datalist", { id: markersId });
    if ($range.setAttribute("list", markersId), options.exactTicks) {
     let start = Math.max(Math.floor(min / options.exactTicks), 1) * options.exactTicks;
@@ -4822,9 +4848,6 @@ class BxNumberStepper extends HTMLInputElement {
  }
  static normalizeValue(value) {
   return value = parseInt(value), value = Math.max(this.controlMin, value), value = Math.min(this.controlMax, value), value;
- }
- static onInput(e) {
-  BxEvent.dispatch(this.$range, "input");
  }
  static onRangeInput(e) {
   let value = parseInt(e.target.value);
@@ -6116,12 +6139,9 @@ class SettingsDialog extends NavigationDialog {
    },
    onCreated: (setting, $elm) => {
     let $range = $elm.querySelector("input[type=range");
-    window.addEventListener(BxEvent.SETTINGS_CHANGED, (e) => {
-     let { storageKey, settingKey, settingValue } = e;
-     if (storageKey !== "BetterXcloud" || settingKey !== "audio.volume") return;
-     $range.value = settingValue, BxEvent.dispatch($range, "input", {
-      ignoreOnChange: !0
-     });
+    EventBus.Script.on("settingChanged", (payload) => {
+     let { storageKey, settingKey, settingValue } = payload;
+     if (storageKey === "BetterXcloud" && settingKey === "audio.volume") $range.value = settingValue, BxEvent.dispatch($range, "input", { ignoreOnChange: !0 });
     });
    }
   }]
@@ -6968,7 +6988,7 @@ var BxExposed = {
    if (touchControllerAvailability === "off") supportedInputTypes = supportedInputTypes.filter((i) => i !== "CustomTouchOverlay" && i !== "GenericTouch"), titleInfo.details.supportedTabs = [];
    if (titleInfo.details.hasNativeTouchSupport = supportedInputTypes.includes("NativeTouch"), titleInfo.details.hasTouchSupport = titleInfo.details.hasNativeTouchSupport || supportedInputTypes.includes("CustomTouchOverlay") || supportedInputTypes.includes("GenericTouch"), !titleInfo.details.hasTouchSupport && touchControllerAvailability === "all") titleInfo.details.hasFakeTouchSupport = !0, supportedInputTypes.push("GenericTouch");
   }
-  return titleInfo.details.supportedInputTypes = supportedInputTypes, STATES.currentStream.titleInfo = titleInfo, BxEvent.dispatch(window, BxEvent.TITLE_INFO_READY), titleInfo;
+  return titleInfo.details.supportedInputTypes = supportedInputTypes, STATES.currentStream.titleInfo = titleInfo, EventBus.Script.emit("titleInfoReady", {}), titleInfo;
  },
  setupGainNode: ($media, audioStream) => {
   if ($media instanceof HTMLAudioElement) $media.muted = !0, $media.addEventListener("playing", (e) => {
@@ -7290,7 +7310,7 @@ class XhomeInterceptor {
   return NATIVE_FETCH(request);
  }
  static async handleConfiguration(request) {
-  BxEvent.dispatch(window, BxEvent.STREAM_STARTING);
+  EventBus.Stream.emit("stateStarting", {});
   let response = await NATIVE_FETCH(request), obj = await response.clone().json(), serverDetails = obj.serverDetails, pairs = [
    ["ipAddress", "port"],
    ["ipV4Address", "ipV4Port"],
@@ -7335,7 +7355,7 @@ class XhomeInterceptor {
   }), NATIVE_FETCH(request);
  }
  static async handlePlay(request) {
-  BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
+  EventBus.Stream.emit("stateLoading", {});
   let body = await request.clone().json(), newRequest = new Request(request, {
    body: JSON.stringify(body)
   });
@@ -7744,7 +7764,7 @@ class XcloudInterceptor {
    ip && request.headers.set("X-Forwarded-For", ip);
   }
   let response = await NATIVE_FETCH(request, init);
-  if (response.status !== 200) return BxEvent.dispatch(window, BxEvent.XCLOUD_SERVERS_UNAVAILABLE), response;
+  if (response.status !== 200) return EventBus.Script.emit("xcloudServerUnavailable", {}), response;
   let obj = await response.clone().json();
   RemotePlayManager.getInstance()?.setXcloudToken(obj.gsToken);
   let serverRegex = /\/\/(\w+)\./, serverExtra = XcloudInterceptor.SERVER_EXTRA_INFO, region;
@@ -7756,7 +7776,7 @@ class XcloudInterceptor {
     else region.contintent = "other";
    region.shortName = shortName.toUpperCase(), STATES.serverRegions[region.name] = Object.assign({}, region);
   }
-  BxEvent.dispatch(window, BxEvent.XCLOUD_SERVERS_READY);
+  EventBus.Script.emit("xcloudServerReady", {});
   let preferredRegion = getPreferredServerRegion();
   if (preferredRegion && preferredRegion in STATES.serverRegions) {
    let tmp = Object.assign({}, STATES.serverRegions[preferredRegion]);
@@ -7765,7 +7785,7 @@ class XcloudInterceptor {
   return STATES.gsToken = obj.gsToken, response.json = () => Promise.resolve(obj), response;
  }
  static async handlePlay(request, init) {
-  BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
+  EventBus.Stream.emit("stateLoading", {});
   let PREF_STREAM_TARGET_RESOLUTION = getPref("stream.video.resolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("stream.locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
   for (let regionName in STATES.serverRegions) {
    let region = STATES.serverRegions[regionName];
@@ -7803,7 +7823,7 @@ class XcloudInterceptor {
    else TouchController.enable();
   let response = await NATIVE_FETCH(request, init), text = await response.clone().text();
   if (!text.length) return response;
-  BxEvent.dispatch(window, BxEvent.STREAM_STARTING);
+  EventBus.Stream.emit("stateStarting", {});
   let obj = JSON.parse(text), overrides = JSON.parse(obj.clientStreamingConfigOverrides || "{}") || {};
   overrides.inputConfiguration = overrides.inputConfiguration || {}, overrides.inputConfiguration.enableVibration = !0;
   let overrideMkb = null;
@@ -8070,7 +8090,7 @@ function onHistoryChanged(e) {
  window.setTimeout(RemotePlayManager.detect, 10);
  let $settings = document.querySelector(".bx-settings-container");
  if ($settings) $settings.classList.add("bx-gone");
- NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
+ NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), EventBus.Stream.emit("stateStopped", {});
 }
 function setCodecPreferences(sdp, preferredCodec) {
  let h264Pattern = /a=fmtp:(\d+).*profile-level-id=([0-9a-f]{6})/g, profilePrefix = preferredCodec === "high" ? "4d" : preferredCodec === "low" ? "420" : "42e", preferredCodecIds = [], matches = sdp.matchAll(h264Pattern) || [];
@@ -8427,7 +8447,7 @@ function patchVideoApi() {
    contrast: getPref("video.contrast"),
    brightness: getPref("video.brightness")
   };
-  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("video.player.type"), playerOptions), BxEvent.dispatch(window, BxEvent.STREAM_PLAYING, {
+  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("video.player.type"), playerOptions), EventBus.Stream.emit("statePlaying", {
    $video: this
   });
  }, nativePlay = HTMLMediaElement.prototype.play;
@@ -8983,7 +9003,7 @@ class StreamUiHandler {
      if (!($elm instanceof HTMLElement)) return;
      let className = $elm.className || "";
      if (className.includes("PureErrorPage")) {
-      BxEvent.dispatch(window, BxEvent.STREAM_ERROR_PAGE);
+      EventBus.Stream.emit("stateError", {});
       return;
      }
      if (className.startsWith("StreamMenu-module__container")) {
@@ -9111,9 +9131,7 @@ class DeviceVibrationManager {
   this.boundOnMessage = this.onMessage.bind(this), window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e) => {
    let dataChannel = e.dataChannel;
    if (dataChannel?.label === "input") this.reset(), this.dataChannel = dataChannel, this.setupDataChannel();
-  }), window.addEventListener(BxEvent.DEVICE_VIBRATION_CHANGED, (e) => {
-   this.setupDataChannel();
-  });
+  }), EventBus.Script.on("deviceVibrationUpdated", () => this.setupDataChannel());
  }
  setupDataChannel() {
   if (!this.dataChannel) return;
@@ -9203,37 +9221,37 @@ window.addEventListener(BxEvent.POPSTATE, onHistoryChanged);
 window.addEventListener("popstate", onHistoryChanged);
 window.history.pushState = patchHistoryMethod("pushState");
 window.history.replaceState = patchHistoryMethod("replaceState");
-window.addEventListener(BxEvent.XCLOUD_SERVERS_UNAVAILABLE, (e) => {
- if (STATES.supportedRegion = !1, window.setTimeout(HeaderSection.watchHeader, 2000), document.querySelector("div[class^=UnsupportedMarketPage-module__container]")) SettingsDialog.getInstance().show();
-}, { once: !0 });
-window.addEventListener(BxEvent.XCLOUD_SERVERS_READY, (e) => {
+EventBus.Script.on("xcloudServerUnavailable", () => {
+ if (EventBus.Script.off("xcloudServerUnavailable", null), STATES.supportedRegion = !1, window.setTimeout(HeaderSection.watchHeader, 2000), document.querySelector("div[class^=UnsupportedMarketPage-module__container]")) SettingsDialog.getInstance().show();
+});
+EventBus.Script.on("xcloudServerReady", () => {
  STATES.isSignedIn = !0, window.setTimeout(HeaderSection.watchHeader, 2000);
 });
-window.addEventListener(BxEvent.STREAM_LOADING, (e) => {
+EventBus.Stream.on("stateLoading", () => {
  if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
  else STATES.currentStream.titleSlug = "remote-play";
 });
-getPref("loadingScreen.gameArt.show") && window.addEventListener(BxEvent.TITLE_INFO_READY, LoadingScreen.setup);
-window.addEventListener(BxEvent.STREAM_STARTING, (e) => {
+getPref("loadingScreen.gameArt.show") && EventBus.Script.on("titleInfoReady", LoadingScreen.setup);
+EventBus.Stream.on("stateStarting", () => {
  LoadingScreen.hide();
  {
   let cursorHider = MouseCursorHider.getInstance();
   if (cursorHider) cursorHider.start(), cursorHider.hide();
  }
 });
-window.addEventListener(BxEvent.STREAM_PLAYING, (e) => {
+EventBus.Stream.on("statePlaying", (payload) => {
  window.BX_STREAM_SETTINGS = StreamSettings.settings, StreamSettings.refreshAllSettings(), STATES.isPlaying = !0, StreamUiHandler.observe();
  {
   let gameBar = GameBar.getInstance();
   if (gameBar) gameBar.reset(), gameBar.enable(), gameBar.showBar();
   KeyboardShortcutHandler.getInstance().start();
-  let $video = e.$video;
+  let $video = payload.$video;
   ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), getPref("localCoOp.enabled") && BxExposed.toggleLocalCoOp(getPref("localCoOp.enabled"));
  }
  updateVideoPlayer();
 });
-window.addEventListener(BxEvent.STREAM_ERROR_PAGE, (e) => {
- BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
+EventBus.Stream.on("stateError", () => {
+ EventBus.Stream.emit("stateStopped", {});
 });
 window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, (e) => {
  if (e.component === "product-detail") ProductDetailsPage.injectButtons();
@@ -9258,9 +9276,9 @@ function unload() {
  if (!STATES.isPlaying) return;
  KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayer?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable();
 }
-window.addEventListener(BxEvent.STREAM_STOPPED, unload);
+EventBus.Stream.on("stateStopped", unload);
 window.addEventListener("pagehide", (e) => {
- BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
+ EventBus.Stream.emit("stateStopped", {});
 });
 window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, (e) => {
  ScreenshotManager.getInstance().takeScreenshot();

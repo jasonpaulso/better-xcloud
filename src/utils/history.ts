@@ -3,14 +3,15 @@ import { LoadingScreen } from "@modules/loading-screen";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { HeaderSection } from "@/modules/ui/header";
 import { NavigationDialogManager } from "@/modules/ui/dialog/navigation-dialog";
+import { EventBus } from "./event-bus";
 
 export function patchHistoryMethod(type: 'pushState' | 'replaceState') {
     const orig = window.history[type];
 
     return function(...args: any[]) {
         BxEvent.dispatch(window, BxEvent.POPSTATE, {
-                arguments: args,
-            });
+            arguments: args,
+        });
 
         // @ts-ignore
         return orig.apply(this, arguments);
@@ -38,5 +39,5 @@ export function onHistoryChanged(e: PopStateEvent) {
     LoadingScreen.reset();
     window.setTimeout(HeaderSection.watchHeader, 2000);
 
-    BxEvent.dispatch(window, BxEvent.STREAM_STOPPED);
+    EventBus.Stream.emit('stateStopped', {});
 }

@@ -4,7 +4,6 @@ import { LoadingScreen } from "@modules/loading-screen";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { StreamBadges } from "@modules/stream/stream-badges";
 import { TouchController } from "@modules/touch-controller";
-import { BxEvent } from "./bx-event";
 import { NATIVE_FETCH, BX_FLAGS } from "./bx-flags";
 import { STATES } from "./global";
 import { generateMsDeviceInfo, getOsNameFromResolution, patchIceCandidates } from "./network";
@@ -13,6 +12,7 @@ import { BypassServerIps } from "@/enums/bypass-servers";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import { NativeMkbMode, StreamResolution, TouchControllerMode } from "@/enums/pref-values";
+import { EventBus } from "./event-bus";
 
 export class XcloudInterceptor {
     private static readonly SERVER_EXTRA_INFO: Record<string, [string, ServerContinent]> = {
@@ -52,7 +52,7 @@ export class XcloudInterceptor {
         const response = await NATIVE_FETCH(request, init);
         if (response.status !== 200) {
             // Unsupported region
-            BxEvent.dispatch(window, BxEvent.XCLOUD_SERVERS_UNAVAILABLE);
+            EventBus.Script.emit('xcloudServerUnavailable', {});
             return response;
         }
 
@@ -89,7 +89,7 @@ export class XcloudInterceptor {
             STATES.serverRegions[region.name] = Object.assign({}, region);
         }
 
-        BxEvent.dispatch(window, BxEvent.XCLOUD_SERVERS_READY);
+        EventBus.Script.emit('xcloudServerReady', {});
 
         const preferredRegion = getPreferredServerRegion();
         if (preferredRegion && preferredRegion in STATES.serverRegions) {
@@ -107,7 +107,7 @@ export class XcloudInterceptor {
     }
 
     private static async handlePlay(request: RequestInfo | URL, init?: RequestInit) {
-        BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
+        EventBus.Stream.emit('stateLoading', {});
 
         const PREF_STREAM_TARGET_RESOLUTION = getPref<StreamResolution>(PrefKey.STREAM_RESOLUTION);
         const PREF_STREAM_PREFERRED_LOCALE = getPref<StreamPreferredLocale>(PrefKey.STREAM_PREFERRED_LOCALE);
@@ -189,7 +189,7 @@ export class XcloudInterceptor {
             return response;
         }
 
-        BxEvent.dispatch(window, BxEvent.STREAM_STARTING);
+        EventBus.Stream.emit('stateStarting', {});
 
         const obj = JSON.parse(text);
         let overrides = JSON.parse(obj.clientStreamingConfigOverrides || '{}') || {};
