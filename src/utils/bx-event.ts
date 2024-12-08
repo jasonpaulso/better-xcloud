@@ -67,4 +67,4 @@ export namespace BxEvent {
     }
 }
 
-(window as any).BxEvent = BxEvent;
+window.BxEvent = BxEvent;

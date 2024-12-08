@@ -442,7 +442,7 @@ export class NavigationDialogManager {
         BxEvent.dispatch(window, BxEvent.XCLOUD_DIALOG_SHOWN);
 
         // Stop xCloud's navigation polling
-        (window as any).BX_EXPOSED.disableGamepadPolling = true;
+        window.BX_EXPOSED.disableGamepadPolling = true;
 
         // Lock scroll bar
         document.body.classList.add('bx-no-scroll');
@@ -504,7 +504,7 @@ export class NavigationDialogManager {
         this.unmountCurrentDialog();
 
         // Enable xCloud's navigation polling
-        (window as any).BX_EXPOSED.disableGamepadPolling = false;
+        window.BX_EXPOSED.disableGamepadPolling = false;
 
         // Show the last dialog in dialogs stack
         if (this.dialogsStack.length) {

@@ -268,7 +268,7 @@ export class TouchController {
 
     static setup() {
         // Function for testing touch control
-        (window as any).testTouchLayout = (layout: any) => {
+        window.testTouchLayout = (layout: any) => {
             const { touchLayoutManager } = window.BX_EXPOSED;
 
             touchLayoutManager && touchLayoutManager.changeLayoutForScope({

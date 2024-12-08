@@ -2,6 +2,8 @@ import type { BxExposed } from "@/utils/bx-exposed";
 import type { AllPresets, ControllerShortcutPresetRecord } from "./presets";
 import type { PrefKey } from "@/enums/pref-keys";
 import type { StreamSettings, type StreamSettingsData } from "@/utils/stream-settings";
+import type { BxEvent } from "@/utils/bx-event";
+import type { BxLogger } from "@/utils/bx-logger";
 
 export {};
 
@@ -24,5 +26,22 @@ declare global {
 
         BX_REMOTE_PLAY_CONFIG: BxStates.remotePlay.config;
         BX_STREAM_SETTINGS: StreamSettingsData;
+
+        BX_FETCH: typeof window['fetch'];
+
+        BxEvent: typeof BxEvent;
+        BxLogger: typeof BxLogger;
+        localRedirect: (path: stringn) => void;
+        testTouchLayout: (layout: any) => void;
+
+        chrome?: any;
+
+        // xCloud properties
+        xbcUser?: {
+            isSignedIn: boolean;
+        };
+        MSA: any;
+        MeControl: any;
+        adobe: any;
     }
 }

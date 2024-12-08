@@ -201,8 +201,8 @@ export function patchMeControl() {
         },
     };
 
-    (window as any).MSA = new Proxy(MSA, MsaHandler);
-    (window as any).MeControl = new Proxy(MeControl, MeControlHandler);
+    window.MSA = new Proxy(MSA, MsaHandler);
+    window.MeControl = new Proxy(MeControl, MeControlHandler);
 }
 
 
@@ -210,7 +210,7 @@ export function patchMeControl() {
  * Disable Adobe Audience Manager (AAM)
  */
 export function disableAdobeAudienceManager() {
-    (window as any).adobe = Object.freeze({});
+    window.adobe = Object.freeze({});
 }
 
 /**

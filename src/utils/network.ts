@@ -189,7 +189,7 @@ export function interceptHttpRequests() {
         '2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io',
     ];
 
-    (window as any).BX_FETCH = window.fetch = async (request: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    window.BX_FETCH = window.fetch = async (request: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
         let url = (typeof request === 'string') ? request : (request as Request).url;
 
         // Check blocked URLs

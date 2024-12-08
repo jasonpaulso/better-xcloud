@@ -10,7 +10,7 @@ type UserAgentConfig = {
 const SMART_TV_UNIQUE_ID = 'FC4A1DA2-711C-4E9C-BC7F-047AF8A672EA';
 
 let CHROMIUM_VERSION = '125.0.0.0';
-if (!!(window as any).chrome || window.navigator.userAgent.includes('Chrome')) {
+if (!!window.chrome || window.navigator.userAgent.includes('Chrome')) {
     // Get Chromium version in the original User-Agent value
     const match = window.navigator.userAgent.match(/\s(?:Chrome|Edg)\/([\d\.]+)/);
     if (match) {

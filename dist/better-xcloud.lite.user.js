@@ -5742,10 +5742,7 @@ function patchHistoryMethod(type) {
 }
 function onHistoryChanged(e) {
  if (e && e.arguments && e.arguments[0] && e.arguments[0].origin === "better-xcloud") return;
- window.setTimeout(RemotePlayManager.detect, 10);
- let $settings = document.querySelector(".bx-settings-container");
- if ($settings) $settings.classList.add("bx-gone");
- NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), EventBus.Stream.emit("stateStopped", {});
+ window.setTimeout(RemotePlayManager.detect, 10), NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), EventBus.Stream.emit("stateStopped", {});
 }
 function setCodecPreferences(sdp, preferredCodec) {
  let h264Pattern = /a=fmtp:(\d+).*profile-level-id=([0-9a-f]{6})/g, profilePrefix = preferredCodec === "high" ? "4d" : preferredCodec === "low" ? "420" : "42e", preferredCodecIds = [], matches = sdp.matchAll(h264Pattern) || [];

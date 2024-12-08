@@ -16,4 +16,4 @@ export class BxLogger {
     }
 }
 
-(window as any).BxLogger = BxLogger;
+window.BxLogger = BxLogger;

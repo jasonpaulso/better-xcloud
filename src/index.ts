@@ -160,7 +160,7 @@ document.addEventListener('readystatechange', e => {
         return;
     }
 
-    STATES.isSignedIn = !!((window as any).xbcUser?.isSignedIn);
+    STATES.isSignedIn = !!window.xbcUser?.isSignedIn;
 
     if (STATES.isSignedIn) {
         // Preload Remote Play
