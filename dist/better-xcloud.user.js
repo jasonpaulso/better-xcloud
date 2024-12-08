@@ -4068,7 +4068,6 @@ window.dispatchEvent(new GamepadEvent('gamepadconnected', { gamepad }));
 }
 };
 window.BX_EXPOSED.toggleLocalCoOp = this.toggleLocalCoOp.bind(this);`;
-var set_currently_focused_interactable_default = `e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, { element: e });`;
 var remote_play_enable_default = `connectMode: window.BX_REMOTE_PLAY_CONFIG ? "xhome-connect" : "cloud-connect",
 remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFIG.serverId) || '',`;
 var remote_play_keep_alive_default = `const msg = JSON.parse(e);
@@ -4246,8 +4245,8 @@ logFunc(logTag, '//', logMessage);
   if (index < 0) return !1;
   let endIndex = str.indexOf("},", index), newSettings = JSON.stringify(FeatureGates);
   newSettings = newSettings.substring(1, newSettings.length - 1);
-  let newCode = newSettings;
-  return str = str.substring(0, endIndex) + "," + newCode + str.substring(endIndex), str;
+  let newCode = "," + newSettings;
+  return str = PatcherUtils.insertAt(str, endIndex, newCode), str;
  },
  disableGamepadDisconnectedScreen(str) {
   let index = str.indexOf('"GamepadDisconnected_Title",');
@@ -4533,7 +4532,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  patchSetCurrentlyFocusedInteractable(str) {
   let index = str.indexOf(".setCurrentlyFocusedInteractable=(");
   if (index < 0) return !1;
-  return index = str.indexOf("{", index) + 1, str = str.substring(0, index) + set_currently_focused_interactable_default + str.substring(index), str;
+  return index = str.indexOf("{", index) + 1, str = PatcherUtils.insertAt(str, index, "e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, { element: e });"), str;
  },
  detectProductDetailPage(str) {
   let index = str.indexOf('{location:"ProductDetailPage",');
@@ -8538,7 +8537,11 @@ function patchMeControl() {
  window.MSA = new Proxy(MSA, MsaHandler), window.MeControl = new Proxy(MeControl, MeControlHandler);
 }
 function disableAdobeAudienceManager() {
- window.adobe = Object.freeze({});
+ Object.defineProperty(window, "adobe", {
+  get() {
+   return Object.freeze({});
+  }
+ });
 }
 function patchCanvasContext() {
  let nativeGetContext = HTMLCanvasElement.prototype.getContext;

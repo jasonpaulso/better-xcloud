@@ -6192,7 +6192,11 @@ function patchMeControl() {
  window.MSA = new Proxy(MSA, MsaHandler), window.MeControl = new Proxy(MeControl, MeControlHandler);
 }
 function disableAdobeAudienceManager() {
- window.adobe = Object.freeze({});
+ Object.defineProperty(window, "adobe", {
+  get() {
+   return Object.freeze({});
+  }
+ });
 }
 function patchCanvasContext() {
  let nativeGetContext = HTMLCanvasElement.prototype.getContext;

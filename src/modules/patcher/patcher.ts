@@ -7,7 +7,6 @@ import { BxEvent } from "@/utils/bx-event";
 import codeControllerShortcuts from "./patches/controller-shortcuts.js" with { type: "text" };
 import codeExposeStreamSession from "./patches/expose-stream-session.js" with { type: "text" };
 import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "text" };
-import codeSetCurrentlyFocusedInteractable from "./patches/set-currently-focused-interactable.js" with { type: "text" };
 import codeRemotePlayEnable from "./patches/remote-play-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
@@ -258,9 +257,8 @@ logFunc(logTag, '//', logMessage);
         let newSettings = JSON.stringify(FeatureGates);
         newSettings = newSettings.substring(1, newSettings.length - 1);
 
-        const newCode = newSettings;
-
-        str = str.substring(0, endIndex) + ',' + newCode + str.substring(endIndex);
+        const newCode = ',' + newSettings;
+        str = PatcherUtils.insertAt(str, endIndex, newCode);
         return str;
     },
 
@@ -852,7 +850,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
         }
 
         index = str.indexOf('{', index) + 1;
-        str = str.substring(0, index) + codeSetCurrentlyFocusedInteractable + str.substring(index);
+        str = PatcherUtils.insertAt(str, index, 'e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, { element: e });');
         return str;
     },
 
