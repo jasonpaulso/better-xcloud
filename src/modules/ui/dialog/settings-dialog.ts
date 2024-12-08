@@ -318,7 +318,7 @@ export class SettingsDialog extends NavigationDialog {
                 pref: PrefKey.USER_AGENT_PROFILE,
                 multiLines: true,
                 onCreated: (setting, $control) => {
-                    const defaultUserAgent = (window.navigator as any).orgUserAgent || window.navigator.userAgent;
+                    const defaultUserAgent = window.navigator.orgUserAgent || window.navigator.userAgent;
 
                     const $inpCustomUserAgent = CE<HTMLInputElement>('input', {
                         type: 'text',

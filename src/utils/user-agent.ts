@@ -59,7 +59,7 @@ export class UserAgent {
     }
 
     static getDefault(): string {
-        return (window.navigator as any).orgUserAgent || window.navigator.userAgent;
+        return window.navigator.orgUserAgent || window.navigator.userAgent;
     }
 
     static get(profile: UserAgentProfile): string {
@@ -123,12 +123,12 @@ export class UserAgent {
 
         // Clear data of navigator.userAgentData, force xCloud to detect browser based on navigator.userAgent
         if ('userAgentData' in window.navigator) {
-            (window.navigator as any).orgUserAgentData = (window.navigator as any).userAgentData;
+            window.navigator.orgUserAgentData = window.navigator.userAgentData;
             Object.defineProperty(window.navigator, 'userAgentData', {});
         }
 
         // Override navigator.userAgent
-        (window.navigator as any).orgUserAgent = window.navigator.userAgent;
+        window.navigator.orgUserAgent = window.navigator.userAgent;
         Object.defineProperty(window.navigator, 'userAgent', {
             value: newUserAgent,
         });

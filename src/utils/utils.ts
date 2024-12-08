@@ -44,7 +44,7 @@ export function checkForUpdate() {
  * Disable PWA requirement on Safari
  */
 export function disablePwa() {
-    const userAgent = ((window.navigator as any).orgUserAgent || window.navigator.userAgent || '').toLowerCase();
+    const userAgent = (window.navigator.orgUserAgent || window.navigator.userAgent || '').toLowerCase();
     if (!userAgent) {
         return;
     }

@@ -45,4 +45,9 @@ declare global {
         MeControl: any;
         adobe: any;
     }
+
+    interface Navigator {
+        orgUserAgent?: string;
+        orgUserAgentData?: any;
+    }
 }
