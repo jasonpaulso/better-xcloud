@@ -44,12 +44,21 @@ type StreamEvents = {
 export class BxEventBus<TEvents extends Record<string, any>> {
     private listeners: Map<keyof TEvents, Set<EventCallback<any>>> = new Map();
     private group: string;
+    private appJsInterfaces: { [key in keyof TEvents]?: string };
 
-    static readonly Script = new BxEventBus<ScriptEvents>('script');
-    static readonly Stream = new BxEventBus<StreamEvents>('stream');
+    static readonly Script = new BxEventBus<ScriptEvents>('script', {
+        'dialog.shown': 'onDialogShown',
+        'dialog.dismissed': 'onDialogDismissed',
+    });
+    static readonly Stream = new BxEventBus<StreamEvents>('stream', {
+        'state.loading': 'onStreamPlaying',
+        'state.playing': 'onStreamPlaying',
+        'state.stopped': 'onStreamStopped',
+    });
 
-    constructor(group: string) {
+    constructor(group: string, appJsInterfaces: { [key in keyof TEvents]?: string }) {
         this.group = group;
+        this.appJsInterfaces = appJsInterfaces;
     }
 
     on<K extends keyof TEvents>(event: K, callback: EventCallback<TEvents[K]>): void {
@@ -101,7 +110,16 @@ export class BxEventBus<TEvents extends Record<string, any>> {
             callback(payload);
         }
 
-        AppInterface && AppInterface.onEventBus(this.group + '.' + (event as string));
+        // Call method inside Android app
+        if (AppInterface) {
+            if (event in this.appJsInterfaces) {
+                const method = this.appJsInterfaces[event];
+                AppInterface[method] && AppInterface[method]();
+            } else {
+                AppInterface.onEventBus(this.group + '.' + (event as string));
+            }
+        }
+
         BX_FLAGS.Debug && BxLogger.warning('EventBus', 'emit', event, payload);
     }
 }

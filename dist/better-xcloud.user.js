@@ -188,10 +188,18 @@ var GamepadKeyName = {
 class BxEventBus {
  listeners = new Map;
  group;
- static Script = new BxEventBus("script");
- static Stream = new BxEventBus("stream");
- constructor(group) {
-  this.group = group;
+ appJsInterfaces;
+ static Script = new BxEventBus("script", {
+  "dialog.shown": "onDialogShown",
+  "dialog.dismissed": "onDialogDismissed"
+ });
+ static Stream = new BxEventBus("stream", {
+  "state.loading": "onStreamPlaying",
+  "state.playing": "onStreamPlaying",
+  "state.stopped": "onStreamStopped"
+ });
+ constructor(group, appJsInterfaces) {
+  this.group = group, this.appJsInterfaces = appJsInterfaces;
  }
  on(event, callback) {
   if (!this.listeners.has(event)) this.listeners.set(event, new Set);
@@ -219,7 +227,11 @@ class BxEventBus {
   let callbacks = this.listeners.get(event) || [];
   for (let callback of callbacks)
    callback(payload);
-  AppInterface && AppInterface.onEventBus(this.group + "." + event), BX_FLAGS.Debug && BxLogger.warning("EventBus", "emit", event, payload);
+  if (AppInterface) if (event in this.appJsInterfaces) {
+    let method = this.appJsInterfaces[event];
+    AppInterface[method] && AppInterface[method]();
+   } else AppInterface.onEventBus(this.group + "." + event);
+  BX_FLAGS.Debug && BxLogger.warning("EventBus", "emit", event, payload);
  }
 }
 window.BxEventBus = BxEventBus;
