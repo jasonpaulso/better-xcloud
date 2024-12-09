@@ -275,7 +275,7 @@ export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectEle
 
     // Render options
     const groups = {
-        default: t('default'),
+        default: t('default') + ' 🔒',
         custom: t('custom'),
     };
 
