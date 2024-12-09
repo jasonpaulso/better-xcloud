@@ -27,8 +27,6 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
-    "button-xbox": "Xbox button",
-    "press": "Press",
     "activate": "Activate",
     "activated": "Activated",
     "active": "Active",
@@ -56,6 +54,7 @@ const Texts = {
     "brazil": "Brazil",
     "brightness": "Brightness",
     "browser-unsupported-feature": "Your browser doesn't support this feature",
+    "button-xbox": "Xbox button",
     "bypass-region-restriction": "Bypass region restriction",
     "can-stream-xbox-360-games": "Can stream Xbox 360 games",
     "cancel": "Cancel",
@@ -220,6 +219,7 @@ const Texts = {
     "prefer-ipv6-server": "Prefer IPv6 server",
     "preferred-game-language": "Preferred game's language",
     "preset": "Preset",
+    "press": "Press",
     "press-esc-to-cancel": "Press Esc to cancel",
     "press-key-to-toggle-mkb": [
         (e: any) => `Press ${e.key} to toggle this feature`,

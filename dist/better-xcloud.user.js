@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.0.3-beta
+// @version      6.0.3
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -107,7 +107,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.3-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.3", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -298,8 +298,6 @@ var SUPPORTED_LANGUAGES = {
  "zh-CN": "中文(简体)",
  "zh-TW": "中文(繁體)"
 }, Texts = {
- "button-xbox": "Xbox button",
- press: "Press",
  activate: "Activate",
  activated: "Activated",
  active: "Active",
@@ -327,6 +325,7 @@ var SUPPORTED_LANGUAGES = {
  brazil: "Brazil",
  brightness: "Brightness",
  "browser-unsupported-feature": "Your browser doesn't support this feature",
+ "button-xbox": "Xbox button",
  "bypass-region-restriction": "Bypass region restriction",
  "can-stream-xbox-360-games": "Can stream Xbox 360 games",
  cancel: "Cancel",
@@ -491,6 +490,7 @@ var SUPPORTED_LANGUAGES = {
  "prefer-ipv6-server": "Prefer IPv6 server",
  "preferred-game-language": "Preferred game's language",
  preset: "Preset",
+ press: "Press",
  "press-esc-to-cancel": "Press Esc to cancel",
  "press-key-to-toggle-mkb": [
   e => `Press ${e.key} to toggle this feature`,
