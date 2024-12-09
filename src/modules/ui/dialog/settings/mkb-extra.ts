@@ -108,11 +108,11 @@ export class MkbExtraSettings extends HTMLElement {
     private static async updateLayout(this: MkbExtraSettings) {
         // Render shortcut presets
         const mappingPresets = await MkbMappingPresetsTable.getInstance().getPresets();
-        renderPresetsList(this.$mappingPresets, mappingPresets, getPref<MkbPresetId>(PrefKey.MKB_P1_MAPPING_PRESET_ID), false);
+        renderPresetsList(this.$mappingPresets, mappingPresets, getPref<MkbPresetId>(PrefKey.MKB_P1_MAPPING_PRESET_ID));
 
         // Render shortcut presets
         const shortcutsPresets = await KeyboardShortcutsTable.getInstance().getPresets();
-        renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref<MkbPresetId>(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID), true);
+        renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref<MkbPresetId>(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID), { addOffValue: true });
     }
 
     private static async saveMkbSettings(this: MkbExtraSettings) {

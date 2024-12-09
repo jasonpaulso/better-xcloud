@@ -263,10 +263,10 @@ export function clearDataSet($elm: HTMLElement) {
     });
 }
 
-export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectElement, allPresets: AllPresets<T>, selectedValue: number | null, addOffValue=false) {
+export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectElement, allPresets: AllPresets<T>, selectedValue: number | null, options: { addOffValue?: boolean, selectedIndicator?: boolean }={}) {
     removeChildElements($select);
 
-    if (addOffValue) {
+    if (options.addOffValue) {
         const $option = CE<HTMLOptionElement>('option', { value: 0 }, t('off'));
         $option.selected = selectedValue === 0;
 
@@ -284,8 +284,13 @@ export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectEle
         const $optGroup = CE('optgroup', { label: groups[key] });
         for (const id of allPresets[key]) {
             const record = allPresets.data[id];
-            const $option = CE<HTMLOptionElement>('option', { value: record.id }, record.name);
-            $option.selected = selectedValue === record.id;
+            const selected = selectedValue === record.id;
+            const name = options.selectedIndicator && selected ? '✅ ' + record.name : record.name;
+
+            const $option = CE<HTMLOptionElement>('option', { value: record.id }, name);
+            if (selected) {
+                $option.selected = true;
+            }
 
             $optGroup.appendChild($option);
         }

@@ -42,11 +42,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
 
     private async renderPresetsList() {
         this.allPresets = await this.presetsDb.getPresets();
-        if (!this.currentPresetId) {
-           this.currentPresetId = this.allPresets.default[0];
-        }
-
-        renderPresetsList<T>(this.$presets, this.allPresets, this.currentPresetId);
+        renderPresetsList<T>(this.$presets, this.allPresets, this.currentPresetId, { selectedIndicator: true });
     }
 
     private promptNewName(action: string,value='') {

@@ -136,7 +136,7 @@ export class ControllerExtraSettings extends HTMLElement {
 
         // Render shortcut presets
         const allShortcutPresets = await ControllerShortcutsTable.getInstance().getPresets();
-        renderPresetsList(this.$selectShortcuts, allShortcutPresets, null, true);
+        renderPresetsList(this.$selectShortcuts, allShortcutPresets, null, { addOffValue: true });
 
         for (const name of this.controllerIds) {
             const $option = CE<HTMLOptionElement>('option', { value: name }, name);
