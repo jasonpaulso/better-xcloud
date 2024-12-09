@@ -1,8 +1,8 @@
-import { BxEvent } from "@utils/bx-event";
 import { BxIcon } from "@utils/bx-icon";
 import { createButton, ButtonStyle, CE } from "@utils/html";
 import { BaseGameBarAction } from "./base-action";
 import { MicrophoneShortcut, MicrophoneState } from "../shortcuts/microphone-shortcut";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 
 export class MicrophoneAction extends BaseGameBarAction {
@@ -26,9 +26,8 @@ export class MicrophoneAction extends BaseGameBarAction {
 
         this.$content = CE('div', {}, $btnMuted, $btnDefault);
 
-        window.addEventListener(BxEvent.MICROPHONE_STATE_CHANGED, e => {
-            const microphoneState = (e as any).microphoneState;
-            const enabled = microphoneState === MicrophoneState.ENABLED;
+        BxEventBus.Stream.on('microphone.state.changed', payload => {
+            const enabled = payload.state === MicrophoneState.ENABLED;
             this.$content.dataset.activated = enabled.toString();
 
             // Show the button in Game Bar if the mic is enabled

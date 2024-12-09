@@ -4,28 +4,26 @@ import { BX_FLAGS } from "./bx-flags";
 
 
 export namespace BxEvent {
-    export const JUMP_BACK_IN_READY = 'bx-jump-back-in-ready';
     export const POPSTATE = 'bx-popstate';
 
     // export const STREAM_EVENT_TARGET_READY = 'bx-stream-event-target-ready';
+    // Inside patch
     export const STREAM_SESSION_READY = 'bx-stream-session-ready';
 
     export const CUSTOM_TOUCH_LAYOUTS_LOADED = 'bx-custom-touch-layouts-loaded';
     export const TOUCH_LAYOUT_MANAGER_READY = 'bx-touch-layout-manager-ready';
 
+    // Inside app
     export const REMOTE_PLAY_READY = 'bx-remote-play-ready';
     export const REMOTE_PLAY_FAILED = 'bx-remote-play-failed';
 
-    export const GAME_BAR_ACTION_ACTIVATED = 'bx-game-bar-action-activated';
-    export const MICROPHONE_STATE_CHANGED = 'bx-microphone-state-changed';
-    export const SPEAKER_STATE_CHANGED = 'bx-speaker-state-changed';
-    export const VIDEO_VISIBILITY_CHANGED = 'bx-video-visibility-changed';
-
+    // Inside patch
     export const CAPTURE_SCREENSHOT = 'bx-capture-screenshot';
 
     export const POINTER_LOCK_REQUESTED = 'bx-pointer-lock-requested';
     export const POINTER_LOCK_EXITED = 'bx-pointer-lock-exited';
 
+    // Inside patch
     export const NAVIGATION_FOCUS_CHANGED = 'bx-nav-focus-changed';
 
     export const XCLOUD_GUIDE_MENU_SHOWN = 'bx-xcloud-guide-menu-shown';
@@ -47,7 +45,6 @@ export namespace BxEvent {
         }
 
         const event = new Event(eventName);
-
         if (data) {
             for (const key in data) {
                 (event as any)[key] = data[key];

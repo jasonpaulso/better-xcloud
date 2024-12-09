@@ -2,7 +2,7 @@ import { BxIcon } from "@utils/bx-icon";
 import { createButton, ButtonStyle, CE } from "@utils/html";
 import { BaseGameBarAction } from "./base-action";
 import { RendererShortcut } from "../shortcuts/renderer-shortcut";
-import { BxEvent } from "@/utils/bx-event";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 
 export class RendererAction extends BaseGameBarAction {
@@ -26,9 +26,8 @@ export class RendererAction extends BaseGameBarAction {
 
         this.$content = CE('div', {}, $btnDefault, $btnActivated);
 
-        window.addEventListener(BxEvent.VIDEO_VISIBILITY_CHANGED, e => {
-            const isShowing = (e as any).isShowing;
-            this.$content.dataset.activated = (!isShowing).toString();
+        BxEventBus.Stream.on('video.visibility.changed', payload => {
+            this.$content.dataset.activated = (!payload.isVisible).toString();
         });
     }
 

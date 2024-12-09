@@ -13,6 +13,7 @@ import { SpeakerAction } from "./speaker-action";
 import { RendererAction } from "./renderer-action";
 import { BxLogger } from "@/utils/bx-logger";
 import { GameBarPosition, TouchControllerMode } from "@/enums/pref-values";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 
 export class GameBar {
@@ -81,7 +82,7 @@ export class GameBar {
         });
 
         // Hide game bar after clicking on an action
-        window.addEventListener(BxEvent.GAME_BAR_ACTION_ACTIVATED, this.hideBar);
+        BxEventBus.Stream.on('gameBar.activated', this.hideBar);
 
         $container.addEventListener('pointerover', this.clearHideTimeout);
         $container.addEventListener('pointerout', this.beginHideTimeout);

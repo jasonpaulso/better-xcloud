@@ -3,11 +3,7 @@ window.BX_EXPOSED.streamSession = this;
 const orgSetMicrophoneState = this.setMicrophoneState.bind(this);
 this.setMicrophoneState = state => {
     orgSetMicrophoneState(state);
-
-    const evt = new Event(BxEvent.MICROPHONE_STATE_CHANGED);
-    evt.microphoneState = state;
-
-    window.dispatchEvent(evt);
+    window.BxEventBus.Stream.emit('microphone.state.changed', { state });
 };
 
 window.dispatchEvent(new Event(BxEvent.STREAM_SESSION_READY));

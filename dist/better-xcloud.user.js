@@ -143,7 +143,7 @@ function deepClone(obj) {
 }
 var BxEvent;
 ((BxEvent) => {
- BxEvent.JUMP_BACK_IN_READY = "bx-jump-back-in-ready", BxEvent.POPSTATE = "bx-popstate", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.GAME_BAR_ACTION_ACTIVATED = "bx-game-bar-action-activated", BxEvent.MICROPHONE_STATE_CHANGED = "bx-microphone-state-changed", BxEvent.SPEAKER_STATE_CHANGED = "bx-speaker-state-changed", BxEvent.VIDEO_VISIBILITY_CHANGED = "bx-video-visibility-changed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
+ BxEvent.POPSTATE = "bx-popstate", BxEvent.STREAM_SESSION_READY = "bx-stream-session-ready", BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED = "bx-custom-touch-layouts-loaded", BxEvent.TOUCH_LAYOUT_MANAGER_READY = "bx-touch-layout-manager-ready", BxEvent.REMOTE_PLAY_READY = "bx-remote-play-ready", BxEvent.REMOTE_PLAY_FAILED = "bx-remote-play-failed", BxEvent.CAPTURE_SCREENSHOT = "bx-capture-screenshot", BxEvent.POINTER_LOCK_REQUESTED = "bx-pointer-lock-requested", BxEvent.POINTER_LOCK_EXITED = "bx-pointer-lock-exited", BxEvent.NAVIGATION_FOCUS_CHANGED = "bx-nav-focus-changed", BxEvent.XCLOUD_GUIDE_MENU_SHOWN = "bx-xcloud-guide-menu-shown", BxEvent.XCLOUD_POLLING_MODE_CHANGED = "bx-xcloud-polling-mode-changed", BxEvent.XCLOUD_RENDERING_COMPONENT = "bx-xcloud-rendering-component", BxEvent.XCLOUD_ROUTER_HISTORY_READY = "bx-xcloud-router-history-ready";
  function dispatch(target, eventName, data) {
   if (!target) return;
   if (!eventName) {
@@ -2122,8 +2122,8 @@ class SoundShortcut {
    let status;
    if (targetValue === 0) status = t("muted");
    else status = targetValue + "%";
-   SoundShortcut.setGainNodeVolume(targetValue), Toast.show(`${t("stream")} ❯ ${t("volume")}`, status, { instant: !0 }), BxEvent.dispatch(window, BxEvent.SPEAKER_STATE_CHANGED, {
-    speakerState: targetValue === 0 ? 1 : 0
+   SoundShortcut.setGainNodeVolume(targetValue), Toast.show(`${t("stream")} ❯ ${t("volume")}`, status, { instant: !0 }), BxEventBus.Stream.emit("speaker.state.changed", {
+    state: targetValue === 0 ? 1 : 0
    });
    return;
   }
@@ -2131,8 +2131,8 @@ class SoundShortcut {
   if ($media) {
    $media.muted = !$media.muted;
    let status = $media.muted ? t("muted") : t("unmuted");
-   Toast.show(`${t("stream")} ❯ ${t("volume")}`, status, { instant: !0 }), BxEvent.dispatch(window, BxEvent.SPEAKER_STATE_CHANGED, {
-    speakerState: $media.muted ? 1 : 0
+   Toast.show(`${t("stream")} ❯ ${t("volume")}`, status, { instant: !0 }), BxEventBus.Stream.emit("speaker.state.changed", {
+    state: $media.muted ? 1 : 0
    });
   }
  }
@@ -4033,9 +4033,7 @@ var expose_stream_session_default = `window.BX_EXPOSED.streamSession = this;
 const orgSetMicrophoneState = this.setMicrophoneState.bind(this);
 this.setMicrophoneState = state => {
 orgSetMicrophoneState(state);
-const evt = new Event(BxEvent.MICROPHONE_STATE_CHANGED);
-evt.microphoneState = state;
-window.dispatchEvent(evt);
+window.BxEventBus.Stream.emit('microphone.state.changed', { state });
 };
 window.dispatchEvent(new Event(BxEvent.STREAM_SESSION_READY));
 let updateDimensionsStr = this.updateDimensions.toString();
@@ -6800,12 +6798,12 @@ class RendererShortcut {
  static toggleVisibility() {
   let $mediaContainer = document.querySelector('#game-stream div[data-testid="media-container"]');
   if (!$mediaContainer) {
-   BxEvent.dispatch(window, BxEvent.VIDEO_VISIBILITY_CHANGED, { isShowing: !0 });
+   BxEventBus.Stream.emit("video.visibility.changed", { isVisible: !0 });
    return;
   }
   $mediaContainer.classList.toggle("bx-gone");
-  let isShowing = !$mediaContainer.classList.contains("bx-gone");
-  limitVideoPlayerFps(isShowing ? getPref("video.maxFps") : 0), BxEvent.dispatch(window, BxEvent.VIDEO_VISIBILITY_CHANGED, { isShowing });
+  let isVisible = !$mediaContainer.classList.contains("bx-gone");
+  limitVideoPlayerFps(isVisible ? getPref("video.maxFps") : 0), BxEventBus.Stream.emit("video.visibility.changed", { isVisible });
  }
 }
 class TrueAchievements {
@@ -8598,7 +8596,7 @@ class BaseGameBarAction {
  constructor() {}
  reset() {}
  onClick(e) {
-  BxEvent.dispatch(window, BxEvent.GAME_BAR_ACTION_ACTIVATED);
+  BxEventBus.Stream.emit("gameBar.activated", {});
  }
  render() {
   return this.$content;
@@ -8660,8 +8658,8 @@ class MicrophoneAction extends BaseGameBarAction {
    icon: BxIcon.MICROPHONE_MUTED,
    onClick: this.onClick
   });
-  this.$content = CE("div", {}, $btnMuted, $btnDefault), window.addEventListener(BxEvent.MICROPHONE_STATE_CHANGED, (e) => {
-   let enabled = e.microphoneState === "Enabled";
+  this.$content = CE("div", {}, $btnMuted, $btnDefault), BxEventBus.Stream.on("microphone.state.changed", (payload) => {
+   let enabled = payload.state === "Enabled";
    this.$content.dataset.activated = enabled.toString(), this.$content.classList.remove("bx-gone");
   });
  }
@@ -8702,8 +8700,8 @@ class SpeakerAction extends BaseGameBarAction {
    onClick: this.onClick,
    classes: ["bx-activated"]
   });
-  this.$content = CE("div", {}, $btnEnable, $btnMuted), window.addEventListener(BxEvent.SPEAKER_STATE_CHANGED, (e) => {
-   let enabled = e.speakerState === 0;
+  this.$content = CE("div", {}, $btnEnable, $btnMuted), BxEventBus.Stream.on("speaker.state.changed", (payload) => {
+   let enabled = payload.state === 0;
    this.$content.dataset.activated = (!enabled).toString();
   });
  }
@@ -8728,9 +8726,8 @@ class RendererAction extends BaseGameBarAction {
    onClick: this.onClick,
    classes: ["bx-activated"]
   });
-  this.$content = CE("div", {}, $btnDefault, $btnActivated), window.addEventListener(BxEvent.VIDEO_VISIBILITY_CHANGED, (e) => {
-   let isShowing = e.isShowing;
-   this.$content.dataset.activated = (!isShowing).toString();
+  this.$content = CE("div", {}, $btnDefault, $btnActivated), BxEventBus.Stream.on("video.visibility.changed", (payload) => {
+   this.$content.dataset.activated = (!payload.isVisible).toString();
   });
  }
  onClick = (e) => {
@@ -8770,7 +8767,7 @@ class GameBar {
   $gameBar.addEventListener("click", (e) => {
    if (e.target !== $gameBar) return;
    $container.classList.contains("bx-show") ? this.hideBar() : this.showBar();
-  }), window.addEventListener(BxEvent.GAME_BAR_ACTION_ACTIVATED, this.hideBar), $container.addEventListener("pointerover", this.clearHideTimeout), $container.addEventListener("pointerout", this.beginHideTimeout), $container.addEventListener("transitionend", (e) => {
+  }), BxEventBus.Stream.on("gameBar.activated", this.hideBar), $container.addEventListener("pointerover", this.clearHideTimeout), $container.addEventListener("pointerout", this.beginHideTimeout), $container.addEventListener("transitionend", (e) => {
    $container.classList.replace("bx-hide", "bx-offscreen");
   }), document.documentElement.appendChild($gameBar), this.$gameBar = $gameBar, this.$container = $container, position !== "off" && window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, ((e) => {
    if (STATES.isPlaying) window.BX_STREAM_SETTINGS.xCloudPollingMode !== "none" ? this.disable() : this.enable();

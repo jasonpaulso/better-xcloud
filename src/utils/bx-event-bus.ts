@@ -2,6 +2,8 @@ import type { PrefKey, StorageKey } from "@/enums/pref-keys";
 import { BX_FLAGS } from "./bx-flags";
 import { BxLogger } from "./bx-logger";
 import { AppInterface } from "./global";
+import type { MicrophoneState } from "@/modules/shortcuts/microphone-shortcut";
+import type { SpeakerState } from "@/modules/shortcuts/sound-shortcut";
 
 type EventCallback<T = any> = (payload: T) => void;
 
@@ -37,6 +39,12 @@ type StreamEvents = {
     'state.playing': { $video?: HTMLVideoElement };
     'state.stopped': {};
     'state.error': {};
+
+    'gameBar.activated': {},
+    'speaker.state.changed': { state: SpeakerState },
+    'video.visibility.changed': { isVisible: boolean },
+    // Inside patch
+    'microphone.state.changed': { state: MicrophoneState },
 
     dataChannelCreated: { dataChannel: RTCDataChannel };
 };

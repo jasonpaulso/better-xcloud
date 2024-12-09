@@ -1,4 +1,4 @@
-import { BxEvent } from "@/utils/bx-event";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 export abstract class BaseGameBarAction {
     abstract $content: HTMLElement;
@@ -7,7 +7,7 @@ export abstract class BaseGameBarAction {
     reset() {}
 
     onClick(e: Event) {
-        BxEvent.dispatch(window, BxEvent.GAME_BAR_ACTION_ACTIVATED);
+        BxEventBus.Stream.emit('gameBar.activated', {});
     };
 
     render(): HTMLElement {
