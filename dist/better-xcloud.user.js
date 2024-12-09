@@ -227,10 +227,14 @@ class BxEventBus {
   let callbacks = this.listeners.get(event) || [];
   for (let callback of callbacks)
    callback(payload);
-  if (AppInterface) if (event in this.appJsInterfaces) {
-    let method = this.appJsInterfaces[event];
-    AppInterface[method] && AppInterface[method]();
-   } else AppInterface.onEventBus(this.group + "." + event);
+  if (AppInterface) try {
+    if (event in this.appJsInterfaces) {
+     let method = this.appJsInterfaces[event];
+     AppInterface[method] && AppInterface[method]();
+    } else AppInterface.onEventBus(this.group + "." + event);
+   } catch (e) {
+    console.log(e);
+   }
   BX_FLAGS.Debug && BxLogger.warning("EventBus", "emit", event, payload);
  }
 }
@@ -3534,7 +3538,8 @@ class NavigationDialogManager {
   this.clearGamepadHoldingInterval(), BxEventBus.Script.emit("dialog.shown", {}), window.BX_EXPOSED.disableGamepadPolling = !0, document.body.classList.add("bx-no-scroll"), this.unmountCurrentDialog(), this.dialogsStack.push(dialog), this.dialog = dialog, dialog.onBeforeMount(configs), this.$container.appendChild(dialog.getContent()), dialog.onMounted(configs), this.$overlay.classList.remove("bx-gone"), this.$overlay.classList.toggle("bx-invisible", !dialog.isOverlayVisible()), this.$container.classList.remove("bx-gone"), this.$container.addEventListener("keydown", this), this.startGamepadPolling();
  }
  hide() {
-  if (this.clearGamepadHoldingInterval(), document.body.classList.remove("bx-no-scroll"), BxEventBus.Script.emit("dialog.dismissed", {}), this.$overlay.classList.add("bx-gone"), this.$overlay.classList.remove("bx-invisible"), this.$container.classList.add("bx-gone"), this.$container.removeEventListener("keydown", this), this.stopGamepadPolling(), this.dialog) {
+  if (this.clearGamepadHoldingInterval(), !this.isShowing()) return;
+  if (document.body.classList.remove("bx-no-scroll"), BxEventBus.Script.emit("dialog.dismissed", {}), this.$overlay.classList.add("bx-gone"), this.$overlay.classList.remove("bx-invisible"), this.$container.classList.add("bx-gone"), this.$container.removeEventListener("keydown", this), this.stopGamepadPolling(), this.dialog) {
    let dialogIndex = this.dialogsStack.indexOf(this.dialog);
    if (dialogIndex > -1) this.dialogsStack = this.dialogsStack.slice(0, dialogIndex);
   }

@@ -476,6 +476,9 @@ export class NavigationDialogManager {
 
     hide() {
         this.clearGamepadHoldingInterval();
+        if (!this.isShowing()) {
+            return;
+        }
 
         // Unlock scroll bar
         document.body.classList.remove('bx-no-scroll');

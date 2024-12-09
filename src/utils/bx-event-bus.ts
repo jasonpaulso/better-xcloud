@@ -120,11 +120,15 @@ export class BxEventBus<TEvents extends Record<string, any>> {
 
         // Call method inside Android app
         if (AppInterface) {
-            if (event in this.appJsInterfaces) {
-                const method = this.appJsInterfaces[event];
-                AppInterface[method] && AppInterface[method]();
-            } else {
-                AppInterface.onEventBus(this.group + '.' + (event as string));
+            try {
+                if (event in this.appJsInterfaces) {
+                    const method = this.appJsInterfaces[event];
+                        AppInterface[method] && AppInterface[method]();
+                } else {
+                    AppInterface.onEventBus(this.group + '.' + (event as string));
+                }
+            } catch (e) {
+                console.log(e);
             }
         }
 
