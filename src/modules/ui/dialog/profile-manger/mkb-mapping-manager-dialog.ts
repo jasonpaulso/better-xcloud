@@ -48,6 +48,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
     private $mouseSensitivityX!: BxNumberStepper;
     private $mouseSensitivityY!: BxNumberStepper;
     private $mouseDeadzone!: BxNumberStepper;
+    private $unbindNote!: HTMLElement;
 
     constructor(title: string) {
         super(title, MkbMappingPresetsTable.getInstance());
@@ -93,7 +94,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
 
     private render() {
         const $rows = CE('div', {},
-            CE('i', { class: 'bx-mkb-note' }, t('right-click-to-unbind')),
+            this.$unbindNote = CE('i', { class: 'bx-mkb-note' }, t('right-click-to-unbind')),
         );
 
         for (const buttonIndex of this.BUTTONS_ORDER) {
@@ -184,6 +185,9 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
         this.currentPresetId = id;
         const isDefaultPreset = id <= 0;
         this.updateButtonStates();
+
+        // Toggle unbind note
+        this.$unbindNote.classList.toggle('bx-gone', isDefaultPreset);
 
         // Update buttons
         for (const $elm of this.allKeyElements) {

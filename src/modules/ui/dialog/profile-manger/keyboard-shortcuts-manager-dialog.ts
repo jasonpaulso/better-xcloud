@@ -19,6 +19,7 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
     // private readonly LOG_TAG = 'KeyboardShortcutsManagerDialog';
 
     protected $content: HTMLElement;
+    private $unbindNote: HTMLElement;
     private readonly allKeyElements: BxKeyBindingButton[] = [];
 
     protected readonly BLANK_PRESET_DATA: KeyboardShortcutPresetData = {
@@ -65,7 +66,10 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
             }
         }
 
-        this.$content = CE('div', {}, $rows);
+        this.$content = CE('div', {},
+            this.$unbindNote = CE('i', { class: 'bx-mkb-note' }, t('right-click-to-unbind')),
+            $rows,
+        );
     }
 
     private onKeyChanged = (e: Event) => {
@@ -108,6 +112,9 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
         this.currentPresetId = id;
         const isDefaultPreset = id <= 0;
         this.updateButtonStates();
+
+        // Toggle unbind note
+        this.$unbindNote.classList.toggle('bx-gone', isDefaultPreset);
 
         // Update buttons
         for (const $elm of this.allKeyElements) {

@@ -174,7 +174,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
                 $header,
                 this.$defaultNote = CE('div', { class: 'bx-default-preset-note bx-gone' }, t('default-preset-note')),
             ),
-            CE('div', { class: 'bx-dialog-content bx-hide-scroll-bar' }, this.$content),
+            CE('div', { class: 'bx-dialog-content' }, this.$content),
         );
     }
 
