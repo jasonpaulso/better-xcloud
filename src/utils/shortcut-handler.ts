@@ -10,6 +10,7 @@ import { EmulatedMkbHandler } from "@/modules/mkb/mkb-handler";
 import { RendererShortcut } from "@/modules/shortcuts/renderer-shortcut";
 import { TrueAchievements } from "./true-achievements";
 import { NativeMkbHandler } from "@/modules/mkb/native-mkb-handler";
+import { VirtualControllerShortcut } from "@/modules/shortcuts/virtual-controller-shortcut";
 
 export class ShortcutHandler {
     static runAction(action: ShortcutAction) {
@@ -68,6 +69,10 @@ export class ShortcutHandler {
 
             case ShortcutAction.TRUE_ACHIEVEMENTS_OPEN:
                 TrueAchievements.getInstance().open(false);
+                break;
+
+            case ShortcutAction.CONTROLLER_XBOX_BUTTON_PRESS:
+                VirtualControllerShortcut.pressXboxButton();
                 break;
         }
     }

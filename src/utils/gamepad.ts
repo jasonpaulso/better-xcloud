@@ -57,3 +57,36 @@ export function hasGamepad() {
 
     return false;
 }
+
+export function generateVirtualControllerMapping(override: {}={}) {
+    const mapping = {
+        GamepadIndex: 0,
+        A: 0,
+        B: 0,
+        X: 0,
+        Y: 0,
+        LeftShoulder: 0,
+        RightShoulder: 0,
+        LeftTrigger: 0,
+        RightTrigger: 0,
+        View: 0,
+        Menu: 0,
+        LeftThumb: 0,
+        RightThumb: 0,
+        DPadUp: 0,
+        DPadDown: 0,
+        DPadLeft: 0,
+        DPadRight: 0,
+        Nexus: 0,
+        LeftThumbXAxis: 0,
+        LeftThumbYAxis: 0,
+        RightThumbXAxis: 0,
+        RightThumbYAxis: 0,
+        PhysicalPhysicality: 0,
+        VirtualPhysicality: 0,
+        Dirty: false,
+        Virtual: false,
+    };
+
+    return Object.assign({}, mapping, override);
+}

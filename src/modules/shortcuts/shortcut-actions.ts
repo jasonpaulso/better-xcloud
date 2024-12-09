@@ -16,6 +16,17 @@ export const SHORTCUT_ACTIONS: ShortcutActions = {
         [ShortcutAction.BETTER_XCLOUD_SETTINGS_SHOW]: [t('settings'), t('show')],
     },
 
+    // MKB
+    ...(STATES.browser.capabilities.mkb ? {
+        [t('mouse-and-keyboard')]: {
+            [ShortcutAction.MKB_TOGGLE]: [t('toggle')],
+        },
+    } : {}),
+
+    [t('controller')]: {
+        [ShortcutAction.CONTROLLER_XBOX_BUTTON_PRESS]: [t('button-xbox'), t('press')],
+    },
+
     // Device
     ...(!!AppInterface ? {
         [t('device')]: {
@@ -44,13 +55,6 @@ export const SHORTCUT_ACTIONS: ShortcutActions = {
         [ShortcutAction.STREAM_STATS_TOGGLE]: [t('stats'), t('show-hide')],
         [ShortcutAction.STREAM_MICROPHONE_TOGGLE]: [t('microphone'), t('toggle')],
     },
-
-    // MKB
-    ...(STATES.browser.capabilities.mkb ? {
-        [t('mouse-and-keyboard')]: {
-            [ShortcutAction.MKB_TOGGLE]: [t('toggle')],
-        },
-    } : {}),
 
     // Other
     [t('other')]: {

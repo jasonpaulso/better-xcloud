@@ -1,6 +1,8 @@
 export const enum ShortcutAction {
     BETTER_XCLOUD_SETTINGS_SHOW = 'bx.settings.show',
 
+    CONTROLLER_XBOX_BUTTON_PRESS = 'controller.xbox.press',
+
     STREAM_VIDEO_TOGGLE = 'stream.video.toggle',
     STREAM_SCREENSHOT_CAPTURE = 'stream.screenshot.capture',
 

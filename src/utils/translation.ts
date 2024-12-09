@@ -27,6 +27,8 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
+    "button-xbox": "Xbox button",
+    "press": "Press",
     "activate": "Activate",
     "activated": "Activated",
     "active": "Active",
