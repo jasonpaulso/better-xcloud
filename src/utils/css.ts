@@ -1,6 +1,6 @@
 import { CE } from "@utils/html";
 import { compressCss, renderStylus } from "@macros/build" with { type: "macro" };
-import { UiSection } from "@/enums/pref-values";
+import { BlockFeature, UiSection } from "@/enums/pref-values";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 
@@ -18,7 +18,7 @@ export function addCss() {
     }
 
     // Hide BYOG section
-    if (getPref(PrefKey.BYOG_DISABLED)) {
+    if (getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES).includes(BlockFeature.BYOG)) {
         selectorToHide.push('#BodyContent > div[class*=ByogRow-module__container___]');
     }
 
@@ -39,7 +39,7 @@ export function addCss() {
     }
 
    // Hide "Start a party" button in the Guide menu
-    if (getPref(PrefKey.BLOCK_SOCIAL_FEATURES)) {
+    if (getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
         selectorToHide.push('#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]');
     }
 

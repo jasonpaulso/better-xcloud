@@ -63,7 +63,7 @@ export const enum PrefKey {
     SCREENSHOT_APPLY_FILTERS = 'screenshot.applyFilters',
 
     BLOCK_TRACKING = 'block.tracking',
-    BLOCK_SOCIAL_FEATURES = 'block.social',
+    BLOCK_FEATURES = 'block.features',
 
     LOADING_SCREEN_GAME_ART = 'loadingScreen.gameArt.show',
     LOADING_SCREEN_SHOW_WAIT_TIME = 'loadingScreen.waitTime.show',
@@ -73,7 +73,6 @@ export const enum PrefKey {
     UI_LAYOUT = 'ui.layout',
     UI_SCROLLBAR_HIDE = 'ui.hideScrollbar',
     UI_HIDE_SECTIONS = 'ui.hideSections',
-    BYOG_DISABLED = 'feature.byog.disabled',
 
     UI_GAME_CARD_SHOW_WAIT_TIME = 'ui.gameCard.waitTime.show',
     UI_SIMPLIFY_STREAM_MENU = 'ui.streamMenu.simplify',

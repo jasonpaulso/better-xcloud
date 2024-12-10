@@ -8,7 +8,7 @@ import { CE } from "../html";
 import { t, SUPPORTED_LANGUAGES } from "../translation";
 import { UserAgent } from "../user-agent";
 import { BaseSettingsStore as BaseSettingsStorage } from "./base-settings-storage";
-import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat, VideoPosition } from "@/enums/pref-values";
+import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat, VideoPosition, BlockFeature } from "@/enums/pref-values";
 import { MkbMappingDefaultPresetId } from "../local-db/mkb-mapping-presets-table";
 import { KeyboardShortcutDefaultId } from "../local-db/keyboard-shortcuts-table";
 import { GhPagesUtils } from "../gh-pages";
@@ -586,25 +586,29 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.BYOG_DISABLED]: {
-            label: t('disable-byog-feature'),
-            default: false,
-        },
-
         [PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME]: {
             requiredVariants: 'full',
             label: t('show-wait-time-in-game-card'),
             default: true,
         },
 
-        [PrefKey.BLOCK_SOCIAL_FEATURES]: {
-            label: t('disable-social-features'),
-            default: false,
-        },
         [PrefKey.BLOCK_TRACKING]: {
             label: t('disable-xcloud-analytics'),
             default: false,
         },
+        [PrefKey.BLOCK_FEATURES]: {
+            label: t('disable-features'),
+            default: [],
+            multipleOptions: {
+                [BlockFeature.CHAT]: t('chat'),
+                [BlockFeature.FRIENDS]: t('friends-followers'),
+                [BlockFeature.BYOG]: t('byog'),
+                // [BlockFeature.NOTIFICATIONS_INVITES]: ut('Notifications: Invites'),
+                // [BlockFeature.NOTIFICATIONS_ACHIEVEMENTS]: ut('Notifications: Achievements'),
+            },
+        },
+
+
         [PrefKey.USER_AGENT_PROFILE]: {
             label: t('user-agent-profile'),
             note: '⚠️ ' + t('unexpected-behavior'),

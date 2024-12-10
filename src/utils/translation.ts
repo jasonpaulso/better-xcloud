@@ -27,6 +27,10 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
+    "chat": "Chat",
+    "friends-followers": "Friends and followers",
+    "byog": "Stream your own game",
+    "disable-features": "Disable features",
     "activate": "Activate",
     "activated": "Activated",
     "active": "Active",

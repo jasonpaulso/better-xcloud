@@ -1,7 +1,7 @@
 import { PrefKey } from "@/enums/pref-keys";
 import { BX_FLAGS } from "./bx-flags";
 import { getPref } from "./settings-storages/global-settings-storage";
-import { NativeMkbMode } from "@/enums/pref-values";
+import { BlockFeature, NativeMkbMode } from "@/enums/pref-values";
 
 export let FeatureGates: { [key: string]: boolean } = {
     PwaPrompt: false,
@@ -17,13 +17,17 @@ if (nativeMkbMode !== NativeMkbMode.DEFAULT) {
 }
 
 // Disable chat feature
-if (getPref(PrefKey.BLOCK_SOCIAL_FEATURES)) {
+const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+if (blockFeatures.includes(BlockFeature.CHAT)) {
     FeatureGates.EnableGuideChatTab = false;
+}
+
+if (blockFeatures.includes(BlockFeature.FRIENDS)) {
     FeatureGates.EnableFriendsAndFollowers = false;
 }
 
 // Disable BYOG feature
-if (getPref(PrefKey.BYOG_DISABLED)) {
+if (blockFeatures.includes(BlockFeature.BYOG)) {
     FeatureGates.EnableBYOG = false;
     FeatureGates.EnableBYOGPurchase = false;
 }

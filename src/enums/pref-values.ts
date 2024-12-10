@@ -110,3 +110,11 @@ export const enum StreamVideoProcessing {
     USM = 'usm',
     CAS = 'cas',
 }
+
+export const enum BlockFeature {
+    CHAT = 'chat',
+    FRIENDS = 'friends',
+    BYOG = 'byog',
+    NOTIFICATIONS_INVITES = 'notifications-invites',
+    NOTIFICATIONS_ACHIEVEMENTS = 'notifications-achievements',
+}

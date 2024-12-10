@@ -11,7 +11,7 @@ import { XcloudInterceptor } from "./xcloud-interceptor";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
-import { StreamResolution } from "@/enums/pref-values";
+import { BlockFeature, StreamResolution } from "@/enums/pref-values";
 
 type RequestType = 'xcloud' | 'xhome';
 
@@ -137,13 +137,20 @@ export function interceptHttpRequests() {
         ]);
     }
 
-    if (getPref(PrefKey.BLOCK_SOCIAL_FEATURES)) {
+
+    // 'https://notificationinbox.xboxlive.com',
+    // 'https://accounts.xboxlive.com/family/memberXuid',
+    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    if (blockFeatures.includes(BlockFeature.CHAT)) {
+        BLOCKED_URLS = BLOCKED_URLS.concat([
+            'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',
+        ]);
+    }
+
+    if (blockFeatures.includes(BlockFeature.FRIENDS)) {
         BLOCKED_URLS = BLOCKED_URLS.concat([
             'https://peoplehub.xboxlive.com/users/me/people/social',
             'https://peoplehub.xboxlive.com/users/me/people/recommendations',
-            'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',
-            // 'https://notificationinbox.xboxlive.com',
-            // 'https://accounts.xboxlive.com/family/memberXuid',
         ]);
     }
 

@@ -282,10 +282,12 @@ export class SettingsDialog extends NavigationDialog {
             PrefKey.UI_HIDE_SYSTEM_MENU_ICON,
             PrefKey.UI_DISABLE_FEEDBACK_DIALOG,
             PrefKey.UI_REDUCE_ANIMATIONS,
-            PrefKey.BLOCK_SOCIAL_FEATURES,
-            PrefKey.BYOG_DISABLED,
             {
                 pref: PrefKey.UI_HIDE_SECTIONS,
+                multiLines: true,
+            },
+            {
+                pref: PrefKey.BLOCK_FEATURES,
                 multiLines: true,
             },
         ],
