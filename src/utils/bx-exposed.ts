@@ -12,6 +12,7 @@ import { TouchController } from "@/modules/touch-controller";
 import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
 import { Patcher, type PatchPage } from "@/modules/patcher/patcher";
 import { BxEventBus } from "./bx-event-bus";
+import { FeatureGates } from "./feature-gates";
 
 export enum SupportedInputType {
     CONTROLLER = 'Controller',
@@ -32,6 +33,15 @@ export const BxExposed = {
         // Override User-Agent
         try {
             state.appContext.requestInfo.userAgent = window.navigator.userAgent;
+        } catch (e) {
+            BxLogger.error(LOG_TAG, e);
+        }
+
+        // Override feature gates
+        try {
+            for (const exp in FeatureGates) {
+                state.experiments.overrideFeatureGates[exp.toLocaleLowerCase()] = FeatureGates[exp];
+            }
         } catch (e) {
             BxLogger.error(LOG_TAG, e);
         }

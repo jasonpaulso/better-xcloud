@@ -244,24 +244,6 @@ logFunc(logTag, '//', logMessage);
         return str;
     },
 
-    // Override website's settings
-    overrideSettings(str: string) {
-        const index = str.indexOf(',EnableStreamGate:');
-        if (index < 0) {
-            return false;
-        }
-
-        // Find the next "},"
-        const endIndex = str.indexOf('},', index);
-
-        let newSettings = JSON.stringify(FeatureGates);
-        newSettings = newSettings.substring(1, newSettings.length - 1);
-
-        const newCode = ',' + newSettings;
-        str = PatcherUtils.insertAt(str, endIndex, newCode);
-        return str;
-    },
-
     disableGamepadDisconnectedScreen(str: string) {
         const index = str.indexOf('"GamepadDisconnected_Title",');
         if (index < 0) {
@@ -972,7 +954,6 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     'patchRequestInfoCrash',
 
     'disableStreamGate',
-    'overrideSettings',
     'broadcastPollingMode',
     'patchGamepadPolling',
 
