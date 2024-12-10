@@ -7,11 +7,11 @@
         margin-bottom: 0 !important;
     }
 
-    html[data-xds-platform=tv] & {
+    body[data-media-type=tv] & {
         flex-direction: column;
     }
 
-    html:not([data-xds-platform=tv]) & {
+    body:not([data-media-type=tv]) & {
         flex-direction: row;
 
         > button:first-of-type {
@@ -34,7 +34,7 @@
         flex-direction: row;
         gap: 12px;
 
-        html[data-xds-platform=tv] & {
+        body[data-media-type=tv] & {
             flex-direction: column;
 
             button {
@@ -42,7 +42,7 @@
             }
         }
 
-        html:not([data-xds-platform=tv]) & {
+        body:not([data-media-type=tv]) & {
             button {
                 span {
                     display: none;

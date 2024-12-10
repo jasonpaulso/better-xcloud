@@ -97,7 +97,7 @@ export class TrueAchievements {
         }
         this.updateIds(xboxTitleId);
 
-        if (document.documentElement.dataset.xdsPlatform === 'tv') {
+        if (document.body.dataset.mediaType === 'tv') {
             $div.appendChild(this.$link);
         } else {
             $div.appendChild(this.$button);
