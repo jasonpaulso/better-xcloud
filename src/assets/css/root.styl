@@ -140,8 +140,17 @@ div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module
     font-family: var(--bx-normal-font) !important;
 }
 
-select[multiple] {
+select[multiple], select[multiple]:focus {
     overflow: auto;
+
+    option {
+        padding: 4px;
+
+        &:checked, {
+            color = var(--bx-primary-button-color);
+            background: color linear-gradient(0deg, color 0%, color 100%);
+        }
+    }
 }
 
 /* Hide UI elements */
