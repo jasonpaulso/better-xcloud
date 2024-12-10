@@ -10,7 +10,6 @@ import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "
 import codeRemotePlayEnable from "./patches/remote-play-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
-import { FeatureGates } from "@/utils/feature-gates.js";
 import { PrefKey, StorageKey } from "@/enums/pref-keys.js";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
