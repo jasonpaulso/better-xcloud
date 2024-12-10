@@ -82,6 +82,7 @@ export class XcloudInterceptor {
                     region.contintent = serverExtra[regionName][1];
                 } else {
                     region.contintent = 'other';
+                    BX_FLAGS.Debug && alert('New server: ' + shortName);
                 }
             }
 
