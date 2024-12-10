@@ -19,6 +19,7 @@ if (nativeMkbMode !== NativeMkbMode.DEFAULT) {
 // Disable chat feature
 if (getPref(PrefKey.BLOCK_SOCIAL_FEATURES)) {
     FeatureGates.EnableGuideChatTab = false;
+    FeatureGates.EnableFriendsAndFollowers = false;
 }
 
 // Disable BYOG feature
