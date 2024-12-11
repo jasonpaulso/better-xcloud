@@ -253,8 +253,9 @@ export class StreamBadges {
         const allAudioCodecs: Record<string, RTCBasicStat> = {};
         let audioCodecId;
 
-        const allCandidates: Record<string, string> = {};
-        let candidateId;
+        const allCandidatePairs: Record<string, string> = {};
+        const allRemoteCandidates: Record<string, string> = {};
+        let candidatePairId;
 
         stats.forEach((stat: RTCBasicStat) => {
             if (stat.type === 'codec') {
@@ -275,10 +276,12 @@ export class StreamBadges {
                 } else if (stat.kind === 'audio') {
                     audioCodecId = stat.codecId;
                 }
-            } else if (stat.type === 'candidate-pair' && stat.packetsReceived > 0 && stat.state === 'succeeded') {
-                candidateId = stat.remoteCandidateId;
+            } else if (stat.type === 'transport' && (stat as unknown as RTCTransportStats).selectedCandidatePairId) {
+                candidatePairId = (stat as unknown as RTCTransportStats).selectedCandidatePairId;
+            } else if (stat.type === 'candidate-pair') {
+                allCandidatePairs[stat.id] = (stat as unknown as RTCIceCandidatePairStats).remoteCandidateId;
             } else if (stat.type === 'remote-candidate') {
-                allCandidates[stat.id] = stat.address;
+                allRemoteCandidates[stat.id] = stat.address;
             }
         });
 
@@ -336,12 +339,12 @@ export class StreamBadges {
         }
 
         // Get server type
-        if (candidateId) {
-            BxLogger.info('candidate', candidateId, allCandidates);
+        if (candidatePairId) {
+            BxLogger.info('candidate', candidatePairId, allCandidatePairs);
 
             // Server + Region
             let text = '';
-            const isIpv6 = allCandidates[candidateId].includes(':');
+            const isIpv6 = allRemoteCandidates[allCandidatePairs[candidatePairId]].includes(':');
 
             const server = this.serverInfo.server;
             if (server && server.region) {

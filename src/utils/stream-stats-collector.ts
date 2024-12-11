@@ -201,6 +201,7 @@ export class StreamStatsCollector {
     };
 
     private lastVideoStat?: RTCInboundRtpStreamStats | null;
+    private selectedCandidatePairId: string | null | undefined = null;
 
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
@@ -210,6 +211,22 @@ export class StreamStatsCollector {
         const stats = await STATES.currentStream.peerConnection?.getStats();
         if (!stats) {
             return;
+        }
+
+        // Find selected candidate
+        if (!this.selectedCandidatePairId) {
+            let found = false;
+            stats.forEach(stat => {
+                if (found || stat.type !== 'transport') {
+                    return;
+                }
+
+                stat = (stat as unknown as RTCTransportStats);
+                if (stat.iceState === 'connected' && stat.selectedCandidatePairId) {
+                    this.selectedCandidatePairId = (stat as unknown as RTCTransportStats).selectedCandidatePairId;
+                    found = true;
+                }
+            });
         }
 
         stats.forEach(stat => {
@@ -256,7 +273,7 @@ export class StreamStatsCollector {
                 dt.current = dt.total / framesDecodedDiff * 1000;
 
                 this.lastVideoStat = stat;
-            } else if (stat.type === 'candidate-pair' && stat.packetsReceived > 0 && stat.state === 'succeeded') {
+            } else if (this.selectedCandidatePairId && stat.type === 'candidate-pair' && stat.id === this.selectedCandidatePairId) {
                 // Round Trip Time
                 const ping = this.currentStats[StreamStat.PING];
                 ping.current = stat.currentRoundTripTime ? stat.currentRoundTripTime * 1000 : -1;
