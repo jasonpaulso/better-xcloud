@@ -191,7 +191,7 @@ window.addEventListener('popstate', onHistoryChanged);
 window.history.pushState = patchHistoryMethod('pushState');
 window.history.replaceState = patchHistoryMethod('replaceState');
 
-BxEventBus.Script.once('xcloudServerUnavailable', () => {
+BxEventBus.Script.once('xcloud.server.unavailable', () => {
     STATES.supportedRegion = false;
     window.setTimeout(HeaderSection.watchHeader, 2000);
 
