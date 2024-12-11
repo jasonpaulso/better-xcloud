@@ -112,7 +112,7 @@ export class StreamStatsCollector {
             current: 0,
             toString() {
                 const maxFps = getPref<VideoMaxFps>(PrefKey.VIDEO_MAX_FPS);
-                return maxFps < 60 ? `${maxFps}/${this.current}` : this.current.toString();
+                return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5, ' ') : this.current.toString();
             },
         },
 
@@ -128,7 +128,7 @@ export class StreamStatsCollector {
             dropped: 0,
             toString() {
                 const framesDroppedPercentage = (this.dropped * 100 / ((this.dropped + this.received) || 1)).toFixed(1);
-                return framesDroppedPercentage === '0.00' ? this.dropped.toString() : `${this.dropped} (${framesDroppedPercentage}%)`;
+                return framesDroppedPercentage === '0.0' ? this.dropped.toString() : `${this.dropped} (${framesDroppedPercentage}%)`;
             },
         },
 
@@ -137,7 +137,7 @@ export class StreamStatsCollector {
             dropped: 0,
             toString() {
                 const packetsLostPercentage = (this.dropped * 100 / ((this.dropped + this.received) || 1)).toFixed(1);
-                return packetsLostPercentage === '0.00' ? this.dropped.toString() : `${this.dropped} (${packetsLostPercentage}%)`;
+                return packetsLostPercentage === '0.0' ? this.dropped.toString() : `${this.dropped} (${packetsLostPercentage}%)`;
             },
         },
 
