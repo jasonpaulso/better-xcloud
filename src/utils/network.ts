@@ -12,6 +12,7 @@ import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
 import { BlockFeature, StreamResolution } from "@/enums/pref-values";
+import { blockAllNotifications } from "./utils";
 
 type RequestType = 'xcloud' | 'xhome';
 
@@ -128,13 +129,13 @@ export function interceptHttpRequests() {
         // Clear Applications Insight buffers
         clearAllLogs();
 
-        BLOCKED_URLS = BLOCKED_URLS.concat([
+        BLOCKED_URLS.push(
             'https://arc.msn.com',
             'https://browser.events.data.microsoft.com',
             'https://dc.services.visualstudio.com',
             'https://2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io',
             'https://mscom.demdex.net',
-        ]);
+        );
     }
 
 
@@ -142,16 +143,23 @@ export function interceptHttpRequests() {
     // 'https://accounts.xboxlive.com/family/memberXuid',
     const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
     if (blockFeatures.includes(BlockFeature.CHAT)) {
-        BLOCKED_URLS = BLOCKED_URLS.concat([
+        BLOCKED_URLS.push(
             'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',
-        ]);
+        );
     }
 
     if (blockFeatures.includes(BlockFeature.FRIENDS)) {
-        BLOCKED_URLS = BLOCKED_URLS.concat([
+        BLOCKED_URLS.push(
             'https://peoplehub.xboxlive.com/users/me/people/social',
             'https://peoplehub.xboxlive.com/users/me/people/recommendations',
-        ]);
+        );
+    }
+
+    // Block all notifications
+    if (blockAllNotifications()) {
+        BLOCKED_URLS.push(
+            'https://notificationinbox.xboxlive.com/',
+        );
     }
 
     const xhrPrototype = XMLHttpRequest.prototype;
@@ -166,11 +174,13 @@ export function interceptHttpRequests() {
     };
 
     xhrPrototype.send = function(...arg) {
-        for (const blocked of BLOCKED_URLS) {
-            if ((this as any)._url.startsWith(blocked)) {
-                if (blocked === 'https://dc.services.visualstudio.com') {
+        for (const url of BLOCKED_URLS) {
+            if ((this as any)._url.startsWith(url)) {
+                if (url === 'https://dc.services.visualstudio.com') {
                     window.setTimeout(clearAllLogs, 1000);
                 }
+
+                BxLogger.warning('Blocked URL', url);
                 return false;
             }
         }
@@ -202,6 +212,7 @@ export function interceptHttpRequests() {
         // Check blocked URLs
         for (const blocked of BLOCKED_URLS) {
             if (url.startsWith(blocked)) {
+                BxLogger.warning('Blocked URL', url);
                 return new Response('{"acc":1,"webResult":{}}', {
                     status: 200,
                     statusText: '200 OK',

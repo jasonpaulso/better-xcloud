@@ -27,6 +27,9 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
+    "notifications": "Notifications",
+    "invites": "Invites",
+    "achievements": "Achievements",
     "chat": "Chat",
     "friends-followers": "Friends and followers",
     "byog": "Stream your own game",

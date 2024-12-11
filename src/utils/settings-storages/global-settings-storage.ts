@@ -603,8 +603,8 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 [BlockFeature.CHAT]: t('chat'),
                 [BlockFeature.FRIENDS]: t('friends-followers'),
                 [BlockFeature.BYOG]: t('byog'),
-                // [BlockFeature.NOTIFICATIONS_INVITES]: ut('Notifications: Invites'),
-                // [BlockFeature.NOTIFICATIONS_ACHIEVEMENTS]: ut('Notifications: Achievements'),
+                [BlockFeature.NOTIFICATIONS_INVITES]: t('notifications') + ': ' + t('invites'),
+                [BlockFeature.NOTIFICATIONS_ACHIEVEMENTS]: t('notifications') + ': ' + t('achievements'),
             },
         },
 

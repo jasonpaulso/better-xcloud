@@ -5,6 +5,7 @@ import { Toast } from "./toast";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref, setPref } from "./settings-storages/global-settings-storage";
 import { LocalDb } from "./local-db/local-db";
+import { BlockFeature } from "@/enums/pref-values";
 
 /**
  * Check for update
@@ -154,4 +155,20 @@ export function clearAllData() {
     } catch (e) {};
 
     alert(t('clear-data-success'));
+}
+
+export function blockAllNotifications() {
+    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    const blockAll = [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES].every(value => blockFeatures.includes(value));
+    return blockAll;
+}
+
+export function blockSomeNotifications() {
+    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    if (blockAllNotifications()) {
+        return false;
+    }
+
+    const blockSome = [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES].some(value => blockFeatures.includes(value));
+    return blockSome;
 }

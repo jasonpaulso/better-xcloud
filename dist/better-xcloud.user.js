@@ -298,6 +298,9 @@ var SUPPORTED_LANGUAGES = {
  "zh-CN": "中文(简体)",
  "zh-TW": "中文(繁體)"
 }, Texts = {
+ notifications: "Notifications",
+ invites: "Invites",
+ achievements: "Achievements",
  chat: "Chat",
  "friends-followers": "Friends and followers",
  byog: "Stream your own game",
@@ -1792,7 +1795,9 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    multipleOptions: {
     chat: t("chat"),
     friends: t("friends-followers"),
-    byog: t("byog")
+    byog: t("byog"),
+    "notifications-invites": t("notifications") + ": " + t("invites"),
+    "notifications-achievements": t("notifications") + ": " + t("achievements")
    }
   },
   "userAgent.profile": {
@@ -2110,6 +2115,15 @@ function clearAllData() {
   indexedDB.deleteDatabase(LocalDb.DB_NAME);
  } catch (e) {}
  alert(t("clear-data-success"));
+}
+function blockAllNotifications() {
+ let blockFeatures = getPref("block.features");
+ return ["friends", "notifications-achievements", "notifications-invites"].every((value) => blockFeatures.includes(value));
+}
+function blockSomeNotifications() {
+ let blockFeatures = getPref("block.features");
+ if (blockAllNotifications()) return !1;
+ return ["friends", "notifications-achievements", "notifications-invites"].some((value) => blockFeatures.includes(value));
 }
 class SoundShortcut {
  static adjustGainNodeVolume(amount) {
@@ -4622,6 +4636,23 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   let text = "sendAbsoluteMouseCapableMessage(e){";
   if (!str.includes(text)) return !1;
   return str = str.replace(text, text + "return;"), str;
+ },
+ changeNotificationsSubscription(str) {
+  let text = ";buildSubscriptionQueryParamsForNotifications(", index = str.indexOf(text);
+  if (index < 0) return !1;
+  index += text.length;
+  let subsVar = str[index];
+  index = str.indexOf("{", index) + 1;
+  let blockFeatures = getPref("block.features"), filters = [];
+  if (blockFeatures.includes("notifications-invites")) filters.push("GameInvite", "PartyInvite");
+  if (blockFeatures.includes("friends")) filters.push("Follower");
+  if (blockFeatures.includes("notifications-achievements")) filters.push("AchievementUnlock");
+  let newCode = `
+let subs = ${subsVar};
+subs = subs.filter(val => !${JSON.stringify(filters)}.includes(val));
+${subsVar} = subs;
+`;
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
@@ -4669,12 +4700,15 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
  ...BX_FLAGS.EnableXcloudLogging ? [
   "enableConsoleLogging",
   "enableXcloudLogger"
+ ] : [],
+ ...blockSomeNotifications() ? [
+  "changeNotificationsSubscription"
  ] : []
-]), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
- getPref("ui.hideSections").includes("friends") && "ignorePlayWithFriendsSection",
- getPref("ui.hideSections").includes("all-games") && "ignoreAllGamesSection",
- STATES.browser.capabilities.touch && getPref("ui.hideSections").includes("touch") && "ignorePlayWithTouchSection",
- (getPref("ui.hideSections").includes("native-mkb") || getPref("ui.hideSections").includes("most-popular")) && "ignoreSiglSections"
+]), hideSections = getPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+ hideSections.includes("friends") && "ignorePlayWithFriendsSection",
+ hideSections.includes("all-games") && "ignoreAllGamesSection",
+ STATES.browser.capabilities.touch && hideSections.includes("touch") && "ignorePlayWithTouchSection",
+ hideSections.some((value) => ["native-mkb", "most-popular"].includes(value)) && "ignoreSiglSections"
 ]), STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  "patchXcloudTitleInfo",
  "disableGamepadDisconnectedScreen",
@@ -7984,29 +8018,19 @@ async function patchIceCandidates(request, consoleAddrs) {
 }
 function interceptHttpRequests() {
  let BLOCKED_URLS = [];
- if (getPref("block.tracking")) clearAllLogs(), BLOCKED_URLS = BLOCKED_URLS.concat([
-   "https://arc.msn.com",
-   "https://browser.events.data.microsoft.com",
-   "https://dc.services.visualstudio.com",
-   "https://2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io",
-   "https://mscom.demdex.net"
-  ]);
+ if (getPref("block.tracking")) clearAllLogs(), BLOCKED_URLS.push("https://arc.msn.com", "https://browser.events.data.microsoft.com", "https://dc.services.visualstudio.com", "https://2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io", "https://mscom.demdex.net");
  let blockFeatures2 = getPref("block.features");
- if (blockFeatures2.includes("chat")) BLOCKED_URLS = BLOCKED_URLS.concat([
-   "https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox"
-  ]);
- if (blockFeatures2.includes("friends")) BLOCKED_URLS = BLOCKED_URLS.concat([
-   "https://peoplehub.xboxlive.com/users/me/people/social",
-   "https://peoplehub.xboxlive.com/users/me/people/recommendations"
-  ]);
+ if (blockFeatures2.includes("chat")) BLOCKED_URLS.push("https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox");
+ if (blockFeatures2.includes("friends")) BLOCKED_URLS.push("https://peoplehub.xboxlive.com/users/me/people/social", "https://peoplehub.xboxlive.com/users/me/people/recommendations");
+ if (blockAllNotifications()) BLOCKED_URLS.push("https://notificationinbox.xboxlive.com/");
  let xhrPrototype = XMLHttpRequest.prototype, nativeXhrOpen = xhrPrototype.open, nativeXhrSend = xhrPrototype.send;
  xhrPrototype.open = function(method, url) {
   return this._url = url, nativeXhrOpen.apply(this, arguments);
  }, xhrPrototype.send = function(...arg) {
-  for (let blocked of BLOCKED_URLS)
-   if (this._url.startsWith(blocked)) {
-    if (blocked === "https://dc.services.visualstudio.com") window.setTimeout(clearAllLogs, 1000);
-    return !1;
+  for (let url of BLOCKED_URLS)
+   if (this._url.startsWith(url)) {
+    if (url === "https://dc.services.visualstudio.com") window.setTimeout(clearAllLogs, 1000);
+    return BxLogger.warning("Blocked URL", url), !1;
    }
   return nativeXhrSend.apply(this, arguments);
  };
@@ -8028,7 +8052,7 @@ function interceptHttpRequests() {
  window.BX_FETCH = window.fetch = async (request, init) => {
   let url = typeof request === "string" ? request : request.url;
   for (let blocked of BLOCKED_URLS)
-   if (url.startsWith(blocked)) return new Response('{"acc":1,"webResult":{}}', {
+   if (url.startsWith(blocked)) return BxLogger.warning("Blocked URL", url), new Response('{"acc":1,"webResult":{}}', {
      status: 200,
      statusText: "200 OK"
     });

@@ -1,7 +1,7 @@
 import { AppInterface, SCRIPT_VERSION, STATES } from "@utils/global";
 import { BX_FLAGS } from "@utils/bx-flags";
 import { BxLogger } from "@utils/bx-logger";
-import { hashCode, renderString } from "@utils/utils";
+import { blockSomeNotifications, hashCode, renderString } from "@utils/utils";
 import { BxEvent } from "@/utils/bx-event";
 
 import codeControllerShortcuts from "./patches/controller-shortcuts.js" with { type: "text" };
@@ -14,7 +14,7 @@ import { PrefKey, StorageKey } from "@/enums/pref-keys.js";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { t } from "@/utils/translation";
-import { NativeMkbMode, TouchControllerMode, UiLayout, UiSection } from "@/enums/pref-values";
+import { BlockFeature, NativeMkbMode, TouchControllerMode, UiLayout, UiSection } from "@/enums/pref-values";
 import { PatcherUtils } from "./patcher-utils.js";
 
 export type PatchName = keyof typeof PATCHES;
@@ -935,7 +935,43 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
 
         str = str.replace(text, text + 'return;');
         return str;
-    }
+    },
+
+    changeNotificationsSubscription(str: string) {
+        let text = ';buildSubscriptionQueryParamsForNotifications(';
+        let index = str.indexOf(text);
+        if (index < 0) {
+            return false;
+        }
+
+        index += text.length;
+        // Get parameter name
+        const subsVar = str[index];
+
+        // Find index after {
+        index = str.indexOf('{', index) + 1;
+        const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+        const filters = [];
+        if (blockFeatures.includes(BlockFeature.NOTIFICATIONS_INVITES)) {
+            filters.push('GameInvite', 'PartyInvite');
+        }
+
+        if (blockFeatures.includes(BlockFeature.FRIENDS)) {
+            filters.push('Follower');
+        }
+
+        if (blockFeatures.includes(BlockFeature.NOTIFICATIONS_ACHIEVEMENTS)) {
+            filters.push('AchievementUnlock');
+        }
+
+        const newCode = `
+let subs = ${subsVar};
+subs = subs.filter(val => !${JSON.stringify(filters)}.includes(val));
+${subsVar} = subs;
+`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1001,13 +1037,18 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
         'enableConsoleLogging',
         'enableXcloudLogger',
     ] : []),
+
+    ...(blockSomeNotifications() ? [
+        'changeNotificationsSubscription',
+    ] : []),
 ]);
 
+const hideSections = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
 let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
-    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
-    getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
-    STATES.browser.capabilities.touch && getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
-    (getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.NATIVE_MKB) || getPref<UiSection>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.MOST_POPULAR)) && 'ignoreSiglSections',
+    hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
+    hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
+    STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
+    hideSections.some(value => [UiSection.NATIVE_MKB, UiSection.MOST_POPULAR].includes(value)) && 'ignoreSiglSections',
 ]);
 
 // Only when playing
