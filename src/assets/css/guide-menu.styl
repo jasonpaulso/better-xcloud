@@ -7,11 +7,11 @@
         margin-bottom: 0 !important;
     }
 
-    body[data-media-type=tv] & {
+    body[data-bx-media-type=tv] & {
         flex-direction: column;
     }
 
-    body:not([data-media-type=tv]) & {
+    body:not([data-bx-media-type=tv]) & {
         flex-direction: row;
 
         > button:first-of-type {
@@ -34,7 +34,7 @@
         flex-direction: row;
         gap: 12px;
 
-        body[data-media-type=tv] & {
+        body[data-bx-media-type=tv] & {
             flex-direction: column;
 
             button {
@@ -42,7 +42,7 @@
             }
         }
 
-        body:not([data-media-type=tv]) & {
+        body:not([data-bx-media-type=tv]) & {
             button {
                 span {
                     display: none;

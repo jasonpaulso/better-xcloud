@@ -8,6 +8,9 @@ import { SettingsDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
 import { BxEventBus } from "@/utils/bx-event-bus";
+import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { UiLayout } from "@/enums/pref-values";
+import { PrefKey } from "@/enums/pref-keys";
 
 export enum GuideMenuTab {
     HOME = 'home',
@@ -110,6 +113,11 @@ export class GuideMenu {
         const $div = CE('div', {
             class: 'bx-guide-home-buttons',
         });
+
+        // Set TV tag
+        if (STATES.userAgent.isTv || getPref<UiLayout>(PrefKey.UI_LAYOUT) === UiLayout.TV) {
+            document.body.dataset.bxMediaType = 'tv';
+        }
 
         for (const $button of buttonsLayout) {
             if (!$button) {
