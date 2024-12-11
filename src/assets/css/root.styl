@@ -142,13 +142,24 @@ div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module
 
 select[multiple], select[multiple]:focus {
     overflow: auto;
+    border: none;
 
     option {
-        padding: 4px;
+        padding: 4px 6px;
 
-        &:checked, {
-            color = var(--bx-primary-button-color);
+        &:checked {
+            color = #1a7bc0;
             background: color linear-gradient(0deg, color 0%, color 100%);
+
+            &::before {
+                content: '☑️';
+                font-size: 12px;
+                display: inline-block;
+                margin-right: 6px;
+                height: 100%;
+                line-height: 100%;
+                vertical-align: middle;
+            }
         }
     }
 }

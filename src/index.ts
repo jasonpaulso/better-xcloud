@@ -27,7 +27,7 @@ import { ScreenshotManager } from "./utils/screenshot-manager";
 import { NativeMkbHandler } from "./modules/mkb/native-mkb-handler";
 import { GuideMenu } from "./modules/ui/guide-menu";
 import { updateVideoPlayer } from "./modules/stream/stream-settings-utils";
-import { NativeMkbMode, TouchControllerMode, UiSection } from "./enums/pref-values";
+import { BlockFeature, NativeMkbMode, TouchControllerMode, UiSection } from "./enums/pref-values";
 import { HeaderSection } from "./modules/ui/header";
 import { GameTile } from "./modules/ui/game-tile";
 import { ProductDetailsPage } from "./modules/ui/product-details";
@@ -171,7 +171,7 @@ document.addEventListener('readystatechange', e => {
     }
 
     // Hide "Play with Friends" skeleton section
-    if (getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS)) {
+    if (getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) || getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
         const $parent = document.querySelector('div[class*=PlayWithFriendsSkeleton]')?.closest<HTMLElement>('div[class*=HomePage-module]');
         $parent && ($parent.style.display = 'none');
     }
