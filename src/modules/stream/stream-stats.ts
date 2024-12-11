@@ -193,12 +193,21 @@ export class StreamStats {
 
     refreshStyles() {
         const PREF_ITEMS = getPref<StreamStat[]>(PrefKey.STATS_ITEMS);
+        const PREF_OPACITY_BG = getPref<number>(PrefKey.STATS_OPACITY_BACKGROUND);
 
         const $container = this.$container;
         $container.dataset.stats = '[' + PREF_ITEMS.join('][') + ']';
         $container.dataset.position = getPref(PrefKey.STATS_POSITION);
-        $container.dataset.transparent = getPref(PrefKey.STATS_TRANSPARENT);
-        $container.style.opacity = getPref(PrefKey.STATS_OPACITY) + '%';
+
+        if (PREF_OPACITY_BG === 0) {
+            $container.style.removeProperty('background-color');
+            $container.dataset.shadow = 'true';
+        } else {
+            delete $container.dataset.shadow;
+            $container.style.backgroundColor = `rgba(0, 0, 0, ${PREF_OPACITY_BG}%)`;
+        }
+
+        $container.style.opacity = getPref(PrefKey.STATS_OPACITY_ALL) + '%';
         $container.style.fontSize = getPref(PrefKey.STATS_TEXT_SIZE);
     }
 

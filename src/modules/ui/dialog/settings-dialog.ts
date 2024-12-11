@@ -630,10 +630,10 @@ export class SettingsDialog extends NavigationDialog {
                 pref: PrefKey.STATS_TEXT_SIZE,
                 onChange: StreamStats.refreshStyles,
             }, {
-                pref: PrefKey.STATS_OPACITY,
+                pref: PrefKey.STATS_OPACITY_ALL,
                 onChange: StreamStats.refreshStyles,
             }, {
-                pref: PrefKey.STATS_TRANSPARENT,
+                pref: PrefKey.STATS_OPACITY_BACKGROUND,
                 onChange: StreamStats.refreshStyles,
             }, {
                 pref: PrefKey.STATS_CONDITIONAL_FORMATTING,

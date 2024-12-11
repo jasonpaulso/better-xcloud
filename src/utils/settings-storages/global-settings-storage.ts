@@ -829,14 +829,21 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 '1.1rem': t('large'),
             },
         },
-        [PrefKey.STATS_TRANSPARENT]: {
-            label: t('transparent-background'),
-            default: false,
-        },
-        [PrefKey.STATS_OPACITY]: {
+        [PrefKey.STATS_OPACITY_ALL]: {
             label: t('opacity'),
             default: 80,
             min: 50,
+            max: 100,
+            params: {
+                steps: 10,
+                suffix: '%',
+                ticks: 10,
+            },
+        },
+        [PrefKey.STATS_OPACITY_BACKGROUND]: {
+            label: t('background-opacity'),
+            default: 100,
+            min: 0,
             max: 100,
             params: {
                 steps: 10,

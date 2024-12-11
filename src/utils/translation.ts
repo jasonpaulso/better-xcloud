@@ -27,6 +27,7 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
+    "background-opacity": "Background opacity",
     "notifications": "Notifications",
     "invites": "Invites",
     "achievements": "Achievements",

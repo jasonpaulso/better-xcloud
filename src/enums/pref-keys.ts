@@ -103,8 +103,8 @@ export const enum PrefKey {
     STATS_QUICK_GLANCE_ENABLED = 'stats.quickGlance.enabled',
     STATS_POSITION = 'stats.position',
     STATS_TEXT_SIZE = 'stats.textSize',
-    STATS_TRANSPARENT = 'stats.transparent',
-    STATS_OPACITY = 'stats.opacity',
+    STATS_OPACITY_ALL = 'stats.opacity.all',
+    STATS_OPACITY_BACKGROUND = 'stats.opacity.background',
     STATS_CONDITIONAL_FORMATTING = 'stats.colors',
 
     REMOTE_PLAY_ENABLED = 'xhome.enabled',
