@@ -4525,6 +4525,11 @@ true` + text;
   if (index = str.indexOf(`const ${funcName}=e=>{`), index > -1 && (index = str.indexOf("return ", index)), index > -1 && (index = str.indexOf("?", index)), index < 0) return !1;
   return str = str.substring(0, index) + "|| true" + str.substring(index), str;
  },
+ ignoreNewsSection(str) {
+  let index = str.indexOf('Logger("CarouselRow")');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "const ", index, 200)), index < 0) return !1;
+  return str = PatcherUtils.insertAt(str, index, "return null;"), str;
+ },
  ignorePlayWithFriendsSection(str) {
   let index = str.indexOf('location:"PlayWithFriendsRow",');
   if (index < 0) return !1;
@@ -4705,6 +4710,7 @@ ${subsVar} = subs;
   "changeNotificationsSubscription"
  ] : []
 ]), hideSections = getPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+ hideSections.includes("news") && "ignoreNewsSection",
  hideSections.includes("friends") && "ignorePlayWithFriendsSection",
  hideSections.includes("all-games") && "ignoreAllGamesSection",
  STATES.browser.capabilities.touch && hideSections.includes("touch") && "ignorePlayWithTouchSection",

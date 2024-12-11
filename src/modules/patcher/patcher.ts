@@ -694,6 +694,18 @@ true` + text;
         return str;
     },
 
+    // Don't render News section
+    ignoreNewsSection(str: string) {
+        let index = str.indexOf('Logger("CarouselRow")');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'const ', index, 200));
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.insertAt(str, index, 'return null;');
+        return str;
+    },
+
     // Don't render "Play With Friends" sections
     ignorePlayWithFriendsSection(str: string) {
         let index = str.indexOf('location:"PlayWithFriendsRow",');
@@ -1045,6 +1057,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
 const hideSections = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
 let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+    hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
     hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
     hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
     STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
