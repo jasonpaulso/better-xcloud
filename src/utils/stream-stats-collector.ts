@@ -96,7 +96,7 @@ export class StreamStatsCollector {
             current: -1,
             grades: [40, 75, 100],
             toString() {
-                return this.current === -1 ? '???' : this.current.toString();
+                return this.current === -1 ? '???' : this.current.toString().padStart(3, ' ');
             },
         },
 
@@ -104,7 +104,7 @@ export class StreamStatsCollector {
             current: 0,
             grades: [30, 40, 60],
             toString() {
-                return `${this.current.toFixed(1)}ms`;
+                return `${this.current.toFixed(1)}ms`.padStart(6, ' ');
             },
         },
 
@@ -119,7 +119,7 @@ export class StreamStatsCollector {
         [StreamStat.BITRATE]: {
             current: 0,
             toString() {
-                return `${this.current.toFixed(1)} Mbps`;
+                return `${this.current.toFixed(1)} Mbps`.padStart(9, ' ');
             },
         },
 
@@ -146,14 +146,14 @@ export class StreamStatsCollector {
             total: 0,
             grades: [6, 9, 12],
             toString() {
-                return isNaN(this.current) ? '??ms' : `${this.current.toFixed(1)}ms`;
+                return isNaN(this.current) ? '??ms' : `${this.current.toFixed(1)}ms`.padStart(6, ' ');
             },
         },
 
         [StreamStat.DOWNLOAD]: {
             total: 0,
             toString() {
-                return humanFileSize(this.total);
+                return humanFileSize(this.total).padStart(8, ' ');
             },
         },
 
