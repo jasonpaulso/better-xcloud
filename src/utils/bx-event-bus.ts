@@ -78,7 +78,7 @@ export class BxEventBus<TEvents extends Record<string, any>> {
         BX_FLAGS.Debug && BxLogger.warning('EventBus', 'on', event, callback);
     }
 
-    once<K extends keyof TEvents>(event: string, callback: EventCallback<TEvents[K]>): void {
+    once<K extends keyof TEvents>(event: K, callback: EventCallback<TEvents[K]>): void {
         const wrapper = (...args: any[]) => {
             // @ts-ignore
             callback(...args);

@@ -41,7 +41,7 @@ export class GuideMenu {
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
                 onClick: () => {
                     // Wait until the Guide dialog is closed
-                    BxEventBus.Script.once('xcloudDialogDismissed', () => {
+                    BxEventBus.Script.once('dialog.dismissed', () => {
                         setTimeout(() => SettingsDialog.getInstance().show(), 50);
                     });
 
