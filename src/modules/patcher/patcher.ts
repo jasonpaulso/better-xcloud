@@ -835,9 +835,9 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
         return str;
     },
 
-    // 24225.js#4127, 24.17.11
-    patchSetCurrentlyFocusedInteractable(str: string) {
-        let index = str.indexOf('.setCurrentlyFocusedInteractable=(');
+    // 49851.js#4083, 27.0.4
+    patchSetCurrentFocus(str: string) {
+        let index = str.indexOf('.setCurrentFocus=(');
         if (index < 0) {
             return false;
         }
@@ -1017,7 +1017,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     'supportLocalCoOp',
     'overrideStorageGetSettings',
-    getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentlyFocusedInteractable',
+    getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentFocus',
 
     getPref<UiLayout>(PrefKey.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
     getPref(PrefKey.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',

@@ -4615,8 +4615,8 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   let commaIndex = str.indexOf(",", index - 10);
   return str = str.substring(0, commaIndex) + ",true" + str.substring(index), str;
  },
- patchSetCurrentlyFocusedInteractable(str) {
-  let index = str.indexOf(".setCurrentlyFocusedInteractable=(");
+ patchSetCurrentFocus(str) {
+  let index = str.indexOf(".setCurrentFocus=(");
   if (index < 0) return !1;
   return index = str.indexOf("{", index) + 1, str = PatcherUtils.insertAt(str, index, "e && BxEvent.dispatch(window, BxEvent.NAVIGATION_FOCUS_CHANGED, { element: e });"), str;
  },
@@ -4704,7 +4704,7 @@ ${subsVar} = subs;
  "enableTvRoutes",
  "supportLocalCoOp",
  "overrideStorageGetSettings",
- getPref("ui.gameCard.waitTime.show") && "patchSetCurrentlyFocusedInteractable",
+ getPref("ui.gameCard.waitTime.show") && "patchSetCurrentFocus",
  getPref("ui.layout") !== "default" && "websiteLayout",
  getPref("game.fortnite.forceConsole") && "forceFortniteConsole",
  ...STATES.userAgent.capabilities.touch ? [
