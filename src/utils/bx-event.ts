@@ -54,7 +54,7 @@ export namespace BxEvent {
         target.dispatchEvent(event);
         AppInterface && AppInterface.onEvent(eventName);
 
-        BX_FLAGS.Debug && BxLogger.warning('BxEvent', 'dispatch', eventName, data);
+        BX_FLAGS.Debug && BxLogger.warning('BxEvent', 'dispatch', target, eventName, data);
     }
 }
 

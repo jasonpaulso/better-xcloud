@@ -153,7 +153,7 @@ var BxEvent;
   let event = new Event(eventName);
   if (data) for (let key in data)
     event[key] = data[key];
-  target.dispatchEvent(event), AppInterface && AppInterface.onEvent(eventName), BX_FLAGS.Debug && BxLogger.warning("BxEvent", "dispatch", eventName, data);
+  target.dispatchEvent(event), AppInterface && AppInterface.onEvent(eventName), BX_FLAGS.Debug && BxLogger.warning("BxEvent", "dispatch", target, eventName, data);
  }
  BxEvent.dispatch = dispatch;
 })(BxEvent ||= {});
@@ -4924,7 +4924,7 @@ class BxNumberStepper extends HTMLInputElement {
    value: options.reverse ? -value : value,
    step: self.steps,
    tabindex: 0
-  }), self.$range = $range, options.hideSlider && $range.classList.add("bx-gone"), self.addEventListener("input", self.onRangeInput), self.appendChild($range), options.ticks || options.exactTicks) {
+  }), self.$range = $range, options.hideSlider && $range.classList.add("bx-gone"), $range.addEventListener("input", self.onRangeInput), self.addEventListener("input", self.onRangeInput), self.appendChild($range), options.ticks || options.exactTicks) {
    let markersId = `markers-${key}`, $markers = CE("datalist", { id: markersId });
    if ($range.setAttribute("list", markersId), options.exactTicks) {
     let start = Math.max(Math.floor(min / options.exactTicks), 1) * options.exactTicks;

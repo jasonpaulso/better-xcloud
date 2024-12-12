@@ -114,6 +114,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
         self.$range = $range;
         options.hideSlider && $range.classList.add('bx-gone');
 
+        $range.addEventListener('input', self.onRangeInput);
         self.addEventListener('input', self.onRangeInput);
         self.appendChild($range);
 
