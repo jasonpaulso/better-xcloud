@@ -1,6 +1,6 @@
 import { BxEvent } from "@/utils/bx-event";
 import { BxIcon } from "@/utils/bx-icon";
-import { CE, createSvgIcon, getReactProps, isElementVisible, secondsToHms } from "@/utils/html";
+import { CE, createSvgIcon, getReactProps, isElementVisible, secondsToHm } from "@/utils/html";
 import { XcloudApi } from "@/utils/xcloud-api";
 
 interface GameTimeElement extends HTMLElement {
@@ -30,8 +30,14 @@ export class GameTile {
         if (typeof totalWaitTime === 'number' && isElementVisible($elm)) {
             const $div = CE('div', { class: 'bx-game-tile-wait-time' },
                 createSvgIcon(BxIcon.PLAYTIME),
-                CE('span', {}, secondsToHms(totalWaitTime)),
+                CE('span', {}, totalWaitTime < 60 ? totalWaitTime + 's' : secondsToHm(totalWaitTime)),
             );
+
+            const duration = (totalWaitTime >= 15 * 60) ? 'long' : (totalWaitTime >= 10 * 60) ? 'medium' : (totalWaitTime >= 5 * 60 ) ? 'short' : '';
+            if (duration) {
+                $div.dataset.duration = duration;
+            }
+
             $elm.insertAdjacentElement('afterbegin', $div);
         }
     }

@@ -194,7 +194,7 @@ div[class*=SupportedInputsBadge] {
     top: 0;
     left: 0;
     z-index: 1;
-    background: #0000008c;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     border-radius: 4px 0 4px 0;
     align-items: center;
@@ -213,6 +213,18 @@ div[class*=SupportedInputsBadge] {
         font-size: 12px;
         font-weight: bold;
         margin-left: 2px;
+    }
+
+    &[data-duration=short] {
+        background-color: rgba(0, 133, 133, 0.75);
+    }
+
+    &[data-duration=medium] {
+        background-color: rgba(213, 133, 0, 0.75);
+    }
+
+    &[data-duration=long] {
+        background-color: rgba(150, 0, 0, 0.75);
     }
 }
 
