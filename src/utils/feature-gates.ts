@@ -8,6 +8,7 @@ export let FeatureGates: { [key: string]: boolean } = {
     EnableWifiWarnings: false,
     EnableUpdateRequiredPage: false,
     ShowForcedUpdateScreen: false,
+    EnableTakControlResizing: true,  // Experimenting
 };
 
 // Enable Native Mouse & Keyboard
