@@ -28,8 +28,8 @@ body:
     attributes:
       label: xCloud officially supports your country/region
       options:
-        - "Yes"
         - "No"
+        - "Yes"
     validations:
       required: true
 
@@ -38,8 +38,8 @@ body:
     attributes:
       label: "The bug doesn't happen when you disable Better xCloud script"
       options:
-        - "Yes"
         - "No"
+        - "Yes"
     validations:
       required: true
 
@@ -48,8 +48,8 @@ body:
     attributes:
       label: "Previous Better xCloud versions didn't have this bug (name which one)"
       options:
-        - "Yes"
         - "No"
+        - "Yes"
     validations:
       required: true
 
