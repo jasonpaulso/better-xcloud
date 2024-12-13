@@ -4,6 +4,13 @@ title: "[Bug] "
 labels:
   - bug
 body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!note]
+        > - Use `Discussions` if you want to ask for question.
+        > - Non-English reports will be deleted. No exceptions.
+
   - type: checkboxes
     id: checklist
     attributes:
@@ -15,17 +22,37 @@ body:
           required: true
         - label: I will describe the problem with as much detail as possible.
           required: true
-  - type: checkboxes
-    id: questions
+
+  - type: dropdown
+    id: question_01
     attributes:
-      label: Questions
+      label: xCloud officially supports your country/region
       options:
-        - label: xCloud officially supports my country/region.
-          required: false
-        - label: "The bug doesn't happen when I disable Better xCloud script."
-          required: false
-        - label: "The bug didn't happen in previous Better xCloud version (name which one)."
-          required: false
+        - Yes
+        - No
+    validations:
+      required: true
+
+  - type: dropdown
+    id: question_02
+    attributes:
+      label: "The bug doesn't happen when you disable Better xCloud script"
+      options:
+        - Yes
+        - No
+    validations:
+      required: true
+
+  - type: dropdown
+    id: question_03
+    attributes:
+      label: "Previous Better xCloud versions didn't have this bug (name which one)"
+      options:
+        - Yes
+        - No
+    validations:
+      required: true
+
   - type: dropdown
     id: device_type
     attributes:
@@ -40,6 +67,7 @@ body:
       multiple: false
     validations:
       required: true
+
   - type: input
     id: device_name
     attributes:
@@ -48,6 +76,7 @@ body:
       placeholder: "e.g., Google Pixel 8"
     validations:
       required: true
+
   - type: input
     id: os
     attributes:
@@ -56,6 +85,7 @@ body:
       placeholder: "e.g., Android 14"
     validations:
       required: true
+  
   - type: input
     id: browser_version
     attributes:
@@ -64,6 +94,7 @@ body:
       placeholder: "e.g., Chrome 124.0, Android app 0.15.0"
     validations:
       required: true
+  
   - type: input
     id: extension_version
     attributes:
@@ -72,6 +103,7 @@ body:
       placeholder: "e.g., 3.5.0"
     validations:
       required: true
+  
   - type: input
     id: game_list
     attributes:
@@ -80,6 +112,7 @@ body:
       placeholder: "e.g., Halo"
     validations:
       required: false
+  
   - type: textarea
     id: reproduction
     attributes:
@@ -93,6 +126,7 @@ body:
         3. Error
     validations:
       required: true
+
   - type: textarea
     id: media
     attributes:
