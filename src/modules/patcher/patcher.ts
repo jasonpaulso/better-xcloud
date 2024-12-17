@@ -541,12 +541,12 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
     },
 
     patchShowSensorControls(str: string) {
-        let text = '{shouldShowSensorControls:';
+        let text = ',{shouldShowSensorControls:';
         if (!str.includes(text)) {
             return false;
         }
 
-        const newCode = `{shouldShowSensorControls: (window.BX_EXPOSED && window.BX_EXPOSED.shouldShowSensorControls) ||`;
+        const newCode = `,{shouldShowSensorControls: (window.BX_EXPOSED && window.BX_EXPOSED.shouldShowSensorControls) ||`;
 
         str = str.replace(text, newCode);
         return str;
