@@ -253,7 +253,7 @@ export function interceptHttpRequests() {
             const response = await NATIVE_FETCH(request, init);
             const obj = await response.clone().json();
 
-            if (url.includes(GamePassCloudGallery.ALL)) {
+            if (url.includes(GamePassCloudGallery.ALL) || url.includes(GamePassCloudGallery.ALL_WITH_BYGO)) {
                 for (let i = 1; i < obj.length; i++) {
                     gamepassAllGames.push(obj[i].id);
                 }

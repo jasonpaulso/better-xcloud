@@ -54,11 +54,16 @@ export const BxExposed = {
                 let customList = TouchController.getCustomList();
 
                 // Remove non-cloud games from the official list
-                const allGames = sigls[GamePassCloudGallery.ALL].data.products;
-                customList = customList.filter(id => allGames.includes(id));
+                const siglId = GamePassCloudGallery.ALL_WITH_BYGO;
+                if (siglId in sigls) {
+                    const allGames = sigls[siglId].data.products;
+                    customList = customList.filter(id => allGames.includes(id));
 
-                // Add to the official touchlist
-                sigls[GamePassCloudGallery.TOUCH]?.data.products.push(...customList);
+                    // Add to the official touchlist
+                    sigls[GamePassCloudGallery.TOUCH]?.data.products.push(...customList);
+                } else {
+                    BxLogger.warning(LOG_TAG, 'Sigl not found: ' + siglId);
+                }
             }
         } catch (e) {
             BxLogger.error(LOG_TAG, e);
