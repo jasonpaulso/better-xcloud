@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.0.6
+// @version      6.0.7
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -107,7 +107,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.6", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.7", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -4481,9 +4481,9 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
   return str = str.replace(text, newCode), str;
  },
  patchShowSensorControls(str) {
-  let text = "{shouldShowSensorControls:";
+  let text = ",{shouldShowSensorControls:";
   if (!str.includes(text)) return !1;
-  let newCode = "{shouldShowSensorControls: (window.BX_EXPOSED && window.BX_EXPOSED.shouldShowSensorControls) ||";
+  let newCode = ",{shouldShowSensorControls: (window.BX_EXPOSED && window.BX_EXPOSED.shouldShowSensorControls) ||";
   return str = str.replace(text, newCode), str;
  },
  exposeStreamSession(str) {
@@ -4745,7 +4745,7 @@ ${subsVar} = subs;
   getPref("touchController.mode") === "all" && "exposeTouchLayoutManager",
   (getPref("touchController.mode") === "off" || getPref("touchController.autoOff")) && "disableTakRenderer",
   getPref("touchController.opacity.default") !== 100 && "patchTouchControlDefaultOpacity",
-  "patchBabylonRendererClass"
+  getPref("touchController.mode") !== "off" && (getPref("mkb.enabled") || getPref("nativeMkb.mode") === "on") && "patchBabylonRendererClass"
  ] : [],
  BX_FLAGS.EnableXcloudLogging && "enableConsoleLogging",
  "patchPollGamepads",
@@ -7089,8 +7089,11 @@ var BxExposed = {
   try {
    let sigls = state.xcloud.sigls;
    if (STATES.userAgent.capabilities.touch) {
-    let customList = TouchController.getCustomList(), allGames = sigls["ce573635-7c18-4d0c-9d68-90b932393470"].data.products;
-    customList = customList.filter((id) => allGames.includes(id)), sigls["9c86f07a-f3e8-45ad-82a0-a1f759597059"]?.data.products.push(...customList);
+    let customList = TouchController.getCustomList(), siglId = "ce573635-7c18-4d0c-9d68-90b932393470";
+    if (siglId in sigls) {
+     let allGames = sigls[siglId].data.products;
+     customList = customList.filter((id) => allGames.includes(id)), sigls["9c86f07a-f3e8-45ad-82a0-a1f759597059"]?.data.products.push(...customList);
+    } else BxLogger.warning(LOG_TAG3, "Sigl not found: " + siglId);
    }
   } catch (e) {
    BxLogger.error(LOG_TAG3, e);
@@ -8093,7 +8096,7 @@ function interceptHttpRequests() {
    }
   if (STATES.userAgent.capabilities.touch && url.includes("catalog.gamepass.com/sigls/")) {
    let response = await NATIVE_FETCH(request, init), obj = await response.clone().json();
-   if (url.includes("ce573635-7c18-4d0c-9d68-90b932393470")) for (let i = 1;i < obj.length; i++)
+   if (url.includes("29a81209-df6f-41fd-a528-2ae6b91f719c") || url.includes("ce573635-7c18-4d0c-9d68-90b932393470")) for (let i = 1;i < obj.length; i++)
      gamepassAllGames.push(obj[i].id);
    else if (url.includes("9c86f07a-f3e8-45ad-82a0-a1f759597059")) try {
      let customList = TouchController.getCustomList();

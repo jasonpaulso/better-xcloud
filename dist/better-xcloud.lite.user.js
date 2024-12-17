@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud (Lite)
 // @namespace    https://github.com/redphx
-// @version      6.0.6
+// @version      6.0.7
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -105,7 +105,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.6", SCRIPT_VARIANT = "lite", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.0.7", SCRIPT_VARIANT = "lite", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -5712,7 +5712,7 @@ function interceptHttpRequests() {
    }
   if (STATES.userAgent.capabilities.touch && url.includes("catalog.gamepass.com/sigls/")) {
    let response = await NATIVE_FETCH(request, init), obj = await response.clone().json();
-   if (url.includes("ce573635-7c18-4d0c-9d68-90b932393470")) for (let i = 1;i < obj.length; i++)
+   if (url.includes("29a81209-df6f-41fd-a528-2ae6b91f719c") || url.includes("ce573635-7c18-4d0c-9d68-90b932393470")) for (let i = 1;i < obj.length; i++)
      gamepassAllGames.push(obj[i].id);
    else if (!1) try {} catch (e) {}
    return response.json = () => Promise.resolve(obj), response;
