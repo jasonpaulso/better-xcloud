@@ -1090,7 +1090,7 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
         getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
         (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
         getPref<TouchControllerDefaultOpacity>(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
-        'patchBabylonRendererClass',
+        (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF && (getPref(PrefKey.MKB_ENABLED) || getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) && 'patchBabylonRendererClass',
     ] : []),
 
     BX_FLAGS.EnableXcloudLogging && 'enableConsoleLogging',
