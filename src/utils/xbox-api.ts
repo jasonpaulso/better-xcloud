@@ -3,7 +3,7 @@ import { NATIVE_FETCH } from "./bx-flags"
 export class XboxApi {
     private static CACHED_TITLES: Record<string, string> = {};
 
-    static async getProductTitle(xboxTitleId: number | string): Promise<string | null> {
+    static async getProductTitle(xboxTitleId: number | string): Promise<string | undefined> {
         xboxTitleId = xboxTitleId.toString();
         if (XboxApi.CACHED_TITLES[xboxTitleId]) {
             return XboxApi.CACHED_TITLES[xboxTitleId];
@@ -20,6 +20,6 @@ export class XboxApi {
             return productTitle;
         } catch (e) {}
 
-        return null;
+        return;
     }
 }

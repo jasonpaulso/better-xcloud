@@ -13,7 +13,6 @@ const isTv = userAgent.includes('smart-tv') || userAgent.includes('smarttv') || 
 const isVr = window.navigator.userAgent.includes('VR') && window.navigator.userAgent.includes('OculusBrowser');
 const browserHasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 const userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport;
-const supportMkb = AppInterface || !userAgent.match(/(android|iphone|ipad)/);
 
 export const STATES: BxStates = {
     supportedRegion: true,
@@ -28,6 +27,9 @@ export const STATES: BxStates = {
         capabilities: {
             touch: browserHasTouchSupport,
             batteryApi: 'getBattery' in window.navigator,
+            deviceVibration: !!window.navigator.vibrate,
+            mkb: AppInterface || !UserAgent.getDefault().toLowerCase().match(/(android|iphone|ipad)/),
+            emulatedNativeMkb: !!AppInterface,
         },
     },
 
@@ -35,7 +37,7 @@ export const STATES: BxStates = {
         isTv: isTv,
         capabilities: {
             touch: userAgentHasTouchSupport,
-            mkb: supportMkb,
+            mkb: AppInterface || !userAgent.match(/(android|iphone|ipad)/),
         }
     },
 
@@ -45,15 +47,15 @@ export const STATES: BxStates = {
     pointerServerPort: 9269,
 };
 
-export const STORAGE: {[key: string]: BaseSettingsStore} = {};
+export const STORAGE: { [key: string]: BaseSettingsStore } = {};
 
-export function deepClone(obj: any): any {
-    if ('structuredClone' in window) {
-        return structuredClone(obj);
-    }
-
+export function deepClone(obj: any): typeof obj | {} {
     if (!obj) {
         return {};
+    }
+
+    if ('structuredClone' in window) {
+        return structuredClone(obj);
     }
 
     return JSON.parse(JSON.stringify(obj));

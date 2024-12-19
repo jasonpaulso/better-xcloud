@@ -1,9 +1,9 @@
 import { BxLogger } from '@/utils/bx-logger'
 import { Toast } from '@/utils/toast'
 import { EmulatedMkbHandler } from '../mkb/mkb-handler'
-import { GamepadKey } from '@/enums/mkb'
 import { BxEvent } from '@/utils/bx-event'
-import { SoundShortcut } from '../shortcuts/shortcut-sound'
+import { GamepadKey } from '@/enums/gamepad'
+
 
 export enum FO76AutomationModes {
   HEAL = 'heal',
@@ -66,9 +66,13 @@ export class FO76AutomationHandler {
   private observers: Set<FO76AutomationStateObserver> = new Set()
 
   private constructor() {
-    this.mkbHandler = EmulatedMkbHandler.getInstance()
-    this.pressButton = this.mkbHandler.pressButton.bind(this.mkbHandler)
-    this.onPointerLockExited = this.mkbHandler.onPointerLockExited.bind(this)
+    const mkbHandlerInstance = EmulatedMkbHandler.getInstance()
+    if (!mkbHandlerInstance) {
+      throw new Error('Failed to initialize EmulatedMkbHandler')
+    }
+    this.mkbHandler = mkbHandlerInstance
+    this.pressButton = this.mkbHandler.pressButtonExposed.bind(this.mkbHandler)
+    this.onPointerLockExited = this.mkbHandler.onPointerLockExitedExposed.bind(this)
     this.buttonPressHandler = new ButtonPressHandler(this.pressButton)
     this.loopManager = new LoopManager()
   }
@@ -309,12 +313,12 @@ export class FO76AutomationHandler {
   private startMkbHandler() {
     this.mkbHandler.start()
     this.onPointerLockExited()
-    this.mkbHandler.hideMessage()
+    // this.mkbHandler.hideMessage()
   }
 
   private stopMkbHandler() {
     this.mkbHandler.stop()
-    this.mkbHandler.hideMessage()
+    // this.mkbHandler.hideMessage()
   }
 
   private showActivationMessage() {
@@ -347,21 +351,21 @@ export class FO76AutomationHandler {
 
   toggleGamepads() {
     window.navigator.getGamepads = () =>
-      !this.windowFocused ? [] : this.mkbHandler.patchedGetGamepads()
+      !this.windowFocused ? [] : this.mkbHandler.patchedGetGamepadsExposed()
   }
 
   handleWindowBlur = () => {
     window.navigator.getGamepads = () => this.mkbHandler.getVirtualGamepads()
-    SoundShortcut.mute(true)
+    // SoundShortcut.mute(true)
     console.log('FO76AutomationHandler', 'Window blurred')
   }
 
   handleWindowFocus = () => {
-    window.navigator.getGamepads = () => this.mkbHandler.patchedGetGamepads()
-    const prefVolume = SoundShortcut.getPrefVolume()
-    if (prefVolume > 0) {
-      SoundShortcut.unmute()
-    }
+    window.navigator.getGamepads = () => this.mkbHandler.patchedGetGamepadsExposed()
+    // const prefVolume = SoundShortcut.getPrefVolume()
+    // if (prefVolume > 0) {
+    //   SoundShortcut.unmute()
+    // }
     console.log('FO76AutomationHandler', 'Window focused')
   }
 
@@ -647,7 +651,7 @@ class EventManager {
 
     window.addEventListener('blur', handler.handleWindowBlur)
     window.addEventListener('focus', handler.handleWindowFocus)
-    window.addEventListener(BxEvent.STREAM_STOPPED, handler.handleStreamStopped)
+    // window.addEventListener(BxEvent.STREAM_STOPPED, handler.handleStreamStopped)
     window.addEventListener('keydown', handler.handleKeyDown)
     window.addEventListener(
       FO76_AUTOMATION_EVENTS.TOGGLE_AUTOMATION,

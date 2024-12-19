@@ -8,7 +8,7 @@ export type BxFlags = {
     SafariWorkaround: boolean;
 
     ForceNativeMkbTitles: string[];
-    FeatureGates: {[key: string]: boolean} | null,
+    FeatureGates: { [key: string]: boolean } | null,
 
     DeviceInfo: {
         deviceType: 'android' | 'android-tv' | 'android-handheld' | 'webos' | 'unknown',

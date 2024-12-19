@@ -1,13 +1,16 @@
-import { BxEvent } from '@utils/bx-event'
-import { STATES } from '@utils/global'
-import { BxLogger } from '@utils/bx-logger'
-import { patchSdpBitrate, setCodecPreferences } from './sdp'
-import { StreamPlayer, type StreamPlayerOptions } from '@/modules/stream-player'
-import { PrefKey } from '@/enums/pref-keys'
-import { getPref } from './settings-storages/global-settings-storage'
+import { BxEvent } from "@utils/bx-event";
+import { STATES } from "@utils/global";
+import { BxLogger } from "@utils/bx-logger";
+import { patchSdpBitrate, setCodecPreferences } from "./sdp";
+import { StreamPlayer, type StreamPlayerOptions } from "@/modules/stream-player";
+import { PrefKey } from "@/enums/pref-keys";
+import { getPref, getPrefDefinition } from "./settings-storages/global-settings-storage";
+import { CodecProfile } from "@/enums/pref-values";
+import type { SettingDefinition } from "@/types/setting-definition";
+import { BxEventBus } from "./bx-event-bus";
 
 export function patchVideoApi() {
-  const PREF_SKIP_SPLASH_VIDEO = getPref(PrefKey.SKIP_SPLASH_VIDEO)
+    const PREF_SKIP_SPLASH_VIDEO = getPref(PrefKey.UI_SKIP_SPLASH_VIDEO);
 
   // Show video player when it's ready
   const showFunc = function (this: HTMLVideoElement) {
@@ -29,10 +32,10 @@ export function patchVideoApi() {
       playerOptions
     )
 
-    BxEvent.dispatch(window, BxEvent.STREAM_PLAYING, {
-      $video: this,
-    })
-  }
+        BxEventBus.Stream.emit('state.playing', {
+            $video: this,
+        })
+    }
 
   const nativePlay = HTMLMediaElement.prototype.play
   ;(HTMLMediaElement.prototype as any).nativePlay = nativePlay
@@ -49,21 +52,21 @@ export function patchVideoApi() {
       return nativePlay.apply(this)
     }
 
-    const $parent = this.parentElement!!
-    // Video tag is stream player
-    if (!this.src && $parent.dataset.testid === 'media-container') {
-      this.addEventListener('loadedmetadata', showFunc, { once: true })
-    }
+        const $parent = this.parentElement!!;
+        // Video tag is stream player
+        if (!this.src && $parent.dataset.testid === 'media-container') {
+            this.addEventListener('loadedmetadata', showFunc, { once: true });
+        }
 
     return nativePlay.apply(this)
   }
 }
 
 export function patchRtcCodecs() {
-  const codecProfile = getPref(PrefKey.STREAM_CODEC_PROFILE)
-  if (codecProfile === 'default') {
-    return
-  }
+    const codecProfile = getPref<CodecProfile>(PrefKey.STREAM_CODEC_PROFILE);
+    if (codecProfile === 'default') {
+        return;
+    }
 
   if (
     typeof RTCRtpTransceiver === 'undefined' ||
@@ -79,34 +82,30 @@ export function patchRtcPeerConnection() {
     // @ts-ignore
     const dataChannel = nativeCreateDataChannel.apply(this, arguments)
 
-    BxEvent.dispatch(window, BxEvent.DATA_CHANNEL_CREATED, {
-      dataChannel: dataChannel,
-    })
+        BxEventBus.Stream.emit('dataChannelCreated', { dataChannel });
+        return dataChannel;
+    }
 
-    return dataChannel
-  }
+    const maxVideoBitrateDef = getPrefDefinition(PrefKey.STREAM_MAX_VIDEO_BITRATE) as Extract<SettingDefinition, { min: number }>;
+    const maxVideoBitrate = getPref<VideoMaxBitrate>(PrefKey.STREAM_MAX_VIDEO_BITRATE);
+    const codec = getPref<CodecProfile>(PrefKey.STREAM_CODEC_PROFILE);
 
-  const maxVideoBitrate = getPref(PrefKey.BITRATE_VIDEO_MAX)
-  const codec = getPref(PrefKey.STREAM_CODEC_PROFILE)
+    if (codec !== CodecProfile.DEFAULT || maxVideoBitrate < maxVideoBitrateDef.max) {
+        const nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+        RTCPeerConnection.prototype.setLocalDescription = function(description?: RTCLocalSessionDescriptionInit): Promise<void> {
+            // Set preferred codec profile
+            if (codec !== CodecProfile.DEFAULT) {
+                arguments[0].sdp = setCodecPreferences(arguments[0].sdp, codec);
+            }
 
-  if (codec !== 'default' || maxVideoBitrate > 0) {
-    const nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription
-    RTCPeerConnection.prototype.setLocalDescription = function (
-      description?: RTCLocalSessionDescriptionInit
-    ): Promise<void> {
-      // Set preferred codec profile
-      if (codec !== 'default') {
-        arguments[0].sdp = setCodecPreferences(arguments[0].sdp, codec)
-      }
-
-      // set maximum bitrate
-      try {
-        if (maxVideoBitrate > 0 && description) {
-          arguments[0].sdp = patchSdpBitrate(arguments[0].sdp, Math.round(maxVideoBitrate / 1000))
-        }
-      } catch (e) {
-        BxLogger.error('setLocalDescription', e)
-      }
+            // Set maximum bitrate
+            try {
+                if (maxVideoBitrate < maxVideoBitrateDef.max && description) {
+                    arguments[0].sdp = patchSdpBitrate(arguments[0].sdp, Math.round(maxVideoBitrate / 1000));
+                }
+            } catch (e) {
+                BxLogger.error('setLocalDescription', e);
+            }
 
       // @ts-ignore
       return nativeSetLocalDescription.apply(this, arguments)
@@ -136,16 +135,16 @@ export function patchAudioContext() {
       options.latencyHint = 0
     }
 
-    const ctx = new OrgAudioContext(options)
-    BxLogger.info('patchAudioContext', ctx, options)
+        const ctx = new OrgAudioContext(options);
+        BxLogger.info('patchAudioContext', ctx, options);
 
-    ctx.createGain = function () {
-      const gainNode = nativeCreateGain.apply(this)
-      gainNode.gain.value = getPref(PrefKey.AUDIO_VOLUME) / 100
+        ctx.createGain = function() {
+            const gainNode = nativeCreateGain.apply(this);
+            gainNode.gain.value = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME) / 100;
 
-      STATES.currentStream.audioGainNode = gainNode
-      return gainNode
-    }
+            STATES.currentStream.audioGainNode = gainNode;
+            return gainNode;
+        }
 
     STATES.currentStream.audioContext = ctx
     return ctx
@@ -205,15 +204,17 @@ export function patchMeControl() {
     },
   }
 
-  ;(window as any).MSA = new Proxy(MSA, MsaHandler)
-  ;(window as any).MeControl = new Proxy(MeControl, MeControlHandler)
+    window.MSA = new Proxy(MSA, MsaHandler);
+    window.MeControl = new Proxy(MeControl, MeControlHandler);
 }
 
 /**
  * Disable Adobe Audience Manager (AAM)
  */
 export function disableAdobeAudienceManager() {
-  ;(window as any).adobe = Object.freeze({})
+    Object.defineProperty(window, 'adobe', {
+        get() { return Object.freeze({}); }
+    });
 }
 
 /**

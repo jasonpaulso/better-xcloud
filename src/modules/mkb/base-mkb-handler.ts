@@ -4,20 +4,22 @@ export abstract class MouseDataProvider {
     this.mkbHandler = handler
   }
 
-  abstract init(): void
-  abstract start(): void
-  abstract stop(): void
-  abstract destroy(): void
+    init() {};
+    destroy() {};
+
+    abstract start(): void;
+    abstract stop(): void;
 }
 
 export abstract class MkbHandler {
-  abstract init(): void
-  abstract start(): void
-  abstract stop(): void
-  abstract destroy(): void
-  abstract handleMouseMove(data: MkbMouseMove): void
-  abstract handleMouseClick(data: MkbMouseClick): void
-  abstract handleMouseWheel(data: MkbMouseWheel): boolean
-  abstract waitForMouseData(enabled: boolean): void
-  abstract isEnabled(): boolean
+    abstract init(): void;
+    abstract start(): void;
+    abstract stop(): void;
+    abstract destroy(): void;
+    abstract toggle(force: boolean): void;
+    abstract handleMouseMove(data: MkbMouseMove): void;
+    abstract handleMouseClick(data: MkbMouseClick): void;
+    abstract handleMouseWheel(data: MkbMouseWheel): boolean;
+    abstract waitForMouseData(enabled: boolean): void;
+    abstract isEnabled(): boolean;
 }

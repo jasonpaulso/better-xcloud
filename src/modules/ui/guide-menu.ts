@@ -1,13 +1,14 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { BxEvent } from "@/utils/bx-event";
 import { AppInterface, STATES } from "@/utils/global";
 import { createButton, ButtonStyle, CE } from "@/utils/html";
 import { t } from "@/utils/translation";
-import { SettingsNavigationDialog } from "./dialog/settings-dialog";
+import { SettingsDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
 import { FO76_AUTOMATION_EVENTS, FO76AutomationHandler } from "../game-automation/game-automation-handler";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 export enum GuideMenuTab {
   HOME = 'home',
@@ -95,15 +96,15 @@ export class GuideMenu {
             scriptSettings: createButton({
                 label: t('better-xcloud'),
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
-                onClick: (() => {
+                onClick: () => {
                     // Wait until the Guide dialog is closed
-                    window.addEventListener(BxEvent.XCLOUD_DIALOG_DISMISSED, e => {
-                        setTimeout(() => SettingsNavigationDialog.getInstance().show(), 50);
-                    }, {once: true});
+                    BxEventBus.Script.once('xcloudDialogDismissed', () => {
+                        setTimeout(() => SettingsDialog.getInstance().show(), 50);
+                    });
 
                     // Close all xCloud's dialogs
                     this.closeGuideMenu();
-                }).bind(this),
+                },
             }),
 
             closeApp: AppInterface && createButton({
@@ -125,7 +126,7 @@ export class GuideMenu {
                 label: t('reload-page'),
                 title: t('reload-page'),
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
-                onClick: (() => {
+                onClick: () => {
                     // Close all xCloud's dialogs
                     this.closeGuideMenu();
 
@@ -134,7 +135,7 @@ export class GuideMenu {
                     } else {
                         window.location.reload();
                     }
-                }).bind(this),
+                },
             }),
 
             backToHome: createButton({
@@ -142,12 +143,12 @@ export class GuideMenu {
                 label: t('back-to-home'),
                 title: t('back-to-home'),
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
-                onClick: (() => {
+                onClick: () => {
                     // Close all xCloud's dialogs
                     this.closeGuideMenu();
 
                     confirm(t('back-to-home-confirm')) && (window.location.href = window.location.href.substring(0, 31));
-                }).bind(this),
+                },
                 attributes: {
                     'data-state': 'playing',
                 },
@@ -228,7 +229,7 @@ export class GuideMenu {
         $target.insertAdjacentElement('afterend', $buttons);
     }
 
-    async onShown(e: Event) {
+    private onShown = async (e: Event) => {
         const where = (e as any).where as GuideMenuTab;
 
         if (where === GuideMenuTab.HOME) {
@@ -238,7 +239,7 @@ export class GuideMenu {
     }
 
     addEventListeners() {
-        window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, this.onShown.bind(this));
+        window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, this.onShown);
     }
 
     observe($addedElm: HTMLElement) {
@@ -285,9 +286,9 @@ export class GuideMenu {
       let index
       for (index = 0; ($elm = $elm?.previousElementSibling); index++);
 
-      if (index === 0) {
-        BxEvent.dispatch(window, BxEvent.XCLOUD_GUIDE_MENU_SHOWN, { where: GuideMenuTab.HOME })
-      }
+            if (index === 0) {
+                BxEvent.dispatch(window, BxEvent.XCLOUD_GUIDE_MENU_SHOWN, {where: GuideMenuTab.HOME});
+            }
+        }
     }
-  }
 }

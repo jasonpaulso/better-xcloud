@@ -1,8 +1,8 @@
 export type PreferenceSetting = {
     default: any;
     optionsGroup?: string;
-    options?: {[index: string]: string};
-    multipleOptions?: {[index: string]: string};
+    options?: { [index: string]: string };
+    multipleOptions?: { [index: string]: string };
     unsupported?: boolean;
     unsupportedNote?: string | (() => HTMLElement);
     note?: string | (() => HTMLElement);
@@ -17,4 +17,4 @@ export type PreferenceSetting = {
     label?: string;
 };
 
-export type PreferenceSettings = {[index in PrefKey]: PreferenceSetting};
+export type PreferenceSettings = { [index in PrefKey]: PreferenceSetting };

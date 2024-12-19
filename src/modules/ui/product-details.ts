@@ -10,7 +10,6 @@ export class ProductDetailsPage {
         icon: BxIcon.CREATE_SHORTCUT,
         label: t('create-shortcut'),
         style: ButtonStyle.FOCUSABLE,
-        tabIndex: 0,
         onClick: e => {
             AppInterface.createShortcut(window.location.pathname.substring(6));
         },
@@ -20,7 +19,6 @@ export class ProductDetailsPage {
         icon: BxIcon.DOWNLOAD,
         label: t('wallpaper'),
         style: ButtonStyle.FOCUSABLE,
-        tabIndex: 0,
         onClick: e => {
             const details = parseDetailsPath(window.location.pathname);
             details && AppInterface.downloadWallpapers(details.titleSlug, details.productId);
@@ -42,7 +40,7 @@ export class ProductDetailsPage {
                 $container.parentElement.appendChild(CE('div', {
                     class: 'bx-product-details-buttons',
                 },
-                    BX_FLAGS.DeviceInfo.deviceType === 'android' && ProductDetailsPage.$btnShortcut,
+                    ['android-handheld', 'android'].includes(BX_FLAGS.DeviceInfo.deviceType) && ProductDetailsPage.$btnShortcut,
                     ProductDetailsPage.$btnWallpaper,
                 ));
             }

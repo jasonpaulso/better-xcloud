@@ -1,4 +1,4 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { BX_FLAGS, NATIVE_FETCH } from "@utils/bx-flags";
 import { TouchController } from "@modules/touch-controller";
@@ -11,6 +11,7 @@ import { XcloudInterceptor } from "./xcloud-interceptor";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
+import { BlockFeature, StreamResolution } from "@/enums/pref-values";
 
 type RequestType = 'xcloud' | 'xhome';
 
@@ -39,7 +40,7 @@ function clearAllLogs() {
     clearDbLogs('XCloudAppLogs', 'logs');
 }
 
-function updateIceCandidates(candidates: any, options: {preferIpv6Server: boolean, consoleAddrs?: RemotePlayConsoleAddresses}) {
+function updateIceCandidates(candidates: any, options: { preferIpv6Server: boolean, consoleAddrs?: RemotePlayConsoleAddresses }) {
     const pattern = new RegExp(/a=candidate:(?<foundation>\d+) (?<component>\d+) UDP (?<priority>\d+) (?<ip>[^\s]+) (?<port>\d+) (?<the_rest>.*)/);
 
     const lst = [];
@@ -48,7 +49,7 @@ function updateIceCandidates(candidates: any, options: {preferIpv6Server: boolea
             continue;
         }
 
-        const groups: {[index: string]: string | number} = pattern.exec(item.candidate)!.groups!;
+        const groups: { [index: string]: string | number } = pattern.exec(item.candidate)!.groups!;
         lst.push(groups);
     }
 
@@ -66,10 +67,10 @@ function updateIceCandidates(candidates: any, options: {preferIpv6Server: boolea
 
     const newCandidate = (candidate: string) => {
         return {
-            'candidate': candidate,
-            'messageType': 'iceCandidate',
-            'sdpMLineIndex': '0',
-            'sdpMid': '0',
+            candidate: candidate,
+            messageType: 'iceCandidate',
+            sdpMLineIndex: '0',
+            sdpMid: '0',
         };
     };
 
@@ -105,7 +106,7 @@ export async function patchIceCandidates(request: Request, consoleAddrs?: Remote
     }
 
     const options = {
-        preferIpv6Server: getPref(PrefKey.PREFER_IPV6_SERVER),
+        preferIpv6Server: getPref(PrefKey.SERVER_PREFER_IPV6),
         consoleAddrs: consoleAddrs,
     };
 
@@ -119,6 +120,7 @@ export async function patchIceCandidates(request: Request, consoleAddrs?: Remote
 
     return response;
 }
+
 
 export function interceptHttpRequests() {
     let BLOCKED_URLS: string[] = [];
@@ -135,13 +137,20 @@ export function interceptHttpRequests() {
         ]);
     }
 
-    if (getPref(PrefKey.BLOCK_SOCIAL_FEATURES)) {
+
+    // 'https://notificationinbox.xboxlive.com',
+    // 'https://accounts.xboxlive.com/family/memberXuid',
+    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    if (blockFeatures.includes(BlockFeature.CHAT)) {
+        BLOCKED_URLS = BLOCKED_URLS.concat([
+            'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',
+        ]);
+    }
+
+    if (blockFeatures.includes(BlockFeature.FRIENDS)) {
         BLOCKED_URLS = BLOCKED_URLS.concat([
             'https://peoplehub.xboxlive.com/users/me/people/social',
             'https://peoplehub.xboxlive.com/users/me/people/recommendations',
-            'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',
-            // 'https://notificationinbox.xboxlive.com',
-            // 'https://accounts.xboxlive.com/family/memberXuid',
         ]);
     }
 
@@ -175,6 +184,7 @@ export function interceptHttpRequests() {
         'chat.xboxlive.com',
         'notificationinbox.xboxlive.com',
         'peoplehub.xboxlive.com',
+        'peoplehub-public.xboxlive.com',
         'rta.xboxlive.com',
         'userpresence.xboxlive.com',
         'xblmessaging.xboxlive.com',
@@ -186,11 +196,11 @@ export function interceptHttpRequests() {
         '2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io',
     ];
 
-    (window as any).BX_FETCH = window.fetch = async (request: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    window.BX_FETCH = window.fetch = async (request: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
         let url = (typeof request === 'string') ? request : (request as Request).url;
 
         // Check blocked URLs
-        for (let blocked of BLOCKED_URLS) {
+        for (const blocked of BLOCKED_URLS) {
             if (url.startsWith(blocked)) {
                 return new Response('{"acc":1,"webResult":{}}', {
                     status: 200,
@@ -199,7 +209,7 @@ export function interceptHttpRequests() {
             }
         }
 
-        // Ignore URLs
+        // Ignore domains
         const domain = (new URL(url)).hostname;
         if (IGNORED_DOMAINS.includes(domain)) {
             return NATIVE_FETCH(request, init);
@@ -282,4 +292,46 @@ export function interceptHttpRequests() {
 
         return XcloudInterceptor.handle(request, init);
     }
+}
+
+
+export function generateMsDeviceInfo(osName: OsName) {
+    return {
+        appInfo: {
+            env: {
+                clientAppId: window.location.host,
+                clientAppType: 'browser',
+                clientAppVersion: '26.1.97',
+                clientSdkVersion: '10.3.7',
+                httpEnvironment: 'prod',
+                sdkInstallId: '',
+            },
+        },
+        dev: {
+            os: { name: osName, ver: '22631.2715', platform: 'desktop' },
+            hw: { make: 'Microsoft', model: 'unknown', sdktype: 'web' },
+            browser: { browserName: 'chrome', browserVersion: '130.0' },
+            displayInfo: {
+                dimensions: { widthInPixels: 1920, heightInPixels: 1080 },
+                pixelDensity: { dpiX: 1, dpiY: 1 },
+            },
+        },
+    };
+}
+
+export function getOsNameFromResolution(resolution: StreamResolution): OsName {
+    let osName: OsName;
+    switch (resolution) {
+        case StreamResolution.DIM_1080P_HQ:
+            osName = 'tizen';
+            break;
+        case StreamResolution.DIM_1080P:
+            osName = 'windows';
+            break;
+        default:
+            osName = 'android';
+            break;
+    }
+
+    return osName;
 }

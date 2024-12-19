@@ -6,6 +6,9 @@ import { t } from "@utils/translation";
 import { BxLogger } from "@utils/bx-logger";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { TouchControllerStyleCustom, TouchControllerStyleStandard } from "@/enums/pref-values";
+import { GhPagesUtils } from "@/utils/gh-pages";
+import { BxEventBus } from "@/utils/bx-event-bus";
 
 const LOG_TAG = 'TouchController';
 
@@ -145,12 +148,9 @@ export class TouchController {
             return;
         }
 
-        const baseUrl = 'https://raw.githubusercontent.com/redphx/better-xcloud/gh-pages/touch-layouts';
-        const url = `${baseUrl}/${xboxTitleId}.json`;
-
         // Get layout info
         try {
-            const resp = await NATIVE_FETCH(url);
+            const resp = await NATIVE_FETCH(GhPagesUtils.getUrl(`touch-layouts/${xboxTitleId}.json`));
             const json = await resp.json();
 
             const layouts = {};
@@ -161,7 +161,7 @@ export class TouchController {
                     baseLayouts = TouchController.#baseCustomLayouts[layoutName];
                 } else {
                     try {
-                        const layoutUrl = `${baseUrl}/layouts/${layoutName}.json`;
+                        const layoutUrl = GhPagesUtils.getUrl(`touch-layouts/layouts/${layoutName}.json`);
                         const resp = await NATIVE_FETCH(layoutUrl);
                         const json = await resp.json();
 
@@ -188,12 +188,11 @@ export class TouchController {
         // TODO: fix this
         if (!window.BX_EXPOSED.touchLayoutManager) {
             const listener = (e: Event) => {
-                window.removeEventListener(BxEvent.TOUCH_LAYOUT_MANAGER_READY, listener);
                 if (TouchController.#enabled) {
                     TouchController.applyCustomLayout(layoutId, 0);
                 }
             };
-            window.addEventListener(BxEvent.TOUCH_LAYOUT_MANAGER_READY, listener);
+            window.addEventListener(BxEvent.TOUCH_LAYOUT_MANAGER_READY, listener, { once: true });
 
             return;
         }
@@ -235,13 +234,13 @@ export class TouchController {
         let html = false;
         if (layout.author) {
             const author = `<b>${escapeHtml(layout.author)}</b>`;
-            msg = t('touch-control-layout-by', {name: author});
+            msg = t('touch-control-layout-by', { name: author });
             html = true;
         } else {
             msg = t('touch-control-layout');
         }
 
-        layoutChanged && Toast.show(msg, layout.name, {html: html});
+        layoutChanged && Toast.show(msg, layout.name, { html });
 
         window.setTimeout(() => {
             // Show gyroscope control in the "More options" dialog if this layout has gyroscope
@@ -261,15 +260,7 @@ export class TouchController {
     }
 
     static updateCustomList() {
-        const key = 'better_xcloud_custom_touch_layouts';
-        TouchController.#customList = JSON.parse(window.localStorage.getItem(key) || '[]');
-
-        NATIVE_FETCH('https://raw.githubusercontent.com/redphx/better-xcloud/gh-pages/touch-layouts/ids.json')
-            .then(response => response.json())
-            .then(json => {
-                TouchController.#customList = json;
-                window.localStorage.setItem(key, JSON.stringify(json));
-            });
+        TouchController.#customList = GhPagesUtils.getTouchControlCustomList();
     }
 
     static getCustomList(): string[] {
@@ -278,7 +269,7 @@ export class TouchController {
 
     static setup() {
         // Function for testing touch control
-        (window as any).testTouchLayout = (layout: any) => {
+        window.testTouchLayout = (layout: any) => {
             const { touchLayoutManager } = window.BX_EXPOSED;
 
             touchLayoutManager && touchLayoutManager.changeLayoutForScope({
@@ -298,24 +289,24 @@ export class TouchController {
 
         TouchController.#$style = $style;
 
-        const PREF_STYLE_STANDARD = getPref(PrefKey.STREAM_TOUCH_CONTROLLER_STYLE_STANDARD);
-        const PREF_STYLE_CUSTOM = getPref(PrefKey.STREAM_TOUCH_CONTROLLER_STYLE_CUSTOM);
+        const PREF_STYLE_STANDARD = getPref<TouchControllerStyleStandard>(PrefKey.TOUCH_CONTROLLER_STYLE_STANDARD);
+        const PREF_STYLE_CUSTOM = getPref<TouchControllerStyleCustom>(PrefKey.TOUCH_CONTROLLER_STYLE_CUSTOM);
 
-        window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, e => {
-            const dataChannel = (e as any).dataChannel;
-            if (!dataChannel || dataChannel.label !== 'message') {
+        BxEventBus.Stream.on('dataChannelCreated', payload => {
+            const { dataChannel } = payload;
+            if (dataChannel?.label !== 'message') {
                 return;
             }
 
             // Apply touch controller's style
             let filter = '';
             if (TouchController.#enabled) {
-                if (PREF_STYLE_STANDARD === 'white') {
+                if (PREF_STYLE_STANDARD === TouchControllerStyleStandard.WHITE) {
                     filter = 'grayscale(1) brightness(2)';
-                } else if (PREF_STYLE_STANDARD === 'muted') {
+                } else if (PREF_STYLE_STANDARD === TouchControllerStyleStandard.MUTED) {
                     filter = 'sepia(0.5)';
                 }
-            } else if (PREF_STYLE_CUSTOM === 'muted') {
+            } else if (PREF_STYLE_CUSTOM === TouchControllerStyleCustom.MUTED) {
                 filter = 'sepia(0.5)';
             }
 

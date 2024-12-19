@@ -1,34 +1,52 @@
+import { PrefKey } from "@/enums/pref-keys";
+import { getPref } from "@/utils/settings-storages/global-settings-storage";
+
 export class MouseCursorHider {
-    static #timeout: number | null;
-    static #cursorVisible = true;
+    private static instance: MouseCursorHider | null | undefined;
+    public static getInstance(): typeof MouseCursorHider['instance'] {
+        if (typeof MouseCursorHider.instance === 'undefined') {
+            if (!getPref(PrefKey.MKB_ENABLED) && getPref(PrefKey.MKB_HIDE_IDLE_CURSOR)) {
+                MouseCursorHider.instance = new MouseCursorHider();
+            } else {
+                MouseCursorHider.instance = null;
+            }
+        }
 
-    static show() {
+        return MouseCursorHider.instance;
+    }
+
+    private timeoutId!: number | null;
+    private isCursorVisible = true;
+
+    show() {
         document.body && (document.body.style.cursor = 'unset');
-        MouseCursorHider.#cursorVisible = true;
+        this.isCursorVisible = true;
     }
 
-    static hide() {
+    hide() {
         document.body && (document.body.style.cursor = 'none');
-        MouseCursorHider.#timeout = null;
-        MouseCursorHider.#cursorVisible = false;
+        this.timeoutId = null;
+        this.isCursorVisible = false;
     }
 
-    static onMouseMove(e: MouseEvent) {
+    onMouseMove = (e: MouseEvent) => {
         // Toggle cursor
-        !MouseCursorHider.#cursorVisible && MouseCursorHider.show();
+        !this.isCursorVisible && this.show();
         // Setup timeout
-        MouseCursorHider.#timeout && clearTimeout(MouseCursorHider.#timeout);
-        MouseCursorHider.#timeout = window.setTimeout(MouseCursorHider.hide, 3000);
+        this.timeoutId && clearTimeout(this.timeoutId);
+        this.timeoutId = window.setTimeout(this.hide, 3000);
     }
 
-    static start() {
-        MouseCursorHider.show();
-        document.addEventListener('mousemove', MouseCursorHider.onMouseMove);
+    start() {
+        this.show();
+        document.addEventListener('mousemove', this.onMouseMove);
     }
 
-    static stop() {
-        MouseCursorHider.#timeout && clearTimeout(MouseCursorHider.#timeout);
-        document.removeEventListener('mousemove', MouseCursorHider.onMouseMove);
-        MouseCursorHider.show();
+    stop() {
+        this.timeoutId && clearTimeout(this.timeoutId);
+        this.timeoutId = null;
+
+        document.removeEventListener('mousemove', this.onMouseMove);
+        this.show();
     }
 }

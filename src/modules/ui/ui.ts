@@ -24,4 +24,4 @@ export function localRedirect(path: string) {
     $anchor.click();
 }
 
-(window as any).localRedirect = localRedirect;
+window.localRedirect = localRedirect;

@@ -1,18 +1,65 @@
-export abstract class LocalDb {
+export class LocalDb {
+    private static instance: LocalDb;
+    public static getInstance = () => LocalDb.instance ?? (LocalDb.instance = new LocalDb());
+    // private readonly LOG_TAG = 'LocalDb';
+
     static readonly DB_NAME = 'BetterXcloud';
-    static readonly DB_VERSION = 2;
+    static readonly DB_VERSION = 3;
 
-    protected db!: IDBDatabase;
+    static readonly TABLE_VIRTUAL_CONTROLLERS = 'virtual_controllers';
+    static readonly TABLE_CONTROLLER_SHORTCUTS = 'controller_shortcuts';
+    static readonly TABLE_CONTROLLER_SETTINGS = 'controller_settings';
+    static readonly TABLE_KEYBOARD_SHORTCUTS = 'keyboard_shortcuts';
 
-    protected open() {
-        return new Promise<void>((resolve, reject) => {
+    private db!: IDBDatabase;
+
+    open() {
+        return new Promise<IDBDatabase>((resolve, reject) => {
             if (this.db) {
-                resolve();
+                resolve(this.db);
                 return;
             }
 
             const request = window.indexedDB.open(LocalDb.DB_NAME, LocalDb.DB_VERSION);
-            request.onupgradeneeded = this.onUpgradeNeeded.bind(this);
+            request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
+                const db = (e.target! as any).result as IDBDatabase;
+
+                // Delete "undefined" table
+                if (db.objectStoreNames.contains('undefined')) {
+                    db.deleteObjectStore('undefined');
+                }
+
+                // Virtual controller
+                if (!db.objectStoreNames.contains(LocalDb.TABLE_VIRTUAL_CONTROLLERS)) {
+                    db.createObjectStore(LocalDb.TABLE_VIRTUAL_CONTROLLERS, {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                    });
+                }
+
+                // Controller shortcuts
+                if (!db.objectStoreNames.contains(LocalDb.TABLE_CONTROLLER_SHORTCUTS)) {
+                    db.createObjectStore(LocalDb.TABLE_CONTROLLER_SHORTCUTS, {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                    });
+                }
+
+                // Controller settings
+                if (!db.objectStoreNames.contains(LocalDb.TABLE_CONTROLLER_SETTINGS)) {
+                    db.createObjectStore(LocalDb.TABLE_CONTROLLER_SETTINGS, {
+                        keyPath: 'id',
+                    });
+                }
+
+                // Keyboard shortcuts
+                if (!db.objectStoreNames.contains(LocalDb.TABLE_KEYBOARD_SHORTCUTS)) {
+                    db.createObjectStore(LocalDb.TABLE_KEYBOARD_SHORTCUTS, {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                    });
+                }
+            };
 
             request.onerror = e => {
                 console.log(e);
@@ -22,58 +69,8 @@ export abstract class LocalDb {
 
             request.onsuccess = e => {
                 this.db = (e.target as any).result;
-                resolve();
+                resolve(this.db);
             };
         });
-    }
-
-    protected abstract onUpgradeNeeded(e: IDBVersionChangeEvent): void;
-
-    protected table(name: string, type: IDBTransactionMode): Promise<IDBObjectStore> {
-        const transaction = this.db.transaction(name, type || 'readonly');
-        const table = transaction.objectStore(name);
-
-        return new Promise(resolve => resolve(table));
-    }
-
-    // Convert IndexDB method to Promise
-    protected call(method: any) {
-        const table = arguments[1];
-        return new Promise(resolve => {
-            const request = method.call(table, ...Array.from(arguments).slice(2));
-            request.onsuccess = (e: Event) => {
-                resolve([table, (e.target as any).result]);
-            };
-        });
-    }
-
-    protected count(table: IDBObjectStore): Promise<[IDBObjectStore, number]> {
-        // @ts-ignore
-        return this.call(table.count, ...arguments);
-    }
-
-    protected add(table: IDBObjectStore, data: any): Promise<[IDBObjectStore, number]> {
-        // @ts-ignore
-        return this.call(table.add, ...arguments);
-    }
-
-    protected put(table: IDBObjectStore, data: any): Promise<[IDBObjectStore, number]> {
-        // @ts-ignore
-        return this.call(table.put, ...arguments);
-    }
-
-    protected delete(table: IDBObjectStore, data: any): Promise<[IDBObjectStore, number]> {
-        // @ts-ignore
-        return this.call(table.delete, ...arguments);
-    }
-
-    protected get(table: IDBObjectStore, id: number): Promise<any> {
-        // @ts-ignore
-        return this.call(table.get, ...arguments);
-    }
-
-    protected getAll(table: IDBObjectStore): Promise<[IDBObjectStore, any]> {
-        // @ts-ignore
-        return this.call(table.getAll, ...arguments);
     }
 }

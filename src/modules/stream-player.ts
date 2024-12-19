@@ -1,13 +1,13 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { CE } from "@/utils/html";
 import { WebGL2Player } from "./player/webgl2-player";
 import { ScreenshotManager } from "@/utils/screenshot-manager";
-import { StreamPlayerType, StreamVideoProcessing } from "@enums/stream-player";
 import { STATES } from "@/utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { BX_FLAGS } from "@/utils/bx-flags";
+import { StreamPlayerType, StreamVideoProcessing, VideoPosition, VideoRatio } from "@/enums/pref-values";
 
 export type StreamPlayerOptions = Partial<{
     processing: string,
@@ -39,13 +39,12 @@ export class StreamPlayer {
     private setupVideoElements() {
         this.$videoCss = document.getElementById('bx-video-css') as HTMLStyleElement;
         if (this.$videoCss) {
-            this.$usmMatrix = this.$videoCss.querySelector('#bx-filter-usm-matrix') as any;
             return;
         }
 
         const $fragment = document.createDocumentFragment();
 
-        this.$videoCss = CE<HTMLStyleElement>('style', {id: 'bx-video-css'});
+        this.$videoCss = CE<HTMLStyleElement>('style', { id: 'bx-video-css' });
         $fragment.appendChild(this.$videoCss);
 
         // Setup SVG filters
@@ -53,7 +52,7 @@ export class StreamPlayer {
             id: 'bx-video-filters',
             xmlns: 'http://www.w3.org/2000/svg',
             class: 'bx-gone',
-        }, CE('defs', {xmlns: 'http://www.w3.org/2000/svg'},
+        }, CE('defs', { xmlns: 'http://www.w3.org/2000/svg' },
             CE('filter', {
                     id: 'bx-filter-usm',
                     xmlns: 'http://www.w3.org/2000/svg',
@@ -99,7 +98,7 @@ export class StreamPlayer {
     }
 
     private resizePlayer() {
-        const PREF_RATIO = getPref(PrefKey.VIDEO_RATIO);
+        const PREF_RATIO = getPref<VideoRatio>(PrefKey.VIDEO_RATIO);
         const $video = this.$video;
         const isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport;
 
@@ -141,6 +140,23 @@ export class StreamPlayer {
             $video.dataset.width = width.toString();
             $video.dataset.height = height.toString();
 
+            // Set position
+            const $parent = $video.parentElement!;
+            const position = getPref<VideoPosition>(PrefKey.VIDEO_POSITION);
+            $parent.style.removeProperty('padding-top');
+
+            $parent.dataset.position = position;
+            if (position === VideoPosition.TOP_HALF || position === VideoPosition.BOTTOM_HALF) {
+                let padding = Math.floor((window.innerHeight - height) / 4);
+                if (padding > 0) {
+                    if (position === VideoPosition.BOTTOM_HALF) {
+                        padding *= 3;
+                    }
+
+                    $parent.style.paddingTop = padding + 'px';
+                }
+            }
+
             // Update size
             targetWidth = `${width}px`;
             targetHeight = `${height}px`;
@@ -164,6 +180,8 @@ export class StreamPlayer {
             $webGL2Canvas.style.width = targetWidth;
             $webGL2Canvas.style.height = targetHeight;
             $webGL2Canvas.style.objectFit = targetObjectFit;
+
+            $video.dispatchEvent(new Event('resize'));
         }
 
         // Update video dimensions

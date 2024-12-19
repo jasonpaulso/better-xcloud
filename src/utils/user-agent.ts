@@ -1,5 +1,6 @@
 import { UserAgentProfile } from "@enums/user-agent";
 import { BX_FLAGS } from "./bx-flags";
+import { StorageKey } from "@/enums/pref-keys";
 
 type UserAgentConfig = {
     profile: UserAgentProfile,
@@ -8,17 +9,17 @@ type UserAgentConfig = {
 
 const SMART_TV_UNIQUE_ID = 'FC4A1DA2-711C-4E9C-BC7F-047AF8A672EA';
 
-let CHROMIUM_VERSION = '123.0.0.0';
-if (!!(window as any).chrome || window.navigator.userAgent.includes('Chrome')) {
+let CHROMIUM_VERSION = '125.0.0.0';
+if (!!window.chrome || window.navigator.userAgent.includes('Chrome')) {
     // Get Chromium version in the original User-Agent value
     const match = window.navigator.userAgent.match(/\s(?:Chrome|Edg)\/([\d\.]+)/);
     if (match) {
-        CHROMIUM_VERSION = match[1];
+        CHROMIUM_VERSION = match[1] as string;
     }
 }
 
 export class UserAgent {
-    static readonly STORAGE_KEY = 'better_xcloud_user_agent';
+    static readonly STORAGE_KEY = StorageKey.USER_AGENT;
     static #config: UserAgentConfig;
 
     static #isMobile: boolean | null = null;
@@ -58,7 +59,7 @@ export class UserAgent {
     }
 
     static getDefault(): string {
-        return (window.navigator as any).orgUserAgent || window.navigator.userAgent;
+        return window.navigator.orgUserAgent || window.navigator.userAgent;
     }
 
     static get(profile: UserAgentProfile): string {
@@ -122,12 +123,12 @@ export class UserAgent {
 
         // Clear data of navigator.userAgentData, force xCloud to detect browser based on navigator.userAgent
         if ('userAgentData' in window.navigator) {
-            (window.navigator as any).orgUserAgentData = (window.navigator as any).userAgentData;
+            window.navigator.orgUserAgentData = window.navigator.userAgentData;
             Object.defineProperty(window.navigator, 'userAgentData', {});
         }
 
         // Override navigator.userAgent
-        (window.navigator as any).orgUserAgent = window.navigator.userAgent;
+        window.navigator.orgUserAgent = window.navigator.userAgent;
         Object.defineProperty(window.navigator, 'userAgent', {
             value: newUserAgent,
         });

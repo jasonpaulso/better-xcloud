@@ -1,9 +1,10 @@
-import { AppInterface, SCRIPT_VERSION } from '@utils/global'
-import { UserAgent } from '@utils/user-agent'
-import { Translations } from './translation'
-import { Toast } from './toast'
-import { PrefKey } from '@/enums/pref-keys'
-import { getPref, setPref } from './settings-storages/global-settings-storage'
+import { AppInterface, SCRIPT_VERSION } from "@utils/global";
+import { UserAgent } from "@utils/user-agent";
+import { t, Translations } from "./translation";
+import { Toast } from "./toast";
+import { PrefKey } from "@/enums/pref-keys";
+import { getPref, setPref } from "./settings-storages/global-settings-storage";
+import { LocalDb } from "./local-db/local-db";
 
 /**
  * Check for update
@@ -16,27 +17,23 @@ export function checkForUpdate() {
 
   const CHECK_INTERVAL_SECONDS = 2 * 3600 // check every 2 hours
 
-  const currentVersion = getPref(PrefKey.CURRENT_VERSION)
-  const lastCheck = getPref(PrefKey.LAST_UPDATE_CHECK)
-  const now = Math.round(+new Date() / 1000)
+    const currentVersion = getPref<VersionCurrent>(PrefKey.VERSION_CURRENT);
+    const lastCheck = getPref<VersionLastCheck>(PrefKey.VERSION_LAST_CHECK);
+    const now = Math.round((+new Date) / 1000);
 
   if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
     return
   }
 
-  // Start checking
-  setPref(PrefKey.LAST_UPDATE_CHECK, now)
-
-  fetch('https://api.github.com/repos/jasonpaulso/better-xcloud/releases/latest')
-    .then((response) => response.json())
-    .then((json) => {
-      console.log('json', json)
-      // Store the latest version
-      console.log('Latest version: ', json.tag_name)
-      console.log('Current version: ', SCRIPT_VERSION)
-      setPref(PrefKey.LATEST_VERSION, json.tag_name)
-      setPref(PrefKey.CURRENT_VERSION, SCRIPT_VERSION)
-    })
+    // Start checking
+    setPref(PrefKey.VERSION_LAST_CHECK, now);
+    fetch('https://api.github.com/repos/redphx/better-xcloud/releases/latest')
+        .then(response => response.json())
+        .then(json => {
+            // Store the latest version
+            setPref(PrefKey.VERSION_LATEST, json.tag_name.substring(1));
+            setPref(PrefKey.VERSION_CURRENT, SCRIPT_VERSION);
+        });
 
   // Update translations
   Translations.updateTranslations(currentVersion === SCRIPT_VERSION)
@@ -46,14 +43,10 @@ export function checkForUpdate() {
  * Disable PWA requirement on Safari
  */
 export function disablePwa() {
-  const userAgent = (
-    (window.navigator as any).orgUserAgent ||
-    window.navigator.userAgent ||
-    ''
-  ).toLowerCase()
-  if (!userAgent) {
-    return
-  }
+    const userAgent = (window.navigator.orgUserAgent || window.navigator.userAgent || '').toLowerCase();
+    if (!userAgent) {
+        return;
+    }
 
   // Check if it's Safari on mobile
   if (!!AppInterface || UserAgent.isSafariMobile()) {
@@ -102,15 +95,15 @@ export function roundToNearest(value: number, interval: number): number {
   return Math.round(value / interval) * interval
 }
 
-export async function copyToClipboard(text: string, showToast = true): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text)
-    showToast && Toast.show('Copied to clipboard', '', { instant: true })
-    return true
-  } catch (err) {
-    console.error('Failed to copy: ', err)
-    showToast && Toast.show('Failed to copy', '', { instant: true })
-  }
+export async function copyToClipboard(text: string, showToast=true): Promise<boolean> {
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast && Toast.show('Copied to clipboard', '', { instant: true });
+        return true;
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+        showToast && Toast.show('Failed to copy', '', { instant: true });
+    }
 
   return false
 }
@@ -132,8 +125,30 @@ export function parseDetailsPath(path: string) {
         return;
     }
 
-    const titleSlug = matches.groups.titleSlug.replaceAll('\%' + '7C', '-');
+    const titleSlug = matches.groups.titleSlug!.replaceAll('\%' + '7C', '-');
     const productId = matches.groups.productId;
 
-    return {titleSlug, productId};
+    return { titleSlug, productId };
+}
+
+export function clearAllData() {
+    // Delete localStorage items
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) {
+            continue;
+        }
+
+        // Delete key
+        if (key.startsWith('BetterXcloud') || key.startsWith('better_xcloud')) {
+            localStorage.removeItem(key);
+        }
+    }
+
+    // Delete IndexedDB database
+    try {
+        indexedDB.deleteDatabase(LocalDb.DB_NAME);
+    } catch (e) {};
+
+    alert(t('clear-data-success'));
 }

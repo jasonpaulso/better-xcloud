@@ -1,9 +1,9 @@
 import type { PrefKey } from "@/enums/pref-keys";
 import type { SettingElementType } from "@/utils/setting-element";
 
-export type SuggestedSettingCategory = 'recommended' | 'lowest' | 'highest' | 'default';
+export type SuggestedSettingProfile = 'recommended' | 'lowest' | 'highest' | 'default';
 export type RecommendedSettings = {
-    schema_version: 1,
+    schema_version: 2,
     device_name: string,
     device_type: 'android' | 'android-tv' | 'android-handheld' | 'webos',
     settings: {
@@ -14,43 +14,58 @@ export type RecommendedSettings = {
     },
 };
 
-export type SettingDefinition = {
+export type SettingAction = 'get' | 'set';
+
+interface BaseSettingDefinition {
     default: any;
-} & Partial<{
-    label: string;
-    note: string | (() => HTMLElement);
-    experimental: boolean;
-    unsupported: boolean;
-    unsupportedNote: string | (() => HTMLElement);
-    suggest: PartialRecord<SuggestedSettingCategory, any>,
-    ready: (setting: SettingDefinition) => void;
-    type: SettingElementType,
-    requiredVariants: BuildVariant | Array<BuildVariant>;
-    // migrate?: (this: Preferences, savedPrefs: any, value: any) => void;
-}> & (
-    {} | {
-        options: {[index: string]: string};
-        optionsGroup?: string;
-    } | {
-        multipleOptions: {[index: string]: string};
-        params: MultipleOptionsParams;
-    } | {
-        type: SettingElementType.NUMBER_STEPPER;
-        min: number;
-        max: number;
-        params: NumberStepperParams;
 
-        steps?: number;
-    }
-);
+    label?: string;
+    note?: string | (() => HTMLElement);
+    experimental?: boolean;
+    unsupported?: boolean;
+    unsupportedValue?: SettingDefinition['default'];
+    unsupportedNote?: string | (() => HTMLElement);
+    suggest?: PartialRecord<SuggestedSettingProfile, any>,
+    ready?: (setting: SettingDefinition) => void;
+    requiredVariants?: BuildVariant | Array<BuildVariant>;
+    transformValue?: {
+        get: Exclude<any, undefined>;
+        set: Exclude<any, undefined>;
+    };
+};
 
-export type SettingDefinitions = {[index in PrefKey]: SettingDefinition};
+interface OptionsSettingDefinition extends BaseSettingDefinition {
+    options: { [index: string]: string };
+    optionsGroup?: string;
+};
+
+interface MultipleOptionsSettingDefinition extends BaseSettingDefinition {
+    multipleOptions: { [index: string]: string };
+    params: MultipleOptionsParams;
+};
+
+interface NumberStepperSettingDefinition extends BaseSettingDefinition {
+    min: number;
+    max: number;
+    params: NumberStepperParams;
+
+    transformValue?: {
+        get(this: Extract<SettingDefinition, { max: number }>, value: any): Exclude<any, undefined>;
+        set(this: Extract<SettingDefinition, { max: number }>, value: any): Exclude<any, undefined>;
+    };
+}
+
+export type SettingDefinition = BaseSettingDefinition | OptionsSettingDefinition | MultipleOptionsSettingDefinition | NumberStepperSettingDefinition;
+
+export type SettingDefinitions = { [index in PrefKey]: SettingDefinition };
 
 export type MultipleOptionsParams = Partial<{
     size?: number;
 }>
 
 export type NumberStepperParams = Partial<{
+    steps: number;
+
     suffix: string;
     disabled: boolean;
     hideSlider: boolean;
@@ -58,6 +73,6 @@ export type NumberStepperParams = Partial<{
     ticks: number;
     exactTicks: number;
 
-    customTextValue: (value: any) => string | null;
+    customTextValue: (value: any, min?: number, max?: number) => string | null;
     reverse: boolean;
 }>

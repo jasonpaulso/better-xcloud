@@ -3,54 +3,16 @@ import { BxEvent } from "./bx-event";
 import { SupportedInputType } from "./bx-exposed";
 import { NATIVE_FETCH } from "./bx-flags";
 import { STATES } from "./global";
-import { patchIceCandidates } from "./network";
+import { generateMsDeviceInfo, getOsNameFromResolution, patchIceCandidates } from "./network";
 import { PrefKey } from "@/enums/pref-keys";
-import { getPref, StreamResolution, StreamTouchController } from "./settings-storages/global-settings-storage";
+import { getPref } from "./settings-storages/global-settings-storage";
 import type { RemotePlayConsoleAddresses } from "@/types/network";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
+import { StreamResolution, TouchControllerMode } from "@/enums/pref-values";
+import { BxEventBus } from "./bx-event-bus";
 
 export class XhomeInterceptor {
     private static consoleAddrs: RemotePlayConsoleAddresses = {};
-
-    private static readonly BASE_DEVICE_INFO = {
-        appInfo: {
-            env: {
-                clientAppId: window.location.host,
-                clientAppType: 'browser',
-                clientAppVersion: '24.17.36',
-                clientSdkVersion: '10.1.14',
-                httpEnvironment: 'prod',
-                sdkInstallId: '',
-            },
-        },
-
-        dev: {
-            displayInfo: {
-                dimensions: {
-                    widthInPixels: 1920,
-                    heightInPixels: 1080,
-                },
-                pixelDensity: {
-                    dpiX: 1,
-                    dpiY: 1,
-                },
-            },
-            hw: {
-                make: 'Microsoft',
-                model: 'unknown',
-                sdktype: 'web',
-            },
-            os: {
-                name: 'windows',
-                ver: '22631.2715',
-                platform: 'desktop',
-            },
-            browser: {
-                browserName: 'chrome',
-                browserVersion: '125.0',
-            },
-        },
-    };
 
     private static async handleLogin(request: Request) {
         try {
@@ -74,7 +36,7 @@ export class XhomeInterceptor {
     }
 
     private static async handleConfiguration(request: Request | URL) {
-        BxEvent.dispatch(window, BxEvent.STREAM_STARTING);
+        BxEventBus.Stream.emit('state.starting', {});
 
         const response = await NATIVE_FETCH(request);
         const obj = await response.clone().json();
@@ -89,7 +51,7 @@ export class XhomeInterceptor {
         XhomeInterceptor.consoleAddrs = {};
         for (const pair of pairs) {
             const [keyAddr, keyPort] = pair;
-            if (serverDetails[keyAddr]) {
+            if (keyAddr && keyPort && serverDetails[keyAddr]) {
                 const port = serverDetails[keyPort];
                 // Add port 9002 to the list of ports
                 const ports = new Set<number>();
@@ -106,10 +68,10 @@ export class XhomeInterceptor {
         return response;
     }
 
-    private static async handleInputConfigs(request: Request | URL, opts: {[index: string]: any}) {
+    private static async handleInputConfigs(request: Request | URL, opts: { [index: string]: any }) {
         const response = await NATIVE_FETCH(request);
 
-        if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) !== StreamTouchController.ALL) {
+        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.ALL) {
             return response;
         }
 
@@ -146,11 +108,11 @@ export class XhomeInterceptor {
     private static async handleTitles(request: Request) {
         const clone = request.clone();
 
-        const headers: {[index: string]: any} = {};
+        const headers: { [index: string]: any } = {};
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }
-        headers.authorization = `Bearer ${RemotePlayManager.getInstance().xcloudToken}`;
+        headers.authorization = `Bearer ${RemotePlayManager.getInstance()!.getXcloudToken()}`;
 
         const index = request.url.indexOf('.xboxlive.com');
         request = new Request('https://wus.core.gssv-play-prod' + request.url.substring(index), {
@@ -163,7 +125,7 @@ export class XhomeInterceptor {
     }
 
     private static async handlePlay(request: RequestInfo | URL) {
-        BxEvent.dispatch(window, BxEvent.STREAM_LOADING);
+        BxEventBus.Stream.emit('state.loading', {});
 
         const clone = (request as Request).clone();
         const body = await clone.json();
@@ -182,20 +144,16 @@ export class XhomeInterceptor {
 
         const clone = request.clone();
 
-        const headers: {[index: string]: string} = {};
+        const headers: { [index: string]: string } = {};
         for (const pair of (clone.headers as any).entries()) {
             headers[pair[0]] = pair[1];
         }
         // Add xHome token to headers
-        headers.authorization = `Bearer ${RemotePlayManager.getInstance().xhomeToken}`;
+        headers.authorization = `Bearer ${RemotePlayManager.getInstance()!.getXhomeToken()}`;
 
         // Patch resolution
-        const deviceInfo = XhomeInterceptor.BASE_DEVICE_INFO;
-        if (getPref(PrefKey.REMOTE_PLAY_RESOLUTION) === StreamResolution.DIM_720P) {
-            deviceInfo.dev.os.name = 'android';
-        }
-
-        headers['x-ms-device-info'] = JSON.stringify(deviceInfo);
+        const osName = getOsNameFromResolution(getPref<StreamResolution>(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION));
+        headers['x-ms-device-info'] = JSON.stringify(generateMsDeviceInfo(osName));
 
         const opts: Record<string, any> = {
             method: clone.method,

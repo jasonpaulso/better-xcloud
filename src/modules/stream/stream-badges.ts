@@ -1,4 +1,4 @@
-import { isLiteVersion } from "@macros/build" with {type: "macro"};
+import { isLiteVersion } from "@macros/build" with { type: "macro" };
 
 import { t } from "@utils/translation";
 import { BxEvent } from "@utils/bx-event";
@@ -7,7 +7,8 @@ import { STATES } from "@utils/global";
 import { BxLogger } from "@/utils/bx-logger";
 import { BxIcon } from "@/utils/bx-icon";
 import { GuideMenuTab } from "../ui/guide-menu";
-import { StreamStat, StreamStatsCollector } from "@/utils/stream-stats-collector";
+import { StreamStatsCollector } from "@/utils/stream-stats-collector";
+import { StreamStat } from "@/enums/pref-values";
 
 
 type StreamBadgeInfo = {
@@ -117,9 +118,9 @@ export class StreamBadges {
             return $badge;
         }
 
-        $badge = CE('div', {class: 'bx-badge', title: badgeInfo.name},
-            CE('span', {class: 'bx-badge-name'}, createSvgIcon(badgeInfo.icon)),
-            CE('span', {class: 'bx-badge-value', style: `background-color: ${badgeInfo.color}`}, value),
+        $badge = CE('div', { class: 'bx-badge', title: badgeInfo.name },
+            CE('span', { class: 'bx-badge-name' }, createSvgIcon(badgeInfo.icon)),
+            CE('span', { class: 'bx-badge-value', style: `background-color: ${badgeInfo.color}` }, value),
         );
 
         if (name === StreamBadge.BATTERY) {
@@ -130,7 +131,7 @@ export class StreamBadges {
         return $badge;
     }
 
-    private async updateBadges(forceUpdate = false) {
+    private updateBadges = async (forceUpdate = false) => {
         if (!this.$container || (!forceUpdate && !this.$container.isConnected)) {
             this.stop();
             return;
@@ -181,7 +182,7 @@ export class StreamBadges {
     private async start() {
         await this.updateBadges(true);
         this.stop();
-        this.intervalId = window.setInterval(this.updateBadges.bind(this), this.REFRESH_INTERVAL);
+        this.intervalId = window.setInterval(this.updateBadges, this.REFRESH_INTERVAL);
     }
 
     private stop() {
@@ -218,7 +219,7 @@ export class StreamBadges {
             this.serverInfo.audio ? this.badges.audio.$element : [StreamBadge.AUDIO, '?'],
         ];
 
-        const $container = CE('div', {class: 'bx-badges'});
+        const $container = CE('div', { class: 'bx-badges' });
 
         for (const item of BADGES) {
             if (!item) {

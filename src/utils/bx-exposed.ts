@@ -1,15 +1,18 @@
-import { isFullVersion } from "@macros/build" with {type: "macro"};
+import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { ControllerShortcut } from "@/modules/controller-shortcut";
-import { BxEvent } from "@utils/bx-event";
 import { deepClone, STATES } from "@utils/global";
 import { BxLogger } from "./bx-logger";
 import { BX_FLAGS } from "./bx-flags";
 import { NavigationDialogManager } from "@/modules/ui/dialog/navigation-dialog";
 import { PrefKey } from "@/enums/pref-keys";
-import { getPref, StreamTouchController } from "./settings-storages/global-settings-storage";
+import { getPref } from "./settings-storages/global-settings-storage";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { TouchController } from "@/modules/touch-controller";
+import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
+import { Patcher, type PatchPage } from "@/modules/patcher/patcher";
+import { BxEventBus } from "./bx-event-bus";
+import { FeatureGates } from "./feature-gates";
 
 export enum SupportedInputType {
     CONTROLLER = 'Controller',
@@ -30,6 +33,15 @@ export const BxExposed = {
         // Override User-Agent
         try {
             state.appContext.requestInfo.userAgent = window.navigator.userAgent;
+        } catch (e) {
+            BxLogger.error(LOG_TAG, e);
+        }
+
+        // Override feature gates
+        try {
+            for (const exp in FeatureGates) {
+                state.experiments.overrideFeatureGates[exp.toLocaleLowerCase()] = FeatureGates[exp];
+            }
         } catch (e) {
             BxLogger.error(LOG_TAG, e);
         }
@@ -89,17 +101,17 @@ export const BxExposed = {
         }
 
         // Remove native MKB support on mobile browsers or by user's choice
-        if (getPref(PrefKey.NATIVE_MKB_ENABLED) === 'off') {
+        if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
             supportedInputTypes = supportedInputTypes.filter(i => i !== SupportedInputType.MKB);
         }
 
         titleInfo.details.hasMkbSupport = supportedInputTypes.includes(SupportedInputType.MKB);
 
         if (STATES.userAgent.capabilities.touch) {
-            let touchControllerAvailability = getPref(PrefKey.STREAM_TOUCH_CONTROLLER);
+            let touchControllerAvailability = getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE);
 
             // Disable touch control when gamepad found
-            if (touchControllerAvailability !== StreamTouchController.OFF && getPref(PrefKey.STREAM_TOUCH_CONTROLLER_AUTO_OFF)) {
+            if (touchControllerAvailability !== TouchControllerMode.OFF && getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) {
                 const gamepads = window.navigator.getGamepads();
                 let gamepadFound = false;
 
@@ -110,10 +122,10 @@ export const BxExposed = {
                     }
                 }
 
-                gamepadFound && (touchControllerAvailability = StreamTouchController.OFF);
+                gamepadFound && (touchControllerAvailability = TouchControllerMode.OFF);
             }
 
-            if (touchControllerAvailability === StreamTouchController.OFF) {
+            if (touchControllerAvailability === TouchControllerMode.OFF) {
                 // Disable touch on all games (not native touch)
                 supportedInputTypes = supportedInputTypes.filter(i => i !== SupportedInputType.CUSTOM_TOUCH_OVERLAY && i !== SupportedInputType.GENERIC_TOUCH);
                 // Empty TABs
@@ -126,7 +138,7 @@ export const BxExposed = {
                     supportedInputTypes.includes(SupportedInputType.CUSTOM_TOUCH_OVERLAY) ||
                     supportedInputTypes.includes(SupportedInputType.GENERIC_TOUCH);
 
-            if (!titleInfo.details.hasTouchSupport && touchControllerAvailability === StreamTouchController.ALL) {
+            if (!titleInfo.details.hasTouchSupport && touchControllerAvailability === TouchControllerMode.ALL) {
                 // Add generic touch support for non touch-supported games
                 titleInfo.details.hasFakeTouchSupport = true;
                 supportedInputTypes.push(SupportedInputType.GENERIC_TOUCH);
@@ -137,7 +149,7 @@ export const BxExposed = {
 
         // Save this info in STATES
         STATES.currentStream.titleInfo = titleInfo;
-        BxEvent.dispatch(window, BxEvent.TITLE_INFO_READY);
+        BxEventBus.Script.emit('titleInfo.ready', {});
 
         return titleInfo;
     },
@@ -172,7 +184,7 @@ export const BxExposed = {
     resetControllerShortcut: isFullVersion() && ControllerShortcut.reset,
 
     overrideSettings: {
-        'Tv_settings': {
+        Tv_settings: {
             hasCompletedOnboarding: true,
         },
     },
@@ -206,4 +218,11 @@ export const BxExposed = {
         / {2,}/g,
         / /g,
     ],
+
+    toggleLocalCoOp(enable: boolean) {},
+
+    beforePageLoad: isFullVersion() ? (page: PatchPage) => {
+        BxLogger.info('beforePageLoad', page);
+        Patcher.patchPage(page);
+    } : () => {},
 };

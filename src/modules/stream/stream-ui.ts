@@ -1,11 +1,12 @@
-import { STATES } from '@utils/global.ts'
-import { createSvgIcon } from '@utils/html.ts'
-import { BxIcon } from '@utils/bx-icon'
-import { BxEvent } from '@utils/bx-event.ts'
-import { t } from '@utils/translation.ts'
-import { StreamBadges } from './stream-badges.ts'
-import { StreamStats } from './stream-stats.ts'
-import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
+import { STATES } from "@utils/global.ts";
+import { createSvgIcon } from "@utils/html.ts";
+import { BxIcon } from "@utils/bx-icon";
+import { t } from "@utils/translation.ts";
+import { StreamBadges } from "./stream-badges.ts";
+import { StreamStats } from "./stream-stats.ts";
+import { SettingsDialog } from "../ui/dialog/settings-dialog.ts";
+import { BxEventBus } from "@/utils/bx-event-bus.ts";
+
 
 export class StreamUiHandler {
   private static $btnStreamSettings: HTMLElement | null | undefined
@@ -185,9 +186,9 @@ export class StreamUiHandler {
         hideGripHandle()
         e.preventDefault()
 
-        // Show Stream Settings dialog
-        SettingsNavigationDialog.getInstance().show()
-      })
+                // Show Stream Settings dialog
+                SettingsDialog.getInstance().show();
+            });
 
       StreamUiHandler.$btnStreamSettings = $btnStreamSettings
     }
@@ -273,11 +274,11 @@ export class StreamUiHandler {
 
           const className = $elm.className || ''
 
-          // Error Page: .PureErrorPage.ErrorScreen
-          if (className.includes('PureErrorPage')) {
-            BxEvent.dispatch(window, BxEvent.STREAM_ERROR_PAGE)
-            return
-          }
+                    // Error Page: .PureErrorPage.ErrorScreen
+                    if (className.includes('PureErrorPage')) {
+                        BxEventBus.Stream.emit('state.error', {});
+                        return;
+                    }
 
           // Render badges
           if (className.startsWith('StreamMenu-module__container')) {
@@ -299,7 +300,7 @@ export class StreamUiHandler {
             };
         });
 
-        observer.observe($screen, {subtree: true, childList: true});
+        observer.observe($screen, { subtree: true, childList: true });
         StreamUiHandler.observer = observer;
     }
 }

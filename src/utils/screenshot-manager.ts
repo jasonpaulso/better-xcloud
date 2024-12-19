@@ -1,9 +1,9 @@
-import { StreamPlayerType } from "@enums/stream-player";
 import { AppInterface, STATES } from "./global";
 import { CE } from "./html";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
 import { BxLogger } from "./bx-logger";
+import { StreamPlayerType } from "@/enums/pref-values";
 
 
 export class ScreenshotManager {
@@ -20,7 +20,7 @@ export class ScreenshotManager {
 
         this.$download = CE<HTMLAnchorElement>('a');
 
-        this.$canvas = CE<HTMLCanvasElement>('canvas', {'class': 'bx-gone'});
+        this.$canvas = CE<HTMLCanvasElement>('canvas', { class: 'bx-gone' });
         this.canvasContext = this.$canvas.getContext('2d', {
             alpha: false,
             willReadFrequently: false,
@@ -59,8 +59,11 @@ export class ScreenshotManager {
             return;
         }
 
-        $player.parentElement!.addEventListener('animationend', this.onAnimationEnd, { once: true });
-        $player.parentElement!.classList.add('bx-taking-screenshot');
+        const $gameStream = $player.closest('#game-stream');
+        if ($gameStream) {
+            $gameStream.addEventListener('animationend', this.onAnimationEnd, { once: true });
+            $gameStream.classList.add('bx-taking-screenshot');
+        }
 
         const canvasContext = this.canvasContext;
 
