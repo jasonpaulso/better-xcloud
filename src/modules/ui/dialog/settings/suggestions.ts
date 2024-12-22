@@ -92,7 +92,7 @@ export class SuggestionsSetting {
 
         // Start rendering
         const $suggestedSettings = CE('div', { class: 'bx-suggest-wrapper' });
-        const $select = CE('select', {},
+        const $select = CE('select', false,
             hasRecommendedSettings && CE('option', { value: 'recommended' }, t('recommended')),
             !hasRecommendedSettings && CE('option', { value: 'highest' }, t('highest-quality')),
             CE('option', { value: 'default' }, t('default')),

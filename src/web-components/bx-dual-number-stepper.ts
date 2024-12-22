@@ -79,7 +79,7 @@ export class BxDualNumberStepper extends HTMLInputElement implements BxHtmlSetti
         $rangeTo.addEventListener('input', self.onRangeInput);
 
         self.addEventListener('input', self.onRangeInput);
-        self.append(CE('div', {}, $rangeFrom, $rangeTo));
+        self.append(CE('div', false, $rangeFrom, $rangeTo));
 
         // Set values
         BxDualNumberStepper.setValues.call(self, values);

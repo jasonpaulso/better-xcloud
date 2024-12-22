@@ -30,7 +30,7 @@ export class GameTile {
         if (typeof totalWaitTime === 'number' && isElementVisible($elm)) {
             const $div = CE('div', { class: 'bx-game-tile-wait-time' },
                 createSvgIcon(BxIcon.PLAYTIME),
-                CE('span', {}, totalWaitTime < 60 ? totalWaitTime + 's' : secondsToHm(totalWaitTime)),
+                CE('span', false, totalWaitTime < 60 ? totalWaitTime + 's' : secondsToHm(totalWaitTime)),
             );
 
             const duration = (totalWaitTime >= 15 * 60) ? 'long' : (totalWaitTime >= 10 * 60) ? 'medium' : (totalWaitTime >= 5 * 60 ) ? 'short' : '';

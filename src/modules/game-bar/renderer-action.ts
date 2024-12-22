@@ -24,7 +24,7 @@ export class RendererAction extends BaseGameBarAction {
             classes: ['bx-activated'],
         });
 
-        this.$content = CE('div', {}, $btnDefault, $btnActivated);
+        this.$content = CE('div', false, $btnDefault, $btnActivated);
 
         BxEventBus.Stream.on('video.visibility.changed', payload => {
             this.$content.dataset.activated = (!payload.isVisible).toString();

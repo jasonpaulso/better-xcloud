@@ -170,8 +170,8 @@ export class SettingsDialog extends NavigationDialog {
                 this.$btnSuggestion = CE('div', {
                     class: 'bx-suggest-toggler bx-focusable',
                     tabindex: 0,
-                }, CE('label', {}, t('suggest-settings')),
-                    CE('span', {}, '❯'),
+                }, CE('label', false, t('suggest-settings')),
+                    CE('span', false, '❯'),
                 );
                 this.$btnSuggestion.addEventListener('click', SuggestionsSetting.renderSuggestions.bind(this));
 
@@ -518,7 +518,7 @@ export class SettingsDialog extends NavigationDialog {
             label: t('layout'),
             content: CE('select', {
                 disabled: true,
-            }, CE('option', {}, t('default'))),
+            }, CE('option', false, t('default'))),
             onCreated: (setting: SettingTabSectionItem, $elm: HTMLSelectElement) => {
                 $elm.addEventListener('input', e => {
                     TouchController.applyCustomLayout($elm.value, 1000);
@@ -1066,7 +1066,7 @@ export class SettingsDialog extends NavigationDialog {
                         orientation: 'horizontal',
                     }
                 },
-                    CE('span', {}, label),
+                    CE('span', false, label),
                     section.helpUrl && createButton({
                             icon: BxIcon.QUESTION,
                             style: ButtonStyle.GHOST | ButtonStyle.FOCUSABLE,
@@ -1146,7 +1146,7 @@ export class SettingsDialog extends NavigationDialog {
                         focus: () => this.focusActiveTab(),
                     },
                 }),
-                CE('div', {},
+                CE('div', false,
                     this.$btnReload = createButton({
                         icon: BxIcon.REFRESH,
                         style: ButtonStyle.FOCUSABLE | ButtonStyle.DROP_SHADOW,

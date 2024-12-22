@@ -27,7 +27,6 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
-    "slightly-increase-input-latency": "Slightly increase input latency",
     "achievements": "Achievements",
     "activate": "Activate",
     "activated": "Activated",
@@ -325,6 +324,7 @@ const Texts = {
     "show-wait-time-in-game-card": "Show wait time in game card",
     "simplify-stream-menu": "Simplify Stream's menu",
     "skip-splash-video": "Skip Xbox splash video",
+    "slightly-increases-input-latency": "Slightly increases input latency",
     "slow": "Slow",
     "small": "Small",
     "smart-tv": "Smart TV",

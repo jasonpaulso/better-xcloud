@@ -301,7 +301,6 @@ var SUPPORTED_LANGUAGES = {
  "zh-CN": "中文(简体)",
  "zh-TW": "中文(繁體)"
 }, Texts = {
- "slightly-increase-input-latency": "Slightly increase input latency",
  achievements: "Achievements",
  activate: "Activate",
  activated: "Activated",
@@ -599,6 +598,7 @@ var SUPPORTED_LANGUAGES = {
  "show-wait-time-in-game-card": "Show wait time in game card",
  "simplify-stream-menu": "Simplify Stream's menu",
  "skip-splash-video": "Skip Xbox splash video",
+ "slightly-increases-input-latency": "Slightly increases input latency",
  slow: "Slow",
  small: "Small",
  "smart-tv": "Smart TV",
@@ -788,26 +788,28 @@ var ButtonStyleClass = {
  4096: "bx-normal-case",
  8192: "bx-normal-link"
 };
-function createElement(elmName, props = {}, ..._) {
- let $elm, hasNs = "xmlns" in props;
+function createElement(elmName, props, ..._) {
+ let $elm, hasNs = props && "xmlns" in props;
  if (hasNs) $elm = document.createElementNS(props.xmlns, elmName), delete props.xmlns;
  else $elm = document.createElement(elmName);
- if (props._nearby) setNearby($elm, props._nearby), delete props._nearby;
- if (props._on) {
-  for (let name in props._on)
-   $elm.addEventListener(name, props._on[name]);
-  delete props._on;
- }
- if (props._dataset) {
-  for (let name in props._dataset)
-   $elm.dataset[name] = props._dataset[name];
-  delete props._dataset;
- }
- for (let key in props) {
-  if ($elm.hasOwnProperty(key)) continue;
-  let value = props[key];
-  if (hasNs) $elm.setAttributeNS(null, key, value);
-  else $elm.setAttribute(key, value);
+ if (props) {
+  if (props._nearby) setNearby($elm, props._nearby), delete props._nearby;
+  if (props._on) {
+   for (let name in props._on)
+    $elm.addEventListener(name, props._on[name]);
+   delete props._on;
+  }
+  if (props._dataset) {
+   for (let name in props._dataset)
+    $elm.dataset[name] = props._dataset[name];
+   delete props._dataset;
+  }
+  for (let key in props) {
+   if ($elm.hasOwnProperty(key)) continue;
+   let value = props[key];
+   if (hasNs) $elm.setAttributeNS(null, key, value);
+   else $elm.setAttribute(key, value);
+  }
  }
  for (let i = 2, size = arguments.length;i < size; i++) {
   let arg = arguments[i];
@@ -837,7 +839,7 @@ function createButton(options) {
   for (index of ButtonStyleIndices)
    style & index && $btn.classList.add(ButtonStyleClass[index]);
  }
- if (options.classes && $btn.classList.add(...options.classes), options.icon && $btn.appendChild(createSvgIcon(options.icon)), options.label && $btn.appendChild(CE("span", {}, options.label)), options.title && $btn.setAttribute("title", options.title), options.onClick && $btn.addEventListener("click", options.onClick), $btn.tabIndex = typeof options.tabIndex === "number" ? options.tabIndex : 0, options.secondaryText) $btn.classList.add("bx-button-multi-lines"), $btn.appendChild(CE("span", {}, options.secondaryText));
+ if (options.classes && $btn.classList.add(...options.classes), options.icon && $btn.appendChild(createSvgIcon(options.icon)), options.label && $btn.appendChild(CE("span", !1, options.label)), options.title && $btn.setAttribute("title", options.title), options.onClick && $btn.addEventListener("click", options.onClick), $btn.tabIndex = typeof options.tabIndex === "number" ? options.tabIndex : 0, options.secondaryText) $btn.classList.add("bx-button-multi-lines"), $btn.appendChild(CE("span", !1, options.secondaryText));
  for (let key in options.attributes)
   if (!$btn.hasOwnProperty(key)) $btn.setAttribute(key, options.attributes[key]);
  return $btn;
@@ -1596,7 +1598,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    requiredVariants: "full",
    label: t("enable-local-co-op-support"),
    default: !1,
-   note: () => CE("div", {}, CE("a", {
+   note: () => CE("div", !1, CE("a", {
     href: "https://github.com/redphx/better-xcloud/discussions/275",
     target: "_blank"
    }, t("enable-local-co-op-support-note")), CE("br"), "⚠️ " + t("unexpected-behavior"))
@@ -2503,7 +2505,7 @@ class StreamStats {
    let stat = this.stats[statKey], $div = CE("div", {
     class: `bx-stat-${statKey}`,
     title: stat.name
-   }, CE("label", {}, statKey.toUpperCase()), stat.$element);
+   }, CE("label", !1, statKey.toUpperCase()), stat.$element);
    this.$container.appendChild($div);
   }
   this.refreshStyles(), document.documentElement.appendChild(this.$container);
@@ -3025,7 +3027,7 @@ class MkbPopup {
   e.preventDefault(), this.mkbHandler.toggle(!0);
  };
  render() {
-  this.$popup = CE("div", { class: "bx-mkb-pointer-lock-msg bx-gone" }, this.$title = CE("p"), this.$btnActivate = this.createActivateButton(), CE("div", {}, createButton({
+  this.$popup = CE("div", { class: "bx-mkb-pointer-lock-msg bx-gone" }, this.$title = CE("p"), this.$btnActivate = this.createActivateButton(), CE("div", !1, createButton({
    label: t("ignore"),
    style: 8,
    onClick: (e) => {
@@ -4022,13 +4024,13 @@ class BxSelectElement extends HTMLSelectElement {
   if (self.isMultiple) $content = CE("button", {
     class: "bx-select-value bx-focusable",
     tabindex: 0
-   }, CE("div", {}, self.$checkBox = CE("input", { type: "checkbox" }), self.$label = CE("span", {}, "")), self.$indicators), $content.addEventListener("click", (e) => {
+   }, CE("div", !1, self.$checkBox = CE("input", { type: "checkbox" }), self.$label = CE("span", !1, "")), self.$indicators), $content.addEventListener("click", (e) => {
     self.$checkBox.click();
    }), self.$checkBox.addEventListener("input", (e) => {
     let $option = BxSelectElement.getOptionAtIndex.call(self, self.visibleIndex);
     $option && ($option.selected = e.target.checked), BxEvent.dispatch($select, "input");
    });
-  else $content = CE("div", {}, self.$label = CE("label", { for: $select.id + "_checkbox" }, ""), self.$indicators);
+  else $content = CE("div", !1, self.$label = CE("label", { for: $select.id + "_checkbox" }, ""), self.$indicators);
   return $select.addEventListener("input", BxSelectElement.render.bind(self)), new MutationObserver((mutationList, observer2) => {
    mutationList.forEach((mutation) => {
     if (mutation.type === "childList" || mutation.type === "attributes") self.visibleIndex = $select.selectedIndex, self.optionsList = Array.from($select.querySelectorAll("option")), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
@@ -4098,7 +4100,7 @@ class BxSelectElement extends HTMLSelectElement {
     let groupLabel = $parent instanceof HTMLOptGroupElement ? $parent.label : " ";
     $label.innerHTML = "";
     let fragment = document.createDocumentFragment();
-    fragment.appendChild(CE("span", {}, groupLabel)), fragment.appendChild(document.createTextNode(content)), $label.appendChild(fragment);
+    fragment.appendChild(CE("span", !1, groupLabel)), fragment.appendChild(document.createTextNode(content)), $label.appendChild(fragment);
    } else $label.textContent = content;
   } else $label.textContent = content;
   if ($label.classList.toggle("bx-line-through", $option && $option.disabled), this.isMultiple) $checkBox.checked = $option?.selected || !1, $checkBox.classList.toggle("bx-gone", !content);
@@ -4850,7 +4852,7 @@ class BxNumberStepper extends HTMLInputElement {
   let $text, $btnInc, $btnDec, $range, self = CE("div", {
    class: "bx-number-stepper",
    id: `bx_setting_${escapeCssSelector(key)}`
-  }, CE("div", {}, $btnDec = CE("button", {
+  }, CE("div", !1, $btnDec = CE("button", {
    _dataset: {
     type: "dec"
    },
@@ -5132,11 +5134,11 @@ class BaseProfileManagerDialog extends NavigationDialog {
     this.currentPresetId = newId, await this.refresh();
    }
   }));
-  this.$header = $header, this.$container = CE("div", { class: "bx-centered-dialog" }, CE("div", { class: "bx-dialog-title" }, CE("p", {}, this.title), createButton({
+  this.$header = $header, this.$container = CE("div", { class: "bx-centered-dialog" }, CE("div", { class: "bx-dialog-title" }, CE("p", !1, this.title), createButton({
    icon: BxIcon.CLOSE,
    style: 64 | 2048 | 8,
    onClick: (e) => this.hide()
-  })), CE("div", {}, $header, this.$defaultNote = CE("div", { class: "bx-default-preset-note bx-gone" }, t("default-preset-note"))), CE("div", { class: "bx-dialog-content" }, this.$content));
+  })), CE("div", !1, $header, this.$defaultNote = CE("div", { class: "bx-default-preset-note bx-gone" }, t("default-preset-note"))), CE("div", { class: "bx-dialog-content" }, this.$content));
  }
  async refresh() {
   await this.renderPresetsList(), this.$presets.value = this.currentPresetId.toString(), BxEvent.dispatch(this.$presets, "input", { manualTrigger: !0 });
@@ -5321,7 +5323,7 @@ class BxDualNumberStepper extends HTMLInputElement {
    max: self.controlMax,
    step: self.steps,
    tabindex: 0
-  }), $rangeTo = $rangeFrom.cloneNode(), self.$rangeFrom = $rangeFrom, self.$rangeTo = $rangeTo, self.$activeRange = $rangeFrom, self.getValue = BxDualNumberStepper.getValues.bind(self), self.setValue = BxDualNumberStepper.setValues.bind(self), $rangeFrom.addEventListener("input", self.onRangeInput), $rangeTo.addEventListener("input", self.onRangeInput), self.addEventListener("input", self.onRangeInput), self.append(CE("div", {}, $rangeFrom, $rangeTo)), BxDualNumberStepper.setValues.call(self, values), self.addEventListener("contextmenu", BxDualNumberStepper.onContextMenu), setNearby(self, {
+  }), $rangeTo = $rangeFrom.cloneNode(), self.$rangeFrom = $rangeFrom, self.$rangeTo = $rangeTo, self.$activeRange = $rangeFrom, self.getValue = BxDualNumberStepper.getValues.bind(self), self.setValue = BxDualNumberStepper.setValues.bind(self), $rangeFrom.addEventListener("input", self.onRangeInput), $rangeTo.addEventListener("input", self.onRangeInput), self.addEventListener("input", self.onRangeInput), self.append(CE("div", !1, $rangeFrom, $rangeTo)), BxDualNumberStepper.setValues.call(self, values), self.addEventListener("contextmenu", BxDualNumberStepper.onContextMenu), setNearby(self, {
    focus: $rangeFrom,
    orientation: "vertical"
   }), Object.defineProperty(self, "value", {
@@ -5601,7 +5603,7 @@ class ControllerExtraSettings extends HTMLElement {
    autocomplete: "off",
    _on: { input: $container.saveSettings }
   }));
-  return $container.append(CE("span", {}, t("no-controllers-connected")), CE("div", { class: "bx-controller-extra-wrapper" }, $selectControllers, CE("div", { class: "bx-sub-content-box" }, createSettingRow(t("in-game-controller-shortcuts"), CE("div", {
+  return $container.append(CE("span", !1, t("no-controllers-connected")), CE("div", { class: "bx-controller-extra-wrapper" }, $selectControllers, CE("div", { class: "bx-sub-content-box" }, createSettingRow(t("in-game-controller-shortcuts"), CE("div", {
    class: "bx-preset-row",
    _nearby: { orientation: "horizontal" }
   }, $selectShortcuts, createButton({
@@ -5623,7 +5625,7 @@ class ControllerExtraSettings extends HTMLElement {
    })
   })), {
    multiLines: !0,
-   $note: CE("div", { class: "bx-settings-dialog-note" }, "ⓘ " + t("slightly-increase-input-latency"))
+   $note: CE("div", { class: "bx-settings-dialog-note" }, "ⓘ " + t("slightly-increases-input-latency"))
   })))), $container.$selectControllers = $selectControllers, $container.$selectShortcuts = $selectShortcuts, $container.$selectCustomization = $selectCustomization, $container.updateLayout(), window.addEventListener("gamepadconnected", $container.updateLayout), window.addEventListener("gamepaddisconnected", $container.updateLayout), this.onMountedCallbacks.push(() => {
    $container.updateLayout();
   }), $container;
@@ -5705,7 +5707,7 @@ class SuggestionsSetting {
   else if (deviceType === "android") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "deviceVibration.mode", "auto");
   else if (deviceType === "android-tv") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "touchController.mode", "off");
   SuggestionsSetting.generateDefaultSuggestedSettings.call(this);
-  let $suggestedSettings = CE("div", { class: "bx-suggest-wrapper" }), $select = CE("select", {}, hasRecommendedSettings && CE("option", { value: "recommended" }, t("recommended")), !hasRecommendedSettings && CE("option", { value: "highest" }, t("highest-quality")), CE("option", { value: "default" }, t("default")), CE("option", { value: "lowest" }, t("lowest-quality")));
+  let $suggestedSettings = CE("div", { class: "bx-suggest-wrapper" }), $select = CE("select", !1, hasRecommendedSettings && CE("option", { value: "recommended" }, t("recommended")), !hasRecommendedSettings && CE("option", { value: "highest" }, t("highest-quality")), CE("option", { value: "default" }, t("default")), CE("option", { value: "lowest" }, t("lowest-quality")));
   $select.addEventListener("input", (e2) => {
    let profile = $select.value;
    removeChildElements($suggestedSettings);
@@ -5871,7 +5873,7 @@ class KeyBindingDialog {
  $currentElm;
  countdownIntervalId;
  constructor() {
-  this.$overlay = CE("div", { class: "bx-key-binding-dialog-overlay bx-gone" }), this.$overlay.addEventListener("contextmenu", (e) => e.preventDefault()), document.documentElement.appendChild(this.$overlay), this.$dialog = CE("div", { class: "bx-key-binding-dialog bx-gone" }, this.$title = CE("h2", {}), CE("div", { class: "bx-key-binding-dialog-content" }, CE("div", {}, this.$wait = CE("p", { class: "bx-blink-me" }), this.$inputList = CE("ul", {}, CE("li", { _dataset: { flag: 1 } }, t("keyboard-key")), CE("li", { _dataset: { flag: 2 } }, t("modifiers-note")), CE("li", { _dataset: { flag: 4 } }, t("mouse-click")), CE("li", { _dataset: { flag: 8 } }, t("mouse-wheel"))), CE("i", {}, t("press-esc-to-cancel"))))), this.$dialog.addEventListener("contextmenu", (e) => e.preventDefault()), document.documentElement.appendChild(this.$dialog);
+  this.$overlay = CE("div", { class: "bx-key-binding-dialog-overlay bx-gone" }), this.$overlay.addEventListener("contextmenu", (e) => e.preventDefault()), document.documentElement.appendChild(this.$overlay), this.$dialog = CE("div", { class: "bx-key-binding-dialog bx-gone" }, this.$title = CE("h2", {}), CE("div", { class: "bx-key-binding-dialog-content" }, CE("div", !1, this.$wait = CE("p", { class: "bx-blink-me" }), this.$inputList = CE("ul", !1, CE("li", { _dataset: { flag: 1 } }, t("keyboard-key")), CE("li", { _dataset: { flag: 2 } }, t("modifiers-note")), CE("li", { _dataset: { flag: 4 } }, t("mouse-click")), CE("li", { _dataset: { flag: 8 } }, t("mouse-wheel"))), CE("i", !1, t("press-esc-to-cancel"))))), this.$dialog.addEventListener("contextmenu", (e) => e.preventDefault()), document.documentElement.appendChild(this.$dialog);
  }
  show(options) {
   this.$currentElm = options.$elm, this.addEventListeners();
@@ -6000,7 +6002,7 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
   this.savePreset();
  };
  render() {
-  let $rows = CE("div", {}, this.$unbindNote = CE("i", { class: "bx-mkb-note" }, t("right-click-to-unbind")));
+  let $rows = CE("div", !1, this.$unbindNote = CE("i", { class: "bx-mkb-note" }, t("right-click-to-unbind")));
   for (let buttonIndex of this.BUTTONS_ORDER) {
    let [buttonName, buttonPrompt] = GamepadKeyName[buttonIndex], $elm, $fragment = document.createDocumentFragment();
    for (let i = 0;i < this.KEYS_PER_BUTTON; i++)
@@ -6016,7 +6018,7 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
    }, CE("label", { title: buttonName }, buttonPrompt), $fragment);
    $rows.appendChild($keyRow);
   }
-  let savePreset = () => this.savePreset(), $extraSettings = CE("div", {}, createSettingRow(t("map-mouse-to"), this.$mouseMapTo = BxSelectElement.create(CE("select", { _on: { input: savePreset } }, CE("option", { value: 2 }, t("right-stick")), CE("option", { value: 1 }, t("left-stick")), CE("option", { value: 0 }, t("off"))))), createSettingRow(t("horizontal-sensitivity"), this.$mouseSensitivityX = BxNumberStepper.create("hor_sensitivity", 0, 1, 300, {
+  let savePreset = () => this.savePreset(), $extraSettings = CE("div", !1, createSettingRow(t("map-mouse-to"), this.$mouseMapTo = BxSelectElement.create(CE("select", { _on: { input: savePreset } }, CE("option", { value: 2 }, t("right-stick")), CE("option", { value: 1 }, t("left-stick")), CE("option", { value: 0 }, t("off"))))), createSettingRow(t("horizontal-sensitivity"), this.$mouseSensitivityX = BxNumberStepper.create("hor_sensitivity", 0, 1, 300, {
    suffix: "%",
    exactTicks: 50
   }, savePreset)), createSettingRow(t("vertical-sensitivity"), this.$mouseSensitivityY = BxNumberStepper.create("ver_sensitivity", 0, 1, 300, {
@@ -6026,7 +6028,7 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
    suffix: "%",
    exactTicks: 10
   }, savePreset)));
-  this.$content = CE("div", {}, $rows, $extraSettings);
+  this.$content = CE("div", !1, $rows, $extraSettings);
  }
  switchPreset(id) {
   let preset = this.allPresets.data[id];
@@ -6085,7 +6087,7 @@ class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
   for (let groupLabel in SHORTCUT_ACTIONS) {
    let items = SHORTCUT_ACTIONS[groupLabel];
    if (!items) continue;
-   let $fieldSet = CE("fieldset", {}, CE("legend", {}, groupLabel));
+   let $fieldSet = CE("fieldset", !1, CE("legend", !1, groupLabel));
    for (let action in items) {
     let crumbs = items[action];
     if (!crumbs) continue;
@@ -6101,7 +6103,7 @@ class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
    }
    if ($fieldSet.childElementCount > 1) $rows.appendChild($fieldSet);
   }
-  this.$content = CE("div", {}, this.$unbindNote = CE("i", { class: "bx-mkb-note" }, t("right-click-to-unbind")), $rows);
+  this.$content = CE("div", !1, this.$unbindNote = CE("i", { class: "bx-mkb-note" }, t("right-click-to-unbind")), $rows);
  }
  onKeyChanged = (e) => {
   let $current = e.target, keyInfo = $current.keyInfo;
@@ -6279,7 +6281,7 @@ class SettingsDialog extends NavigationDialog {
     }, t("settings-reload-note")), topButtons.push(this.$noteGlobalReload), this.$btnSuggestion = CE("div", {
      class: "bx-suggest-toggler bx-focusable",
      tabindex: 0
-    }, CE("label", {}, t("suggest-settings")), CE("span", {}, "❯")), this.$btnSuggestion.addEventListener("click", SuggestionsSetting.renderSuggestions.bind(this)), topButtons.push(this.$btnSuggestion);
+    }, CE("label", !1, t("suggest-settings")), CE("span", !1, "❯")), this.$btnSuggestion.addEventListener("click", SuggestionsSetting.renderSuggestions.bind(this)), topButtons.push(this.$btnSuggestion);
     let $div = CE("div", {
      class: "bx-top-buttons",
      _nearby: {
@@ -6574,7 +6576,7 @@ class SettingsDialog extends NavigationDialog {
     label: t("layout"),
     content: CE("select", {
      disabled: !0
-    }, CE("option", {}, t("default"))),
+    }, CE("option", !1, t("default"))),
     onCreated: (setting, $elm) => {
      $elm.addEventListener("input", (e) => {
       TouchController.applyCustomLayout($elm.value, 1000);
@@ -6893,7 +6895,7 @@ class SettingsDialog extends NavigationDialog {
      _nearby: {
       orientation: "horizontal"
      }
-    }, CE("span", {}, label), section.helpUrl && createButton({
+    }, CE("span", !1, label), section.helpUrl && createButton({
      icon: BxIcon.QUESTION,
      style: 8 | 64,
      url: section.helpUrl,
@@ -6945,7 +6947,7 @@ class SettingsDialog extends NavigationDialog {
    _nearby: {
     focus: () => this.focusActiveTab()
    }
-  }), CE("div", {}, this.$btnReload = createButton({
+  }), CE("div", !1, this.$btnReload = createButton({
    icon: BxIcon.REFRESH,
    style: 64 | 32,
    onClick: (e) => {
@@ -7477,7 +7479,7 @@ class HeaderSection {
    label: "???",
    style: 16 | 32 | 64 | 256,
    onClick: (e) => SettingsDialog.getInstance().show()
-  }), this.$buttonsWrapper = CE("div", {}, getPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
+  }), this.$buttonsWrapper = CE("div", !1, getPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
  }
  injectSettingsButton($parent) {
   if (!$parent) return;
@@ -7521,7 +7523,7 @@ class RemotePlayDialog extends NavigationDialog {
   BxLogger.info(this.LOG_TAG, "constructor()"), this.setupDialog();
  }
  setupDialog() {
-  let $fragment = CE("div", { class: "bx-remote-play-container" }), $settingNote = CE("p", {}), currentResolution = getPref("xhome.video.resolution"), $resolutions = CE("select", {}, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
+  let $fragment = CE("div", { class: "bx-remote-play-container" }), $settingNote = CE("p", {}), currentResolution = getPref("xhome.video.resolution"), $resolutions = CE("select", !1, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
   $resolutions = BxSelectElement.create($resolutions), $resolutions.addEventListener("input", (e) => {
    let value = e.target.value;
    $settingNote.textContent = value === "1080p" ? "✅ " + t("can-stream-xbox-360-games") : "❌ " + t("cant-stream-xbox-360-games"), setPref("xhome.video.resolution", value);
@@ -7530,11 +7532,11 @@ class RemotePlayDialog extends NavigationDialog {
   });
   let $qualitySettings = CE("div", {
    class: "bx-remote-play-settings"
-  }, CE("div", {}, CE("label", {}, t("target-resolution"), $settingNote), $resolutions));
+  }, CE("div", !1, CE("label", !1, t("target-resolution"), $settingNote), $resolutions));
   $fragment.appendChild($qualitySettings);
   let manager = RemotePlayManager.getInstance(), consoles = manager.getConsoles();
   for (let con of consoles) {
-   let $child = CE("div", { class: "bx-remote-play-device-wrapper" }, CE("div", { class: "bx-remote-play-device-info" }, CE("div", {}, CE("span", { class: "bx-remote-play-device-name" }, con.deviceName), CE("span", { class: "bx-remote-play-console-type" }, con.consoleType.replace("Xbox", ""))), CE("div", { class: "bx-remote-play-power-state" }, this.STATE_LABELS[con.powerState])), createButton({
+   let $child = CE("div", { class: "bx-remote-play-device-wrapper" }, CE("div", { class: "bx-remote-play-device-info" }, CE("div", !1, CE("span", { class: "bx-remote-play-device-name" }, con.deviceName), CE("span", { class: "bx-remote-play-console-type" }, con.consoleType.replace("Xbox", ""))), CE("div", { class: "bx-remote-play-power-state" }, this.STATE_LABELS[con.powerState])), createButton({
     classes: ["bx-remote-play-connect-button"],
     label: t("console-connect"),
     style: 1 | 64,
@@ -7822,7 +7824,7 @@ class LoadingScreen {
   let endDateStr = endDate.toISOString().slice(0, 19);
   endDateStr = endDateStr.substring(0, 10) + " " + endDateStr.substring(11, 19), endDateStr += ` (${LoadingScreen.secondsToString(waitTime)})`;
   let $waitTimeBox = LoadingScreen.$waitTimeBox;
-  if (!$waitTimeBox) $waitTimeBox = CE("div", { class: "bx-wait-time-box" }, CE("label", {}, t("server")), CE("span", {}, getPreferredServerRegion()), CE("label", {}, t("wait-time-estimated")), $estimated = CE("span", {}), CE("label", {}, t("wait-time-countdown")), $countDown = CE("span", {})), document.documentElement.appendChild($waitTimeBox), LoadingScreen.$waitTimeBox = $waitTimeBox;
+  if (!$waitTimeBox) $waitTimeBox = CE("div", { class: "bx-wait-time-box" }, CE("label", !1, t("server")), CE("span", !1, getPreferredServerRegion()), CE("label", !1, t("wait-time-estimated")), $estimated = CE("span", {}), CE("label", !1, t("wait-time-countdown")), $countDown = CE("span", {})), document.documentElement.appendChild($waitTimeBox), LoadingScreen.$waitTimeBox = $waitTimeBox;
   else $waitTimeBox.classList.remove("bx-gone"), $estimated = $waitTimeBox.querySelector(".bx-wait-time-estimated"), $countDown = $waitTimeBox.querySelector(".bx-wait-time-countdown");
   $estimated.textContent = endDateStr, $countDown.textContent = LoadingScreen.secondsToString(secondsLeft), document.title = `[${$countDown.textContent}] ${LoadingScreen.orgWebTitle}`, LoadingScreen.waitTimeInterval = window.setInterval(() => {
    if (secondsLeft--, $countDown.textContent = LoadingScreen.secondsToString(secondsLeft), document.title = `[${$countDown.textContent}] ${LoadingScreen.orgWebTitle}`, secondsLeft <= 0) LoadingScreen.waitTimeInterval && clearInterval(LoadingScreen.waitTimeInterval), LoadingScreen.waitTimeInterval = null;
@@ -8429,7 +8431,7 @@ function addCss() {
  if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getPref("ui.streamMenu.simplify")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";
  else css += "body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) + 30px)}body:not([data-media-type=tv]) .bx-badges{top:calc(var(--streamMenuItemSize) + 20px)}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]{min-width:auto !important;width:100px !important}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]:nth-child(n+2){margin-left:10px !important}body:not([data-media-type=tv]) div[class*=MenuItem-module__label]{margin-left:8px !important;margin-right:8px !important}";
  if (getPref("ui.hideScrollbar")) css += "html{scrollbar-width:none}body::-webkit-scrollbar{display:none}";
- let $style = CE("style", {}, css);
+ let $style = CE("style", !1, css);
  document.documentElement.appendChild($style);
 }
 function preloadFonts() {
@@ -9004,7 +9006,7 @@ class TouchControlAction extends BaseGameBarAction {
    onClick: this.onClick,
    classes: ["bx-activated"]
   });
-  this.$content = CE("div", {}, $btnEnable, $btnDisable);
+  this.$content = CE("div", !1, $btnEnable, $btnDisable);
  }
  onClick = (e) => {
   super.onClick(e);
@@ -9029,7 +9031,7 @@ class MicrophoneAction extends BaseGameBarAction {
    icon: BxIcon.MICROPHONE_MUTED,
    onClick: this.onClick
   });
-  this.$content = CE("div", {}, $btnMuted, $btnDefault), BxEventBus.Stream.on("microphone.state.changed", (payload) => {
+  this.$content = CE("div", !1, $btnMuted, $btnDefault), BxEventBus.Stream.on("microphone.state.changed", (payload) => {
    let enabled = payload.state === "Enabled";
    this.$content.dataset.activated = enabled.toString(), this.$content.classList.remove("bx-gone");
   });
@@ -9071,7 +9073,7 @@ class SpeakerAction extends BaseGameBarAction {
    onClick: this.onClick,
    classes: ["bx-activated"]
   });
-  this.$content = CE("div", {}, $btnEnable, $btnMuted), BxEventBus.Stream.on("speaker.state.changed", (payload) => {
+  this.$content = CE("div", !1, $btnEnable, $btnMuted), BxEventBus.Stream.on("speaker.state.changed", (payload) => {
    let enabled = payload.state === 0;
    this.$content.dataset.activated = (!enabled).toString();
   });
@@ -9097,7 +9099,7 @@ class RendererAction extends BaseGameBarAction {
    onClick: this.onClick,
    classes: ["bx-activated"]
   });
-  this.$content = CE("div", {}, $btnDefault, $btnActivated), BxEventBus.Stream.on("video.visibility.changed", (payload) => {
+  this.$content = CE("div", !1, $btnDefault, $btnActivated), BxEventBus.Stream.on("video.visibility.changed", (payload) => {
    this.$content.dataset.activated = (!payload.isVisible).toString();
   });
  }
@@ -9229,7 +9231,7 @@ class GameTile {
    if (waitTime) totalWaitTime = waitTime.estimatedAllocationTimeInSeconds;
   }
   if (typeof totalWaitTime === "number" && isElementVisible($elm)) {
-   let $div = CE("div", { class: "bx-game-tile-wait-time" }, createSvgIcon(BxIcon.PLAYTIME), CE("span", {}, totalWaitTime < 60 ? totalWaitTime + "s" : secondsToHm(totalWaitTime))), duration = totalWaitTime >= 900 ? "long" : totalWaitTime >= 600 ? "medium" : totalWaitTime >= 300 ? "short" : "";
+   let $div = CE("div", { class: "bx-game-tile-wait-time" }, createSvgIcon(BxIcon.PLAYTIME), CE("span", !1, totalWaitTime < 60 ? totalWaitTime + "s" : secondsToHm(totalWaitTime))), duration = totalWaitTime >= 900 ? "long" : totalWaitTime >= 600 ? "medium" : totalWaitTime >= 300 ? "short" : "";
    if (duration) $div.dataset.duration = duration;
    $elm.insertAdjacentElement("afterbegin", $div);
   }
@@ -9580,15 +9582,15 @@ if (BX_FLAGS.SafariWorkaround && document.readyState !== "loading") {
  let css = "";
  css += '.bx-reload-overlay{position:fixed;top:0;bottom:0;left:0;right:0;display:flex;align-items:center;background:rgba(0,0,0,0.8);z-index:9999;color:#fff;text-align:center;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem}.bx-reload-overlay *:focus{outline:none !important}.bx-reload-overlay > div{margin:0 auto}.bx-reload-overlay a{text-decoration:none;display:inline-block;background:#107c10;color:#fff;border-radius:4px;padding:6px}';
  let isSafari = UserAgent.isSafari(), $secondaryAction;
- if (isSafari) $secondaryAction = CE("p", {}, t("settings-reloading"));
+ if (isSafari) $secondaryAction = CE("p", !1, t("settings-reloading"));
  else $secondaryAction = CE("a", {
    href: "https://better-xcloud.github.io/troubleshooting",
    target: "_blank"
   }, "🤓 " + t("how-to-fix"));
  let $fragment = document.createDocumentFragment();
- throw $fragment.appendChild(CE("style", {}, css)), $fragment.appendChild(CE("div", {
+ throw $fragment.appendChild(CE("style", !1, css)), $fragment.appendChild(CE("div", {
   class: "bx-reload-overlay"
- }, CE("div", {}, CE("p", {}, t("load-failed-message")), $secondaryAction))), document.documentElement.appendChild($fragment), isSafari && window.location.reload(!0), new Error("[Better xCloud] Executing workaround for Safari");
+ }, CE("div", !1, CE("p", !1, t("load-failed-message")), $secondaryAction))), document.documentElement.appendChild($fragment), isSafari && window.location.reload(!0), new Error("[Better xCloud] Executing workaround for Safari");
 }
 window.addEventListener("load", (e) => {
  window.setTimeout(() => {

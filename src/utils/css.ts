@@ -164,7 +164,7 @@ body::-webkit-scrollbar {
 `);
     }
 
-    const $style = CE('style', {}, css);
+    const $style = CE('style', false, css);
     document.documentElement.appendChild($style);
 }
 

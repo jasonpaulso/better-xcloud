@@ -89,11 +89,9 @@ type HTMLElementTagNameMap = {
     [key: string] : HTMLElement;
 };
 
-function createElement<T extends keyof HTMLElementTagNameMap>(elmName: T, props: CreateElementOptions={}, ..._: any): HTMLElementTagNameMap[T] {
+function createElement<T extends keyof HTMLElementTagNameMap>(elmName: T, props?: CreateElementOptions | false, ..._: any): HTMLElementTagNameMap[T] {
     let $elm;
-    const hasNs = 'xmlns' in props;
-
-    // console.trace('createElement', elmName, props);
+    const hasNs = props && 'xmlns' in props;
 
     if (hasNs) {
         $elm = document.createElementNS(props.xmlns, elmName as string);
@@ -102,35 +100,39 @@ function createElement<T extends keyof HTMLElementTagNameMap>(elmName: T, props:
         $elm = document.createElement(elmName as string);
     }
 
-    if (props._nearby) {
-        setNearby($elm, props._nearby);
-        delete props._nearby;
-    }
+    if (props) {
+        // console.trace('createElement', elmName, props);
 
-    if (props._on) {
-        for (const name in props._on) {
-            $elm.addEventListener(name, props._on[name]);
-        }
-        delete props._on;
-    }
-
-    if (props._dataset) {
-        for (const name in props._dataset) {
-            $elm.dataset[name] = props._dataset[name] as string;
-        }
-        delete props._dataset;
-    }
-
-    for (const key in props) {
-        if ($elm.hasOwnProperty(key)) {
-            continue;
+        if (props._nearby) {
+            setNearby($elm, props._nearby);
+            delete props._nearby;
         }
 
-        const value = props[key];
-        if (hasNs) {
-            $elm.setAttributeNS(null, key, value);
-        } else {
-            $elm.setAttribute(key, value);
+        if (props._on) {
+            for (const name in props._on) {
+                $elm.addEventListener(name, props._on[name]);
+            }
+            delete props._on;
+        }
+
+        if (props._dataset) {
+            for (const name in props._dataset) {
+                $elm.dataset[name] = props._dataset[name] as string;
+            }
+            delete props._dataset;
+        }
+
+        for (const key in props) {
+            if ($elm.hasOwnProperty(key)) {
+                continue;
+            }
+
+            const value = props[key];
+            if (hasNs) {
+                $elm.setAttributeNS(null, key, value);
+            } else {
+                $elm.setAttribute(key, value);
+            }
         }
     }
 
@@ -184,14 +186,14 @@ export function createButton<T=HTMLButtonElement>(options: BxButtonOptions): T {
     options.classes && $btn.classList.add(...options.classes);
 
     options.icon && $btn.appendChild(createSvgIcon(options.icon));
-    options.label && $btn.appendChild(CE('span', {}, options.label));
+    options.label && $btn.appendChild(CE('span', false, options.label));
     options.title && $btn.setAttribute('title', options.title);
     options.onClick && $btn.addEventListener('click', options.onClick);
     $btn.tabIndex = typeof options.tabIndex === 'number' ? options.tabIndex : 0;
 
     if (options.secondaryText) {
         $btn.classList.add('bx-button-multi-lines');
-        $btn.appendChild(CE('span', {}, options.secondaryText));
+        $btn.appendChild(CE('span', false, options.secondaryText));
     }
 
     for (const key in options.attributes) {

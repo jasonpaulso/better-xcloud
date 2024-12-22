@@ -110,11 +110,11 @@ export class LoadingScreen {
         let $waitTimeBox = LoadingScreen.$waitTimeBox;
         if (!$waitTimeBox) {
             $waitTimeBox = CE('div', { class: 'bx-wait-time-box' },
-                CE('label', {}, t('server')),
-                CE('span', {}, getPreferredServerRegion()),
-                CE('label', {}, t('wait-time-estimated')),
+                CE('label', false, t('server')),
+                CE('span', false, getPreferredServerRegion()),
+                CE('label', false, t('wait-time-estimated')),
                 $estimated = CE('span', {}),
-                CE('label', {}, t('wait-time-countdown')),
+                CE('label', false, t('wait-time-countdown')),
                 $countDown = CE('span', {}),
             );
 

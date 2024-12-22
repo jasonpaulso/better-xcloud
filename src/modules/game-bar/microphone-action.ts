@@ -24,7 +24,7 @@ export class MicrophoneAction extends BaseGameBarAction {
             onClick: this.onClick,
         });
 
-        this.$content = CE('div', {}, $btnMuted, $btnDefault);
+        this.$content = CE('div', false, $btnMuted, $btnDefault);
 
         BxEventBus.Stream.on('microphone.state.changed', payload => {
             const enabled = payload.state === MicrophoneState.ENABLED;

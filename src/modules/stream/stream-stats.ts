@@ -227,7 +227,7 @@ export class StreamStats {
                 class: `bx-stat-${statKey}`,
                 title: stat.name,
             },
-                CE('label', {}, statKey.toUpperCase()),
+                CE('label', false, statKey.toUpperCase()),
                 stat.$element,
             );
 

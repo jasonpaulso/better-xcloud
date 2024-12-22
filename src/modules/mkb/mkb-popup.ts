@@ -78,7 +78,7 @@ export class MkbPopup {
             this.$title = CE('p'),
             this.$btnActivate = this.createActivateButton(),
 
-            CE('div', {},
+            CE('div', false,
                 createButton({
                     label: t('ignore'),
                     style: ButtonStyle.GHOST,

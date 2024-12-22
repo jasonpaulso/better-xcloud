@@ -37,7 +37,7 @@ export class RemotePlayDialog extends NavigationDialog {
         const $settingNote = CE('p', {});
 
         const currentResolution = getPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION);
-        let $resolutions : HTMLSelectElement | NavigationElement = CE('select', {},
+        let $resolutions : HTMLSelectElement | NavigationElement = CE('select', false,
             CE('option', { value: StreamResolution.DIM_720P }, '720p'),
             CE('option', { value: StreamResolution.DIM_1080P }, '1080p'),
             // CE('option', { value: StreamResolution.DIM_1080P_HQ }, `1080p (HQ)`),
@@ -58,8 +58,8 @@ export class RemotePlayDialog extends NavigationDialog {
 
         const $qualitySettings = CE('div', {
             class: 'bx-remote-play-settings',
-        }, CE('div', {},
-            CE('label', {}, t('target-resolution'), $settingNote),
+        }, CE('div', false,
+            CE('label', false, t('target-resolution'), $settingNote),
             $resolutions,
         ));
 
@@ -72,7 +72,7 @@ export class RemotePlayDialog extends NavigationDialog {
         for (let con of consoles) {
             const $child = CE('div', { class: 'bx-remote-play-device-wrapper' },
                 CE('div', { class: 'bx-remote-play-device-info' },
-                    CE('div', {},
+                    CE('div', false,
                         CE('span', { class: 'bx-remote-play-device-name' }, con.deviceName),
                         CE('span', { class: 'bx-remote-play-console-type' }, con.consoleType.replace('Xbox', ''))
                     ),

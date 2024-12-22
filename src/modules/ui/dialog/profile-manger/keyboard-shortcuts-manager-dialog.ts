@@ -37,7 +37,7 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
                 continue;
             }
 
-            const $fieldSet = CE('fieldset', {}, CE('legend', {}, groupLabel));
+            const $fieldSet = CE('fieldset', false, CE('legend', false, groupLabel));
             for (const action in items) {
                 const crumbs = items[action as keyof typeof items];
                 if (!crumbs) {
@@ -66,7 +66,7 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
             }
         }
 
-        this.$content = CE('div', {},
+        this.$content = CE('div', false,
             this.$unbindNote = CE('i', { class: 'bx-mkb-note' }, t('right-click-to-unbind')),
             $rows,
         );

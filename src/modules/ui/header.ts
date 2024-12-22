@@ -39,7 +39,7 @@ export class HeaderSection {
             onClick: e => SettingsDialog.getInstance().show(),
         });
 
-        this.$buttonsWrapper = CE('div', {},
+        this.$buttonsWrapper = CE('div', false,
             getPref(PrefKey.REMOTE_PLAY_ENABLED) ? this.$btnRemotePlay : null,
             this.$btnSettings,
         );

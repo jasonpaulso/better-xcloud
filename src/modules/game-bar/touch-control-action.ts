@@ -25,7 +25,7 @@ export class TouchControlAction extends BaseGameBarAction {
             classes: ['bx-activated'],
         });
 
-        this.$content = CE('div', {}, $btnEnable, $btnDisable);
+        this.$content = CE('div', false, $btnEnable, $btnDisable);
     }
 
     onClick = (e: Event) => {

@@ -321,7 +321,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             requiredVariants: 'full',
             label: t('enable-local-co-op-support'),
             default: false,
-            note: () => CE('div', {},
+            note: () => CE('div', false,
                 CE('a', {
                     href: 'https://github.com/redphx/better-xcloud/discussions/275',
                     target: '_blank',

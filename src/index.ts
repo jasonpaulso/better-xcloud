@@ -113,7 +113,7 @@ if (isFullVersion() && BX_FLAGS.SafariWorkaround && document.readyState !== 'loa
     const isSafari = UserAgent.isSafari();
     let $secondaryAction: HTMLElement;
     if (isSafari) {
-        $secondaryAction = CE('p', {}, t('settings-reloading'));
+        $secondaryAction = CE('p', false, t('settings-reloading'));
     } else {
         $secondaryAction = CE('a', {
             href: 'https://better-xcloud.github.io/troubleshooting',
@@ -123,12 +123,12 @@ if (isFullVersion() && BX_FLAGS.SafariWorkaround && document.readyState !== 'loa
 
     // Show the reloading overlay
     const $fragment = document.createDocumentFragment();
-    $fragment.appendChild(CE('style', {}, css));
+    $fragment.appendChild(CE('style', false, css));
     $fragment.appendChild(CE('div',{
         class: 'bx-reload-overlay',
     },
-        CE('div', {},
-            CE('p', {}, t('load-failed-message')),
+        CE('div', false,
+            CE('p', false, t('load-failed-message')),
             $secondaryAction,
         ),
     ));

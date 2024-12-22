@@ -48,7 +48,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
             class: 'bx-number-stepper',
             id: `bx_setting_${escapeCssSelector(key)}`,
         },
-            CE('div', {},
+            CE('div', false,
                 $btnDec = CE('button', {
                     _dataset: {
                         type: 'dec' as ButtonType,

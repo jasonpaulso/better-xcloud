@@ -167,14 +167,14 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
 
         this.$container = CE('div', { class: 'bx-centered-dialog' },
             CE('div', { class: 'bx-dialog-title' },
-                CE('p', {}, this.title),
+                CE('p', false, this.title),
                 createButton({
                     icon: BxIcon.CLOSE,
                     style: ButtonStyle.FOCUSABLE | ButtonStyle.CIRCULAR | ButtonStyle.GHOST,
                     onClick: e => this.hide(),
                 }),
             ),
-            CE('div', {},
+            CE('div', false,
                 $header,
                 this.$defaultNote = CE('div', { class: 'bx-default-preset-note bx-gone' }, t('default-preset-note')),
             ),

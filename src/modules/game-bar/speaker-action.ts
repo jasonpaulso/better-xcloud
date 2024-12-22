@@ -24,7 +24,7 @@ export class SpeakerAction extends BaseGameBarAction {
             classes: ['bx-activated'],
         });
 
-        this.$content = CE('div', {}, $btnEnable, $btnMuted);
+        this.$content = CE('div', false, $btnEnable, $btnMuted);
 
         BxEventBus.Stream.on('speaker.state.changed', payload => {
             const enabled = payload.state === SpeakerState.ENABLED;

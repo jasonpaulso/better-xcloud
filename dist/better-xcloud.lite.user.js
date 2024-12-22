@@ -269,7 +269,6 @@ var SUPPORTED_LANGUAGES = {
  "zh-CN": "中文(简体)",
  "zh-TW": "中文(繁體)"
 }, Texts = {
- "slightly-increase-input-latency": "Slightly increase input latency",
  achievements: "Achievements",
  activate: "Activate",
  activated: "Activated",
@@ -567,6 +566,7 @@ var SUPPORTED_LANGUAGES = {
  "show-wait-time-in-game-card": "Show wait time in game card",
  "simplify-stream-menu": "Simplify Stream's menu",
  "skip-splash-video": "Skip Xbox splash video",
+ "slightly-increases-input-latency": "Slightly increases input latency",
  slow: "Slow",
  small: "Small",
  "smart-tv": "Smart TV",
@@ -756,26 +756,28 @@ var ButtonStyleClass = {
  4096: "bx-normal-case",
  8192: "bx-normal-link"
 };
-function createElement(elmName, props = {}, ..._) {
- let $elm, hasNs = "xmlns" in props;
+function createElement(elmName, props, ..._) {
+ let $elm, hasNs = props && "xmlns" in props;
  if (hasNs) $elm = document.createElementNS(props.xmlns, elmName), delete props.xmlns;
  else $elm = document.createElement(elmName);
- if (props._nearby) setNearby($elm, props._nearby), delete props._nearby;
- if (props._on) {
-  for (let name in props._on)
-   $elm.addEventListener(name, props._on[name]);
-  delete props._on;
- }
- if (props._dataset) {
-  for (let name in props._dataset)
-   $elm.dataset[name] = props._dataset[name];
-  delete props._dataset;
- }
- for (let key in props) {
-  if ($elm.hasOwnProperty(key)) continue;
-  let value = props[key];
-  if (hasNs) $elm.setAttributeNS(null, key, value);
-  else $elm.setAttribute(key, value);
+ if (props) {
+  if (props._nearby) setNearby($elm, props._nearby), delete props._nearby;
+  if (props._on) {
+   for (let name in props._on)
+    $elm.addEventListener(name, props._on[name]);
+   delete props._on;
+  }
+  if (props._dataset) {
+   for (let name in props._dataset)
+    $elm.dataset[name] = props._dataset[name];
+   delete props._dataset;
+  }
+  for (let key in props) {
+   if ($elm.hasOwnProperty(key)) continue;
+   let value = props[key];
+   if (hasNs) $elm.setAttributeNS(null, key, value);
+   else $elm.setAttribute(key, value);
+  }
  }
  for (let i = 2, size = arguments.length;i < size; i++) {
   let arg = arguments[i];
@@ -805,7 +807,7 @@ function createButton(options) {
   for (index of ButtonStyleIndices)
    style & index && $btn.classList.add(ButtonStyleClass[index]);
  }
- if (options.classes && $btn.classList.add(...options.classes), options.icon && $btn.appendChild(createSvgIcon(options.icon)), options.label && $btn.appendChild(CE("span", {}, options.label)), options.title && $btn.setAttribute("title", options.title), options.onClick && $btn.addEventListener("click", options.onClick), $btn.tabIndex = typeof options.tabIndex === "number" ? options.tabIndex : 0, options.secondaryText) $btn.classList.add("bx-button-multi-lines"), $btn.appendChild(CE("span", {}, options.secondaryText));
+ if (options.classes && $btn.classList.add(...options.classes), options.icon && $btn.appendChild(createSvgIcon(options.icon)), options.label && $btn.appendChild(CE("span", !1, options.label)), options.title && $btn.setAttribute("title", options.title), options.onClick && $btn.addEventListener("click", options.onClick), $btn.tabIndex = typeof options.tabIndex === "number" ? options.tabIndex : 0, options.secondaryText) $btn.classList.add("bx-button-multi-lines"), $btn.appendChild(CE("span", !1, options.secondaryText));
  for (let key in options.attributes)
   if (!$btn.hasOwnProperty(key)) $btn.setAttribute(key, options.attributes[key]);
  return $btn;
@@ -1524,7 +1526,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    requiredVariants: "full",
    label: t("enable-local-co-op-support"),
    default: !1,
-   note: () => CE("div", {}, CE("a", {
+   note: () => CE("div", !1, CE("a", {
     href: "https://github.com/redphx/better-xcloud/discussions/275",
     target: "_blank"
    }, t("enable-local-co-op-support-note")), CE("br"), "⚠️ " + t("unexpected-behavior"))
@@ -2393,7 +2395,7 @@ class StreamStats {
    let stat = this.stats[statKey], $div = CE("div", {
     class: `bx-stat-${statKey}`,
     title: stat.name
-   }, CE("label", {}, statKey.toUpperCase()), stat.$element);
+   }, CE("label", !1, statKey.toUpperCase()), stat.$element);
    this.$container.appendChild($div);
   }
   this.refreshStyles(), document.documentElement.appendChild(this.$container);
@@ -2879,7 +2881,7 @@ class MkbPopup {
   e.preventDefault(), this.mkbHandler.toggle(!0);
  };
  render() {
-  this.$popup = CE("div", { class: "bx-mkb-pointer-lock-msg bx-gone" }, this.$title = CE("p"), this.$btnActivate = this.createActivateButton(), CE("div", {}, createButton({
+  this.$popup = CE("div", { class: "bx-mkb-pointer-lock-msg bx-gone" }, this.$title = CE("p"), this.$btnActivate = this.createActivateButton(), CE("div", !1, createButton({
    label: t("ignore"),
    style: 8,
    onClick: (e) => {
@@ -3682,13 +3684,13 @@ class BxSelectElement extends HTMLSelectElement {
   if (self.isMultiple) $content = CE("button", {
     class: "bx-select-value bx-focusable",
     tabindex: 0
-   }, CE("div", {}, self.$checkBox = CE("input", { type: "checkbox" }), self.$label = CE("span", {}, "")), self.$indicators), $content.addEventListener("click", (e) => {
+   }, CE("div", !1, self.$checkBox = CE("input", { type: "checkbox" }), self.$label = CE("span", !1, "")), self.$indicators), $content.addEventListener("click", (e) => {
     self.$checkBox.click();
    }), self.$checkBox.addEventListener("input", (e) => {
     let $option = BxSelectElement.getOptionAtIndex.call(self, self.visibleIndex);
     $option && ($option.selected = e.target.checked), BxEvent.dispatch($select, "input");
    });
-  else $content = CE("div", {}, self.$label = CE("label", { for: $select.id + "_checkbox" }, ""), self.$indicators);
+  else $content = CE("div", !1, self.$label = CE("label", { for: $select.id + "_checkbox" }, ""), self.$indicators);
   return $select.addEventListener("input", BxSelectElement.render.bind(self)), new MutationObserver((mutationList, observer2) => {
    mutationList.forEach((mutation) => {
     if (mutation.type === "childList" || mutation.type === "attributes") self.visibleIndex = $select.selectedIndex, self.optionsList = Array.from($select.querySelectorAll("option")), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
@@ -3758,7 +3760,7 @@ class BxSelectElement extends HTMLSelectElement {
     let groupLabel = $parent instanceof HTMLOptGroupElement ? $parent.label : " ";
     $label.innerHTML = "";
     let fragment = document.createDocumentFragment();
-    fragment.appendChild(CE("span", {}, groupLabel)), fragment.appendChild(document.createTextNode(content)), $label.appendChild(fragment);
+    fragment.appendChild(CE("span", !1, groupLabel)), fragment.appendChild(document.createTextNode(content)), $label.appendChild(fragment);
    } else $label.textContent = content;
   } else $label.textContent = content;
   if ($label.classList.toggle("bx-line-through", $option && $option.disabled), this.isMultiple) $checkBox.checked = $option?.selected || !1, $checkBox.classList.toggle("bx-gone", !content);
@@ -3815,7 +3817,7 @@ class BxNumberStepper extends HTMLInputElement {
   let $text, $btnInc, $btnDec, $range, self = CE("div", {
    class: "bx-number-stepper",
    id: `bx_setting_${escapeCssSelector(key)}`
-  }, CE("div", {}, $btnDec = CE("button", {
+  }, CE("div", !1, $btnDec = CE("button", {
    _dataset: {
     type: "dec"
    },
@@ -4043,7 +4045,7 @@ class SuggestionsSetting {
   else if (deviceType === "android") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "deviceVibration.mode", "auto");
   else if (deviceType === "android-tv") SuggestionsSetting.addDefaultSuggestedSetting.call(this, "touchController.mode", "off");
   SuggestionsSetting.generateDefaultSuggestedSettings.call(this);
-  let $suggestedSettings = CE("div", { class: "bx-suggest-wrapper" }), $select = CE("select", {}, hasRecommendedSettings && CE("option", { value: "recommended" }, t("recommended")), !hasRecommendedSettings && CE("option", { value: "highest" }, t("highest-quality")), CE("option", { value: "default" }, t("default")), CE("option", { value: "lowest" }, t("lowest-quality")));
+  let $suggestedSettings = CE("div", { class: "bx-suggest-wrapper" }), $select = CE("select", !1, hasRecommendedSettings && CE("option", { value: "recommended" }, t("recommended")), !hasRecommendedSettings && CE("option", { value: "highest" }, t("highest-quality")), CE("option", { value: "default" }, t("default")), CE("option", { value: "lowest" }, t("lowest-quality")));
   $select.addEventListener("input", (e2) => {
    let profile = $select.value;
    removeChildElements($suggestedSettings);
@@ -4222,7 +4224,7 @@ class SettingsDialog extends NavigationDialog {
     }, t("settings-reload-note")), topButtons.push(this.$noteGlobalReload), this.$btnSuggestion = CE("div", {
      class: "bx-suggest-toggler bx-focusable",
      tabindex: 0
-    }, CE("label", {}, t("suggest-settings")), CE("span", {}, "❯")), this.$btnSuggestion.addEventListener("click", SuggestionsSetting.renderSuggestions.bind(this)), topButtons.push(this.$btnSuggestion);
+    }, CE("label", !1, t("suggest-settings")), CE("span", !1, "❯")), this.$btnSuggestion.addEventListener("click", SuggestionsSetting.renderSuggestions.bind(this)), topButtons.push(this.$btnSuggestion);
     let $div = CE("div", {
      class: "bx-top-buttons",
      _nearby: {
@@ -4751,7 +4753,7 @@ class SettingsDialog extends NavigationDialog {
      _nearby: {
       orientation: "horizontal"
      }
-    }, CE("span", {}, label), section.helpUrl && createButton({
+    }, CE("span", !1, label), section.helpUrl && createButton({
      icon: BxIcon.QUESTION,
      style: 8 | 64,
      url: section.helpUrl,
@@ -4803,7 +4805,7 @@ class SettingsDialog extends NavigationDialog {
    _nearby: {
     focus: () => this.focusActiveTab()
    }
-  }), CE("div", {}, this.$btnReload = createButton({
+  }), CE("div", !1, this.$btnReload = createButton({
    icon: BxIcon.REFRESH,
    style: 64 | 32,
    onClick: (e) => {
@@ -5052,7 +5054,7 @@ class HeaderSection {
    label: "???",
    style: 16 | 32 | 64 | 256,
    onClick: (e) => SettingsDialog.getInstance().show()
-  }), this.$buttonsWrapper = CE("div", {}, getPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
+  }), this.$buttonsWrapper = CE("div", !1, getPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
  }
  injectSettingsButton($parent) {
   if (!$parent) return;
@@ -5096,7 +5098,7 @@ class RemotePlayDialog extends NavigationDialog {
   BxLogger.info(this.LOG_TAG, "constructor()"), this.setupDialog();
  }
  setupDialog() {
-  let $fragment = CE("div", { class: "bx-remote-play-container" }), $settingNote = CE("p", {}), currentResolution = getPref("xhome.video.resolution"), $resolutions = CE("select", {}, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
+  let $fragment = CE("div", { class: "bx-remote-play-container" }), $settingNote = CE("p", {}), currentResolution = getPref("xhome.video.resolution"), $resolutions = CE("select", !1, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
   $resolutions = BxSelectElement.create($resolutions), $resolutions.addEventListener("input", (e) => {
    let value = e.target.value;
    $settingNote.textContent = value === "1080p" ? "✅ " + t("can-stream-xbox-360-games") : "❌ " + t("cant-stream-xbox-360-games"), setPref("xhome.video.resolution", value);
@@ -5105,11 +5107,11 @@ class RemotePlayDialog extends NavigationDialog {
   });
   let $qualitySettings = CE("div", {
    class: "bx-remote-play-settings"
-  }, CE("div", {}, CE("label", {}, t("target-resolution"), $settingNote), $resolutions));
+  }, CE("div", !1, CE("label", !1, t("target-resolution"), $settingNote), $resolutions));
   $fragment.appendChild($qualitySettings);
   let manager = RemotePlayManager.getInstance(), consoles = manager.getConsoles();
   for (let con of consoles) {
-   let $child = CE("div", { class: "bx-remote-play-device-wrapper" }, CE("div", { class: "bx-remote-play-device-info" }, CE("div", {}, CE("span", { class: "bx-remote-play-device-name" }, con.deviceName), CE("span", { class: "bx-remote-play-console-type" }, con.consoleType.replace("Xbox", ""))), CE("div", { class: "bx-remote-play-power-state" }, this.STATE_LABELS[con.powerState])), createButton({
+   let $child = CE("div", { class: "bx-remote-play-device-wrapper" }, CE("div", { class: "bx-remote-play-device-info" }, CE("div", !1, CE("span", { class: "bx-remote-play-device-name" }, con.deviceName), CE("span", { class: "bx-remote-play-console-type" }, con.consoleType.replace("Xbox", ""))), CE("div", { class: "bx-remote-play-power-state" }, this.STATE_LABELS[con.powerState])), createButton({
     classes: ["bx-remote-play-connect-button"],
     label: t("console-connect"),
     style: 1 | 64,
@@ -5301,7 +5303,7 @@ class LoadingScreen {
   let endDateStr = endDate.toISOString().slice(0, 19);
   endDateStr = endDateStr.substring(0, 10) + " " + endDateStr.substring(11, 19), endDateStr += ` (${LoadingScreen.secondsToString(waitTime)})`;
   let $waitTimeBox = LoadingScreen.$waitTimeBox;
-  if (!$waitTimeBox) $waitTimeBox = CE("div", { class: "bx-wait-time-box" }, CE("label", {}, t("server")), CE("span", {}, getPreferredServerRegion()), CE("label", {}, t("wait-time-estimated")), $estimated = CE("span", {}), CE("label", {}, t("wait-time-countdown")), $countDown = CE("span", {})), document.documentElement.appendChild($waitTimeBox), LoadingScreen.$waitTimeBox = $waitTimeBox;
+  if (!$waitTimeBox) $waitTimeBox = CE("div", { class: "bx-wait-time-box" }, CE("label", !1, t("server")), CE("span", !1, getPreferredServerRegion()), CE("label", !1, t("wait-time-estimated")), $estimated = CE("span", {}), CE("label", !1, t("wait-time-countdown")), $countDown = CE("span", {})), document.documentElement.appendChild($waitTimeBox), LoadingScreen.$waitTimeBox = $waitTimeBox;
   else $waitTimeBox.classList.remove("bx-gone"), $estimated = $waitTimeBox.querySelector(".bx-wait-time-estimated"), $countDown = $waitTimeBox.querySelector(".bx-wait-time-countdown");
   $estimated.textContent = endDateStr, $countDown.textContent = LoadingScreen.secondsToString(secondsLeft), document.title = `[${$countDown.textContent}] ${LoadingScreen.orgWebTitle}`, LoadingScreen.waitTimeInterval = window.setInterval(() => {
    if (secondsLeft--, $countDown.textContent = LoadingScreen.secondsToString(secondsLeft), document.title = `[${$countDown.textContent}] ${LoadingScreen.orgWebTitle}`, secondsLeft <= 0) LoadingScreen.waitTimeInterval && clearInterval(LoadingScreen.waitTimeInterval), LoadingScreen.waitTimeInterval = null;
@@ -5888,7 +5890,7 @@ function addCss() {
  if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getPref("ui.streamMenu.simplify")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";
  else css += "body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) + 30px)}body:not([data-media-type=tv]) .bx-badges{top:calc(var(--streamMenuItemSize) + 20px)}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]{min-width:auto !important;width:100px !important}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]:nth-child(n+2){margin-left:10px !important}body:not([data-media-type=tv]) div[class*=MenuItem-module__label]{margin-left:8px !important;margin-right:8px !important}";
  if (getPref("ui.hideScrollbar")) css += "html{scrollbar-width:none}body::-webkit-scrollbar{display:none}";
- let $style = CE("style", {}, css);
+ let $style = CE("style", !1, css);
  document.documentElement.appendChild($style);
 }
 function preloadFonts() {

@@ -96,9 +96,9 @@ export class BxSelectElement extends HTMLSelectElement {
                 class: 'bx-select-value bx-focusable',
                 tabindex: 0,
             },
-                CE('div', {},
+                CE('div', false,
                     self.$checkBox = CE('input', { type: 'checkbox' }),
-                    self.$label = CE('span', {}, ''),
+                    self.$label = CE('span', false, ''),
                 ),
 
                 self.$indicators,
@@ -115,7 +115,7 @@ export class BxSelectElement extends HTMLSelectElement {
                 BxEvent.dispatch($select, 'input');
             });
         } else {
-            $content = CE('div', {},
+            $content = CE('div', false,
                 self.$label = CE('label', { for: $select.id + '_checkbox' }, ''),
                 self.$indicators,
             );
@@ -259,7 +259,7 @@ export class BxSelectElement extends HTMLSelectElement {
 
                 $label.innerHTML = '';
                 const fragment = document.createDocumentFragment();
-                fragment.appendChild(CE('span', {}, groupLabel));
+                fragment.appendChild(CE('span', false, groupLabel));
                 fragment.appendChild(document.createTextNode(content));
 
                 $label.appendChild(fragment);

@@ -56,7 +56,7 @@ export class ControllerExtraSettings extends HTMLElement {
         }));
 
         $container.append(
-            CE('span', {}, t('no-controllers-connected')),
+            CE('span', false, t('no-controllers-connected')),
             CE('div', { class: 'bx-controller-extra-wrapper' },
                 $selectControllers,
 
@@ -98,7 +98,7 @@ export class ControllerExtraSettings extends HTMLElement {
                         ),
                         {
                             multiLines: true,
-                            $note: CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('slightly-increase-input-latency')),
+                            $note: CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('slightly-increases-input-latency')),
                         },
                     ),
                 ),

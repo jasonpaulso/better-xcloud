@@ -93,7 +93,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
     }
 
     private render() {
-        const $rows = CE('div', {},
+        const $rows = CE('div', false,
             this.$unbindNote = CE('i', { class: 'bx-mkb-note' }, t('right-click-to-unbind')),
         );
 
@@ -131,7 +131,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
         }
 
         const savePreset = () => this.savePreset();
-        const $extraSettings = CE('div', {},
+        const $extraSettings = CE('div', false,
             createSettingRow(
                 t('map-mouse-to'),
                 this.$mouseMapTo = BxSelectElement.create(CE('select', { _on: { input: savePreset } },
@@ -166,7 +166,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
             ),
         );
 
-        this.$content = CE('div', {},
+        this.$content = CE('div', false,
             $rows,
             $extraSettings,
         );
