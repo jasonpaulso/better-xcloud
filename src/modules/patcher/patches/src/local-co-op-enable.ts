@@ -1,9 +1,14 @@
+import { BxLogger as OrgBxLogger } from "@/utils/bx-logger";
+
+declare const BxLogger: typeof OrgBxLogger;
+declare const $this$: any;
+
 // Save the original onGamepadChanged() and onGamepadInput()
-this.orgOnGamepadChanged = this.onGamepadChanged;
-this.orgOnGamepadInput = this.onGamepadInput;
+$this$.orgOnGamepadChanged = $this$.onGamepadChanged;
+$this$.orgOnGamepadInput = $this$.onGamepadInput;
 
 let match;
-let onGamepadChangedStr = this.onGamepadChanged.toString();
+let onGamepadChangedStr = $this$.onGamepadChanged.toString();
 
 // Fix problem with Safari
 if (onGamepadChangedStr.startsWith('function ')) {
@@ -11,9 +16,9 @@ if (onGamepadChangedStr.startsWith('function ')) {
 }
 
 onGamepadChangedStr = onGamepadChangedStr.replaceAll('0', 'arguments[1]');
-eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);
+eval(`$this$.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);
 
-let onGamepadInputStr = this.onGamepadInput.toString();
+let onGamepadInputStr = $this$.onGamepadInput.toString();
 // Fix problem with Safari
 if (onGamepadInputStr.startsWith('function ')) {
     onGamepadInputStr = onGamepadInputStr.substring(9);
@@ -22,19 +27,19 @@ if (onGamepadInputStr.startsWith('function ')) {
 match = onGamepadInputStr.match(/(\w+\.GamepadIndex)/);
 if (match) {
     const gamepadIndexVar = match[0];
-    onGamepadInputStr = onGamepadInputStr.replace('this.gamepadStates.get(', `this.gamepadStates.get(${gamepadIndexVar},`);
-    eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`);
+    onGamepadInputStr = onGamepadInputStr.replace('$this$.gamepadStates.get(', `$this$.gamepadStates.get(${gamepadIndexVar},`);
+    eval(`$this$.patchedOnGamepadInput = function ${onGamepadInputStr}`);
     BxLogger.info('supportLocalCoOp', '✅ Successfully patched local co-op support');
 } else {
     BxLogger.error('supportLocalCoOp', '❌ Unable to patch local co-op support');
 }
 
 // Add method to switch between patched and original methods
-this.toggleLocalCoOp = enable => {
+$this$.toggleLocalCoOp = (enable: boolean) => {
     BxLogger.info('toggleLocalCoOp', enable ? 'Enabled' : 'Disabled');
 
-    this.onGamepadChanged = enable ? this.patchedOnGamepadChanged : this.orgOnGamepadChanged;
-    this.onGamepadInput = enable ? this.patchedOnGamepadInput : this.orgOnGamepadInput;
+    $this$.onGamepadChanged = enable ? $this$.patchedOnGamepadChanged : $this$.orgOnGamepadChanged;
+    $this$.onGamepadInput = enable ? $this$.patchedOnGamepadInput : $this$.orgOnGamepadInput;
 
     // Reconnect all gamepads
     const gamepads = window.navigator.getGamepads();
@@ -54,4 +59,4 @@ this.toggleLocalCoOp = enable => {
 };
 
 // Expose this method
-window.BX_EXPOSED.toggleLocalCoOp = this.toggleLocalCoOp.bind(this);
+window.BX_EXPOSED.toggleLocalCoOp = $this$.toggleLocalCoOp.bind(this);

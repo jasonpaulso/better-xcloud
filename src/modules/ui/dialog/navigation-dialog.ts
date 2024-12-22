@@ -1,12 +1,10 @@
 import { GamepadKey } from "@/enums/gamepad";
-import { PrefKey } from "@/enums/pref-keys";
 import { VIRTUAL_GAMEPAD_ID } from "@/modules/mkb/mkb-handler";
 import { BxEvent } from "@/utils/bx-event";
 import { BxEventBus } from "@/utils/bx-event-bus";
 import { BxLogger } from "@/utils/bx-logger";
-import { CE, isElementVisible } from "@/utils/html";
+import { calculateSelectBoxes, CE, isElementVisible } from "@/utils/html";
 import { setNearby } from "@/utils/navigation-utils";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
 
 export enum NavigationDirection {
     UP = 1,
@@ -21,10 +19,10 @@ export type NavigationNearbyElements = Partial<{
 
     focus: NavigationElement | (() => boolean),
     loop: ((direction: NavigationDirection) => boolean),
-    [NavigationDirection.UP]: NavigationElement | (() => void) | 'previous' | 'next',
-    [NavigationDirection.DOWN]: NavigationElement | (() => void) | 'previous' | 'next',
-    [NavigationDirection.LEFT]: NavigationElement | (() => void) | 'previous' | 'next',
-    [NavigationDirection.RIGHT]: NavigationElement | (() => void) | 'previous' | 'next',
+    [NavigationDirection.UP]: NavigationElement,
+    [NavigationDirection.DOWN]: NavigationElement,
+    [NavigationDirection.LEFT]: NavigationElement,
+    [NavigationDirection.RIGHT]: NavigationElement,
 }>;
 
 export interface NavigationElement extends HTMLElement {
@@ -107,16 +105,18 @@ export class NavigationDialogManager {
 
     private static readonly GAMEPAD_POLLING_INTERVAL = 50;
     private static readonly GAMEPAD_KEYS = [
-        GamepadKey.UP,
-        GamepadKey.DOWN,
-        GamepadKey.LEFT,
-        GamepadKey.RIGHT,
-        GamepadKey.A,
-        GamepadKey.B,
-        GamepadKey.LB,
-        GamepadKey.RB,
-        GamepadKey.LT,
-        GamepadKey.RT,
+        GamepadKey.A, GamepadKey.B,
+        GamepadKey.X, GamepadKey.Y,
+
+        GamepadKey.UP, GamepadKey.RIGHT,
+        GamepadKey.DOWN, GamepadKey.LEFT,
+
+        GamepadKey.LB, GamepadKey.RB,
+        GamepadKey.LT, GamepadKey.RT,
+
+        GamepadKey.L3, GamepadKey.R3,
+
+        GamepadKey.SELECT, GamepadKey.START,
     ];
 
     private static readonly GAMEPAD_DIRECTION_MAP = {
@@ -172,61 +172,21 @@ export class NavigationDialogManager {
         window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, e => this.hide());
 
         // Calculate minimum width of controller-friendly <select> elements
-        if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
-            const observer = new MutationObserver(mutationList => {
-                if (mutationList.length === 0 || mutationList[0].addedNodes.length === 0) {
-                    return;
-                }
-
-                // Get dialog
-                const $dialog = mutationList[0].addedNodes[0];
-                if (!$dialog || !($dialog instanceof HTMLElement)) {
-                    return;
-                }
-
-                // Find un-calculated <select> elements
-                this.calculateSelectBoxes($dialog);
-            });
-            observer.observe(this.$container, { childList: true });
-        }
-    }
-
-    calculateSelectBoxes($root: HTMLElement) {
-        const selects = Array.from($root.querySelectorAll('.bx-select:not([data-calculated]) select'));
-
-        for (const $select of selects) {
-            const $parent = $select.parentElement! as HTMLElement;
-
-            // Don't apply to select.bx-full-width elements
-            if ($parent.classList.contains('bx-full-width')) {
-                $parent.dataset.calculated = 'true';
+        const observer = new MutationObserver(mutationList => {
+            if (mutationList.length === 0 || mutationList[0].addedNodes.length === 0) {
                 return;
             }
 
-            const rect = $select.getBoundingClientRect();
-
-            let $label: HTMLElement;
-            let width = Math.ceil(rect.width);
-            if (!width) {
+            // Get dialog
+            const $dialog = mutationList[0].addedNodes[0];
+            if (!$dialog || !($dialog instanceof HTMLElement)) {
                 return;
             }
 
-            if (($select as HTMLSelectElement).multiple) {
-                $label = $parent.querySelector<HTMLElement>('.bx-select-value')!;
-                width += 20;  // Add checkbox's width
-            } else {
-                $label = $parent.querySelector<HTMLElement>('div')!;
-            }
-
-            // Reduce width if it has <optgroup>
-            if ($select.querySelector('optgroup')) {
-                width -= 15;
-            }
-
-            // Set min-width
-            $label.style.minWidth = width + 'px';
-            $parent.dataset.calculated = 'true';
-        };
+            // Find un-calculated <select> elements
+            calculateSelectBoxes($dialog);
+        });
+        observer.observe(this.$container, { childList: true });
     }
 
     private updateActiveInput(input: 'keyboard' | 'gamepad' | 'mouse') {
@@ -369,7 +329,7 @@ export class NavigationDialogManager {
                         }
 
                         this.clearGamepadHoldingInterval();
-                    }, 200);
+                    }, 100);
                 }
                 continue;
             }
@@ -578,6 +538,16 @@ export class NavigationDialogManager {
 
         const nearby = ($target as NavigationElement).nearby || {};
         const orientation = this.getOrientation($target)!;
+
+        if (nearby[NavigationDirection.UP] && direction === NavigationDirection.UP) {
+            return nearby[NavigationDirection.UP];
+        } else if (nearby[NavigationDirection.DOWN] && direction === NavigationDirection.DOWN) {
+            return nearby[NavigationDirection.DOWN];
+        } else if (nearby[NavigationDirection.LEFT] && direction === NavigationDirection.LEFT) {
+            return nearby[NavigationDirection.LEFT];
+        } else if (nearby[NavigationDirection.RIGHT] && direction === NavigationDirection.RIGHT) {
+            return nearby[NavigationDirection.RIGHT];
+        }
 
         // @ts-ignore
         let siblingProperty = (NavigationDialogManager.SIBLING_PROPERTY_MAP[orientation])[direction];

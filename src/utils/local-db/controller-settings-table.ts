@@ -2,6 +2,7 @@ import { BaseLocalTable } from "./base-table";
 import { LocalDb } from "./local-db";
 import { ControllerShortcutDefaultId } from "./controller-shortcuts-table";
 import { deepClone } from "../global";
+import { ControllerCustomizationDefaultPresetId } from "./controller-customizations-table";
 
 export class ControllerSettingsTable extends BaseLocalTable<ControllerSettingsRecord> {
     private static instance: ControllerSettingsTable;
@@ -9,7 +10,7 @@ export class ControllerSettingsTable extends BaseLocalTable<ControllerSettingsRe
 
     static readonly DEFAULT_DATA: ControllerSettingsRecord['data'] = {
         shortcutPresetId: ControllerShortcutDefaultId.DEFAULT,
-        vibrationIntensity: 50,
+        customizationPresetId: ControllerCustomizationDefaultPresetId.DEFAULT,
     };
 
     async getControllerData(id: string): Promise<ControllerSettingsRecord['data']> {
@@ -30,10 +31,7 @@ export class ControllerSettingsTable extends BaseLocalTable<ControllerSettingsRe
                 continue;
             }
 
-            const settings = all[key].data;
-            // Pre-calculate virabtionIntensity
-            settings.vibrationIntensity /= 100;
-
+            const settings = Object.assign(all[key].data, ControllerSettingsTable.DEFAULT_DATA);
             results[key] = settings;
         }
 

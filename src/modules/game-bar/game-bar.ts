@@ -20,7 +20,7 @@ export class GameBar {
     private static instance: GameBar | null | undefined;
     public static getInstance(): typeof GameBar['instance'] {
         if (typeof GameBar.instance === 'undefined') {
-            if (getPref<GameBarPosition>(PrefKey.GAME_BAR_POSITION) !== GameBarPosition.OFF) {
+            if (getPref(PrefKey.GAME_BAR_POSITION) !== GameBarPosition.OFF) {
                 GameBar.instance = new GameBar();
             } else {
                 GameBar.instance = null;
@@ -46,7 +46,7 @@ export class GameBar {
 
         let $container;
 
-        const position = getPref<GameBarPosition>(PrefKey.GAME_BAR_POSITION);
+        const position = getPref(PrefKey.GAME_BAR_POSITION);
 
         const $gameBar = CE('div', { id: 'bx-game-bar', class: 'bx-gone', 'data-position': position },
             $container = CE('div', { class: 'bx-game-bar-container bx-offscreen' }),
@@ -55,7 +55,7 @@ export class GameBar {
 
         this.actions = [
             new ScreenshotAction(),
-            ...(STATES.userAgent.capabilities.touch && (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF) ? [new TouchControlAction()] : []),
+            ...(STATES.userAgent.capabilities.touch && (getPref(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF) ? [new TouchControlAction()] : []),
             new SpeakerAction(),
             new RendererAction(),
             new MicrophoneAction(),

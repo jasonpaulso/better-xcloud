@@ -3,6 +3,7 @@ import { setNearby } from "./navigation-utils";
 import type { NavigationNearbyElements } from "@/modules/ui/dialog/navigation-dialog";
 import type { PresetRecord, AllPresets } from "@/types/presets";
 import { t } from "./translation";
+import type { BxSelectElement } from "@/web-components/bx-select";
 
 export enum ButtonStyle {
     PRIMARY = 1,
@@ -14,10 +15,11 @@ export enum ButtonStyle {
     FOCUSABLE = 1 << 6,
     FULL_WIDTH = 1 << 7,
     FULL_HEIGHT = 1 << 8,
-    TALL = 1 << 9,
-    CIRCULAR = 1 << 10,
-    NORMAL_CASE = 1 << 11,
-    NORMAL_LINK = 1 << 12,
+    AUTO_HEIGHT = 1 << 9,
+    TALL = 1 << 10,
+    CIRCULAR = 1 << 11,
+    NORMAL_CASE = 1 << 12,
+    NORMAL_LINK = 1 << 13,
 }
 
 const ButtonStyleClass = {
@@ -30,6 +32,7 @@ const ButtonStyleClass = {
     [ButtonStyle.FOCUSABLE]: 'bx-focusable',
     [ButtonStyle.FULL_WIDTH]: 'bx-full-width',
     [ButtonStyle.FULL_HEIGHT]: 'bx-full-height',
+    [ButtonStyle.AUTO_HEIGHT]: 'bx-auto-height',
     [ButtonStyle.TALL]: 'bx-tall',
     [ButtonStyle.CIRCULAR]: 'bx-circular',
     [ButtonStyle.NORMAL_CASE]: 'bx-normal-case',
@@ -62,23 +65,41 @@ type CreateElementOptions = {
         [ key: string ]: (e: Event) => void;
     };
     _dataset?: {
-        [ key: string ]: string | number;
+        [ key: string ]: string | number | boolean;
     };
     _nearby?: NavigationNearbyElements;
 };
 
+type HTMLElementTagNameMap = {
+    a: HTMLAnchorElement;
+    button: HTMLButtonElement;
+    canvas: HTMLCanvasElement;
+    datalist: HTMLDataListElement,
+    div: HTMLDivElement;
+    fieldset: HTMLFieldSetElement;
+    input: HTMLInputElement;
+    label: HTMLLabelElement;
+    link: HTMLLinkElement;
+    optgroup: HTMLOptGroupElement;
+    option: HTMLOptionElement;
+    p: HTMLParagraphElement;
+    select: HTMLSelectElement;
+    span: HTMLSpanElement;
+    style: HTMLStyleElement;
+    [key: string] : HTMLElement;
+};
 
-function createElement<T=HTMLElement>(elmName: string, props: CreateElementOptions={}, ..._: any): T {
+function createElement<T extends keyof HTMLElementTagNameMap>(elmName: T, props: CreateElementOptions={}, ..._: any): HTMLElementTagNameMap[T] {
     let $elm;
     const hasNs = 'xmlns' in props;
 
     // console.trace('createElement', elmName, props);
 
     if (hasNs) {
-        $elm = document.createElementNS(props.xmlns, elmName);
+        $elm = document.createElementNS(props.xmlns, elmName as string);
         delete props.xmlns;
     } else {
-        $elm = document.createElement(elmName);
+        $elm = document.createElement(elmName as string);
     }
 
     if (props._nearby) {
@@ -121,7 +142,7 @@ function createElement<T=HTMLElement>(elmName: string, props: CreateElementOptio
         }
     }
 
-    return $elm as T;
+    return $elm as HTMLElementTagNameMap[T];
 }
 
 
@@ -137,13 +158,13 @@ export function createButton<T=HTMLButtonElement>(options: BxButtonOptions): T {
 
     // Create base button element
     if (options.url) {
-        $btn = CE<HTMLAnchorElement>('a', {
+        $btn = CE('a', {
             class: 'bx-button',
             href: options.url,
             target: '_blank',
         });
     } else {
-        $btn = CE<HTMLButtonElement>('button', {
+        $btn = CE('button', {
             class: 'bx-button',
             type: 'button',
         });
@@ -185,7 +206,7 @@ export function createButton<T=HTMLButtonElement>(options: BxButtonOptions): T {
 export function createSettingRow(label: string, $control: HTMLElement | false | undefined, options: SettingsRowOptions={}) {
     let $label: HTMLElement;
 
-    const $row = CE<HTMLLabelElement>('label', { class: 'bx-settings-row' },
+    const $row = CE('label', { class: 'bx-settings-row' },
         $label = CE('span', { class: 'bx-settings-label' },
             label,
             options.$note,
@@ -267,7 +288,7 @@ export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectEle
     removeChildElements($select);
 
     if (options.addOffValue) {
-        const $option = CE<HTMLOptionElement>('option', { value: 0 }, t('off'));
+        const $option = CE('option', { value: 0 }, t('off'));
         $option.selected = selectedValue === 0;
 
         $select.appendChild($option);
@@ -287,7 +308,7 @@ export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectEle
             const selected = selectedValue === record.id;
             const name = options.selectedIndicator && selected ? '✅ ' + record.name : record.name;
 
-            const $option = CE<HTMLOptionElement>('option', { value: record.id }, name);
+            const $option = CE('option', { value: record.id }, name);
             if (selected) {
                 $option.selected = true;
             }
@@ -299,6 +320,48 @@ export function renderPresetsList<T extends PresetRecord>($select: HTMLSelectEle
             $select.appendChild($optGroup);
         }
     }
+}
+
+export function calculateSelectBoxes($root: HTMLElement) {
+    const selects = Array.from<HTMLSelectElement>($root.querySelectorAll('div.bx-select:not([data-calculated]) select'));
+
+    for (const $select of selects) {
+        const $parent = $select.parentElement! as BxSelectElement;
+
+        // Don't apply to select.bx-full-width elements
+        if ($parent.classList.contains('bx-full-width')) {
+            $parent.dataset.calculated = 'true';
+            continue;
+        }
+
+        const rect = $select.getBoundingClientRect();
+
+        let $label: HTMLElement;
+        let width = Math.ceil(rect.width);
+        if (!width) {
+            continue;
+        }
+
+        $label = $parent.querySelector<HTMLElement>($select.multiple ? '.bx-select-value' : 'div')!;
+        if ($parent.isControllerFriendly) {
+            // Adjust width for controller-friendly UI
+            if ($select.multiple) {
+                width += 20;  // Add checkbox's width
+            }
+
+            // Reduce width if it has <optgroup>
+            if ($select.querySelector('optgroup')) {
+                width -= 15;
+            }
+        } else {
+            width += 10;
+        }
+
+        // Set min-width
+        $select.style.left = '0';
+        $label.style.minWidth = width + 'px';
+        $parent.dataset.calculated = 'true';
+    };
 }
 
 // https://stackoverflow.com/a/20732091

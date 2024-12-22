@@ -7,7 +7,7 @@ import { StreamVideoProcessing, StreamPlayerType } from "@/enums/pref-values";
 import { escapeCssSelector } from "@/utils/html";
 
 export function onChangeVideoPlayerType() {
-    const playerType = getPref<StreamPlayerType>(PrefKey.VIDEO_PLAYER_TYPE);
+    const playerType = getPref(PrefKey.VIDEO_PLAYER_TYPE);
     const $videoProcessing = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_PROCESSING)}`) as HTMLSelectElement;
     const $videoSharpness = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_SHARPNESS)}`) as HTMLElement;
     const $videoPowerPreference = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_POWER_PREFERENCE)}`) as HTMLElement;

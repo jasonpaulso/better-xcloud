@@ -92,7 +92,7 @@ export class SuggestionsSetting {
 
         // Start rendering
         const $suggestedSettings = CE('div', { class: 'bx-suggest-wrapper' });
-        const $select = CE<HTMLSelectElement>('select', {},
+        const $select = CE('select', {},
             hasRecommendedSettings && CE('option', { value: 'recommended' }, t('recommended')),
             !hasRecommendedSettings && CE('option', { value: 'highest' }, t('highest-quality')),
             CE('option', { value: 'default' }, t('default')),
@@ -126,6 +126,7 @@ export class SuggestionsSetting {
                     suggestedValue = settings[prefKey];
                 }
 
+                // @ts-ignore
                 const currentValue = getPref(prefKey, false);
                 const currentValueText = STORAGE.Global.getValueText(prefKey, currentValue);
                 const isSameValue = currentValue === suggestedValue;
@@ -233,7 +234,7 @@ export class SuggestionsSetting {
                 orientation: 'vertical',
             }
         },
-            BxSelectElement.create($select, true),
+            BxSelectElement.create($select),
             $suggestedSettings,
             $btnApply,
 

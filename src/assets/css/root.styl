@@ -47,6 +47,7 @@ button_color(name, normal, hover, active, disabled)
 @font-face {
     font-family: 'promptfont';
     src: url('https://redphx.github.io/better-xcloud/fonts/promptfont.otf');
+    unicode-range: U+2196-E011;
 }
 
 /* Fix Stream menu buttons not hiding */
@@ -71,6 +72,10 @@ div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module
 
 .bx-full-height {
     height: 100% !important;
+}
+
+.bx-auto-height {
+    height: auto !important;
 }
 
 .bx-no-scroll {
@@ -123,6 +128,10 @@ div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module
 
 .bx-prompt {
     font-family: var(--bx-promptfont-font) !important;
+}
+
+.bx-monospaced {
+    font-family: var(--bx-monospaced-font) !important;
 }
 
 .bx-line-through {
@@ -269,4 +278,16 @@ div[class*=SupportedInputsBadge] {
   100% {
     opacity: 0;
   }
+}
+
+.bx-horizontal-shaking {
+    animation: bx-horizontal-shaking .4s ease-in-out 2;
+}
+
+@keyframes bx-horizontal-shaking {
+    0% { transform: translateX(0) }
+    25% { transform: translateX(5px) }
+    50% { transform: translateX(-5px) }
+    75% { transform: translateX(5px) }
+    100% { transform: translateX(0) }
 }

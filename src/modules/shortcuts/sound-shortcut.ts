@@ -17,7 +17,7 @@ export class SoundShortcut {
             return 0;
         }
 
-        const currentValue = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME);
+        const currentValue = getPref(PrefKey.AUDIO_VOLUME);
         let nearestValue: number;
 
         if (amount > 0) {  // Increase
@@ -49,7 +49,7 @@ export class SoundShortcut {
     static muteUnmute() {
         if (getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && STATES.currentStream.audioGainNode) {
             const gainValue = STATES.currentStream.audioGainNode.gain.value;
-            const settingValue = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME);
+            const settingValue = getPref(PrefKey.AUDIO_VOLUME);
 
             let targetValue: number;
             if (settingValue === 0) {  // settingValue is 0 => set to 100

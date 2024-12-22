@@ -106,14 +106,14 @@ export const BxExposed = {
         }
 
         // Remove native MKB support on mobile browsers or by user's choice
-        if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
+        if (getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
             supportedInputTypes = supportedInputTypes.filter(i => i !== SupportedInputType.MKB);
         }
 
         titleInfo.details.hasMkbSupport = supportedInputTypes.includes(SupportedInputType.MKB);
 
         if (STATES.userAgent.capabilities.touch) {
-            let touchControllerAvailability = getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE);
+            let touchControllerAvailability = getPref(PrefKey.TOUCH_CONTROLLER_MODE);
 
             // Disable touch control when gamepad found
             if (touchControllerAvailability !== TouchControllerMode.OFF && getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) {
@@ -185,8 +185,8 @@ export const BxExposed = {
         }
     },
 
-    handleControllerShortcut: isFullVersion() && ControllerShortcut.handle,
-    resetControllerShortcut: isFullVersion() && ControllerShortcut.reset,
+    handleControllerShortcut: isFullVersion() ? ControllerShortcut.handle : () => {},
+    resetControllerShortcut: isFullVersion() ? ControllerShortcut.reset : () => {},
 
     overrideSettings: {
         Tv_settings: {

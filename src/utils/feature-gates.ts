@@ -12,13 +12,13 @@ export let FeatureGates: { [key: string]: boolean } = {
 };
 
 // Enable Native Mouse & Keyboard
-const nativeMkbMode = getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE);
+const nativeMkbMode = getPref(PrefKey.NATIVE_MKB_MODE);
 if (nativeMkbMode !== NativeMkbMode.DEFAULT) {
     FeatureGates.EnableMouseAndKeyboard = nativeMkbMode === NativeMkbMode.ON;
 }
 
 // Disable chat feature
-const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
 if (blockFeatures.includes(BlockFeature.CHAT)) {
     FeatureGates.EnableGuideChatTab = false;
 }

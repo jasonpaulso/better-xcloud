@@ -171,7 +171,7 @@ document.addEventListener('readystatechange', e => {
     }
 
     // Hide "Play with Friends" skeleton section
-    if (getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) || getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
+    if (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) || getPref(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
         const $parent = document.querySelector('div[class*=PlayWithFriendsSkeleton]')?.closest<HTMLElement>('div[class*=HomePage-module]');
         $parent && ($parent.style.display = 'none');
     }
@@ -357,8 +357,8 @@ isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
 function main() {
     GhPagesUtils.fetchLatestCommit();
 
-    if (getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
-        const customList = getPref<string[]>(PrefKey.NATIVE_MKB_FORCED_GAMES);
+    if (getPref(PrefKey.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
+        const customList = getPref(PrefKey.NATIVE_MKB_FORCED_GAMES);
         BX_FLAGS.ForceNativeMkbTitles.push(...customList);
     }
 
@@ -405,12 +405,12 @@ function main() {
             RemotePlayManager.detect();
         }
 
-        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
+        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
             TouchController.setup();
         }
 
         // Start PointerProviderServer
-        if (AppInterface && (getPref(PrefKey.MKB_ENABLED) || getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) {
+        if (AppInterface && (getPref(PrefKey.MKB_ENABLED) || getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) {
             STATES.pointerServerPort = AppInterface.startPointerServer() || 9269;
             BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString());
         }

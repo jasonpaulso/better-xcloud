@@ -4,10 +4,11 @@ export class LocalDb {
     // private readonly LOG_TAG = 'LocalDb';
 
     static readonly DB_NAME = 'BetterXcloud';
-    static readonly DB_VERSION = 3;
+    static readonly DB_VERSION = 4;
 
     static readonly TABLE_VIRTUAL_CONTROLLERS = 'virtual_controllers';
     static readonly TABLE_CONTROLLER_SHORTCUTS = 'controller_shortcuts';
+    static readonly TABLE_CONTROLLER_CUSTOMIZATIONS = 'controller_customizations';
     static readonly TABLE_CONTROLLER_SETTINGS = 'controller_settings';
     static readonly TABLE_KEYBOARD_SHORTCUTS = 'keyboard_shortcuts';
 
@@ -49,6 +50,14 @@ export class LocalDb {
                 if (!db.objectStoreNames.contains(LocalDb.TABLE_CONTROLLER_SETTINGS)) {
                     db.createObjectStore(LocalDb.TABLE_CONTROLLER_SETTINGS, {
                         keyPath: 'id',
+                    });
+                }
+
+                // Controller mappings
+                if (!db.objectStoreNames.contains(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS)) {
+                    db.createObjectStore(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS, {
+                        keyPath: 'id',
+                        autoIncrement: true,
                     });
                 }
 

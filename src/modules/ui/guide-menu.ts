@@ -115,7 +115,7 @@ export class GuideMenu {
         });
 
         // Set TV tag
-        if (STATES.userAgent.isTv || getPref<UiLayout>(PrefKey.UI_LAYOUT) === UiLayout.TV) {
+        if (STATES.userAgent.isTv || getPref(PrefKey.UI_LAYOUT) === UiLayout.TV) {
             document.body.dataset.bxMediaType = 'tv';
         }
 

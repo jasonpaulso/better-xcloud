@@ -9,7 +9,7 @@ export function localRedirect(path: string) {
         return;
     }
 
-    const $anchor = CE<HTMLAnchorElement>('a', {
+    const $anchor = CE('a', {
             href: url,
             class: 'bx-hidden bx-offscreen',
         }, '');

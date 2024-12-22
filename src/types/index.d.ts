@@ -24,7 +24,7 @@ type ServerRegion = {
 
 type BxStates = {
     supportedRegion: boolean;
-    serverRegions: Record<ServerRegionName, ServerRegion>;
+    serverRegions: Record<string, ServerRegion>;
     selectedRegion: any;
     gsToken: string;
     isSignedIn: boolean;
@@ -164,3 +164,37 @@ type XboxAchievement = {
 };
 
 type OsName = 'windows' | 'tizen' | 'android';
+
+type XcloudGamepad = {
+    GamepadIndex: number;
+    A: number;
+    B: number;
+    X: number;
+    Y: number;
+    LeftShoulder: number;
+    RightShoulder: number;
+    LeftTrigger: number;
+    RightTrigger: number;
+    View: number;
+    Menu: number;
+    LeftThumb: number;
+    RightThumb: number;
+    DPadUp: number;
+    DPadDown: number;
+    DPadLeft: number;
+    DPadRight: number;
+    Nexus: number;
+    LeftThumbXAxis: number;
+    LeftThumbYAxis: number;
+    RightThumbXAxis: number;
+    RightThumbYAxis: number;
+    PhysicalPhysicality: number;
+    VirtualPhysicality: number;
+    Dirty: boolean;
+    Virtual: boolean;
+
+    // Only in Better xCloud
+    LeftStickAxes?: any;
+    RightStickAxes?: any;
+    Share?: any;
+};

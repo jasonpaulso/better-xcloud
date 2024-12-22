@@ -37,7 +37,7 @@ export class LoadingScreen {
 
         LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl);
 
-        if (getPref<LoadingScreenRocket>(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE) {
+        if (getPref(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE) {
             LoadingScreen.hideRocket();
         }
     }
@@ -89,7 +89,7 @@ export class LoadingScreen {
 
     static setupWaitTime(waitTime: number) {
         // Hide rocket when queing
-        if (getPref<LoadingScreenRocket>(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE_QUEUE) {
+        if (getPref(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE_QUEUE) {
             LoadingScreen.hideRocket();
         }
 

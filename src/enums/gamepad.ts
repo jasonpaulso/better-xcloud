@@ -24,11 +24,13 @@ export enum GamepadKey {
     LS_DOWN = 101,
     LS_LEFT = 102,
     LS_RIGHT = 103,
+    LS = 104,
 
     RS_UP = 200,
     RS_DOWN = 201,
     RS_LEFT = 202,
     RS_RIGHT = 203,
+    RS = 204,
 };
 
 export const GamepadKeyName: Record<number, [string, PrompFont]> = {
@@ -56,12 +58,16 @@ export const GamepadKeyName: Record<number, [string, PrompFont]> = {
     [GamepadKey.LS_DOWN]: ['Left Stick Down', PrompFont.LS_DOWN],
     [GamepadKey.LS_LEFT]: ['Left Stick Left', PrompFont.LS_LEFT],
     [GamepadKey.LS_RIGHT]: ['Left Stick Right', PrompFont.LS_RIGHT],
+    [GamepadKey.LS]: ['Left Stick', PrompFont.LS],
 
     [GamepadKey.R3]: ['R3', PrompFont.R3],
     [GamepadKey.RS_UP]: ['Right Stick Up', PrompFont.RS_UP],
     [GamepadKey.RS_DOWN]: ['Right Stick Down', PrompFont.RS_DOWN],
     [GamepadKey.RS_LEFT]: ['Right Stick Left', PrompFont.RS_LEFT],
     [GamepadKey.RS_RIGHT]: ['Right Stick Right', PrompFont.RS_RIGHT],
+    [GamepadKey.RS]: ['Right Stick', PrompFont.RS],
+
+    [GamepadKey.SHARE]: ['Screenshot', PrompFont.SHARE],
 };
 
 

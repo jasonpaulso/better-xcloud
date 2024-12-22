@@ -32,7 +32,7 @@ export class TrueAchievements {
             onClick: this.onClick,
         });
 
-        this.$hiddenLink = CE<HTMLAnchorElement>('a', {
+        this.$hiddenLink = CE('a', {
             target: '_blank',
         });
     }

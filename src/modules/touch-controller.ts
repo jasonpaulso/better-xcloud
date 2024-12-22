@@ -289,8 +289,8 @@ export class TouchController {
 
         TouchController.#$style = $style;
 
-        const PREF_STYLE_STANDARD = getPref<TouchControllerStyleStandard>(PrefKey.TOUCH_CONTROLLER_STYLE_STANDARD);
-        const PREF_STYLE_CUSTOM = getPref<TouchControllerStyleCustom>(PrefKey.TOUCH_CONTROLLER_STYLE_CUSTOM);
+        const PREF_STYLE_STANDARD = getPref(PrefKey.TOUCH_CONTROLLER_STYLE_STANDARD);
+        const PREF_STYLE_CUSTOM = getPref(PrefKey.TOUCH_CONTROLLER_STYLE_CUSTOM);
 
         BxEventBus.Stream.on('dataChannelCreated', payload => {
             const { dataChannel } = payload;

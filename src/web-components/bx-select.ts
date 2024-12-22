@@ -6,6 +6,7 @@ import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { ButtonStyle, CE, clearDataSet, createButton } from "@utils/html";
 
 export class BxSelectElement extends HTMLSelectElement {
+    isControllerFriendly!: boolean;
     private optionsList!: HTMLOptionElement[];
     private indicatorsList!: HTMLElement[];
     private $indicators!: HTMLElement;
@@ -13,14 +14,16 @@ export class BxSelectElement extends HTMLSelectElement {
     private isMultiple!: boolean;
 
     private $select!: HTMLSelectElement;
-    private $btnNext!: HTMLButtonElement;
-    private $btnPrev!: HTMLButtonElement;
-    private $label!: HTMLLabelElement;
+    private $btnNext!: HTMLButtonElement | undefined;
+    private $btnPrev!: HTMLButtonElement | undefined;
+    private $label!: HTMLSpanElement;
     private $checkBox!: HTMLInputElement;
 
     static create($select: HTMLSelectElement, forceFriendly=false): BxSelectElement {
-        // Return normal <select> if not using controller-friendly UI
-        if (!forceFriendly && !getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
+        const isControllerFriendly = forceFriendly || getPref(PrefKey.UI_CONTROLLER_FRIENDLY);
+
+        // Return normal <select> if it's non-controller friendly <select multiple>
+        if ($select.multiple && !isControllerFriendly) {
             $select.classList.add('bx-select');
             // @ts-ignore
             return $select;
@@ -29,25 +32,22 @@ export class BxSelectElement extends HTMLSelectElement {
         // Remove "tabindex" attribute from <select>
         $select.removeAttribute('tabindex');
 
-        const $wrapper = CE<BxSelectElement & NavigationElement>('div', { class: 'bx-select' });
-        const $btnPrev = createButton({
-            label: '<',
-            style: ButtonStyle.FOCUSABLE,
-        });
+        const $wrapper = CE('div', {
+            class: 'bx-select',
+            _dataset: {
+                controllerFriendly: isControllerFriendly,
+            },
+        }) as unknown as (BxSelectElement & NavigationElement);
 
-        const $btnNext = createButton({
-            label: '>',
-            style: ButtonStyle.FOCUSABLE,
-        });
-
-        setNearby($wrapper, {
-            orientation: 'horizontal',
-            focus: $btnNext,
-        });
+        // Copy bx-full-width class
+        if ($select.classList.contains('bx-full-width')) {
+            $wrapper.classList.add('bx-full-width');
+        }
 
         let $content;
 
         const self = $wrapper;
+        self.isControllerFriendly = isControllerFriendly;
         self.isMultiple = $select.multiple;
         self.visibleIndex = $select.selectedIndex;
 
@@ -55,8 +55,41 @@ export class BxSelectElement extends HTMLSelectElement {
         self.optionsList = Array.from($select.querySelectorAll<HTMLOptionElement>('option'));
         self.$indicators = CE('div', { class: 'bx-select-indicators' });
         self.indicatorsList = [];
-        self.$btnNext = $btnNext;
-        self.$btnPrev = $btnPrev;
+
+        let $btnPrev;
+        let $btnNext;
+        if (isControllerFriendly) {
+            // Setup prev/next buttons
+            $btnPrev = createButton({
+                label: '<',
+                style: ButtonStyle.FOCUSABLE,
+            });
+
+            $btnNext = createButton({
+                label: '>',
+                style: ButtonStyle.FOCUSABLE,
+            });
+
+            setNearby($wrapper, {
+                orientation: 'horizontal',
+                focus: $btnNext,
+            });
+
+            self.$btnNext = $btnNext;
+            self.$btnPrev = $btnPrev;
+
+            const boundOnPrevNext = BxSelectElement.onPrevNext.bind(self);
+            $btnPrev.addEventListener('click', boundOnPrevNext);
+            $btnNext.addEventListener('click', boundOnPrevNext);
+        } else {
+            // Setup 'change' event for $select
+            $select.addEventListener('change', e => {
+                self.visibleIndex = $select.selectedIndex;
+                // Re-render
+                BxSelectElement.resetIndicators.call(self);
+                BxSelectElement.render.call(self);
+            });
+        }
 
         if (self.isMultiple) {
             $content = CE('button', {
@@ -88,11 +121,7 @@ export class BxSelectElement extends HTMLSelectElement {
             );
         }
 
-        const boundOnPrevNext = BxSelectElement.onPrevNext.bind(self);
-
         $select.addEventListener('input', BxSelectElement.render.bind(self));
-        $btnPrev.addEventListener('click', boundOnPrevNext);
-        $btnNext.addEventListener('click', boundOnPrevNext);
 
         const observer = new MutationObserver((mutationList, observer) => {
             mutationList.forEach(mutation => {
@@ -114,9 +143,9 @@ export class BxSelectElement extends HTMLSelectElement {
 
         self.append(
             $select,
-            $btnPrev,
+            $btnPrev || '',
             $content,
-            $btnNext,
+            $btnNext || '',
         );
 
         BxSelectElement.resetIndicators.call(self);
@@ -208,7 +237,6 @@ export class BxSelectElement extends HTMLSelectElement {
             $btnNext,
             $btnPrev,
             $checkBox,
-            visibleIndex,
             optionsList,
             indicatorsList,
         } = this;
@@ -225,7 +253,7 @@ export class BxSelectElement extends HTMLSelectElement {
             const $parent = $option.parentElement!;
             const hasLabel = $parent instanceof HTMLOptGroupElement || this.$select.querySelector('optgroup');
 
-            content = $option.textContent || '';
+            content = $option.dataset.label || $option.textContent || '';
             if (content && hasLabel) {
                 const groupLabel = $parent instanceof HTMLOptGroupElement ? $parent.label : ' ';
 
@@ -253,8 +281,8 @@ export class BxSelectElement extends HTMLSelectElement {
 
         // Disable buttons when there is only one option or fewer
         const disableButtons = optionsList.length <= 1;
-        $btnPrev.classList.toggle('bx-inactive', disableButtons);
-        $btnNext.classList.toggle('bx-inactive', disableButtons);
+        $btnPrev?.classList.toggle('bx-inactive', disableButtons);
+        $btnNext?.classList.toggle('bx-inactive', disableButtons);
 
         // Update indicators
         for (let i = 0; i < optionsList.length; i++) {
@@ -269,7 +297,7 @@ export class BxSelectElement extends HTMLSelectElement {
                 $indicator.dataset.selected = 'true';
             }
 
-            if ($option.index === visibleIndex) {
+            if ($option.index === this.visibleIndex) {
                 $indicator.dataset.highlighted = 'true';
             }
         }

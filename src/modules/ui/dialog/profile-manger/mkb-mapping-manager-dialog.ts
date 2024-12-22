@@ -121,9 +121,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
 
             const $keyRow = CE('div', {
                 class: 'bx-mkb-key-row',
-                _nearby: {
-                    orientation: 'horizontal',
-                },
+                _nearby: { orientation: 'horizontal' },
             },
                 CE('label', { title: buttonName }, buttonPrompt),
                 $fragment,
@@ -244,15 +242,19 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
         mouse.sensitivityY = parseInt(this.$mouseSensitivityY.value);
         mouse.deadzoneCounterweight = parseInt(this.$mouseDeadzone.value);
 
-        const oldPreset = this.allPresets.data[this.currentPresetId];
+        const oldPreset = this.allPresets.data[this.currentPresetId!];
         const newPreset = {
-            id: this.currentPresetId,
+            id: this.currentPresetId!,
             name: oldPreset.name,
             data: presetData,
         };
         this.presetsDb.updatePreset(newPreset);
 
-        this.allPresets.data[this.currentPresetId] = newPreset;
+        this.allPresets.data[this.currentPresetId!] = newPreset;
+    }
+
+    onBeforeUnmount() {
         StreamSettings.refreshMkbSettings();
+        super.onBeforeUnmount();
     }
 }

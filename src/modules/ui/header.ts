@@ -50,7 +50,7 @@ export class HeaderSection {
             return;
         }
 
-        const PREF_LATEST_VERSION = getPref<VersionLatest>(PrefKey.VERSION_LATEST);
+        const PREF_LATEST_VERSION = getPref(PrefKey.VERSION_LATEST);
 
         // Setup Settings button
         const $btnSettings = this.$btnSettings;

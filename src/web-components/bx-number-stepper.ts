@@ -44,7 +44,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
         let $btnDec: HTMLButtonElement;
         let $range: HTMLInputElement | null;
 
-        const $wrapper = CE<BxNumberStepper>('div', {
+        const $wrapper = CE('div', {
             class: 'bx-number-stepper',
             id: `bx_setting_${escapeCssSelector(key)}`,
         },
@@ -67,7 +67,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
                     tabindex: options.hideSlider ? 0 : -1,
                 }, '+') as HTMLButtonElement,
             ),
-        );
+        ) as BxNumberStepper;
 
         const self = $wrapper;
         self.$text = $text;
@@ -102,7 +102,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
             return self;
         }
 
-        $range = CE<HTMLInputElement>('input', {
+        $range = CE('input', {
             id: `bx_inp_setting_${key}`,
             type: 'range',
             min: self.uiMin,
@@ -131,13 +131,13 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
                 }
 
                 for (let i = start; i < max; i += options.exactTicks) {
-                    $markers.appendChild(CE<HTMLOptionElement>('option', {
+                    $markers.appendChild(CE('option', {
                         value: options.reverse ? -i : i,
                     }));
                 }
             } else {
                 for (let i = self.uiMin + options.ticks!; i < self.uiMax; i += options.ticks!) {
-                    $markers.appendChild(CE<HTMLOptionElement>('option', { value: i }));
+                    $markers.appendChild(CE('option', { value: i }));
                 }
             }
             self.appendChild($markers);

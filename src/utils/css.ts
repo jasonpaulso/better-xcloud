@@ -9,7 +9,7 @@ export function addCss() {
     const STYLUS_CSS = renderStylus() as unknown as string;
     let css = STYLUS_CSS;
 
-    const PREF_HIDE_SECTIONS = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
+    const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS);
     const selectorToHide = [];
 
     // Hide "News" section
@@ -18,7 +18,7 @@ export function addCss() {
     }
 
     // Hide BYOG section
-    if (getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES).includes(BlockFeature.BYOG)) {
+    if (getPref(PrefKey.BLOCK_FEATURES).includes(BlockFeature.BYOG)) {
         selectorToHide.push('#BodyContent > div[class*=ByogRow-module__container___]');
     }
 
@@ -39,7 +39,7 @@ export function addCss() {
     }
 
    // Hide "Start a party" button in the Guide menu
-    if (getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
+    if (getPref(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
         selectorToHide.push('#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]');
     }
 
@@ -170,7 +170,7 @@ body::-webkit-scrollbar {
 
 
 export function preloadFonts() {
-    const $link = CE<HTMLLinkElement>('link', {
+    const $link = CE('link', {
             rel: 'preload',
             href: 'https://redphx.github.io/better-xcloud/fonts/promptfont.otf',
             as: 'font',

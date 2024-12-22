@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.0.7
+// @version      6.1.0-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -107,7 +107,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.0.7", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.1.0-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -179,11 +179,14 @@ var GamepadKeyName = {
  101: ["Left Stick Down", "⇂"],
  102: ["Left Stick Left", "↼"],
  103: ["Left Stick Right", "⇀"],
+ 104: ["Left Stick", "⇱"],
  11: ["R3", "↻"],
  200: ["Right Stick Up", "↿"],
  201: ["Right Stick Down", "⇃"],
  202: ["Right Stick Left", "↽"],
- 203: ["Right Stick Right", "⇁"]
+ 203: ["Right Stick Right", "⇁"],
+ 204: ["Right Stick", "⇲"],
+ 17: ["Screenshot", "📸"]
 };
 class BxEventBus {
  listeners = new Map;
@@ -298,6 +301,7 @@ var SUPPORTED_LANGUAGES = {
  "zh-CN": "中文(简体)",
  "zh-TW": "中文(繁體)"
 }, Texts = {
+ "slightly-increase-input-latency": "Slightly increase input latency",
  achievements: "Achievements",
  activate: "Activate",
  activated: "Activated",
@@ -357,12 +361,10 @@ var SUPPORTED_LANGUAGES = {
  "continent-south-america": "South America",
  contrast: "Contrast",
  controller: "Controller",
+ "controller-customization": "Controller customization",
  "controller-friendly-ui": "Controller-friendly UI",
- "controller-mapping": "Controller mapping",
- "controller-mapping-in-game": "In-game controller mapping",
  "controller-shortcuts": "Controller shortcuts",
  "controller-shortcuts-connect-note": "Connect a controller to use this feature",
- "controller-shortcuts-in-game": "In-game controller shortcuts",
  "controller-shortcuts-xbox-note": "Button to open the Guide menu",
  "controller-vibration": "Controller vibration",
  copy: "Copy",
@@ -373,12 +375,12 @@ var SUPPORTED_LANGUAGES = {
  default: "Default",
  "default-preset-note": "You can't modify default presets. Create a new one to customize it.",
  delete: "Delete",
+ "detect-controller-button": "Detect controller button",
  device: "Device",
  "device-unsupported-touch": "Your device doesn't have touch support",
  "device-vibration": "Device vibration",
  "device-vibration-not-using-gamepad": "On when not using gamepad",
  disable: "Disable",
- "disable-byog-feature": 'Disable "Stream your own game" feature',
  "disable-features": "Disable features",
  "disable-home-context-menu": "Disable context menu in Home page",
  "disable-post-stream-feedback-dialog": "Disable post-stream feedback dialog",
@@ -424,6 +426,10 @@ var SUPPORTED_LANGUAGES = {
  "how-to-improve-app-performance": "How to improve app's performance",
  ignore: "Ignore",
  import: "Import",
+ "in-game-controller-customization": "In-game controller customization",
+ "in-game-controller-shortcuts": "In-game controller shortcuts",
+ "in-game-keyboard-shortcuts": "In-game keyboard shortcuts",
+ "in-game-shortcuts": "In-game shortcuts",
  increase: "Increase",
  "install-android": "Better xCloud app for Android",
  invites: "Invites",
@@ -431,12 +437,13 @@ var SUPPORTED_LANGUAGES = {
  jitter: "Jitter",
  "keyboard-key": "Keyboard key",
  "keyboard-shortcuts": "Keyboard shortcuts",
- "keyboard-shortcuts-in-game": "In-game keyboard shortcuts",
  korea: "Korea",
  language: "Language",
  large: "Large",
  layout: "Layout",
  "left-stick": "Left stick",
+ "left-stick-deadzone": "Left stick deadzone",
+ "left-trigger-range": "Left trigger range",
  "limit-fps": "Limit FPS",
  "load-failed-message": "Failed to run Better xCloud",
  "loading-screen": "Loading screen",
@@ -444,7 +451,6 @@ var SUPPORTED_LANGUAGES = {
  "lowest-quality": "Lowest quality",
  manage: "Manage",
  "map-mouse-to": "Map mouse to",
- mapping: "Mapping",
  "may-not-work-properly": "May not work properly!",
  menu: "Menu",
  microphone: "Microphone",
@@ -501,6 +507,7 @@ var SUPPORTED_LANGUAGES = {
  "preferred-game-language": "Preferred game's language",
  preset: "Preset",
  press: "Press",
+ "press-any-button": "Press any button...",
  "press-esc-to-cancel": "Press Esc to cancel",
  "press-key-to-toggle-mkb": [
   e => `Press ${e.key} to toggle this feature`,
@@ -556,6 +563,8 @@ var SUPPORTED_LANGUAGES = {
  "renderer-configuration": "Renderer configuration",
  "right-click-to-unbind": "Right-click on a key to unbind it",
  "right-stick": "Right stick",
+ "right-stick-deadzone": "Right stick deadzone",
+ "right-trigger-range": "Right trigger range",
  "rocket-always-hide": "Always hide",
  "rocket-always-show": "Always show",
  "rocket-animation": "Rocket animation",
@@ -565,7 +574,6 @@ var SUPPORTED_LANGUAGES = {
  screen: "Screen",
  "screenshot-apply-filters": "Apply video filters to screenshots",
  "section-all-games": "All games",
- "section-byog": "Stream your own game",
  "section-most-popular": "Most popular",
  "section-native-mkb": "Play with mouse & keyboard",
  "section-news": "News",
@@ -655,7 +663,6 @@ var SUPPORTED_LANGUAGES = {
   e => `觸控遊玩佈局由 ${e.name} 提供`
  ],
  "touch-controller": "Touch controller",
- "transparent-background": "Transparent background",
  "true-achievements": "TrueAchievements",
  ui: "UI",
  "unexpected-behavior": "May cause unexpected behavior",
@@ -775,10 +782,11 @@ var ButtonStyleClass = {
  64: "bx-focusable",
  128: "bx-full-width",
  256: "bx-full-height",
- 512: "bx-tall",
- 1024: "bx-circular",
- 2048: "bx-normal-case",
- 4096: "bx-normal-link"
+ 512: "bx-auto-height",
+ 1024: "bx-tall",
+ 2048: "bx-circular",
+ 4096: "bx-normal-case",
+ 8192: "bx-normal-link"
 };
 function createElement(elmName, props = {}, ..._) {
  let $elm, hasNs = "xmlns" in props;
@@ -886,6 +894,23 @@ function renderPresetsList($select, allPresets, selectedValue, options = {}) {
    $optGroup.appendChild($option);
   }
   if ($optGroup.hasChildNodes()) $select.appendChild($optGroup);
+ }
+}
+function calculateSelectBoxes($root) {
+ let selects = Array.from($root.querySelectorAll("div.bx-select:not([data-calculated]) select"));
+ for (let $select of selects) {
+  let $parent = $select.parentElement;
+  if ($parent.classList.contains("bx-full-width")) {
+   $parent.dataset.calculated = "true";
+   continue;
+  }
+  let rect = $select.getBoundingClientRect(), $label, width = Math.ceil(rect.width);
+  if (!width) continue;
+  if ($label = $parent.querySelector($select.multiple ? ".bx-select-value" : "div"), $parent.isControllerFriendly) {
+   if ($select.multiple) width += 20;
+   if ($select.querySelector("optgroup")) width -= 15;
+  } else width += 10;
+  $select.style.left = "0", $label.style.minWidth = width + "px", $parent.dataset.calculated = "true";
  }
 }
 var FILE_SIZE_UNITS = ["B", "KB", "MB", "GB", "TB"];
@@ -1070,9 +1095,10 @@ class LocalDb {
  static instance;
  static getInstance = () => LocalDb.instance ?? (LocalDb.instance = new LocalDb);
  static DB_NAME = "BetterXcloud";
- static DB_VERSION = 3;
+ static DB_VERSION = 4;
  static TABLE_VIRTUAL_CONTROLLERS = "virtual_controllers";
  static TABLE_CONTROLLER_SHORTCUTS = "controller_shortcuts";
+ static TABLE_CONTROLLER_CUSTOMIZATIONS = "controller_customizations";
  static TABLE_CONTROLLER_SETTINGS = "controller_settings";
  static TABLE_KEYBOARD_SHORTCUTS = "keyboard_shortcuts";
  db;
@@ -1096,6 +1122,10 @@ class LocalDb {
      });
     if (!db.objectStoreNames.contains(LocalDb.TABLE_CONTROLLER_SETTINGS)) db.createObjectStore(LocalDb.TABLE_CONTROLLER_SETTINGS, {
       keyPath: "id"
+     });
+    if (!db.objectStoreNames.contains(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS)) db.createObjectStore(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS, {
+      keyPath: "id",
+      autoIncrement: !0
      });
     if (!db.objectStoreNames.contains(LocalDb.TABLE_KEYBOARD_SHORTCUTS)) db.createObjectStore(LocalDb.TABLE_KEYBOARD_SHORTCUTS, {
       keyPath: "id",
@@ -2080,10 +2110,9 @@ function hashCode(str) {
  return hash;
 }
 function renderString(str, obj) {
- return str.replace(/\$\{.+?\}/g, (match) => {
-  let key = match.substring(2, match.length - 1);
-  if (key in obj) return obj[key];
-  return match;
+ return str.replace(/\$\{([A-Za-z0-9_$]+)\}|\$([A-Za-z0-9_$]+)\$/g, (match, p1, p2) => {
+  let name = p1 || p2;
+  return name in obj ? obj[name] : match;
  });
 }
 function ceilToNearest(value, interval) {
@@ -2185,27 +2214,27 @@ class StreamStatsCollector {
    current: -1,
    grades: [40, 75, 100],
    toString() {
-    return this.current === -1 ? "???" : this.current.toString().padStart(3, " ");
+    return this.current === -1 ? "???" : this.current.toString().padStart(3);
    }
   },
   jit: {
    current: 0,
    grades: [30, 40, 60],
    toString() {
-    return `${this.current.toFixed(1)}ms`.padStart(6, " ");
+    return `${this.current.toFixed(1)}ms`.padStart(6);
    }
   },
   fps: {
    current: 0,
    toString() {
     let maxFps = getPref("video.maxFps");
-    return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5, " ") : this.current.toString();
+    return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5) : this.current.toString();
    }
   },
   btr: {
    current: 0,
    toString() {
-    return `${this.current.toFixed(1)} Mbps`.padStart(9, " ");
+    return `${this.current.toFixed(1)} Mbps`.padStart(9);
    }
   },
   fl: {
@@ -2229,13 +2258,13 @@ class StreamStatsCollector {
    total: 0,
    grades: [6, 9, 12],
    toString() {
-    return isNaN(this.current) ? "??ms" : `${this.current.toFixed(1)}ms`.padStart(6, " ");
+    return isNaN(this.current) ? "??ms" : `${this.current.toFixed(1)}ms`.padStart(6);
    }
   },
   dl: {
    total: 0,
    toString() {
-    return humanFileSize(this.total).padStart(8, " ");
+    return humanFileSize(this.total).padStart(8);
    }
   },
   ul: {
@@ -2702,12 +2731,39 @@ class ControllerShortcutsTable extends BasePresetsTable {
   BxLogger.info(this.LOG_TAG, "constructor()");
  }
 }
+class ControllerCustomizationsTable extends BasePresetsTable {
+ static instance;
+ static getInstance = () => ControllerCustomizationsTable.instance ?? (ControllerCustomizationsTable.instance = new ControllerCustomizationsTable(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS));
+ TABLE_PRESETS = LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS;
+ DEFAULT_PRESETS = {
+  [-1]: {
+   id: -1,
+   name: "ABXY ⇄ BAYX",
+   data: {
+    mapping: {
+     0: 1,
+     1: 0,
+     2: 3,
+     3: 2
+    },
+    settings: {
+     leftStickDeadzone: [0, 100],
+     rightStickDeadzone: [0, 100],
+     leftTriggerRange: [0, 100],
+     rightTriggerRange: [0, 100],
+     vibrationIntensity: 100
+    }
+   }
+  }
+ };
+ DEFAULT_PRESET_ID = 0;
+}
 class ControllerSettingsTable extends BaseLocalTable {
  static instance;
  static getInstance = () => ControllerSettingsTable.instance ?? (ControllerSettingsTable.instance = new ControllerSettingsTable(LocalDb.TABLE_CONTROLLER_SETTINGS));
  static DEFAULT_DATA = {
   shortcutPresetId: -1,
-  vibrationIntensity: 50
+  customizationPresetId: 0
  };
  async getControllerData(id) {
   let setting = await this.get(id);
@@ -2718,8 +2774,8 @@ class ControllerSettingsTable extends BaseLocalTable {
   let all = await this.getAll(), results = {};
   for (let key in all) {
    if (!all[key]) continue;
-   let settings = all[key].data;
-   settings.vibrationIntensity /= 100, results[key] = settings;
+   let settings = Object.assign(all[key].data, ControllerSettingsTable.DEFAULT_DATA);
+   results[key] = settings;
   }
   return results;
  }
@@ -2788,23 +2844,64 @@ class StreamSettings {
   mkbPreset: null,
   keyboardShortcuts: {}
  };
+ static CONTROLLER_CUSTOMIZATION_MAPPING = {
+  0: "A",
+  1: "B",
+  2: "X",
+  3: "Y",
+  12: "DPadUp",
+  15: "DPadRight",
+  13: "DPadDown",
+  14: "DPadLeft",
+  4: "LeftShoulder",
+  5: "RightShoulder",
+  6: "LeftTrigger",
+  7: "RightTrigger",
+  10: "LeftThumb",
+  11: "RightThumb",
+  104: "LeftStickAxes",
+  204: "RightStickAxes",
+  8: "View",
+  9: "Menu",
+  17: "Share"
+ };
  static getPref(key) {
   return getPref(key);
  }
  static async refreshControllerSettings() {
-  let settings = StreamSettings.settings, controllers = {}, settingsTable = ControllerSettingsTable.getInstance(), shortcutsTable = ControllerShortcutsTable.getInstance(), gamepads = window.navigator.getGamepads();
+  let settings = StreamSettings.settings, controllers = {}, settingsTable = ControllerSettingsTable.getInstance(), shortcutsTable = ControllerShortcutsTable.getInstance(), mappingTable = ControllerCustomizationsTable.getInstance(), gamepads = window.navigator.getGamepads();
   for (let gamepad of gamepads) {
    if (!gamepad?.connected) continue;
    if (gamepad.id === VIRTUAL_GAMEPAD_ID) continue;
-   let settingsData = await settingsTable.getControllerData(gamepad.id), shortcutsMapping, preset = await shortcutsTable.getPreset(settingsData.shortcutPresetId);
-   if (!preset) shortcutsMapping = null;
-   else shortcutsMapping = preset.data.mapping;
+   let settingsData = await settingsTable.getControllerData(gamepad.id), shortcutsPreset = await shortcutsTable.getPreset(settingsData.shortcutPresetId), shortcutsMapping = !shortcutsPreset ? null : shortcutsPreset.data.mapping, customizationPreset = await mappingTable.getPreset(settingsData.customizationPresetId), customizationData = StreamSettings.convertControllerCustomization(customizationPreset?.data);
    controllers[gamepad.id] = {
-    vibrationIntensity: settingsData.vibrationIntensity,
-    shortcuts: shortcutsMapping
+    shortcuts: shortcutsMapping,
+    customization: customizationData
    };
   }
   settings.controllers = controllers, settings.controllerPollingRate = StreamSettings.getPref("controller.pollingRate"), await StreamSettings.refreshDeviceVibration();
+ }
+ static preCalculateControllerRange(obj, target, values) {
+  if (values && Array.isArray(values)) {
+   let [from, to] = values;
+   if (from > 1 || to < 100) obj[target] = [from / 100, to / 100];
+  }
+ }
+ static convertControllerCustomization(customization) {
+  if (!customization) return null;
+  let converted = {
+   mapping: {},
+   ranges: {},
+   vibrationIntensity: 1
+  }, gamepadKey;
+  for (gamepadKey in customization.mapping) {
+   let gamepadStr = StreamSettings.CONTROLLER_CUSTOMIZATION_MAPPING[gamepadKey];
+   if (!gamepadStr) continue;
+   let mappedKey = customization.mapping[gamepadKey];
+   if (typeof mappedKey === "number") converted.mapping[gamepadStr] = StreamSettings.CONTROLLER_CUSTOMIZATION_MAPPING[mappedKey];
+   else converted.mapping[gamepadStr] = !1;
+  }
+  return StreamSettings.preCalculateControllerRange(converted.ranges, "LeftTrigger", customization.settings.leftTriggerRange), StreamSettings.preCalculateControllerRange(converted.ranges, "RightTrigger", customization.settings.rightTriggerRange), StreamSettings.preCalculateControllerRange(converted.ranges, "LeftThumb", customization.settings.leftStickDeadzone), StreamSettings.preCalculateControllerRange(converted.ranges, "RightThumb", customization.settings.rightStickDeadzone), converted.vibrationIntensity = customization.settings.vibrationIntensity / 100, converted;
  }
  static async refreshDeviceVibration() {
   if (!STATES.browser.capabilities.deviceVibration) return;
@@ -2855,6 +2952,43 @@ class StreamSettings {
   window.addEventListener("gamepadconnected", listener), window.addEventListener("gamepaddisconnected", listener), StreamSettings.refreshAllSettings();
  }
 }
+var BxIcon = {
+ BETTER_XCLOUD: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-miterlimit='2' stroke-width='2' viewBox='0 0 32 32'><path d='M16.001 7.236h-2.328c-.443 0-1.941-.851-2.357-.905-.824-.106-1.684 0-2.489.176a13.04 13.04 0 0 0-3.137 1.14c-.392.275-.677.668-.866 1.104v.03l-3.302 8.963-.015.015c-.288.867-.553 3.75-.5 4.279a4.89 4.89 0 0 0 1.022 2.55c.654.823 3.71 1.364 4.057 1.016l4.462-4.475c.185-.186 1.547-.706 2.01-.706h6.884c.463 0 1.825.52 2.01.706l4.462 4.475c.347.348 3.403-.193 4.057-1.016a4.89 4.89 0 0 0 1.022-2.55c.053-.529-.212-3.412-.5-4.279l-.015-.015-3.302-8.963v-.03c-.189-.436-.474-.829-.866-1.104a13.04 13.04 0 0 0-3.137-1.14c-.805-.176-1.665-.282-2.489-.176-.416.054-1.914.905-2.357.905h-2.328' fill='none' stroke='#fff'/><path d='M8.172 12.914H6.519c-.235 0-.315.267-.335.452l-.052.578c0 .193.033.384.054.576.023.202.091.511.355.511h1.631l-.001 1.652c0 .234.266.315.452.335l.578.052c.193 0 .384-.033.576-.054.203-.023.511-.091.511-.355V15.03l1.652.001c.234 0 .315-.266.335-.452l.052-.578c-.001-.193-.033-.385-.055-.577-.022-.202-.09-.51-.354-.51h-1.632v-1.652c0-.234-.266-.315-.453-.335l-.577-.052c-.193 0-.385.033-.577.054-.202.023-.51.091-.51.355v1.631m16.546 2.994h-3.487c-.206 0-.413-.043-.604-.121-.177-.072-.339-.183-.476-.316-.149-.144-.259-.315-.341-.504-.156-.361-.172-.788-.032-1.157a1.57 1.57 0 0 1 .459-.641c.106-.089.223-.164.349-.222a1.52 1.52 0 0 1 .423-.123c.167-.024.338-.02.504.012a1.83 1.83 0 0 1 .455-.482 1.62 1.62 0 0 1 .522-.252c.307-.089.651-.09.959-.003a1.75 1.75 0 0 1 1.009.764 1.83 1.83 0 0 1 .251.721c.156 0 .312.031.456.09a1.24 1.24 0 0 1 .372.248c.091.087.165.19.221.302a1.19 1.19 0 0 1-.173 1.299c-.119.132-.276.239-.441.305a1.17 1.17 0 0 1-.426.08z' fill='#fff' stroke='none'/></svg>",
+ TRUE_ACHIEVEMENTS: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='nons' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M2.497 14.127c.781-6.01 5.542-10.849 11.551-11.708V0C6.634.858.858 6.712 0 14.127h2.497zM17.952 2.419V0C25.366.858 31.142 6.712 32 14.127h-2.497c-.781-6.01-5.542-10.849-11.551-11.708zM2.497 17.873c.781 6.01 5.542 10.849 11.551 11.708V32C6.634 31.142.858 25.288 0 17.873h2.497zm27.006 0H32C31.142 25.288 25.366 31.142 17.952 32v-2.419c6.009-.859 10.77-5.698 11.551-11.708zm-19.2-4.527h2.028a.702.702 0 1 0 0-1.404h-2.107a1.37 1.37 0 0 1-1.326-1.327V9.21a.7.7 0 0 0-.703-.703c-.387 0-.703.316-.703.7v1.408c.079 1.483 1.25 2.731 2.811 2.731zm2.809 7.337h-2.888a1.37 1.37 0 0 1-1.326-1.327v-4.917c0-.387-.316-.703-.7-.703a.7.7 0 0 0-.706.703v4.917a2.77 2.77 0 0 0 2.732 2.732h2.81c.387 0 .702-.316.702-.7.078-.393-.234-.705-.624-.705zM25.6 19.2a.7.7 0 0 0-.702-.702c-.387 0-.703.316-.703.699v.081c0 .702-.546 1.326-1.248 1.326H19.98c-.702-.078-1.248-.624-1.248-1.326v-.312c0-.78.624-1.327 1.326-1.327h2.811a2.77 2.77 0 0 0 2.731-2.732v-.312a2.68 2.68 0 0 0-2.576-2.732h-4.76a.702.702 0 1 0 0 1.405h4.526a1.37 1.37 0 0 1 1.327 1.327v.234c0 .781-.624 1.327-1.327 1.327h-2.81a2.77 2.77 0 0 0-2.731 2.732v.312a2.77 2.77 0 0 0 2.731 2.732h2.967a2.74 2.74 0 0 0 2.575-2.732s.078.078.078 0z'/></svg>",
+ STREAM_SETTINGS: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g transform='matrix(.142357 0 0 .142357 -2.22021 -2.22164)' fill='none' stroke='#fff' stroke-width='16'><circle cx='128' cy='128' r='40'/><path d='M130.05 206.11h-4L94 224c-12.477-4.197-24.049-10.711-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9 147.24a99.16 99.16 0 0 1 0-38.46l31.84-18.1c.65-1.15 1.32-2.29 2-3.41l.16-36C69.951 42.757 81.521 36.218 94 32l32 17.89h4L162 32c12.477 4.197 24.049 10.711 34.11 19.2l.12 36c.71 1.12 1.38 2.25 2 3.41l31.85 18.14a99.16 99.16 0 0 1 0 38.46l-31.84 18.1c-.65 1.15-1.32 2.29-2 3.41l-.16 36A104.59 104.59 0 0 1 162 224l-31.95-17.89z'/></g></svg>",
+ STREAM_STATS: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M1.181 24.55v-3.259c0-8.19 6.576-14.952 14.767-14.98H16c8.13 0 14.819 6.69 14.819 14.819v3.42c0 .625-.515 1.14-1.14 1.14H2.321c-.625 0-1.14-.515-1.14-1.14z'/><path d='M16 6.311v4.56M12.58 25.69l9.12-12.54m4.559 5.7h4.386m-29.266 0H5.74'/></svg>",
+ CLOSE: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M29.928,2.072L2.072,29.928'/><path d='M29.928,29.928L2.072,2.072'/></svg>",
+ CONTROLLER: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M19.193 12.807h3.193m-13.836 0h4.257'/><path d='M10.678 10.678v4.257'/><path d='M13.061 19.193l-5.602 6.359c-.698.698-1.646 1.09-2.633 1.09-2.044 0-3.725-1.682-3.725-3.725a3.73 3.73 0 0 1 .056-.646l2.177-11.194a6.94 6.94 0 0 1 6.799-5.721h11.722c3.795 0 6.918 3.123 6.918 6.918s-3.123 6.918-6.918 6.918h-8.793z'/><path d='M18.939 19.193l5.602 6.359c.698.698 1.646 1.09 2.633 1.09 2.044 0 3.725-1.682 3.725-3.725a3.73 3.73 0 0 0-.056-.646l-2.177-11.194'/></svg>",
+ CREATE_SHORTCUT: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M13.253 3.639c0-.758-.615-1.373-1.373-1.373H3.639c-.758 0-1.373.615-1.373 1.373v8.241c0 .758.615 1.373 1.373 1.373h8.241c.758 0 1.373-.615 1.373-1.373V3.639zm0 16.481c0-.758-.615-1.373-1.373-1.373H3.639c-.758 0-1.373.615-1.373 1.373v8.241c0 .758.615 1.373 1.373 1.373h8.241c.758 0 1.373-.615 1.373-1.373V20.12zm16.481 0c0-.758-.615-1.373-1.373-1.373H20.12c-.758 0-1.373.615-1.373 1.373v8.241c0 .758.615 1.373 1.373 1.373h8.241c.758 0 1.373-.615 1.373-1.373V20.12zM19.262 7.76h9.957'/><path d='M24.24 2.781v9.957'/></svg>",
+ DISPLAY: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M1.238 21.119c0 1.928 1.565 3.493 3.493 3.493H27.27c1.928 0 3.493-1.565 3.493-3.493V5.961c0-1.928-1.565-3.493-3.493-3.493H4.731c-1.928 0-3.493 1.565-3.493 3.493v15.158zm19.683 8.413H11.08'/></svg>",
+ EYE: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='none ' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><clipPath id='A'><path d='M0 0h32v32H0z'/></clipPath><g clip-path='url(#A)'><path d='M31.908 15.568c-.047-.105-1.176-2.611-3.687-5.121C24.876 7.101 20.651 5.333 16 5.333S7.124 7.101 3.779 10.447c-2.511 2.51-3.646 5.02-3.687 5.121-.123.276-.123.591 0 .867.047.105 1.176 2.609 3.687 5.12 3.345 3.344 7.57 5.112 12.221 5.112s8.876-1.768 12.221-5.112c2.511-2.511 3.64-5.015 3.687-5.12.123-.276.123-.591 0-.867zM16 24.533c-4.104 0-7.689-1.492-10.657-4.433-1.218-1.211-2.254-2.592-3.076-4.1.822-1.508 1.858-2.889 3.076-4.1C8.311 8.959 11.896 7.467 16 7.467s7.689 1.492 10.657 4.433c1.221 1.211 2.259 2.592 3.083 4.1-.961 1.795-5.149 8.533-13.74 8.533zM16 9.6c-3.511 0-6.4 2.889-6.4 6.4s2.889 6.4 6.4 6.4 6.4-2.889 6.4-6.4A6.44 6.44 0 0 0 16 9.6zm0 10.667A4.29 4.29 0 0 1 11.733 16 4.29 4.29 0 0 1 16 11.733 4.29 4.29 0 0 1 20.267 16 4.29 4.29 0 0 1 16 20.267z' fill-rule='nonzero'/></g></svg>",
+ EYE_SLASH: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='none ' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><clipPath id='A'><path d='M0 0h32v32H0z'/></clipPath><g clip-path='url(#A)'><path d='M6.123 3.549a1.07 1.07 0 0 0-.798-.359c-.585 0-1.067.482-1.067 1.067 0 .27.102.53.286.727l2.565 2.823C2.267 10.779.184 15.36.092 15.568c-.123.276-.123.591 0 .867.047.105 1.176 2.609 3.687 5.12 3.345 3.344 7.57 5.112 12.221 5.112a16.97 16.97 0 0 0 6.943-1.444l2.933 3.228c.202.228.493.359.798.359.585 0 1.067-.482 1.067-1.067a1.07 1.07 0 0 0-.286-.727L6.123 3.549zm6.31 10.112l5.556 6.114c-.612.322-1.294.49-1.986.49a4.29 4.29 0 0 1-4.267-4.266c0-.831.242-1.643.697-2.338zM16 24.533c-4.104 0-7.689-1.492-10.657-4.433A17.73 17.73 0 0 1 2.267 16c.625-1.172 2.621-4.452 6.313-6.584l2.4 2.633c-.878 1.125-1.356 2.512-1.356 3.939 0 3.511 2.89 6.4 6.4 6.4 1.221 0 2.416-.349 3.444-1.005l1.964 2.16a14.92 14.92 0 0 1-5.432.99zm.8-12.724a1.07 1.07 0 0 1-.867-1.048c0-.585.482-1.067 1.067-1.067a1.12 1.12 0 0 1 .2.019c2.784.54 4.896 2.863 5.169 5.686a1.07 1.07 0 0 1-.962 1.161c-.034.002-.067.002-.1 0a1.07 1.07 0 0 1-1.067-.968 4.29 4.29 0 0 0-3.44-3.783zm15.104 4.626c-.056.125-1.407 3.116-4.448 5.84a1.07 1.07 0 0 1-.724.283c-.585 0-1.067-.482-1.067-1.067a1.07 1.07 0 0 1 .368-.806A17.7 17.7 0 0 0 29.74 16a17.73 17.73 0 0 0-3.083-4.103C23.689 8.959 20.104 7.467 16 7.467a15.82 15.82 0 0 0-2.581.209 1.06 1.06 0 0 1-.186.016 1.07 1.07 0 0 1-1.067-1.066 1.07 1.07 0 0 1 .901-1.054A17.89 17.89 0 0 1 16 5.333c4.651 0 8.876 1.768 12.221 5.114 2.511 2.51 3.64 5.016 3.687 5.121.123.276.123.591 0 .867h-.004z' fill-rule='nonzero'/></g></svg>",
+ HOME: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M12.217 30.503V20.414h7.567v10.089h10.089V15.37a1.26 1.26 0 0 0-.369-.892L16.892 1.867a1.26 1.26 0 0 0-1.784 0L2.497 14.478a1.26 1.26 0 0 0-.369.892v15.133h10.089z'/></svg>",
+ NATIVE_MKB: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g stroke-width='2.1'><path d='m15.817 6h-10.604c-2.215 0-4.013 1.798-4.013 4.013v12.213c0 2.215 1.798 4.013 4.013 4.013h11.21'/><path d='m5.698 20.617h1.124m-1.124-4.517h7.9m-7.881-4.5h7.9m-2.3 9h2.2'/></g><g stroke-width='2.13'><path d='m30.805 13.1c0-3.919-3.181-7.1-7.1-7.1s-7.1 3.181-7.1 7.1v6.4c0 3.919 3.182 7.1 7.1 7.1s7.1-3.181 7.1-7.1z'/><path d='m23.705 14.715v-4.753'/></g></svg>",
+ NEW: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M26.875 30.5H5.125c-.663 0-1.208-.545-1.208-1.208V2.708c0-.663.545-1.208 1.208-1.208h14.5l8.458 8.458v19.333c0 .663-.545 1.208-1.208 1.208z'/><path d='M19.625 1.5v8.458h8.458m-15.708 9.667h7.25'/><path d='M16 16v7.25'/></svg>",
+ MANAGE: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' viewBox='0 0 32 32'><path d='M10.417 30.271H2.97a1.25 1.25 0 0 1-1.241-1.241v-6.933c.001-.329.131-.644.363-.877L21.223 2.09c.481-.481 1.273-.481 1.754 0l6.933 6.928a1.25 1.25 0 0 1 0 1.755L10.417 30.271z'/><path d='M29.032 30.271H10.417m6.205-23.58l8.687 8.687'/></svg>",
+ COPY: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M1.498 6.772h23.73v23.73H1.498zm5.274-5.274h23.73v23.73'/></svg>",
+ TRASH: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M29.5 6.182h-27m9.818 7.363v9.818m7.364-9.818v9.818'/><path d='M27.045 6.182V29.5c0 .673-.554 1.227-1.227 1.227H6.182c-.673 0-1.227-.554-1.227-1.227V6.182m17.181 0V3.727a2.47 2.47 0 0 0-2.455-2.455h-7.364a2.47 2.47 0 0 0-2.455 2.455v2.455'/></svg>",
+ CURSOR_TEXT: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M16 7.3a5.83 5.83 0 0 1 5.8-5.8h2.9m0 29h-2.9a5.83 5.83 0 0 1-5.8-5.8'/><path d='M7.3 30.5h2.9a5.83 5.83 0 0 0 5.8-5.8V7.3a5.83 5.83 0 0 0-5.8-5.8H7.3'/><path d='M11.65 16h8.7'/></svg>",
+ POWER: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 2.445v12.91m7.746-11.619C27.631 6.27 30.2 10.37 30.2 15.355c0 7.79-6.41 14.2-14.2 14.2s-14.2-6.41-14.2-14.2c0-4.985 2.569-9.085 6.454-11.619'/></svg>",
+ QUESTION: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><g transform='matrix(.256867 0 0 .256867 -16.878964 -18.049342)'><circle cx='128' cy='180' r='12' fill='#fff'/><path d='M128 144v-8c17.67 0 32-12.54 32-28s-14.33-28-32-28-32 12.54-32 28v4' fill='none' stroke='#fff' stroke-width='16'/></g></svg>",
+ REFRESH: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M23.247 12.377h7.247V5.13'/><path d='M23.911 25.663a13.29 13.29 0 0 1-9.119 3.623C7.504 29.286 1.506 23.289 1.506 16S7.504 2.713 14.792 2.713a13.29 13.29 0 0 1 9.395 3.891l6.307 5.772'/></svg>",
+ REMOTE_PLAY: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><g transform='matrix(.492308 0 0 .581818 -14.7692 -11.6364)'><clipPath id='A'><path d='M30 20h65v55H30z'/></clipPath><g clip-path='url(#A)'><g transform='matrix(.395211 0 0 .334409 11.913 7.01124)'><g transform='matrix(.555556 0 0 .555556 57.8889 -20.2417)' fill='none' stroke='#fff' stroke-width='13.88'><path d='M200 140.564c-42.045-33.285-101.955-33.285-144 0M168 165c-23.783-17.3-56.217-17.3-80 0'/></g><g transform='matrix(-.555556 0 0 -.555556 200.111 262.393)'><g transform='matrix(1 0 0 1 0 11.5642)'><path d='M200 129c-17.342-13.728-37.723-21.795-58.636-24.198C111.574 101.378 80.703 109.444 56 129' fill='none' stroke='#fff' stroke-width='13.88'/></g><path d='M168 165c-23.783-17.3-56.217-17.3-80 0' fill='none' stroke='#fff' stroke-width='13.88'/></g><g transform='matrix(.75 0 0 .75 32 32)'><path d='M24 72h208v93.881H24z' fill='none' stroke='#fff' stroke-linejoin='miter' stroke-width='9.485'/><circle cx='188' cy='128' r='12' stroke-width='10' transform='matrix(.708333 0 0 .708333 71.8333 12.8333)'/><path d='M24.358 103.5h110' fill='none' stroke='#fff' stroke-linecap='butt' stroke-width='10.282'/></g></g></g></g></svg>",
+ CARET_LEFT: "<svg xmlns='http://www.w3.org/2000/svg' width='100%' stroke='#fff' fill='#fff' height='100%' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><path d='M6.755 1.924l-6 13.649c-.119.27-.119.578 0 .849l6 13.649c.234.533.857.775 1.389.541s.775-.857.541-1.389L2.871 15.997 8.685 2.773c.234-.533-.008-1.155-.541-1.389s-1.155.008-1.389.541z'/></svg>",
+ CARET_RIGHT: "<svg xmlns='http://www.w3.org/2000/svg' width='100%' stroke='#fff' fill='#fff' height='100%' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><path d='M2.685 1.924l6 13.649c.119.27.119.578 0 .849l-6 13.649c-.234.533-.857.775-1.389.541s-.775-.857-.541-1.389l5.813-13.225L.755 2.773c-.234-.533.008-1.155.541-1.389s1.155.008 1.389.541z'/></svg>",
+ SCREENSHOT: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g transform='matrix(.150985 0 0 .150985 -3.32603 -2.72209)' fill='none' stroke='#fff' stroke-width='16'><path d='M208 208H48c-8.777 0-16-7.223-16-16V80c0-8.777 7.223-16 16-16h32l16-24h64l16 24h32c8.777 0 16 7.223 16 16v112c0 8.777-7.223 16-16 16z'/><circle cx='128' cy='132' r='36'/></g></svg>",
+ SPEAKER_MUTED: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='none' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M5.462 3.4c-.205-.23-.499-.363-.808-.363-.592 0-1.079.488-1.079 1.08a1.08 1.08 0 0 0 .289.736l4.247 4.672H2.504a2.17 2.17 0 0 0-2.16 2.16v8.637a2.17 2.17 0 0 0 2.16 2.16h6.107l9.426 7.33a1.08 1.08 0 0 0 .662.227c.592 0 1.08-.487 1.08-1.079v-6.601l5.679 6.247a1.08 1.08 0 0 0 .808.363c.592 0 1.08-.487 1.08-1.079a1.08 1.08 0 0 0-.29-.736L5.462 3.4zm-2.958 8.285h5.398v8.637H2.504v-8.637zM17.62 26.752l-7.558-5.878V11.67l7.558 8.313v6.769zm5.668-8.607c1.072-1.218 1.072-3.063 0-4.281a1.08 1.08 0 0 1-.293-.74c0-.592.487-1.079 1.079-1.079a1.08 1.08 0 0 1 .834.393 5.42 5.42 0 0 1 0 7.137 1.08 1.08 0 0 1-.81.365c-.593 0-1.08-.488-1.08-1.08 0-.263.096-.517.27-.715zM12.469 7.888c-.147-.19-.228-.423-.228-.663a1.08 1.08 0 0 1 .417-.853l5.379-4.184a1.08 1.08 0 0 1 .662-.227c.593 0 1.08.488 1.08 1.08v10.105c0 .593-.487 1.08-1.08 1.08s-1.079-.487-1.079-1.08V5.255l-3.636 2.834c-.469.362-1.153.273-1.515-.196v-.005zm19.187 8.115a10.79 10.79 0 0 1-2.749 7.199 1.08 1.08 0 0 1-.793.347c-.593 0-1.08-.487-1.08-1.079 0-.26.094-.511.264-.708 2.918-3.262 2.918-8.253 0-11.516-.184-.2-.287-.461-.287-.733 0-.592.487-1.08 1.08-1.08a1.08 1.08 0 0 1 .816.373 10.78 10.78 0 0 1 2.749 7.197z' fill-rule='nonzero'/></svg>",
+ TOUCH_CONTROL_ENABLE: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><path d='M30.021 9.448a.89.89 0 0 0-.889-.889H2.909a.89.89 0 0 0-.889.889v13.146a.89.89 0 0 0 .889.888h26.223a.89.89 0 0 0 .889-.888V9.448z' fill='none' stroke='#fff' stroke-width='2.083'/><path d='M8.147 11.981l-.053-.001-.054.001c-.55.028-.988.483-.988 1.04v6c0 .575.467 1.042 1.042 1.042l.053-.001c.55-.028.988-.484.988-1.04v-6a1.04 1.04 0 0 0-.988-1.04z'/><path d='M11.147 14.981l-.054-.001h-6a1.04 1.04 0 1 0 0 2.083h6c.575 0 1.042-.467 1.042-1.042a1.04 1.04 0 0 0-.988-1.04z'/><circle cx='25.345' cy='18.582' r='2.561' fill='none' stroke='#fff' stroke-width='1.78' transform='matrix(1.17131 0 0 1.17131 -5.74235 -5.74456)'/></svg>",
+ TOUCH_CONTROL_DISABLE: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><g fill='none' stroke='#fff'><path d='M6.021 5.021l20 22' stroke-width='2'/><path d='M8.735 8.559H2.909a.89.89 0 0 0-.889.889v13.146a.89.89 0 0 0 .889.888h19.34m4.289 0h2.594a.89.89 0 0 0 .889-.888V9.448a.89.89 0 0 0-.889-.889H12.971' stroke-miterlimit='1.5' stroke-width='2.083'/></g><path d='M8.147 11.981l-.053-.001-.054.001c-.55.028-.988.483-.988 1.04v6c0 .575.467 1.042 1.042 1.042l.053-.001c.55-.028.988-.484.988-1.04v-6a1.04 1.04 0 0 0-.988-1.04z'/><path d='M11.147 14.981l-.054-.001h-6a1.04 1.04 0 1 0 0 2.083h6c.575 0 1.042-.467 1.042-1.042a1.04 1.04 0 0 0-.988-1.04z'/><circle cx='25.345' cy='18.582' r='2.561' fill='none' stroke='#fff' stroke-width='1.78' transform='matrix(1.17131 0 0 1.17131 -5.74235 -5.74456)'/></svg>",
+ MICROPHONE: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M21.368 6.875A5.37 5.37 0 0 0 16 1.507a5.37 5.37 0 0 0-5.368 5.368v8.588A5.37 5.37 0 0 0 16 20.831a5.37 5.37 0 0 0 5.368-5.368V6.875zM16 25.125v5.368m9.662-15.03c0 5.3-4.362 9.662-9.662 9.662s-9.662-4.362-9.662-9.662'/></svg>",
+ MICROPHONE_MUTED: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 25.125v5.368M5.265 4.728l21.471 23.618m-4.789-5.267c-1.698 1.326-3.793 2.047-5.947 2.047-5.3 0-9.662-4.362-9.662-9.662'/><path d='M25.662 15.463a9.62 9.62 0 0 1-.978 4.242m-5.64.187c-.895.616-1.957.943-3.043.939-2.945 0-5.368-2.423-5.368-5.368v-4.831m.442-5.896A5.38 5.38 0 0 1 16 1.507c2.945 0 5.368 2.423 5.368 5.368v8.588c0 .188-.01.375-.03.562'/></svg>",
+ BATTERY: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' stroke-miterlimit='2' viewBox='0 0 32 32'><path d='M24.774 6.71H3.097C1.398 6.71 0 8.108 0 9.806v12.387c0 1.699 1.398 3.097 3.097 3.097h21.677c1.699 0 3.097-1.398 3.097-3.097V9.806c0-1.699-1.398-3.097-3.097-3.097zm1.032 15.484a1.04 1.04 0 0 1-1.032 1.032H3.097a1.04 1.04 0 0 1-1.032-1.032V9.806a1.04 1.04 0 0 1 1.032-1.032h21.677a1.04 1.04 0 0 1 1.032 1.032v12.387zm-2.065-10.323v8.258a1.04 1.04 0 0 1-1.032 1.032H5.161a1.04 1.04 0 0 1-1.032-1.032v-8.258a1.04 1.04 0 0 1 1.032-1.032H22.71a1.04 1.04 0 0 1 1.032 1.032zm8.258 0v8.258a1.04 1.04 0 0 1-1.032 1.032 1.04 1.04 0 0 1-1.032-1.032v-8.258a1.04 1.04 0 0 1 1.032-1.032A1.04 1.04 0 0 1 32 11.871z' fill-rule='nonzero'/></svg>",
+ PLAYTIME: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g transform='matrix(.150026 0 0 .150026 -3.20332 -3.20332)' fill='none' stroke='#fff' stroke-width='16'><circle cx='128' cy='128' r='96'/><path d='M128 72v56h56'/></g></svg>",
+ SERVER: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M9.773 16c0-5.694 4.685-10.379 10.379-10.379S30.53 10.306 30.53 16s-4.685 10.379-10.379 10.379H8.735c-3.982-.005-7.256-3.283-7.256-7.265s3.28-7.265 7.265-7.265c.606 0 1.21.076 1.797.226' fill='none' stroke='#fff' stroke-width='2.076'/></svg>",
+ DOWNLOAD: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 19.955V1.5m14.5 18.455v9.227c0 .723-.595 1.318-1.318 1.318H2.818c-.723 0-1.318-.595-1.318-1.318v-9.227'/><path d='M22.591 13.364L16 19.955l-6.591-6.591'/></svg>",
+ UPLOAD: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 19.905V1.682m14.318 18.223v9.112a1.31 1.31 0 0 1-1.302 1.302H2.983a1.31 1.31 0 0 1-1.302-1.302v-9.112'/><path d='M9.492 8.19L16 1.682l6.508 6.508'/></svg>",
+ AUDIO: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M8.964 21.417h-6.5a1.09 1.09 0 0 1-1.083-1.083v-8.667a1.09 1.09 0 0 1 1.083-1.083h6.5L18.714 3v26l-9.75-7.583z'/><path d='M8.964 10.583v10.833m15.167-8.28a4.35 4.35 0 0 1 0 5.728M28.149 9.5a9.79 9.79 0 0 1 0 13'/></svg>"
+};
 class MkbPopup {
  static instance;
  static getInstance = () => MkbPopup.instance ?? (MkbPopup.instance = new MkbPopup);
@@ -2880,7 +3014,7 @@ class MkbPopup {
  }
  createActivateButton() {
   let options = {
-   style: 1 | 512 | 128,
+   style: 1 | 1024 | 128,
    label: t("activate"),
    onClick: this.onActivate
   }, shortcutKey = StreamSettings.findKeyboardShortcut("mkb.toggle");
@@ -2899,6 +3033,7 @@ class MkbPopup {
    }
   }), createButton({
    label: t("manage"),
+   icon: BxIcon.MANAGE,
    style: 64,
    onClick: () => {
     let dialog = SettingsDialog.getInstance();
@@ -3411,16 +3546,22 @@ class NavigationDialogManager {
  LOG_TAG = "NavigationDialogManager";
  static GAMEPAD_POLLING_INTERVAL = 50;
  static GAMEPAD_KEYS = [
-  12,
-  13,
-  14,
-  15,
   0,
   1,
+  2,
+  3,
+  12,
+  15,
+  13,
+  14,
   4,
   5,
   6,
-  7
+  7,
+  10,
+  11,
+  8,
+  9
  ];
  static GAMEPAD_DIRECTION_MAP = {
   12: 1,
@@ -3450,31 +3591,14 @@ class NavigationDialogManager {
  dialog = null;
  dialogsStack = [];
  constructor() {
-  if (BxLogger.info(this.LOG_TAG, "constructor()"), this.$overlay = CE("div", { class: "bx-navigation-dialog-overlay bx-gone" }), this.$overlay.addEventListener("click", (e) => {
+  BxLogger.info(this.LOG_TAG, "constructor()"), this.$overlay = CE("div", { class: "bx-navigation-dialog-overlay bx-gone" }), this.$overlay.addEventListener("click", (e) => {
    e.preventDefault(), e.stopPropagation(), this.dialog?.isCancellable() && this.hide();
-  }), document.documentElement.appendChild(this.$overlay), this.$container = CE("div", { class: "bx-navigation-dialog bx-gone" }), document.documentElement.appendChild(this.$container), window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, (e) => this.hide()), getPref("ui.controllerFriendly"))
-   new MutationObserver((mutationList) => {
-    if (mutationList.length === 0 || mutationList[0].addedNodes.length === 0) return;
-    let $dialog = mutationList[0].addedNodes[0];
-    if (!$dialog || !($dialog instanceof HTMLElement)) return;
-    this.calculateSelectBoxes($dialog);
-   }).observe(this.$container, { childList: !0 });
- }
- calculateSelectBoxes($root) {
-  let selects = Array.from($root.querySelectorAll(".bx-select:not([data-calculated]) select"));
-  for (let $select of selects) {
-   let $parent = $select.parentElement;
-   if ($parent.classList.contains("bx-full-width")) {
-    $parent.dataset.calculated = "true";
-    return;
-   }
-   let rect = $select.getBoundingClientRect(), $label, width = Math.ceil(rect.width);
-   if (!width) return;
-   if ($select.multiple) $label = $parent.querySelector(".bx-select-value"), width += 20;
-   else $label = $parent.querySelector("div");
-   if ($select.querySelector("optgroup")) width -= 15;
-   $label.style.minWidth = width + "px", $parent.dataset.calculated = "true";
-  }
+  }), document.documentElement.appendChild(this.$overlay), this.$container = CE("div", { class: "bx-navigation-dialog bx-gone" }), document.documentElement.appendChild(this.$container), window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, (e) => this.hide()), new MutationObserver((mutationList) => {
+   if (mutationList.length === 0 || mutationList[0].addedNodes.length === 0) return;
+   let $dialog = mutationList[0].addedNodes[0];
+   if (!$dialog || !($dialog instanceof HTMLElement)) return;
+   calculateSelectBoxes($dialog);
+  }).observe(this.$container, { childList: !0 });
  }
  updateActiveInput(input) {
   document.documentElement.dataset.activeInput = input;
@@ -3537,7 +3661,7 @@ class NavigationDialogManager {
        }
       }
       this.clearGamepadHoldingInterval();
-     }, 200);
+     }, 100);
     continue;
    }
    if (releasedButton === null) {
@@ -3607,7 +3731,12 @@ class NavigationDialogManager {
   if (!$focusing || $focusing === this.$container) return null;
   if (checked.includes($focusing)) return null;
   checked.push($focusing);
-  let $target = $focusing, $parent = $target.parentElement, nearby = $target.nearby || {}, orientation = this.getOrientation($target), siblingProperty = NavigationDialogManager.SIBLING_PROPERTY_MAP[orientation][direction];
+  let $target = $focusing, $parent = $target.parentElement, nearby = $target.nearby || {}, orientation = this.getOrientation($target);
+  if (nearby[1] && direction === 1) return nearby[1];
+  else if (nearby[3] && direction === 3) return nearby[3];
+  else if (nearby[4] && direction === 4) return nearby[4];
+  else if (nearby[2] && direction === 2) return nearby[2];
+  let siblingProperty = NavigationDialogManager.SIBLING_PROPERTY_MAP[orientation][direction];
   if (siblingProperty) {
    let $sibling = $target;
    while ($sibling[siblingProperty]) {
@@ -3848,43 +3977,8 @@ class TouchController {
   });
  }
 }
-var BxIcon = {
- BETTER_XCLOUD: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-miterlimit='2' stroke-width='2' viewBox='0 0 32 32'><path d='M16.001 7.236h-2.328c-.443 0-1.941-.851-2.357-.905-.824-.106-1.684 0-2.489.176a13.04 13.04 0 0 0-3.137 1.14c-.392.275-.677.668-.866 1.104v.03l-3.302 8.963-.015.015c-.288.867-.553 3.75-.5 4.279a4.89 4.89 0 0 0 1.022 2.55c.654.823 3.71 1.364 4.057 1.016l4.462-4.475c.185-.186 1.547-.706 2.01-.706h6.884c.463 0 1.825.52 2.01.706l4.462 4.475c.347.348 3.403-.193 4.057-1.016a4.89 4.89 0 0 0 1.022-2.55c.053-.529-.212-3.412-.5-4.279l-.015-.015-3.302-8.963v-.03c-.189-.436-.474-.829-.866-1.104a13.04 13.04 0 0 0-3.137-1.14c-.805-.176-1.665-.282-2.489-.176-.416.054-1.914.905-2.357.905h-2.328' fill='none' stroke='#fff'/><path d='M8.172 12.914H6.519c-.235 0-.315.267-.335.452l-.052.578c0 .193.033.384.054.576.023.202.091.511.355.511h1.631l-.001 1.652c0 .234.266.315.452.335l.578.052c.193 0 .384-.033.576-.054.203-.023.511-.091.511-.355V15.03l1.652.001c.234 0 .315-.266.335-.452l.052-.578c-.001-.193-.033-.385-.055-.577-.022-.202-.09-.51-.354-.51h-1.632v-1.652c0-.234-.266-.315-.453-.335l-.577-.052c-.193 0-.385.033-.577.054-.202.023-.51.091-.51.355v1.631m16.546 2.994h-3.487c-.206 0-.413-.043-.604-.121-.177-.072-.339-.183-.476-.316-.149-.144-.259-.315-.341-.504-.156-.361-.172-.788-.032-1.157a1.57 1.57 0 0 1 .459-.641c.106-.089.223-.164.349-.222a1.52 1.52 0 0 1 .423-.123c.167-.024.338-.02.504.012a1.83 1.83 0 0 1 .455-.482 1.62 1.62 0 0 1 .522-.252c.307-.089.651-.09.959-.003a1.75 1.75 0 0 1 1.009.764 1.83 1.83 0 0 1 .251.721c.156 0 .312.031.456.09a1.24 1.24 0 0 1 .372.248c.091.087.165.19.221.302a1.19 1.19 0 0 1-.173 1.299c-.119.132-.276.239-.441.305a1.17 1.17 0 0 1-.426.08z' fill='#fff' stroke='none'/></svg>",
- TRUE_ACHIEVEMENTS: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='nons' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M2.497 14.127c.781-6.01 5.542-10.849 11.551-11.708V0C6.634.858.858 6.712 0 14.127h2.497zM17.952 2.419V0C25.366.858 31.142 6.712 32 14.127h-2.497c-.781-6.01-5.542-10.849-11.551-11.708zM2.497 17.873c.781 6.01 5.542 10.849 11.551 11.708V32C6.634 31.142.858 25.288 0 17.873h2.497zm27.006 0H32C31.142 25.288 25.366 31.142 17.952 32v-2.419c6.009-.859 10.77-5.698 11.551-11.708zm-19.2-4.527h2.028a.702.702 0 1 0 0-1.404h-2.107a1.37 1.37 0 0 1-1.326-1.327V9.21a.7.7 0 0 0-.703-.703c-.387 0-.703.316-.703.7v1.408c.079 1.483 1.25 2.731 2.811 2.731zm2.809 7.337h-2.888a1.37 1.37 0 0 1-1.326-1.327v-4.917c0-.387-.316-.703-.7-.703a.7.7 0 0 0-.706.703v4.917a2.77 2.77 0 0 0 2.732 2.732h2.81c.387 0 .702-.316.702-.7.078-.393-.234-.705-.624-.705zM25.6 19.2a.7.7 0 0 0-.702-.702c-.387 0-.703.316-.703.699v.081c0 .702-.546 1.326-1.248 1.326H19.98c-.702-.078-1.248-.624-1.248-1.326v-.312c0-.78.624-1.327 1.326-1.327h2.811a2.77 2.77 0 0 0 2.731-2.732v-.312a2.68 2.68 0 0 0-2.576-2.732h-4.76a.702.702 0 1 0 0 1.405h4.526a1.37 1.37 0 0 1 1.327 1.327v.234c0 .781-.624 1.327-1.327 1.327h-2.81a2.77 2.77 0 0 0-2.731 2.732v.312a2.77 2.77 0 0 0 2.731 2.732h2.967a2.74 2.74 0 0 0 2.575-2.732s.078.078.078 0z'/></svg>",
- STREAM_SETTINGS: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g transform='matrix(.142357 0 0 .142357 -2.22021 -2.22164)' fill='none' stroke='#fff' stroke-width='16'><circle cx='128' cy='128' r='40'/><path d='M130.05 206.11h-4L94 224c-12.477-4.197-24.049-10.711-34.11-19.2l-.12-36c-.71-1.12-1.38-2.25-2-3.41L25.9 147.24a99.16 99.16 0 0 1 0-38.46l31.84-18.1c.65-1.15 1.32-2.29 2-3.41l.16-36C69.951 42.757 81.521 36.218 94 32l32 17.89h4L162 32c12.477 4.197 24.049 10.711 34.11 19.2l.12 36c.71 1.12 1.38 2.25 2 3.41l31.85 18.14a99.16 99.16 0 0 1 0 38.46l-31.84 18.1c-.65 1.15-1.32 2.29-2 3.41l-.16 36A104.59 104.59 0 0 1 162 224l-31.95-17.89z'/></g></svg>",
- STREAM_STATS: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M1.181 24.55v-3.259c0-8.19 6.576-14.952 14.767-14.98H16c8.13 0 14.819 6.69 14.819 14.819v3.42c0 .625-.515 1.14-1.14 1.14H2.321c-.625 0-1.14-.515-1.14-1.14z'/><path d='M16 6.311v4.56M12.58 25.69l9.12-12.54m4.559 5.7h4.386m-29.266 0H5.74'/></svg>",
- CLOSE: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M29.928,2.072L2.072,29.928'/><path d='M29.928,29.928L2.072,2.072'/></svg>",
- CONTROLLER: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M19.193 12.807h3.193m-13.836 0h4.257'/><path d='M10.678 10.678v4.257'/><path d='M13.061 19.193l-5.602 6.359c-.698.698-1.646 1.09-2.633 1.09-2.044 0-3.725-1.682-3.725-3.725a3.73 3.73 0 0 1 .056-.646l2.177-11.194a6.94 6.94 0 0 1 6.799-5.721h11.722c3.795 0 6.918 3.123 6.918 6.918s-3.123 6.918-6.918 6.918h-8.793z'/><path d='M18.939 19.193l5.602 6.359c.698.698 1.646 1.09 2.633 1.09 2.044 0 3.725-1.682 3.725-3.725a3.73 3.73 0 0 0-.056-.646l-2.177-11.194'/></svg>",
- CREATE_SHORTCUT: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M13.253 3.639c0-.758-.615-1.373-1.373-1.373H3.639c-.758 0-1.373.615-1.373 1.373v8.241c0 .758.615 1.373 1.373 1.373h8.241c.758 0 1.373-.615 1.373-1.373V3.639zm0 16.481c0-.758-.615-1.373-1.373-1.373H3.639c-.758 0-1.373.615-1.373 1.373v8.241c0 .758.615 1.373 1.373 1.373h8.241c.758 0 1.373-.615 1.373-1.373V20.12zm16.481 0c0-.758-.615-1.373-1.373-1.373H20.12c-.758 0-1.373.615-1.373 1.373v8.241c0 .758.615 1.373 1.373 1.373h8.241c.758 0 1.373-.615 1.373-1.373V20.12zM19.262 7.76h9.957'/><path d='M24.24 2.781v9.957'/></svg>",
- DISPLAY: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M1.238 21.119c0 1.928 1.565 3.493 3.493 3.493H27.27c1.928 0 3.493-1.565 3.493-3.493V5.961c0-1.928-1.565-3.493-3.493-3.493H4.731c-1.928 0-3.493 1.565-3.493 3.493v15.158zm19.683 8.413H11.08'/></svg>",
- EYE: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='none ' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><clipPath id='A'><path d='M0 0h32v32H0z'/></clipPath><g clip-path='url(#A)'><path d='M31.908 15.568c-.047-.105-1.176-2.611-3.687-5.121C24.876 7.101 20.651 5.333 16 5.333S7.124 7.101 3.779 10.447c-2.511 2.51-3.646 5.02-3.687 5.121-.123.276-.123.591 0 .867.047.105 1.176 2.609 3.687 5.12 3.345 3.344 7.57 5.112 12.221 5.112s8.876-1.768 12.221-5.112c2.511-2.511 3.64-5.015 3.687-5.12.123-.276.123-.591 0-.867zM16 24.533c-4.104 0-7.689-1.492-10.657-4.433-1.218-1.211-2.254-2.592-3.076-4.1.822-1.508 1.858-2.889 3.076-4.1C8.311 8.959 11.896 7.467 16 7.467s7.689 1.492 10.657 4.433c1.221 1.211 2.259 2.592 3.083 4.1-.961 1.795-5.149 8.533-13.74 8.533zM16 9.6c-3.511 0-6.4 2.889-6.4 6.4s2.889 6.4 6.4 6.4 6.4-2.889 6.4-6.4A6.44 6.44 0 0 0 16 9.6zm0 10.667A4.29 4.29 0 0 1 11.733 16 4.29 4.29 0 0 1 16 11.733 4.29 4.29 0 0 1 20.267 16 4.29 4.29 0 0 1 16 20.267z' fill-rule='nonzero'/></g></svg>",
- EYE_SLASH: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='none ' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><clipPath id='A'><path d='M0 0h32v32H0z'/></clipPath><g clip-path='url(#A)'><path d='M6.123 3.549a1.07 1.07 0 0 0-.798-.359c-.585 0-1.067.482-1.067 1.067 0 .27.102.53.286.727l2.565 2.823C2.267 10.779.184 15.36.092 15.568c-.123.276-.123.591 0 .867.047.105 1.176 2.609 3.687 5.12 3.345 3.344 7.57 5.112 12.221 5.112a16.97 16.97 0 0 0 6.943-1.444l2.933 3.228c.202.228.493.359.798.359.585 0 1.067-.482 1.067-1.067a1.07 1.07 0 0 0-.286-.727L6.123 3.549zm6.31 10.112l5.556 6.114c-.612.322-1.294.49-1.986.49a4.29 4.29 0 0 1-4.267-4.266c0-.831.242-1.643.697-2.338zM16 24.533c-4.104 0-7.689-1.492-10.657-4.433A17.73 17.73 0 0 1 2.267 16c.625-1.172 2.621-4.452 6.313-6.584l2.4 2.633c-.878 1.125-1.356 2.512-1.356 3.939 0 3.511 2.89 6.4 6.4 6.4 1.221 0 2.416-.349 3.444-1.005l1.964 2.16a14.92 14.92 0 0 1-5.432.99zm.8-12.724a1.07 1.07 0 0 1-.867-1.048c0-.585.482-1.067 1.067-1.067a1.12 1.12 0 0 1 .2.019c2.784.54 4.896 2.863 5.169 5.686a1.07 1.07 0 0 1-.962 1.161c-.034.002-.067.002-.1 0a1.07 1.07 0 0 1-1.067-.968 4.29 4.29 0 0 0-3.44-3.783zm15.104 4.626c-.056.125-1.407 3.116-4.448 5.84a1.07 1.07 0 0 1-.724.283c-.585 0-1.067-.482-1.067-1.067a1.07 1.07 0 0 1 .368-.806A17.7 17.7 0 0 0 29.74 16a17.73 17.73 0 0 0-3.083-4.103C23.689 8.959 20.104 7.467 16 7.467a15.82 15.82 0 0 0-2.581.209 1.06 1.06 0 0 1-.186.016 1.07 1.07 0 0 1-1.067-1.066 1.07 1.07 0 0 1 .901-1.054A17.89 17.89 0 0 1 16 5.333c4.651 0 8.876 1.768 12.221 5.114 2.511 2.51 3.64 5.016 3.687 5.121.123.276.123.591 0 .867h-.004z' fill-rule='nonzero'/></g></svg>",
- HOME: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M12.217 30.503V20.414h7.567v10.089h10.089V15.37a1.26 1.26 0 0 0-.369-.892L16.892 1.867a1.26 1.26 0 0 0-1.784 0L2.497 14.478a1.26 1.26 0 0 0-.369.892v15.133h10.089z'/></svg>",
- NATIVE_MKB: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g stroke-width='2.1'><path d='m15.817 6h-10.604c-2.215 0-4.013 1.798-4.013 4.013v12.213c0 2.215 1.798 4.013 4.013 4.013h11.21'/><path d='m5.698 20.617h1.124m-1.124-4.517h7.9m-7.881-4.5h7.9m-2.3 9h2.2'/></g><g stroke-width='2.13'><path d='m30.805 13.1c0-3.919-3.181-7.1-7.1-7.1s-7.1 3.181-7.1 7.1v6.4c0 3.919 3.182 7.1 7.1 7.1s7.1-3.181 7.1-7.1z'/><path d='m23.705 14.715v-4.753'/></g></svg>",
- NEW: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M26.875 30.5H5.125c-.663 0-1.208-.545-1.208-1.208V2.708c0-.663.545-1.208 1.208-1.208h14.5l8.458 8.458v19.333c0 .663-.545 1.208-1.208 1.208z'/><path d='M19.625 1.5v8.458h8.458m-15.708 9.667h7.25'/><path d='M16 16v7.25'/></svg>",
- COPY: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M1.498 6.772h23.73v23.73H1.498zm5.274-5.274h23.73v23.73'/></svg>",
- TRASH: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M29.5 6.182h-27m9.818 7.363v9.818m7.364-9.818v9.818'/><path d='M27.045 6.182V29.5c0 .673-.554 1.227-1.227 1.227H6.182c-.673 0-1.227-.554-1.227-1.227V6.182m17.181 0V3.727a2.47 2.47 0 0 0-2.455-2.455h-7.364a2.47 2.47 0 0 0-2.455 2.455v2.455'/></svg>",
- CURSOR_TEXT: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><path d='M16 7.3a5.83 5.83 0 0 1 5.8-5.8h2.9m0 29h-2.9a5.83 5.83 0 0 1-5.8-5.8'/><path d='M7.3 30.5h2.9a5.83 5.83 0 0 0 5.8-5.8V7.3a5.83 5.83 0 0 0-5.8-5.8H7.3'/><path d='M11.65 16h8.7'/></svg>",
- POWER: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 2.445v12.91m7.746-11.619C27.631 6.27 30.2 10.37 30.2 15.355c0 7.79-6.41 14.2-14.2 14.2s-14.2-6.41-14.2-14.2c0-4.985 2.569-9.085 6.454-11.619'/></svg>",
- QUESTION: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><g transform='matrix(.256867 0 0 .256867 -16.878964 -18.049342)'><circle cx='128' cy='180' r='12' fill='#fff'/><path d='M128 144v-8c17.67 0 32-12.54 32-28s-14.33-28-32-28-32 12.54-32 28v4' fill='none' stroke='#fff' stroke-width='16'/></g></svg>",
- REFRESH: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M23.247 12.377h7.247V5.13'/><path d='M23.911 25.663a13.29 13.29 0 0 1-9.119 3.623C7.504 29.286 1.506 23.289 1.506 16S7.504 2.713 14.792 2.713a13.29 13.29 0 0 1 9.395 3.891l6.307 5.772'/></svg>",
- REMOTE_PLAY: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' viewBox='0 0 32 32'><g transform='matrix(.492308 0 0 .581818 -14.7692 -11.6364)'><clipPath id='A'><path d='M30 20h65v55H30z'/></clipPath><g clip-path='url(#A)'><g transform='matrix(.395211 0 0 .334409 11.913 7.01124)'><g transform='matrix(.555556 0 0 .555556 57.8889 -20.2417)' fill='none' stroke='#fff' stroke-width='13.88'><path d='M200 140.564c-42.045-33.285-101.955-33.285-144 0M168 165c-23.783-17.3-56.217-17.3-80 0'/></g><g transform='matrix(-.555556 0 0 -.555556 200.111 262.393)'><g transform='matrix(1 0 0 1 0 11.5642)'><path d='M200 129c-17.342-13.728-37.723-21.795-58.636-24.198C111.574 101.378 80.703 109.444 56 129' fill='none' stroke='#fff' stroke-width='13.88'/></g><path d='M168 165c-23.783-17.3-56.217-17.3-80 0' fill='none' stroke='#fff' stroke-width='13.88'/></g><g transform='matrix(.75 0 0 .75 32 32)'><path d='M24 72h208v93.881H24z' fill='none' stroke='#fff' stroke-linejoin='miter' stroke-width='9.485'/><circle cx='188' cy='128' r='12' stroke-width='10' transform='matrix(.708333 0 0 .708333 71.8333 12.8333)'/><path d='M24.358 103.5h110' fill='none' stroke='#fff' stroke-linecap='butt' stroke-width='10.282'/></g></g></g></g></svg>",
- CARET_LEFT: "<svg xmlns='http://www.w3.org/2000/svg' width='100%' stroke='#fff' fill='#fff' height='100%' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><path d='M6.755 1.924l-6 13.649c-.119.27-.119.578 0 .849l6 13.649c.234.533.857.775 1.389.541s.775-.857.541-1.389L2.871 15.997 8.685 2.773c.234-.533-.008-1.155-.541-1.389s-1.155.008-1.389.541z'/></svg>",
- CARET_RIGHT: "<svg xmlns='http://www.w3.org/2000/svg' width='100%' stroke='#fff' fill='#fff' height='100%' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><path d='M2.685 1.924l6 13.649c.119.27.119.578 0 .849l-6 13.649c-.234.533-.857.775-1.389.541s-.775-.857-.541-1.389l5.813-13.225L.755 2.773c-.234-.533.008-1.155.541-1.389s1.155.008 1.389.541z'/></svg>",
- SCREENSHOT: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g transform='matrix(.150985 0 0 .150985 -3.32603 -2.72209)' fill='none' stroke='#fff' stroke-width='16'><path d='M208 208H48c-8.777 0-16-7.223-16-16V80c0-8.777 7.223-16 16-16h32l16-24h64l16 24h32c8.777 0 16 7.223 16 16v112c0 8.777-7.223 16-16 16z'/><circle cx='128' cy='132' r='36'/></g></svg>",
- SPEAKER_MUTED: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' stroke='none' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M5.462 3.4c-.205-.23-.499-.363-.808-.363-.592 0-1.079.488-1.079 1.08a1.08 1.08 0 0 0 .289.736l4.247 4.672H2.504a2.17 2.17 0 0 0-2.16 2.16v8.637a2.17 2.17 0 0 0 2.16 2.16h6.107l9.426 7.33a1.08 1.08 0 0 0 .662.227c.592 0 1.08-.487 1.08-1.079v-6.601l5.679 6.247a1.08 1.08 0 0 0 .808.363c.592 0 1.08-.487 1.08-1.079a1.08 1.08 0 0 0-.29-.736L5.462 3.4zm-2.958 8.285h5.398v8.637H2.504v-8.637zM17.62 26.752l-7.558-5.878V11.67l7.558 8.313v6.769zm5.668-8.607c1.072-1.218 1.072-3.063 0-4.281a1.08 1.08 0 0 1-.293-.74c0-.592.487-1.079 1.079-1.079a1.08 1.08 0 0 1 .834.393 5.42 5.42 0 0 1 0 7.137 1.08 1.08 0 0 1-.81.365c-.593 0-1.08-.488-1.08-1.08 0-.263.096-.517.27-.715zM12.469 7.888c-.147-.19-.228-.423-.228-.663a1.08 1.08 0 0 1 .417-.853l5.379-4.184a1.08 1.08 0 0 1 .662-.227c.593 0 1.08.488 1.08 1.08v10.105c0 .593-.487 1.08-1.08 1.08s-1.079-.487-1.079-1.08V5.255l-3.636 2.834c-.469.362-1.153.273-1.515-.196v-.005zm19.187 8.115a10.79 10.79 0 0 1-2.749 7.199 1.08 1.08 0 0 1-.793.347c-.593 0-1.08-.487-1.08-1.079 0-.26.094-.511.264-.708 2.918-3.262 2.918-8.253 0-11.516-.184-.2-.287-.461-.287-.733 0-.592.487-1.08 1.08-1.08a1.08 1.08 0 0 1 .816.373 10.78 10.78 0 0 1 2.749 7.197z' fill-rule='nonzero'/></svg>",
- TOUCH_CONTROL_ENABLE: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><path d='M30.021 9.448a.89.89 0 0 0-.889-.889H2.909a.89.89 0 0 0-.889.889v13.146a.89.89 0 0 0 .889.888h26.223a.89.89 0 0 0 .889-.888V9.448z' fill='none' stroke='#fff' stroke-width='2.083'/><path d='M8.147 11.981l-.053-.001-.054.001c-.55.028-.988.483-.988 1.04v6c0 .575.467 1.042 1.042 1.042l.053-.001c.55-.028.988-.484.988-1.04v-6a1.04 1.04 0 0 0-.988-1.04z'/><path d='M11.147 14.981l-.054-.001h-6a1.04 1.04 0 1 0 0 2.083h6c.575 0 1.042-.467 1.042-1.042a1.04 1.04 0 0 0-.988-1.04z'/><circle cx='25.345' cy='18.582' r='2.561' fill='none' stroke='#fff' stroke-width='1.78' transform='matrix(1.17131 0 0 1.17131 -5.74235 -5.74456)'/></svg>",
- TOUCH_CONTROL_DISABLE: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' viewBox='0 0 32 32' fill-rule='evenodd' stroke-linejoin='round' stroke-miterlimit='2'><g fill='none' stroke='#fff'><path d='M6.021 5.021l20 22' stroke-width='2'/><path d='M8.735 8.559H2.909a.89.89 0 0 0-.889.889v13.146a.89.89 0 0 0 .889.888h19.34m4.289 0h2.594a.89.89 0 0 0 .889-.888V9.448a.89.89 0 0 0-.889-.889H12.971' stroke-miterlimit='1.5' stroke-width='2.083'/></g><path d='M8.147 11.981l-.053-.001-.054.001c-.55.028-.988.483-.988 1.04v6c0 .575.467 1.042 1.042 1.042l.053-.001c.55-.028.988-.484.988-1.04v-6a1.04 1.04 0 0 0-.988-1.04z'/><path d='M11.147 14.981l-.054-.001h-6a1.04 1.04 0 1 0 0 2.083h6c.575 0 1.042-.467 1.042-1.042a1.04 1.04 0 0 0-.988-1.04z'/><circle cx='25.345' cy='18.582' r='2.561' fill='none' stroke='#fff' stroke-width='1.78' transform='matrix(1.17131 0 0 1.17131 -5.74235 -5.74456)'/></svg>",
- MICROPHONE: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M21.368 6.875A5.37 5.37 0 0 0 16 1.507a5.37 5.37 0 0 0-5.368 5.368v8.588A5.37 5.37 0 0 0 16 20.831a5.37 5.37 0 0 0 5.368-5.368V6.875zM16 25.125v5.368m9.662-15.03c0 5.3-4.362 9.662-9.662 9.662s-9.662-4.362-9.662-9.662'/></svg>",
- MICROPHONE_MUTED: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 25.125v5.368M5.265 4.728l21.471 23.618m-4.789-5.267c-1.698 1.326-3.793 2.047-5.947 2.047-5.3 0-9.662-4.362-9.662-9.662'/><path d='M25.662 15.463a9.62 9.62 0 0 1-.978 4.242m-5.64.187c-.895.616-1.957.943-3.043.939-2.945 0-5.368-2.423-5.368-5.368v-4.831m.442-5.896A5.38 5.38 0 0 1 16 1.507c2.945 0 5.368 2.423 5.368 5.368v8.588c0 .188-.01.375-.03.562'/></svg>",
- BATTERY: "<svg xmlns='http://www.w3.org/2000/svg' fill='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' stroke-miterlimit='2' viewBox='0 0 32 32'><path d='M24.774 6.71H3.097C1.398 6.71 0 8.108 0 9.806v12.387c0 1.699 1.398 3.097 3.097 3.097h21.677c1.699 0 3.097-1.398 3.097-3.097V9.806c0-1.699-1.398-3.097-3.097-3.097zm1.032 15.484a1.04 1.04 0 0 1-1.032 1.032H3.097a1.04 1.04 0 0 1-1.032-1.032V9.806a1.04 1.04 0 0 1 1.032-1.032h21.677a1.04 1.04 0 0 1 1.032 1.032v12.387zm-2.065-10.323v8.258a1.04 1.04 0 0 1-1.032 1.032H5.161a1.04 1.04 0 0 1-1.032-1.032v-8.258a1.04 1.04 0 0 1 1.032-1.032H22.71a1.04 1.04 0 0 1 1.032 1.032zm8.258 0v8.258a1.04 1.04 0 0 1-1.032 1.032 1.04 1.04 0 0 1-1.032-1.032v-8.258a1.04 1.04 0 0 1 1.032-1.032A1.04 1.04 0 0 1 32 11.871z' fill-rule='nonzero'/></svg>",
- PLAYTIME: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><g transform='matrix(.150026 0 0 .150026 -3.20332 -3.20332)' fill='none' stroke='#fff' stroke-width='16'><circle cx='128' cy='128' r='96'/><path d='M128 72v56h56'/></g></svg>",
- SERVER: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M9.773 16c0-5.694 4.685-10.379 10.379-10.379S30.53 10.306 30.53 16s-4.685 10.379-10.379 10.379H8.735c-3.982-.005-7.256-3.283-7.256-7.265s3.28-7.265 7.265-7.265c.606 0 1.21.076 1.797.226' fill='none' stroke='#fff' stroke-width='2.076'/></svg>",
- DOWNLOAD: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 19.955V1.5m14.5 18.455v9.227c0 .723-.595 1.318-1.318 1.318H2.818c-.723 0-1.318-.595-1.318-1.318v-9.227'/><path d='M22.591 13.364L16 19.955l-6.591-6.591'/></svg>",
- UPLOAD: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M16 19.905V1.682m14.318 18.223v9.112a1.31 1.31 0 0 1-1.302 1.302H2.983a1.31 1.31 0 0 1-1.302-1.302v-9.112'/><path d='M9.492 8.19L16 1.682l6.508 6.508'/></svg>",
- AUDIO: "<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 32 32'><path d='M8.964 21.417h-6.5a1.09 1.09 0 0 1-1.083-1.083v-8.667a1.09 1.09 0 0 1 1.083-1.083h6.5L18.714 3v26l-9.75-7.583z'/><path d='M8.964 10.583v10.833m15.167-8.28a4.35 4.35 0 0 1 0 5.728M28.149 9.5a9.79 9.79 0 0 1 0 13'/></svg>"
-};
 class BxSelectElement extends HTMLSelectElement {
+ isControllerFriendly;
  optionsList;
  indicatorsList;
  $indicators;
@@ -3896,21 +3990,36 @@ class BxSelectElement extends HTMLSelectElement {
  $label;
  $checkBox;
  static create($select, forceFriendly = !1) {
-  if (!forceFriendly && !getPref("ui.controllerFriendly")) return $select.classList.add("bx-select"), $select;
+  let isControllerFriendly = forceFriendly || getPref("ui.controllerFriendly");
+  if ($select.multiple && !isControllerFriendly) return $select.classList.add("bx-select"), $select;
   $select.removeAttribute("tabindex");
-  let $wrapper = CE("div", { class: "bx-select" }), $btnPrev = createButton({
-   label: "<",
-   style: 64
-  }), $btnNext = createButton({
-   label: ">",
-   style: 64
+  let $wrapper = CE("div", {
+   class: "bx-select",
+   _dataset: {
+    controllerFriendly: isControllerFriendly
+   }
   });
-  setNearby($wrapper, {
-   orientation: "horizontal",
-   focus: $btnNext
-  });
+  if ($select.classList.contains("bx-full-width")) $wrapper.classList.add("bx-full-width");
   let $content, self = $wrapper;
-  if (self.isMultiple = $select.multiple, self.visibleIndex = $select.selectedIndex, self.$select = $select, self.optionsList = Array.from($select.querySelectorAll("option")), self.$indicators = CE("div", { class: "bx-select-indicators" }), self.indicatorsList = [], self.$btnNext = $btnNext, self.$btnPrev = $btnPrev, self.isMultiple) $content = CE("button", {
+  self.isControllerFriendly = isControllerFriendly, self.isMultiple = $select.multiple, self.visibleIndex = $select.selectedIndex, self.$select = $select, self.optionsList = Array.from($select.querySelectorAll("option")), self.$indicators = CE("div", { class: "bx-select-indicators" }), self.indicatorsList = [];
+  let $btnPrev, $btnNext;
+  if (isControllerFriendly) {
+   $btnPrev = createButton({
+    label: "<",
+    style: 64
+   }), $btnNext = createButton({
+    label: ">",
+    style: 64
+   }), setNearby($wrapper, {
+    orientation: "horizontal",
+    focus: $btnNext
+   }), self.$btnNext = $btnNext, self.$btnPrev = $btnPrev;
+   let boundOnPrevNext = BxSelectElement.onPrevNext.bind(self);
+   $btnPrev.addEventListener("click", boundOnPrevNext), $btnNext.addEventListener("click", boundOnPrevNext);
+  } else $select.addEventListener("change", (e) => {
+    self.visibleIndex = $select.selectedIndex, BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
+   });
+  if (self.isMultiple) $content = CE("button", {
     class: "bx-select-value bx-focusable",
     tabindex: 0
    }, CE("div", {}, self.$checkBox = CE("input", { type: "checkbox" }), self.$label = CE("span", {}, "")), self.$indicators), $content.addEventListener("click", (e) => {
@@ -3920,8 +4029,7 @@ class BxSelectElement extends HTMLSelectElement {
     $option && ($option.selected = e.target.checked), BxEvent.dispatch($select, "input");
    });
   else $content = CE("div", {}, self.$label = CE("label", { for: $select.id + "_checkbox" }, ""), self.$indicators);
-  let boundOnPrevNext = BxSelectElement.onPrevNext.bind(self);
-  return $select.addEventListener("input", BxSelectElement.render.bind(self)), $btnPrev.addEventListener("click", boundOnPrevNext), $btnNext.addEventListener("click", boundOnPrevNext), new MutationObserver((mutationList, observer2) => {
+  return $select.addEventListener("input", BxSelectElement.render.bind(self)), new MutationObserver((mutationList, observer2) => {
    mutationList.forEach((mutation) => {
     if (mutation.type === "childList" || mutation.type === "attributes") self.visibleIndex = $select.selectedIndex, self.optionsList = Array.from($select.querySelectorAll("option")), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self);
    });
@@ -3929,7 +4037,7 @@ class BxSelectElement extends HTMLSelectElement {
    subtree: !0,
    childList: !0,
    attributes: !0
-  }), self.append($select, $btnPrev, $content, $btnNext), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self), Object.defineProperty(self, "value", {
+  }), self.append($select, $btnPrev || "", $content, $btnNext || ""), BxSelectElement.resetIndicators.call(self), BxSelectElement.render.call(self), Object.defineProperty(self, "value", {
    get() {
     return $select.value;
    },
@@ -3978,7 +4086,6 @@ class BxSelectElement extends HTMLSelectElement {
    $btnNext,
    $btnPrev,
    $checkBox,
-   visibleIndex,
    optionsList,
    indicatorsList
   } = this;
@@ -3987,7 +4094,7 @@ class BxSelectElement extends HTMLSelectElement {
   let $option = BxSelectElement.getOptionAtIndex.call(this, this.visibleIndex), content = "";
   if ($option) {
    let $parent = $option.parentElement, hasLabel = $parent instanceof HTMLOptGroupElement || this.$select.querySelector("optgroup");
-   if (content = $option.textContent || "", content && hasLabel) {
+   if (content = $option.dataset.label || $option.textContent || "", content && hasLabel) {
     let groupLabel = $parent instanceof HTMLOptGroupElement ? $parent.label : " ";
     $label.innerHTML = "";
     let fragment = document.createDocumentFragment();
@@ -3996,12 +4103,12 @@ class BxSelectElement extends HTMLSelectElement {
   } else $label.textContent = content;
   if ($label.classList.toggle("bx-line-through", $option && $option.disabled), this.isMultiple) $checkBox.checked = $option?.selected || !1, $checkBox.classList.toggle("bx-gone", !content);
   let disableButtons = optionsList.length <= 1;
-  $btnPrev.classList.toggle("bx-inactive", disableButtons), $btnNext.classList.toggle("bx-inactive", disableButtons);
+  $btnPrev?.classList.toggle("bx-inactive", disableButtons), $btnNext?.classList.toggle("bx-inactive", disableButtons);
   for (let i = 0;i < optionsList.length; i++) {
    let $option2 = optionsList[i], $indicator = indicatorsList[i];
    if (!$option2 || !$indicator) continue;
    if (clearDataSet($indicator), $option2.selected) $indicator.dataset.selected = "true";
-   if ($option2.index === visibleIndex) $indicator.dataset.highlighted = "true";
+   if ($option2.index === this.visibleIndex) $indicator.dataset.highlighted = "true";
   }
  }
  static normalizeIndex(index) {
@@ -4022,178 +4129,24 @@ class BxSelectElement extends HTMLSelectElement {
   else BxEvent.dispatch($select, "input");
  }
 }
-var controller_shortcuts_default = `if (window.BX_EXPOSED.disableGamepadPolling) {
-this.inputConfiguration.useIntervalWorkerThreadForInput && this.intervalWorker ? this.intervalWorker.scheduleTimer(50) : this.pollGamepadssetTimeoutTimerID = setTimeout(this.pollGamepads, 50);
-return;
-}
-const currentGamepad = \${gamepadVar};
-if (currentGamepad.buttons[17] && currentGamepad.buttons[17].pressed) {
-window.dispatchEvent(new Event(BxEvent.CAPTURE_SCREENSHOT));
-}
-const btnHome = currentGamepad.buttons[16];
-if (btnHome) {
-if (!this.bxHomeStates) {
-this.bxHomeStates = {};
-}
-let intervalMs = 0;
-let hijack = false;
-if (btnHome.pressed) {
-hijack = true;
-intervalMs = 16;
-this.gamepadIsIdle.set(currentGamepad.index, false);
-if (this.bxHomeStates[currentGamepad.index]) {
-const lastTimestamp = this.bxHomeStates[currentGamepad.index].timestamp;
-if (currentGamepad.timestamp !== lastTimestamp) {
-this.bxHomeStates[currentGamepad.index].timestamp = currentGamepad.timestamp;
-const handled = window.BX_EXPOSED.handleControllerShortcut(currentGamepad);
-if (handled) {
-this.bxHomeStates[currentGamepad.index].shortcutPressed += 1;
-}
-}
-} else {
-window.BX_EXPOSED.resetControllerShortcut(currentGamepad.index);
-this.bxHomeStates[currentGamepad.index] = {
-shortcutPressed: 0,
-timestamp: currentGamepad.timestamp,
-};
-}
-} else if (this.bxHomeStates[currentGamepad.index]) {
-hijack = true;
-const info = structuredClone(this.bxHomeStates[currentGamepad.index]);
-this.bxHomeStates[currentGamepad.index] = null;
-if (info.shortcutPressed === 0) {
-const fakeGamepadMappings = [{
-GamepadIndex: currentGamepad.index,
-A: 0,
-B: 0,
-X: 0,
-Y: 0,
-LeftShoulder: 0,
-RightShoulder: 0,
-LeftTrigger: 0,
-RightTrigger: 0,
-View: 0,
-Menu: 0,
-LeftThumb: 0,
-RightThumb: 0,
-DPadUp: 0,
-DPadDown: 0,
-DPadLeft: 0,
-DPadRight: 0,
-Nexus: 1,
-LeftThumbXAxis: 0,
-LeftThumbYAxis: 0,
-RightThumbXAxis: 0,
-RightThumbYAxis: 0,
-PhysicalPhysicality: 0,
-VirtualPhysicality: 0,
-Dirty: true,
-Virtual: false,
-}];
-const isLongPress = (currentGamepad.timestamp - info.timestamp) >= 500;
-intervalMs = isLongPress ? 500 : 100;
-this.inputSink.onGamepadInput(performance.now() - intervalMs, fakeGamepadMappings);
-} else {
-intervalMs = window.BX_STREAM_SETTINGS.controllerPollingRate;
-}
-}
-if (hijack && intervalMs) {
-this.inputConfiguration.useIntervalWorkerThreadForInput && this.intervalWorker ? this.intervalWorker.scheduleTimer(intervalMs) : this.pollGamepadssetTimeoutTimerID = setTimeout(this.pollGamepads, intervalMs);
-return;
-}
-}`;
-var expose_stream_session_default = `window.BX_EXPOSED.streamSession = this;
-const orgSetMicrophoneState = this.setMicrophoneState.bind(this);
-this.setMicrophoneState = state => {
-orgSetMicrophoneState(state);
-window.BxEventBus.Stream.emit('microphone.state.changed', { state });
-};
-window.dispatchEvent(new Event(BxEvent.STREAM_SESSION_READY));
-let updateDimensionsStr = this.updateDimensions.toString();
-if (updateDimensionsStr.startsWith('function ')) {
-updateDimensionsStr = updateDimensionsStr.substring(9);
-}
-const renderTargetVar = updateDimensionsStr.match(/if\\((\\w+)\\){/)[1];
-updateDimensionsStr = updateDimensionsStr.replaceAll(renderTargetVar + '.scroll', 'scroll');
-updateDimensionsStr = updateDimensionsStr.replace(\`if(\${renderTargetVar}){\`, \`
-if (\${renderTargetVar}) {
-const scrollWidth = \${renderTargetVar}.dataset.width ? parseInt(\${renderTargetVar}.dataset.width) : \${renderTargetVar}.scrollWidth;
-const scrollHeight = \${renderTargetVar}.dataset.height ? parseInt(\${renderTargetVar}.dataset.height) : \${renderTargetVar}.scrollHeight;
-\`);
-eval(\`this.updateDimensions = function \${updateDimensionsStr}\`);`;
-var local_co_op_enable_default = `this.orgOnGamepadChanged = this.onGamepadChanged;
-this.orgOnGamepadInput = this.onGamepadInput;
-let match;
-let onGamepadChangedStr = this.onGamepadChanged.toString();
-if (onGamepadChangedStr.startsWith('function ')) {
-onGamepadChangedStr = onGamepadChangedStr.substring(9);
-}
-onGamepadChangedStr = onGamepadChangedStr.replaceAll('0', 'arguments[1]');
-eval(\`this.patchedOnGamepadChanged = function \${onGamepadChangedStr}\`);
-let onGamepadInputStr = this.onGamepadInput.toString();
-if (onGamepadInputStr.startsWith('function ')) {
-onGamepadInputStr = onGamepadInputStr.substring(9);
-}
-match = onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);
-if (match) {
-const gamepadIndexVar = match[0];
-onGamepadInputStr = onGamepadInputStr.replace('this.gamepadStates.get(', \`this.gamepadStates.get(\${gamepadIndexVar},\`);
-eval(\`this.patchedOnGamepadInput = function \${onGamepadInputStr}\`);
-BxLogger.info('supportLocalCoOp', '✅ Successfully patched local co-op support');
-} else {
-BxLogger.error('supportLocalCoOp', '❌ Unable to patch local co-op support');
-}
-this.toggleLocalCoOp = enable => {
-BxLogger.info('toggleLocalCoOp', enable ? 'Enabled' : 'Disabled');
-this.onGamepadChanged = enable ? this.patchedOnGamepadChanged : this.orgOnGamepadChanged;
-this.onGamepadInput = enable ? this.patchedOnGamepadInput : this.orgOnGamepadInput;
-const gamepads = window.navigator.getGamepads();
-for (const gamepad of gamepads) {
-if (!gamepad?.connected) {
-continue;
-}
-if (gamepad.id.includes('Better xCloud')) {
-continue;
-}
-window.dispatchEvent(new GamepadEvent('gamepaddisconnected', { gamepad }));
-window.dispatchEvent(new GamepadEvent('gamepadconnected', { gamepad }));
-}
-};
-window.BX_EXPOSED.toggleLocalCoOp = this.toggleLocalCoOp.bind(this);`;
-var remote_play_enable_default = `connectMode: window.BX_REMOTE_PLAY_CONFIG ? "xhome-connect" : "cloud-connect",
-remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFIG.serverId) || '',`;
-var remote_play_keep_alive_default = `const msg = JSON.parse(e);
-if (msg.reason === 'WarningForBeingIdle' && !window.location.pathname.includes('/launch/')) {
-try {
-this.sendKeepAlive();
-return;
-} catch (ex) { console.log(ex); }
-}`;
-var vibration_adjust_default = `const gamepad = e.gamepad;
-if (gamepad?.connected) {
-const gamepadSettings = window.BX_STREAM_SETTINGS.controllers[gamepad.id];
-if (gamepadSettings) {
-const intensity = gamepadSettings.vibrationIntensity;
-if (intensity === 0) {
-return void(e.repeat = 0);
-} else if (intensity < 1) {
-e.leftMotorPercent *= intensity;
-e.rightMotorPercent *= intensity;
-e.leftTriggerMotorPercent *= intensity;
-e.rightTriggerMotorPercent *= intensity;
-}
-}
-}`;
+var controller_customization_default = "var shareButtonPressed=currentGamepad.buttons[17]?.pressed,shareButtonHandled=!1,xCloudGamepad=$xCloudGamepadVar$;if(currentGamepad.id in window.BX_STREAM_SETTINGS.controllers){let controller=window.BX_STREAM_SETTINGS.controllers[currentGamepad.id];if(controller?.customization){let{mapping,ranges}=controller.customization,pressedButtons={},releasedButtons={},isModified=!1;if(ranges.LeftTrigger){let[from,to]=ranges.LeftTrigger;xCloudGamepad.LeftTrigger=xCloudGamepad.LeftTrigger>to?1:xCloudGamepad.LeftTrigger,xCloudGamepad.LeftTrigger=xCloudGamepad.LeftTrigger<from?0:xCloudGamepad.LeftTrigger}if(ranges.RightTrigger){let[from,to]=ranges.RightTrigger;xCloudGamepad.RightTrigger=xCloudGamepad.RightTrigger>to?1:xCloudGamepad.RightTrigger,xCloudGamepad.RightTrigger=xCloudGamepad.RightTrigger<from?0:xCloudGamepad.RightTrigger}if(ranges.LeftThumb){let[from,to]=ranges.LeftThumb,xAxis=xCloudGamepad.LeftThumbXAxis,yAxis=xCloudGamepad.LeftThumbYAxis,range=Math.abs(Math.sqrt(xAxis*xAxis+yAxis*yAxis)),newRange=range>to?1:range;if(newRange=newRange<from?0:newRange,newRange!==range)xCloudGamepad.LeftThumbXAxis=xAxis*(newRange/range),xCloudGamepad.LeftThumbYAxis=yAxis*(newRange/range)}if(ranges.RightThumb){let[from,to]=ranges.RightThumb,xAxis=xCloudGamepad.RightThumbXAxis,yAxis=xCloudGamepad.RightThumbYAxis,range=Math.abs(Math.sqrt(xAxis*xAxis+yAxis*yAxis)),newRange=range>to?1:range;if(newRange=newRange<from?0:newRange,newRange!==range)xCloudGamepad.RightThumbXAxis=xAxis*(newRange/range),xCloudGamepad.RightThumbYAxis=yAxis*(newRange/range)}if(shareButtonPressed&&\"Share\"in mapping){let targetButton=mapping.Share;if(typeof targetButton===\"string\")pressedButtons[targetButton]=1;shareButtonHandled=!0,delete mapping.Share}let key;for(key in mapping){let mappedKey=mapping[key];if(key===\"LeftStickAxes\"||key===\"RightStickAxes\"){let sourceX,sourceY,targetX,targetY;if(key===\"LeftStickAxes\")sourceX=\"LeftThumbXAxis\",sourceY=\"LeftThumbYAxis\",targetX=\"RightThumbXAxis\",targetY=\"RightThumbYAxis\";else sourceX=\"RightThumbXAxis\",sourceY=\"RightThumbYAxis\",targetX=\"LeftThumbXAxis\",targetY=\"LeftThumbYAxis\";if(typeof mappedKey===\"string\"){let rangeX=xCloudGamepad[sourceX],rangeY=xCloudGamepad[sourceY];if(Math.abs(Math.sqrt(rangeX*rangeX+rangeY*rangeY))>=0.1)pressedButtons[targetX]=rangeX,pressedButtons[targetY]=rangeY}releasedButtons[sourceX]=0,releasedButtons[sourceY]=0,isModified=!0}else if(typeof mappedKey===\"string\"){let pressed=!1,value=0;if(key===\"LeftTrigger\"||key===\"RightTrigger\"){let currentRange=xCloudGamepad[key];if(mappedKey===\"LeftTrigger\"||mappedKey===\"RightTrigger\")pressed=currentRange>=0.1,value=currentRange;else pressed=!0,value=currentRange>=0.9?1:0}else if(xCloudGamepad[key])pressed=!0,value=xCloudGamepad[key];if(pressed)pressedButtons[mappedKey]=value,releasedButtons[key]=0,isModified=!0}else if(mappedKey===!1)pressedButtons[key]=0,isModified=!0}isModified&&Object.assign(xCloudGamepad,releasedButtons,pressedButtons)}}if(shareButtonPressed&&!shareButtonHandled)window.dispatchEvent(new Event(BxEvent.CAPTURE_SCREENSHOT));\n";
+var poll_gamepad_default = "var self=this;if(window.BX_EXPOSED.disableGamepadPolling){self.inputConfiguration.useIntervalWorkerThreadForInput&&self.intervalWorker?self.intervalWorker.scheduleTimer(50):self.pollGamepadssetTimeoutTimerID=window.setTimeout(self.pollGamepads,50);return}var currentGamepad=$gamepadVar$,btnHome=currentGamepad.buttons[16];if(btnHome){if(!self.bxHomeStates)self.bxHomeStates={};let intervalMs=0,hijack=!1;if(btnHome.pressed)if(hijack=!0,intervalMs=16,self.gamepadIsIdle.set(currentGamepad.index,!1),self.bxHomeStates[currentGamepad.index]){let lastTimestamp=self.bxHomeStates[currentGamepad.index].timestamp;if(currentGamepad.timestamp!==lastTimestamp){if(self.bxHomeStates[currentGamepad.index].timestamp=currentGamepad.timestamp,window.BX_EXPOSED.handleControllerShortcut(currentGamepad))self.bxHomeStates[currentGamepad.index].shortcutPressed+=1}}else window.BX_EXPOSED.resetControllerShortcut(currentGamepad.index),self.bxHomeStates[currentGamepad.index]={shortcutPressed:0,timestamp:currentGamepad.timestamp};else if(self.bxHomeStates[currentGamepad.index]){hijack=!0;let info=structuredClone(self.bxHomeStates[currentGamepad.index]);if(self.bxHomeStates[currentGamepad.index]=null,info.shortcutPressed===0){let fakeGamepadMappings=[{GamepadIndex:currentGamepad.index,A:0,B:0,X:0,Y:0,LeftShoulder:0,RightShoulder:0,LeftTrigger:0,RightTrigger:0,View:0,Menu:0,LeftThumb:0,RightThumb:0,DPadUp:0,DPadDown:0,DPadLeft:0,DPadRight:0,Nexus:1,LeftThumbXAxis:0,LeftThumbYAxis:0,RightThumbXAxis:0,RightThumbYAxis:0,PhysicalPhysicality:0,VirtualPhysicality:0,Dirty:!0,Virtual:!1}];intervalMs=currentGamepad.timestamp-info.timestamp>=500?500:100,self.inputSink.onGamepadInput(performance.now()-intervalMs,fakeGamepadMappings)}else intervalMs=window.BX_STREAM_SETTINGS.controllerPollingRate}if(hijack&&intervalMs){self.inputConfiguration.useIntervalWorkerThreadForInput&&self.intervalWorker?self.intervalWorker.scheduleTimer(intervalMs):self.pollGamepadssetTimeoutTimerID=setTimeout(self.pollGamepads,intervalMs);return}}\n";
+var expose_stream_session_default = 'var self=this;window.BX_EXPOSED.streamSession=self;var orgSetMicrophoneState=self.setMicrophoneState.bind(self);self.setMicrophoneState=(state)=>{orgSetMicrophoneState(state),window.BxEventBus.Stream.emit("microphone.state.changed",{state})};window.dispatchEvent(new Event(BxEvent.STREAM_SESSION_READY));var updateDimensionsStr=self.updateDimensions.toString();if(updateDimensionsStr.startsWith("function "))updateDimensionsStr=updateDimensionsStr.substring(9);var renderTargetVar=updateDimensionsStr.match(/if\\((\\w+)\\){/)[1];updateDimensionsStr=updateDimensionsStr.replaceAll(renderTargetVar+".scroll","scroll");updateDimensionsStr=updateDimensionsStr.replace(`if(${renderTargetVar}){`,`\nif (${renderTargetVar}) {\nconst scrollWidth = ${renderTargetVar}.dataset.width ? parseInt(${renderTargetVar}.dataset.width) : ${renderTargetVar}.scrollWidth;\nconst scrollHeight = ${renderTargetVar}.dataset.height ? parseInt(${renderTargetVar}.dataset.height) : ${renderTargetVar}.scrollHeight;\n`);eval(`this.updateDimensions = function ${updateDimensionsStr}`);\n';
+var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
+var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&!window.location.pathname.includes("/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
+var vibration_adjust_default = `if(e?.gamepad?.connected){let gamepadSettings=window.BX_STREAM_SETTINGS.controllers[e.gamepad.id];if(gamepadSettings?.customization){let intensity=gamepadSettings.customization.vibrationIntensity;if(intensity<=0){e.repeat=0;return}else if(intensity<1)e.leftMotorPercent*=intensity,e.rightMotorPercent*=intensity,e.leftTriggerMotorPercent*=intensity,e.rightTriggerMotorPercent*=intensity}}`;
 class PatcherUtils {
- static indexOf(txt, searchString, startIndex, maxRange) {
+ static indexOf(txt, searchString, startIndex, maxRange = 0, after = !1) {
+  if (startIndex < 0) return -1;
   let index = txt.indexOf(searchString, startIndex);
   if (index < 0 || maxRange && index - startIndex > maxRange) return -1;
-  return index;
+  return after ? index + searchString.length : index;
  }
- static lastIndexOf(txt, searchString, startIndex, maxRange) {
+ static lastIndexOf(txt, searchString, startIndex, maxRange = 0, after = !1) {
+  if (startIndex < 0) return -1;
   let index = txt.lastIndexOf(searchString, startIndex);
   if (index < 0 || maxRange && startIndex - index > maxRange) return -1;
-  return index;
+  return after ? index + searchString.length : index;
  }
  static insertAt(txt, index, insertString) {
   return txt.substring(0, index) + insertString + txt.substring(index);
@@ -4262,7 +4215,9 @@ var LOG_TAG2 = "Patcher", PATCHES = {
  remotePlayConnectMode(str) {
   let text = 'connectMode:"cloud-connect",';
   if (!str.includes(text)) return !1;
-  return str.replace(text, remote_play_enable_default);
+  let newCode = `connectMode: window.BX_REMOTE_PLAY_CONFIG ? "xhome-connect" : "cloud-connect",
+remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFIG.serverId) || '',`;
+  return str.replace(text, newCode);
  },
  remotePlayDisableAchievementToast(str) {
   let text = ".AchievementUnlock:{";
@@ -4293,14 +4248,16 @@ var LOG_TAG2 = "Patcher", PATCHES = {
   if (setTimeoutIndex < 0) return !1;
   let codeBlock = str.substring(index, setTimeoutIndex), tmp = str.substring(setTimeoutIndex, setTimeoutIndex + 150), tmpPatched = tmp.replaceAll("Math.max(0,4-", "Math.max(0,window.BX_STREAM_SETTINGS.controllerPollingRate - ");
   if (str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched), getPref("block.tracking")) codeBlock = codeBlock.replace("this.inputPollingIntervalStats.addValue", ""), codeBlock = codeBlock.replace("this.inputPollingDurationStats.addValue", "");
-  let match = codeBlock.match(/this\.gamepadTimestamps\.set\((\w+)\.index/);
-  if (match) {
-   let gamepadVar = match[1], newCode = renderString(controller_shortcuts_default, {
-    gamepadVar
-   });
-   codeBlock = codeBlock.replace("this.gamepadTimestamps.set", newCode + "this.gamepadTimestamps.set");
-  }
-  return str = str.substring(0, index) + codeBlock + str.substring(setTimeoutIndex), str;
+  let match = codeBlock.match(/this\.gamepadTimestamps\.set\(([A-Za-z0-9_$]+)\.index/);
+  if (!match) return !1;
+  let newCode = renderString(poll_gamepad_default, {
+   gamepadVar: match[1]
+  });
+  if (codeBlock = codeBlock.replace("this.gamepadTimestamps.set", newCode + "this.gamepadTimestamps.set"), match = codeBlock.match(/let ([A-Za-z0-9_$]+)=this\.gamepadMappings\.find/), !match) return !1;
+  let xCloudGamepadVar = match[1], inputFeedbackManager = PatcherUtils.indexOf(codeBlock, "this.inputFeedbackManager.onGamepadConnected(", 0, 1e4), backetIndex = PatcherUtils.indexOf(codeBlock, "}", inputFeedbackManager, 100);
+  if (backetIndex < 0) return !1;
+  let customizationCode = ";";
+  return customizationCode += renderString(controller_customization_default, { xCloudGamepadVar }), codeBlock = PatcherUtils.insertAt(codeBlock, backetIndex, customizationCode), str = str.substring(0, index) + codeBlock + str.substring(setTimeoutIndex), str;
  },
  enableXcloudLogger(str) {
   let text = "this.telemetryProvider=e}log(e,t,r){";
@@ -5094,7 +5051,8 @@ class BaseProfileManagerDialog extends NavigationDialog {
  title;
  presetsDb;
  allPresets;
- currentPresetId = 0;
+ currentPresetId = null;
+ activatedPresetId = null;
  $presets;
  $header;
  $defaultNote;
@@ -5106,11 +5064,12 @@ class BaseProfileManagerDialog extends NavigationDialog {
   this.title = title, this.presetsDb = presetsDb;
  }
  updateButtonStates() {
-  let isDefaultPreset = this.currentPresetId <= 0;
+  let isDefaultPreset = this.currentPresetId === null || this.currentPresetId <= 0;
   this.$btnRename.disabled = isDefaultPreset, this.$btnDelete.disabled = isDefaultPreset, this.$defaultNote.classList.toggle("bx-gone", !isDefaultPreset);
  }
  async renderPresetsList() {
-  this.allPresets = await this.presetsDb.getPresets(), renderPresetsList(this.$presets, this.allPresets, this.currentPresetId, { selectedIndicator: !0 });
+  if (this.allPresets = await this.presetsDb.getPresets(), this.currentPresetId === null) this.currentPresetId = this.allPresets.default[0];
+  renderPresetsList(this.$presets, this.allPresets, this.activatedPresetId, { selectedIndicator: !0 });
  }
  promptNewName(action, value = "") {
   let newName = "";
@@ -5121,9 +5080,12 @@ class BaseProfileManagerDialog extends NavigationDialog {
   return newName ? newName : !1;
  }
  async renderDialog() {
-  this.$presets = CE("select", { tabindex: -1 });
+  this.$presets = CE("select", {
+   class: "bx-full-width",
+   tabindex: -1
+  });
   let $select = BxSelectElement.create(this.$presets);
-  $select.classList.add("bx-full-width"), $select.addEventListener("input", (e) => {
+  $select.addEventListener("input", (e) => {
    this.switchPreset(parseInt($select.value));
   });
   let $header = CE("div", {
@@ -5172,15 +5134,20 @@ class BaseProfileManagerDialog extends NavigationDialog {
   }));
   this.$header = $header, this.$container = CE("div", { class: "bx-centered-dialog" }, CE("div", { class: "bx-dialog-title" }, CE("p", {}, this.title), createButton({
    icon: BxIcon.CLOSE,
-   style: 64 | 1024 | 8,
+   style: 64 | 2048 | 8,
    onClick: (e) => this.hide()
   })), CE("div", {}, $header, this.$defaultNote = CE("div", { class: "bx-default-preset-note bx-gone" }, t("default-preset-note"))), CE("div", { class: "bx-dialog-content" }, this.$content));
  }
  async refresh() {
-  await this.renderPresetsList(), this.switchPreset(this.currentPresetId);
+  await this.renderPresetsList(), this.$presets.value = this.currentPresetId.toString(), BxEvent.dispatch(this.$presets, "input", { manualTrigger: !0 });
  }
  async onBeforeMount(configs = {}) {
-  if (configs?.id) this.currentPresetId = configs.id;
+  await this.renderPresetsList();
+  let valid = !1;
+  if (typeof configs?.id === "number") {
+   if (configs.id in this.allPresets.data) this.currentPresetId = configs.id, this.activatedPresetId = configs.id, valid = !0;
+  }
+  if (!valid) this.currentPresetId = this.allPresets.default[0], this.activatedPresetId = null;
   this.refresh();
  }
  getDialog() {
@@ -5259,7 +5226,10 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
  ];
  constructor(title) {
   super(title, ControllerShortcutsTable.getInstance());
-  let PREF_CONTROLLER_FRIENDLY_UI = getPref("ui.controllerFriendly"), $baseSelect = CE("select", { autocomplete: "off" }, CE("option", { value: "" }, "---"));
+  let $baseSelect = CE("select", {
+   class: "bx-full-width",
+   autocomplete: "off"
+  }, CE("option", { value: "" }, "---"));
   for (let groupLabel in SHORTCUT_ACTIONS) {
    let items = SHORTCUT_ACTIONS[groupLabel];
    if (!items) continue;
@@ -5275,15 +5245,6 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
   let $content = CE("div", {
    class: "bx-controller-shortcuts-manager-container"
   }), onActionChanged = (e) => {
-   let $target = e.target, action = $target.value;
-   if (!PREF_CONTROLLER_FRIENDLY_UI) {
-    let $fakeSelect = $target.previousElementSibling, fakeText = "---";
-    if (action) {
-     let $selectedOption = $target.options[$target.selectedIndex];
-     fakeText = $selectedOption.parentElement.label + " ❯ " + $selectedOption.text;
-    }
-    $fakeSelect.firstElementChild.text = fakeText;
-   }
    if (!e.ignoreOnChange) this.updatePreset();
   }, fragment = document.createDocumentFragment();
   fragment.appendChild(CE("p", { class: "bx-shortcut-note" }, CE("span", { class: "bx-prompt" }, ""), ": " + t("controller-shortcuts-xbox-note")));
@@ -5293,12 +5254,10 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
     _nearby: {
      orientation: "horizontal"
     }
-   }), $label = CE("label", { class: "bx-prompt" }, `${""}${prompt2}`), $div = CE("div", { class: "bx-shortcut-actions" }), $fakeSelect = null;
-   if (!PREF_CONTROLLER_FRIENDLY_UI) $fakeSelect = CE("select", { autocomplete: "off" }, CE("option", {}, "---")), $div.appendChild($fakeSelect);
-   let $select = BxSelectElement.create($baseSelect.cloneNode(!0));
-   $select.dataset.button = button.toString(), $select.classList.add("bx-full-width"), $select.addEventListener("input", onActionChanged), this.selectActions[button] = [$select, $fakeSelect], $div.appendChild($select), setNearby($row, {
+   }), $label = CE("label", { class: "bx-prompt" }, `${""}${prompt2}`), $select = BxSelectElement.create($baseSelect.cloneNode(!0));
+   $select.dataset.button = button.toString(), $select.addEventListener("input", onActionChanged), this.selectActions[button] = $select, setNearby($row, {
     focus: $select
-   }), $row.append($label, $div), fragment.appendChild($row);
+   }), $row.append($label, $select), fragment.appendChild($row);
   }
   $content.appendChild(fragment), this.$content = $content;
  }
@@ -5311,8 +5270,8 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
   this.currentPresetId = id;
   let isDefaultPreset = id <= 0, actions = preset.data, button;
   for (button in this.selectActions) {
-   let [$select, $fakeSelect] = this.selectActions[button];
-   $select.value = actions.mapping[button] || "", $select.disabled = isDefaultPreset, $fakeSelect && ($fakeSelect.disabled = isDefaultPreset), BxEvent.dispatch($select, "input", {
+   let $select = this.selectActions[button];
+   $select.value = actions.mapping[button] || "", $select.disabled = isDefaultPreset, BxEvent.dispatch($select, "input", {
     ignoreOnChange: !0,
     manualTrigger: !0
    });
@@ -5322,12 +5281,294 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
  updatePreset() {
   let newData = deepClone(this.BLANK_PRESET_DATA), button;
   for (button in this.selectActions) {
-   let [$select, _] = this.selectActions[button], action = $select.value;
+   let action = this.selectActions[button].value;
    if (!action) continue;
    newData.mapping[button] = action;
   }
   let preset = this.allPresets.data[this.currentPresetId];
-  preset.data = newData, this.presetsDb.updatePreset(preset), StreamSettings.refreshControllerSettings();
+  preset.data = newData, this.presetsDb.updatePreset(preset);
+ }
+ onBeforeUnmount() {
+  StreamSettings.refreshControllerSettings(), super.onBeforeUnmount();
+ }
+}
+class BxDualNumberStepper extends HTMLInputElement {
+ controlValues;
+ controlMin;
+ controlMinDiff;
+ controlMax;
+ steps;
+ options;
+ onChange;
+ $text;
+ $rangeFrom;
+ $rangeTo;
+ $activeRange;
+ onRangeInput;
+ setValue;
+ getValue;
+ normalizeValue;
+ static create(key, values, options, onChange) {
+  options.suffix = options.suffix || "", options.disabled = !!options.disabled;
+  let $text, $rangeFrom, $rangeTo, self = CE("div", {
+   class: "bx-dual-number-stepper",
+   id: `bx_setting_${escapeCssSelector(key)}`
+  }, $text = CE("span"));
+  if (self.$text = $text, self.onChange = onChange, self.onRangeInput = BxDualNumberStepper.onRangeInput.bind(self), self.controlMin = options.min, self.controlMax = options.max, self.controlMinDiff = options.minDiff, self.options = options, self.steps = Math.max(options.steps || 1, 1), options.disabled) return self.disabled = !0, self;
+  return $rangeFrom = CE("input", {
+   type: "range",
+   min: self.controlMin,
+   max: self.controlMax,
+   step: self.steps,
+   tabindex: 0
+  }), $rangeTo = $rangeFrom.cloneNode(), self.$rangeFrom = $rangeFrom, self.$rangeTo = $rangeTo, self.$activeRange = $rangeFrom, self.getValue = BxDualNumberStepper.getValues.bind(self), self.setValue = BxDualNumberStepper.setValues.bind(self), $rangeFrom.addEventListener("input", self.onRangeInput), $rangeTo.addEventListener("input", self.onRangeInput), self.addEventListener("input", self.onRangeInput), self.append(CE("div", {}, $rangeFrom, $rangeTo)), BxDualNumberStepper.setValues.call(self, values), self.addEventListener("contextmenu", BxDualNumberStepper.onContextMenu), setNearby(self, {
+   focus: $rangeFrom,
+   orientation: "vertical"
+  }), Object.defineProperty(self, "value", {
+   get() {
+    return self.controlValues;
+   },
+   set(value) {
+    let from, to;
+    if (typeof value === "string") {
+     let tmp = value.split(",");
+     from = parseInt(tmp[0]), to = parseInt(tmp[1]);
+    } else if (Array.isArray(value)) [from, to] = value;
+    if (typeof from !== "undefined" && typeof to !== "undefined") BxDualNumberStepper.setValues.call(self, [from, to]);
+   }
+  }), self;
+ }
+ static setValues(values) {
+  let from, to;
+  if (values) [from, to] = BxDualNumberStepper.normalizeValues.call(this, values);
+  else from = this.controlMin, to = this.controlMax, values = [from, to];
+  this.controlValues = [from, to], this.$text.textContent = BxDualNumberStepper.updateTextValue.call(this), this.$rangeFrom.value = from.toString(), this.$rangeTo.value = to.toString();
+  let ratio = 100 / (this.controlMax - this.controlMin);
+  this.style.setProperty("--from", ratio * (from - this.controlMin) + "%"), this.style.setProperty("--to", ratio * (to - this.controlMin) + "%");
+ }
+ static getValues() {
+  return this.controlValues || [this.controlMin, this.controlMax];
+ }
+ static normalizeValues(values) {
+  let [from, to] = values;
+  if (this.$activeRange === this.$rangeFrom) to = Math.min(this.controlMax, to), from = Math.min(from, to), from = Math.min(to - this.controlMinDiff, from);
+  else from = Math.max(this.controlMin, from), to = Math.max(from, to), to = Math.max(this.controlMinDiff + from, to);
+  return to = Math.min(this.controlMax, to), from = Math.min(from, to), [from, to];
+ }
+ static onRangeInput(e) {
+  this.$activeRange = e.target;
+  let values = BxDualNumberStepper.normalizeValues.call(this, [parseInt(this.$rangeFrom.value), parseInt(this.$rangeTo.value)]);
+  if (BxDualNumberStepper.setValues.call(this, values), !e.ignoreOnChange && this.onChange) this.onChange(e, values);
+ }
+ static onContextMenu(e) {
+  e.preventDefault();
+ }
+ static updateTextValue() {
+  let values = this.controlValues, textContent = null;
+  if (this.options.customTextValue) textContent = this.options.customTextValue(values, this.controlMin, this.controlMax);
+  if (textContent === null) {
+   let [from, to] = values;
+   if (from === this.controlMin && to === this.controlMax) textContent = t("default");
+   else {
+    let pad = to.toString().length;
+    textContent = `${from.toString().padStart(pad)} - ${to.toString().padEnd(pad)}${this.options.suffix}`;
+   }
+  }
+  return textContent;
+ }
+}
+class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
+ static instance;
+ static getInstance = () => ControllerCustomizationsManagerDialog.instance ?? (ControllerCustomizationsManagerDialog.instance = new ControllerCustomizationsManagerDialog(t("controller-customization")));
+ $vibrationIntensity;
+ $leftTriggerRange;
+ $rightTriggerRange;
+ $leftStickDeadzone;
+ $rightStickDeadzone;
+ $btnDetect;
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  settings: {
+   leftTriggerRange: [0, 100],
+   rightTriggerRange: [0, 100],
+   leftStickDeadzone: [0, 100],
+   rightStickDeadzone: [0, 100],
+   vibrationIntensity: 100
+  }
+ };
+ selectsMap = {};
+ selectsOrder = [];
+ isDetectingButton = !1;
+ detectIntervalId = null;
+ BUTTONS_ORDER = [
+  0,
+  1,
+  2,
+  3,
+  12,
+  15,
+  13,
+  14,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  104,
+  204,
+  17
+ ];
+ constructor(title) {
+  super(title, ControllerCustomizationsTable.getInstance());
+  this.render();
+ }
+ render() {
+  let isControllerFriendly = getPref("ui.controllerFriendly"), $rows = CE("div", { class: "bx-buttons-grid" }), $baseSelect = CE("select", { class: "bx-full-width" }, CE("option", { value: "" }, "---"), CE("option", { value: "false", _dataset: { label: "🚫" } }, isControllerFriendly ? "🚫" : t("off"))), $baseButtonSelect = $baseSelect.cloneNode(!0), $baseStickSelect = $baseSelect.cloneNode(!0), onButtonChanged = (e) => {
+   if (!e.ignoreOnChange) this.updatePreset();
+  }, boundUpdatePreset = this.updatePreset.bind(this);
+  for (let gamepadKey of this.BUTTONS_ORDER) {
+   if (gamepadKey === 17) continue;
+   let name = GamepadKeyName[gamepadKey][isControllerFriendly ? 1 : 0];
+   (gamepadKey === 104 || gamepadKey === 204 ? $baseStickSelect : $baseButtonSelect).appendChild(CE("option", {
+    value: gamepadKey,
+    _dataset: { label: GamepadKeyName[gamepadKey][1] }
+   }, name));
+  }
+  for (let gamepadKey of this.BUTTONS_ORDER) {
+   let [buttonName, buttonPrompt] = GamepadKeyName[gamepadKey], $clonedSelect = (gamepadKey === 104 || gamepadKey === 204 ? $baseStickSelect : $baseButtonSelect).cloneNode(!0);
+   $clonedSelect.querySelector(`option[value="${gamepadKey}"]`)?.remove();
+   let $select = BxSelectElement.create($clonedSelect);
+   $select.dataset.index = gamepadKey.toString(), $select.addEventListener("input", onButtonChanged), this.selectsMap[gamepadKey] = $select, this.selectsOrder.push(gamepadKey);
+   let $row = CE("div", {
+    class: "bx-controller-key-row",
+    _nearby: { orientation: "horizontal" }
+   }, CE("label", { title: buttonName }, buttonPrompt), $select);
+   $rows.append($row);
+  }
+  if (getPref("ui.controllerFriendly")) for (let i = 0;i < this.selectsOrder.length; i++) {
+    let $select = this.selectsMap[this.selectsOrder[i]], directions = {
+     1: i - 2,
+     3: i + 2,
+     4: i - 1,
+     2: i + 1
+    };
+    for (let dir in directions) {
+     let idx = directions[dir];
+     if (typeof this.selectsOrder[idx] === "undefined") continue;
+     let $targetSelect = this.selectsMap[this.selectsOrder[idx]];
+     setNearby($select, {
+      [dir]: $targetSelect
+     });
+    }
+   }
+  let params = {
+   min: 0,
+   minDiff: 1,
+   max: 100,
+   steps: 1
+  };
+  this.$content = CE("div", { class: "bx-controller-customizations-container" }, this.$btnDetect = createButton({
+   label: t("detect-controller-button"),
+   classes: ["bx-btn-detect"],
+   style: 4096 | 64 | 128,
+   onClick: () => {
+    this.startDetectingButton();
+   }
+  }), $rows, createSettingRow(t("vibration-intensity"), this.$vibrationIntensity = BxNumberStepper.create("controller_vibration_intensity", 50, 0, 100, {
+   steps: 10,
+   suffix: "%",
+   exactTicks: 20,
+   customTextValue: (value) => {
+    return value = parseInt(value), value === 0 ? t("off") : value + "%";
+   }
+  }, boundUpdatePreset)), createSettingRow(t("left-trigger-range"), this.$leftTriggerRange = BxDualNumberStepper.create("left-trigger-range", this.BLANK_PRESET_DATA.settings.leftTriggerRange, params, boundUpdatePreset)), createSettingRow(t("right-trigger-range"), this.$rightTriggerRange = BxDualNumberStepper.create("right-trigger-range", this.BLANK_PRESET_DATA.settings.rightTriggerRange, params, boundUpdatePreset)), createSettingRow(t("left-stick-deadzone"), this.$leftStickDeadzone = BxDualNumberStepper.create("left-stick-deadzone", this.BLANK_PRESET_DATA.settings.leftStickDeadzone, params, boundUpdatePreset)), createSettingRow(t("right-stick-deadzone"), this.$rightStickDeadzone = BxDualNumberStepper.create("right-stick-deadzone", this.BLANK_PRESET_DATA.settings.rightStickDeadzone, params, boundUpdatePreset)));
+ }
+ startDetectingButton() {
+  this.isDetectingButton = !0;
+  let { $btnDetect } = this;
+  $btnDetect.classList.add("bx-monospaced", "bx-blink-me"), $btnDetect.disabled = !0;
+  let count = 4;
+  $btnDetect.textContent = `[${count}] ${t("press-any-button")}`, this.detectIntervalId = window.setInterval(() => {
+   if (count -= 1, count === 0) {
+    this.stopDetectingButton(), $btnDetect.focus();
+    return;
+   }
+   $btnDetect.textContent = `[${count}] ${t("press-any-button")}`;
+  }, 1000);
+ }
+ stopDetectingButton() {
+  let { $btnDetect } = this;
+  $btnDetect.classList.remove("bx-monospaced", "bx-blink-me"), $btnDetect.textContent = t("detect-controller-button"), $btnDetect.disabled = !1, this.isDetectingButton = !1, this.detectIntervalId && window.clearInterval(this.detectIntervalId), this.detectIntervalId = null;
+ }
+ async onBeforeMount() {
+  this.stopDetectingButton(), super.onBeforeMount(...arguments);
+ }
+ onBeforeUnmount() {
+  this.stopDetectingButton(), StreamSettings.refreshControllerSettings(), super.onBeforeUnmount();
+ }
+ handleGamepad(button) {
+  if (!this.isDetectingButton) return super.handleGamepad(button);
+  if (button in this.BUTTONS_ORDER) {
+   this.stopDetectingButton();
+   let $select = this.selectsMap[button], $label = $select.previousElementSibling;
+   if ($label.addEventListener("animationend", () => {
+    $label.classList.remove("bx-horizontal-shaking");
+   }, { once: !0 }), $label.classList.add("bx-horizontal-shaking"), getPref("ui.controllerFriendly"))
+    this.dialogManager.focus($select);
+  }
+  return !0;
+ }
+ switchPreset(id) {
+  let preset = this.allPresets.data[id];
+  if (!preset) {
+   this.currentPresetId = 0;
+   return;
+  }
+  let {
+   $btnDetect,
+   $vibrationIntensity,
+   $leftStickDeadzone,
+   $rightStickDeadzone,
+   $leftTriggerRange,
+   $rightTriggerRange,
+   selectsMap
+  } = this, presetData = preset.data;
+  this.currentPresetId = id;
+  let isDefaultPreset = id <= 0;
+  this.updateButtonStates(), $btnDetect.classList.toggle("bx-gone", isDefaultPreset);
+  let buttonIndex;
+  for (buttonIndex in selectsMap) {
+   buttonIndex = buttonIndex;
+   let $select = selectsMap[buttonIndex];
+   if (!$select) continue;
+   let mappedButton = presetData.mapping[buttonIndex];
+   $select.value = typeof mappedButton === "undefined" ? "" : mappedButton.toString(), $select.disabled = isDefaultPreset, BxEvent.dispatch($select, "input", {
+    ignoreOnChange: !0,
+    manualTrigger: !0
+   });
+  }
+  presetData.settings = Object.assign(this.BLANK_PRESET_DATA.settings, presetData.settings), $vibrationIntensity.value = presetData.settings.vibrationIntensity.toString(), $vibrationIntensity.dataset.disabled = isDefaultPreset.toString(), $leftStickDeadzone.dataset.disabled = $rightStickDeadzone.dataset.disabled = $leftTriggerRange.dataset.disabled = $rightTriggerRange.dataset.disabled = isDefaultPreset.toString(), $leftStickDeadzone.setValue(presetData.settings.leftStickDeadzone), $rightStickDeadzone.setValue(presetData.settings.rightStickDeadzone), $leftTriggerRange.setValue(presetData.settings.leftTriggerRange), $rightTriggerRange.setValue(presetData.settings.rightTriggerRange);
+ }
+ updatePreset() {
+  let newData = deepClone(this.BLANK_PRESET_DATA), gamepadKey;
+  for (gamepadKey in this.selectsMap) {
+   let value = this.selectsMap[gamepadKey].value;
+   if (!value) continue;
+   let mapTo = value === "false" ? !1 : parseInt(value);
+   newData.mapping[gamepadKey] = mapTo;
+  }
+  Object.assign(newData.settings, {
+   vibrationIntensity: parseInt(this.$vibrationIntensity.value),
+   leftStickDeadzone: this.$leftStickDeadzone.getValue(),
+   rightStickDeadzone: this.$rightStickDeadzone.getValue(),
+   leftTriggerRange: this.$leftTriggerRange.getValue(),
+   rightTriggerRange: this.$rightTriggerRange.getValue()
+  });
+  let preset = this.allPresets.data[this.currentPresetId];
+  preset.data = newData, this.presetsDb.updatePreset(preset);
  }
 }
 class ControllerExtraSettings extends HTMLElement {
@@ -5335,7 +5576,7 @@ class ControllerExtraSettings extends HTMLElement {
  controllerIds;
  $selectControllers;
  $selectShortcuts;
- $vibrationIntensity;
+ $selectCustomization;
  updateLayout;
  switchController;
  getCurrentControllerId;
@@ -5346,39 +5587,44 @@ class ControllerExtraSettings extends HTMLElement {
   });
   $container.updateLayout = ControllerExtraSettings.updateLayout.bind($container), $container.switchController = ControllerExtraSettings.switchController.bind($container), $container.getCurrentControllerId = ControllerExtraSettings.getCurrentControllerId.bind($container), $container.saveSettings = ControllerExtraSettings.saveSettings.bind($container);
   let $selectControllers = BxSelectElement.create(CE("select", {
+   class: "bx-full-width",
    autocomplete: "off",
    _on: {
     input: (e) => {
      $container.switchController($selectControllers.value);
     }
    }
-  }));
-  $selectControllers.classList.add("bx-full-width");
-  let $selectShortcuts = BxSelectElement.create(CE("select", {
+  })), $selectShortcuts = BxSelectElement.create(CE("select", {
    autocomplete: "off",
-   _on: {
-    input: $container.saveSettings
-   }
-  })), $vibrationIntensity = BxNumberStepper.create("controller_vibration_intensity", 50, 0, 100, {
-   steps: 10,
-   suffix: "%",
-   exactTicks: 20,
-   customTextValue: (value) => {
-    return value = parseInt(value), value === 0 ? t("off") : value + "%";
-   }
-  }, $container.saveSettings);
-  return $container.append(CE("span", {}, t("no-controllers-connected")), CE("div", { class: "bx-controller-extra-wrapper" }, $selectControllers, CE("div", { class: "bx-sub-content-box" }, createSettingRow(t("controller-shortcuts-in-game"), CE("div", {
+   _on: { input: $container.saveSettings }
+  })), $selectCustomization = BxSelectElement.create(CE("select", {
+   autocomplete: "off",
+   _on: { input: $container.saveSettings }
+  }));
+  return $container.append(CE("span", {}, t("no-controllers-connected")), CE("div", { class: "bx-controller-extra-wrapper" }, $selectControllers, CE("div", { class: "bx-sub-content-box" }, createSettingRow(t("in-game-controller-shortcuts"), CE("div", {
    class: "bx-preset-row",
-   _nearby: {
-    orientation: "horizontal"
-   }
+   _nearby: { orientation: "horizontal" }
   }, $selectShortcuts, createButton({
-   label: t("manage"),
-   style: 64,
+   title: t("manage"),
+   icon: BxIcon.MANAGE,
+   style: 64 | 1 | 512,
    onClick: () => ControllerShortcutsManagerDialog.getInstance().show({
     id: parseInt($container.$selectShortcuts.value)
    })
-  })), { multiLines: !0 }), createSettingRow(t("vibration-intensity"), $vibrationIntensity)))), $container.$selectControllers = $selectControllers, $container.$selectShortcuts = $selectShortcuts, $container.$vibrationIntensity = $vibrationIntensity, $container.updateLayout(), window.addEventListener("gamepadconnected", $container.updateLayout), window.addEventListener("gamepaddisconnected", $container.updateLayout), this.onMountedCallbacks.push(() => {
+  })), { multiLines: !0 }), createSettingRow(t("in-game-controller-customization"), CE("div", {
+   class: "bx-preset-row",
+   _nearby: { orientation: "horizontal" }
+  }, $selectCustomization, createButton({
+   title: t("manage"),
+   icon: BxIcon.MANAGE,
+   style: 64 | 1 | 512,
+   onClick: () => ControllerCustomizationsManagerDialog.getInstance().show({
+    id: $container.$selectCustomization.value ? parseInt($container.$selectCustomization.value) : null
+   })
+  })), {
+   multiLines: !0,
+   $note: CE("div", { class: "bx-settings-dialog-note" }, "ⓘ " + t("slightly-increase-input-latency"))
+  })))), $container.$selectControllers = $selectControllers, $container.$selectShortcuts = $selectShortcuts, $container.$selectCustomization = $selectCustomization, $container.updateLayout(), window.addEventListener("gamepadconnected", $container.updateLayout), window.addEventListener("gamepaddisconnected", $container.updateLayout), this.onMountedCallbacks.push(() => {
    $container.updateLayout();
   }), $container;
  }
@@ -5393,16 +5639,18 @@ class ControllerExtraSettings extends HTMLElement {
   this.$selectControllers.appendChild($fragment);
   let allShortcutPresets = await ControllerShortcutsTable.getInstance().getPresets();
   renderPresetsList(this.$selectShortcuts, allShortcutPresets, null, { addOffValue: !0 });
+  let allCustomizationPresets = await ControllerCustomizationsTable.getInstance().getPresets();
+  renderPresetsList(this.$selectCustomization, allCustomizationPresets, null, { addOffValue: !0 });
   for (let name of this.controllerIds) {
    let $option = CE("option", { value: name }, name);
    $fragment.appendChild($option);
   }
-  BxEvent.dispatch(this.$selectControllers, "input");
+  BxEvent.dispatch(this.$selectControllers, "input"), calculateSelectBoxes(this);
  }
  static async switchController(id) {
   if (this.currentControllerId = id, !this.getCurrentControllerId()) return;
   let controllerSettings = await ControllerSettingsTable.getInstance().getControllerData(this.currentControllerId);
-  this.$selectShortcuts.value = controllerSettings.shortcutPresetId.toString(), this.$vibrationIntensity.value = controllerSettings.vibrationIntensity.toString();
+  this.$selectShortcuts.value = controllerSettings.shortcutPresetId.toString(), this.$selectCustomization.value = controllerSettings.customizationPresetId.toString();
  }
  static getCurrentControllerId() {
   if (this.currentControllerId) {
@@ -5419,7 +5667,7 @@ class ControllerExtraSettings extends HTMLElement {
    id: this.currentControllerId,
    data: {
     shortcutPresetId: parseInt(this.$selectShortcuts.value),
-    vibrationIntensity: parseInt(this.$vibrationIntensity.value)
+    customizationPresetId: parseInt(this.$selectCustomization.value)
    }
   };
   await ControllerSettingsTable.getInstance().put(data), StreamSettings.refreshControllerSettings();
@@ -5525,7 +5773,7 @@ class SuggestionsSetting {
    _nearby: {
     orientation: "vertical"
    }
-  }, BxSelectElement.create($select, !0), $suggestedSettings, $btnApply, BX_FLAGS.DeviceInfo.deviceType.includes("android") && CE("a", {
+  }, BxSelectElement.create($select), $suggestedSettings, $btnApply, BX_FLAGS.DeviceInfo.deviceType.includes("android") && CE("a", {
    class: "bx-suggest-link bx-focusable",
    href: "https://better-xcloud.github.io/guide/android-webview-tweaks/",
    target: "_blank",
@@ -5764,9 +6012,7 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
     }), $elm.dataset.buttonIndex = buttonIndex.toString(), $elm.dataset.keySlot = i.toString(), $elm.addEventListener("mouseup", this.onBindingKey), $fragment.appendChild($elm), this.allKeyElements.push($elm);
    let $keyRow = CE("div", {
     class: "bx-mkb-key-row",
-    _nearby: {
-     orientation: "horizontal"
-    }
+    _nearby: { orientation: "horizontal" }
    }, CE("label", { title: buttonName }, buttonPrompt), $fragment);
    $rows.appendChild($keyRow);
   }
@@ -5818,7 +6064,10 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
    name: oldPreset.name,
    data: presetData
   };
-  this.presetsDb.updatePreset(newPreset), this.allPresets.data[this.currentPresetId] = newPreset, StreamSettings.refreshMkbSettings();
+  this.presetsDb.updatePreset(newPreset), this.allPresets.data[this.currentPresetId] = newPreset;
+ }
+ onBeforeUnmount() {
+  StreamSettings.refreshMkbSettings(), super.onBeforeUnmount();
  }
 }
 class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
@@ -5895,7 +6144,10 @@ class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
    name: oldPreset.name,
    data: presetData
   };
-  this.presetsDb.updatePreset(newPreset), this.allPresets.data[this.currentPresetId] = newPreset, StreamSettings.refreshKeyboardShortcuts();
+  this.presetsDb.updatePreset(newPreset), this.allPresets.data[this.currentPresetId] = newPreset;
+ }
+ onBeforeUnmount() {
+  StreamSettings.refreshKeyboardShortcuts(), super.onBeforeUnmount();
  }
 }
 class MkbExtraSettings extends HTMLElement {
@@ -5925,8 +6177,9 @@ class MkbExtraSettings extends HTMLElement {
      orientation: "horizontal"
     }
    }, $mappingPresets, createButton({
-    label: t("manage"),
-    style: 64,
+    title: t("manage"),
+    icon: BxIcon.MANAGE,
+    style: 64 | 1 | 512,
     onClick: () => MkbMappingManagerDialog.getInstance().show({
      id: parseInt($container.$mappingPresets.value)
     })
@@ -5934,14 +6187,15 @@ class MkbExtraSettings extends HTMLElement {
    createSettingRow(t("virtual-controller-slot"), SettingElement.fromPref("mkb.p1.slot", STORAGE.Global, () => {
     EmulatedMkbHandler.getInstance()?.updateGamepadSlots();
    }))
-  ] : [], createSettingRow(t("keyboard-shortcuts-in-game"), CE("div", {
+  ] : [], createSettingRow(t("in-game-keyboard-shortcuts"), CE("div", {
    class: "bx-preset-row",
    _nearby: {
     orientation: "horizontal"
    }
   }, $shortcutsPresets, createButton({
-   label: t("manage"),
-   style: 64,
+   title: t("manage"),
+   icon: BxIcon.MANAGE,
+   style: 64 | 1 | 512,
    onClick: () => KeyboardShortcutsManagerDialog.getInstance().show({
     id: parseInt($container.$shortcutsPresets.value)
    })
@@ -6293,20 +6547,6 @@ class SettingsDialog extends NavigationDialog {
   }]
  }];
  TAB_CONTROLLER_ITEMS = [
-  STATES.browser.capabilities.deviceVibration && {
-   group: "device",
-   label: t("device"),
-   items: [{
-    pref: "deviceVibration.mode",
-    multiLines: !0,
-    unsupported: !STATES.browser.capabilities.deviceVibration,
-    onChange: () => StreamSettings.refreshControllerSettings()
-   }, {
-    pref: "deviceVibration.intensity",
-    unsupported: !STATES.browser.capabilities.deviceVibration,
-    onChange: () => StreamSettings.refreshControllerSettings()
-   }]
-  },
   {
    group: "controller",
    label: t("controller"),
@@ -6357,6 +6597,20 @@ class SettingsDialog extends NavigationDialog {
       $elm.appendChild($fragment), $elm.value = customLayouts.default_layout;
      });
     }
+   }]
+  },
+  STATES.browser.capabilities.deviceVibration && {
+   group: "device",
+   label: t("device"),
+   items: [{
+    pref: "deviceVibration.mode",
+    multiLines: !0,
+    unsupported: !STATES.browser.capabilities.deviceVibration,
+    onChange: () => StreamSettings.refreshControllerSettings()
+   }, {
+    pref: "deviceVibration.intensity",
+    unsupported: !STATES.browser.capabilities.deviceVibration,
+    onChange: () => StreamSettings.refreshControllerSettings()
    }]
   }
  ];
@@ -6498,9 +6752,8 @@ class SettingsDialog extends NavigationDialog {
   }
   let $child, children = Array.from(this.$tabContents.children);
   for ($child of children)
-   if ($child.dataset.tabGroup === $svg.dataset.group) {
-    if ($child.classList.remove("bx-gone"), getPref("ui.controllerFriendly")) this.dialogManager.calculateSelectBoxes($child);
-   } else $child.classList.add("bx-gone");
+   if ($child.dataset.tabGroup === $svg.dataset.group) $child.classList.remove("bx-gone"), calculateSelectBoxes($child);
+   else $child.classList.add("bx-gone");
   for (let $child2 of Array.from(this.$tabs.children))
    $child2.classList.remove("bx-active");
   $svg.classList.add("bx-active");
@@ -6534,7 +6787,6 @@ class SettingsDialog extends NavigationDialog {
    }
   }, $control = CE("select", {
    id: `bx_setting_${escapeCssSelector(setting.pref)}`,
-   title: setting.label,
    tabindex: 0
   });
   $control.name = $control.id, $control.addEventListener("input", (e) => {
@@ -6633,7 +6885,7 @@ class SettingsDialog extends NavigationDialog {
     label = createButton({
      label,
      url: "https://github.com/redphx/better-xcloud/releases",
-     style: 2048 | 16 | 64
+     style: 4096 | 16 | 64
     });
    }
    if (label) {
@@ -6904,7 +7156,7 @@ class TrueAchievements {
    label: t("true-achievements"),
    url: "#",
    icon: BxIcon.TRUE_ACHIEVEMENTS,
-   style: 64 | 8 | 128 | 4096,
+   style: 64 | 8 | 128 | 8192,
    onClick: this.onClick
   }), this.$button = createButton({
    label: t("true-achievements"),
@@ -7218,7 +7470,7 @@ class HeaderSection {
    classes: ["bx-header-remote-play-button", "bx-gone"],
    icon: BxIcon.REMOTE_PLAY,
    title: t("remote-play"),
-   style: 8 | 64 | 1024,
+   style: 8 | 64 | 2048,
    onClick: (e) => RemotePlayManager.getInstance()?.togglePopup()
   }), this.$btnSettings = createButton({
    classes: ["bx-header-settings-button"],
@@ -8164,7 +8416,7 @@ function getOsNameFromResolution(resolution) {
  return osName;
 }
 function addCss() {
- let css = ':root{--bx-title-font:Bahnschrift,Arial,Helvetica,sans-serif;--bx-title-font-semibold:Bahnschrift Semibold,Arial,Helvetica,sans-serif;--bx-normal-font:"Segoe UI",Arial,Helvetica,sans-serif;--bx-monospaced-font:Consolas,"Courier New",Courier,monospace;--bx-promptfont-font:promptfont;--bx-button-height:40px;--bx-default-button-color:#2d3036;--bx-default-button-rgb:45,48,54;--bx-default-button-hover-color:#515863;--bx-default-button-hover-rgb:81,88,99;--bx-default-button-active-color:#222428;--bx-default-button-active-rgb:34,36,40;--bx-default-button-disabled-color:#8e8e8e;--bx-default-button-disabled-rgb:142,142,142;--bx-primary-button-color:#008746;--bx-primary-button-rgb:0,135,70;--bx-primary-button-hover-color:#04b358;--bx-primary-button-hover-rgb:4,179,88;--bx-primary-button-active-color:#044e2a;--bx-primary-button-active-rgb:4,78,42;--bx-primary-button-disabled-color:#448262;--bx-primary-button-disabled-rgb:68,130,98;--bx-warning-button-color:#c16e04;--bx-warning-button-rgb:193,110,4;--bx-warning-button-hover-color:#fa9005;--bx-warning-button-hover-rgb:250,144,5;--bx-warning-button-active-color:#965603;--bx-warning-button-active-rgb:150,86,3;--bx-warning-button-disabled-color:#a2816c;--bx-warning-button-disabled-rgb:162,129,108;--bx-danger-button-color:#c10404;--bx-danger-button-rgb:193,4,4;--bx-danger-button-hover-color:#e61d1d;--bx-danger-button-hover-rgb:230,29,29;--bx-danger-button-active-color:#a26c6c;--bx-danger-button-active-rgb:162,108,108;--bx-danger-button-disabled-color:#df5656;--bx-danger-button-disabled-rgb:223,86,86;--bx-fullscreen-text-z-index:9999;--bx-toast-z-index:6000;--bx-key-binding-dialog-z-index:5010;--bx-key-binding-dialog-overlay-z-index:5000;--bx-stats-bar-z-index:4010;--bx-navigation-dialog-z-index:3010;--bx-navigation-dialog-overlay-z-index:3000;--bx-mkb-pointer-lock-msg-z-index:2000;--bx-game-bar-z-index:1000;--bx-screenshot-animation-z-index:200;--bx-wait-time-box-z-index:100}@font-face{font-family:\'promptfont\';src:url("https://redphx.github.io/better-xcloud/fonts/promptfont.otf")}div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]){opacity:0;pointer-events:none !important;position:absolute;top:-9999px;left:-9999px}@media screen and (max-width:640px){header a[href="/play"]{display:none}}.bx-full-width{width:100% !important}.bx-full-height{height:100% !important}.bx-no-scroll{overflow:hidden !important}.bx-hide-scroll-bar{scrollbar-width:none}.bx-hide-scroll-bar::-webkit-scrollbar{display:none}.bx-gone{display:none !important}.bx-offscreen{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}.bx-hidden{visibility:hidden !important}.bx-invisible{opacity:0}.bx-unclickable{pointer-events:none}.bx-pixel{width:1px !important;height:1px !important}.bx-no-margin{margin:0 !important}.bx-no-padding{padding:0 !important}.bx-prompt{font-family:var(--bx-promptfont-font) !important}.bx-line-through{text-decoration:line-through !important}.bx-normal-case{text-transform:none !important}.bx-normal-link{text-transform:none !important;text-align:left !important;font-weight:400 !important;font-family:var(--bx-normal-font) !important}select[multiple],select[multiple]:focus{overflow:auto;border:none}select[multiple] option,select[multiple]:focus option{padding:4px 6px}select[multiple] option:checked,select[multiple]:focus option:checked{background:#1a7bc0 linear-gradient(0deg,#1a7bc0 0%,#1a7bc0 100%)}select[multiple] option:checked::before,select[multiple]:focus option:checked::before{content:\'☑️\';font-size:12px;display:inline-block;margin-right:6px;height:100%;line-height:100%;vertical-align:middle}#headerArea,#uhfSkipToMain,.uhf-footer{display:none}div[class*=NotFocusedDialog]{position:absolute !important;top:-9999px !important;left:-9999px !important;width:0 !important;height:0 !important}#game-stream video:not([src]){visibility:hidden}div[class*=SupportedInputsBadge]:not(:has(:nth-child(2))),div[class*=SupportedInputsBadge] svg:first-of-type{display:none}.bx-game-tile-wait-time{position:absolute;top:0;left:0;z-index:1;background:rgba(0,0,0,0.5);display:flex;border-radius:4px 0 4px 0;align-items:center;padding:4px 8px}.bx-game-tile-wait-time svg{width:14px;height:16px;margin-right:2px}.bx-game-tile-wait-time span{display:inline-block;height:16px;line-height:16px;font-size:12px;font-weight:bold;margin-left:2px}.bx-game-tile-wait-time[data-duration=short]{background-color:rgba(0,133,133,0.75)}.bx-game-tile-wait-time[data-duration=medium]{background-color:rgba(213,133,0,0.75)}.bx-game-tile-wait-time[data-duration=long]{background-color:rgba(150,0,0,0.75)}.bx-fullscreen-text{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);z-index:var(--bx-fullscreen-text-z-index);line-height:100vh;color:#fff;text-align:center;font-weight:400;font-family:var(--bx-normal-font);font-size:1.3rem;user-select:none;-webkit-user-select:none}#root section[class*=DeviceCodePage-module__page]{margin-left:20px !important;margin-right:20px !important;margin-top:20px !important;max-width:800px !important}#root div[class*=DeviceCodePage-module__back]{display:none}.bx-blink-me{animation:bx-blinker 1s linear infinite}@-moz-keyframes bx-blinker{100%{opacity:0}}@-webkit-keyframes bx-blinker{100%{opacity:0}}@-o-keyframes bx-blinker{100%{opacity:0}}@keyframes bx-blinker{100%{opacity:0}}.bx-button{--button-rgb:var(--bx-default-button-rgb);--button-hover-rgb:var(--bx-default-button-hover-rgb);--button-active-rgb:var(--bx-default-button-active-rgb);--button-disabled-rgb:var(--bx-default-button-disabled-rgb);background-color:rgb(var(--button-rgb));user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;border:none;font-weight:400;height:var(--bx-button-height);border-radius:4px;padding:0 8px;text-transform:uppercase;cursor:pointer;overflow:hidden}.bx-button:not([disabled]):active{background-color:rgb(var(--button-active-rgb))}.bx-button:focus{outline:none !important}.bx-button:not([disabled]):not(:active):hover,.bx-button:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button:disabled{cursor:default;background-color:rgb(var(--button-disabled-rgb))}.bx-button.bx-ghost{background-color:transparent}.bx-button.bx-ghost:not([disabled]):not(:active):hover,.bx-button.bx-ghost:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button.bx-primary{--button-rgb:var(--bx-primary-button-rgb)}.bx-button.bx-primary:not([disabled]):active{--button-active-rgb:var(--bx-primary-button-active-rgb)}.bx-button.bx-primary:not([disabled]):not(:active):hover,.bx-button.bx-primary:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-primary-button-hover-rgb)}.bx-button.bx-primary:disabled{--button-disabled-rgb:var(--bx-primary-button-disabled-rgb)}.bx-button.bx-warning{--button-rgb:var(--bx-warning-button-rgb)}.bx-button.bx-warning:not([disabled]):active{--button-active-rgb:var(--bx-warning-button-active-rgb)}.bx-button.bx-warning:not([disabled]):not(:active):hover,.bx-button.bx-warning:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-warning-button-hover-rgb)}.bx-button.bx-warning:disabled{--button-disabled-rgb:var(--bx-warning-button-disabled-rgb)}.bx-button.bx-danger{--button-rgb:var(--bx-danger-button-rgb)}.bx-button.bx-danger:not([disabled]):active{--button-active-rgb:var(--bx-danger-button-active-rgb)}.bx-button.bx-danger:not([disabled]):not(:active):hover,.bx-button.bx-danger:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-danger-button-hover-rgb)}.bx-button.bx-danger:disabled{--button-disabled-rgb:var(--bx-danger-button-disabled-rgb)}.bx-button.bx-frosted{--button-alpha:.2;background-color:rgba(var(--button-rgb), var(--button-alpha));backdrop-filter:blur(4px) brightness(1.5)}.bx-button.bx-frosted:not([disabled]):not(:active):hover,.bx-button.bx-frosted:not([disabled]):not(:active).bx-focusable:focus{background-color:rgba(var(--button-hover-rgb), var(--button-alpha))}.bx-button.bx-drop-shadow{box-shadow:0 0 4px rgba(0,0,0,0.502)}.bx-button.bx-tall{height:calc(var(--bx-button-height) * 1.5) !important}.bx-button.bx-circular{border-radius:var(--bx-button-height);width:var(--bx-button-height);height:var(--bx-button-height)}.bx-button svg{display:inline-block;width:16px;height:var(--bx-button-height)}.bx-button span{display:inline-block;line-height:var(--bx-button-height);vertical-align:middle;color:#fff;overflow:hidden;white-space:nowrap}.bx-button span:not(:only-child){margin-left:10px}.bx-button.bx-button-multi-lines{height:auto;text-align:left;padding:10px 0}.bx-button.bx-button-multi-lines span{line-height:unset;display:block}.bx-button.bx-button-multi-lines span:last-of-type{text-transform:none;font-weight:normal;font-family:"Segoe Sans Variable Text";font-size:12px;margin-top:4px}.bx-focusable{position:relative;overflow:visible}.bx-focusable::after{border:2px solid transparent;border-radius:10px}.bx-focusable:focus::after{content:\'\';border-color:#fff;position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px}html[data-active-input=touch] .bx-focusable:focus::after,html[data-active-input=mouse] .bx-focusable:focus::after{border-color:transparent !important}.bx-focusable.bx-circular::after{border-radius:var(--bx-button-height)}a.bx-button{display:inline-block}a.bx-button.bx-full-width{text-align:center}button.bx-inactive{pointer-events:none;opacity:.2;background:transparent !important}.bx-header-remote-play-button{height:auto;margin-right:8px !important}.bx-header-remote-play-button svg{width:24px;height:24px}.bx-header-settings-button{line-height:30px;font-size:14px;text-transform:uppercase;position:relative}.bx-header-settings-button[data-update-available]::before{content:\'🌟\' !important;line-height:var(--bx-button-height);display:inline-block;margin-left:4px}.bx-key-binding-dialog-overlay{position:fixed;inset:0;z-index:var(--bx-key-binding-dialog-overlay-z-index);background:#000;opacity:50%}.bx-key-binding-dialog{display:flex;flex-flow:column;max-height:90vh;position:fixed;top:50%;left:50%;margin-right:-50%;transform:translate(-50%,-50%);min-width:420px;padding:16px;border-radius:8px;z-index:var(--bx-key-binding-dialog-z-index);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-normal-font);box-shadow:0 0 6px #000;user-select:none;-webkit-user-select:none}.bx-key-binding-dialog *:focus{outline:none !important}.bx-key-binding-dialog h2{margin-bottom:12px;color:#fff;display:block;font-family:var(--bx-title-font);font-size:32px;font-weight:400;line-height:var(--bx-button-height)}.bx-key-binding-dialog > div{overflow:auto;padding:2px 0}.bx-key-binding-dialog > button{padding:8px 32px;margin:10px auto 0;border:none;border-radius:4px;display:block;background-color:#2d3036;text-align:center;color:#fff;text-transform:uppercase;font-family:var(--bx-title-font);font-weight:400;line-height:18px;font-size:14px}@media (hover:hover){.bx-key-binding-dialog > button:hover{background-color:#515863}}.bx-key-binding-dialog > button:focus{background-color:#515863}.bx-key-binding-dialog ul{margin-bottom:1rem}.bx-key-binding-dialog ul li{display:none}.bx-key-binding-dialog ul[data-flags*="[1]"] > li[data-flag="1"],.bx-key-binding-dialog ul[data-flags*="[2]"] > li[data-flag="2"],.bx-key-binding-dialog ul[data-flags*="[4]"] > li[data-flag="4"],.bx-key-binding-dialog ul[data-flags*="[8]"] > li[data-flag="8"]{display:list-item}@media screen and (max-width:450px){.bx-key-binding-dialog{min-width:100%}}.bx-navigation-dialog{position:absolute;z-index:var(--bx-navigation-dialog-z-index);font-family:var(--bx-title-font)}.bx-navigation-dialog *:focus{outline:none !important}.bx-navigation-dialog select:disabled{-webkit-appearance:none;text-align-last:right;text-align:right;color:#fff;background:#131416;border:none;border-radius:4px;padding:0 5px}.bx-navigation-dialog-overlay{position:fixed;background:rgba(11,11,11,0.89);top:0;left:0;right:0;bottom:0;z-index:var(--bx-navigation-dialog-overlay-z-index)}.bx-navigation-dialog-overlay[data-is-playing="true"]{background:transparent}.bx-centered-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:450px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:16px;max-height:95vh;flex-direction:column;overflow:hidden;display:flex;flex-direction:column}.bx-centered-dialog .bx-dialog-title{display:flex;flex-direction:row;align-items:center;margin-bottom:10px}.bx-centered-dialog .bx-dialog-title p{padding:0;margin:0;flex:1;font-size:1.2rem;font-weight:bold}.bx-centered-dialog .bx-dialog-title button{flex-shrink:0}.bx-centered-dialog .bx-dialog-content{flex:1;overflow:auto;overflow-x:hidden}.bx-centered-dialog .bx-dialog-preset-tools{display:flex;margin-bottom:12px;gap:6px}.bx-centered-dialog .bx-dialog-preset-tools select{flex:1}.bx-centered-dialog .bx-default-preset-note{font-size:12px;font-style:italic;text-align:center;margin-bottom:10px}.bx-centered-dialog input,.bx-settings-dialog input{accent-color:var(--bx-primary-button-color)}.bx-centered-dialog input:focus,.bx-settings-dialog input:focus{accent-color:var(--bx-danger-button-color)}.bx-centered-dialog select:disabled,.bx-settings-dialog select:disabled{-webkit-appearance:none;background:transparent;text-align-last:right;border:none;color:#fff}.bx-centered-dialog select option:disabled,.bx-settings-dialog select option:disabled{display:none}.bx-centered-dialog input[type=checkbox]:focus,.bx-settings-dialog input[type=checkbox]:focus,.bx-centered-dialog select:focus,.bx-settings-dialog select:focus{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}.bx-centered-dialog a,.bx-settings-dialog a{color:#1c9d1c;text-decoration:none}.bx-centered-dialog a:hover,.bx-settings-dialog a:hover,.bx-centered-dialog a:focus,.bx-settings-dialog a:focus{color:#5dc21e}.bx-centered-dialog label,.bx-settings-dialog label{margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-note{margin-top:10px;font-size:14px;text-align:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt{flex-shrink:0;font-size:32px;margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt::first-letter{letter-spacing:6px}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions{flex:1;position:relative}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select{width:100%;height:100%;min-height:38px;display:block}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select:first-of-type{position:absolute;top:0;left:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row .bx-shortcut-actions select:last-of-type{opacity:0;z-index:calc(var(--bx-settings-z-index) + 1)}.bx-controller-shortcuts-manager-container select:disabled{text-align:left;text-align-last:left}.bx-keyboard-shortcuts-manager-container{display:flex;flex-direction:column;gap:16px}.bx-keyboard-shortcuts-manager-container fieldset{background:#2a2a2a;border:1px solid #2a2a2a;border-radius:4px;padding:4px}.bx-keyboard-shortcuts-manager-container legend{width:auto;padding:4px 8px;margin:0 4px 4px;background:#004f87;box-shadow:0 2px 0 #071e3d;border-radius:4px;font-size:14px;font-weight:bold;text-transform:uppercase}.bx-keyboard-shortcuts-manager-container .bx-settings-row{background:none;padding:10px}.bx-settings-dialog{display:flex;position:fixed;top:0;right:0;bottom:0;opacity:.98;user-select:none;-webkit-user-select:none}.bx-settings-dialog .bx-focusable::after{border-radius:4px}.bx-settings-dialog .bx-focusable:focus::after{top:0;left:0;right:0;bottom:0}.bx-settings-dialog .bx-settings-reload-note{font-size:.8rem;display:block;padding:8px;font-style:italic;font-weight:normal;height:var(--bx-button-height)}.bx-settings-tabs-container{position:fixed;width:48px;max-height:100vh;display:flex;flex-direction:column}.bx-settings-tabs-container > div:last-of-type{display:flex;flex-direction:column;align-items:end}.bx-settings-tabs-container > div:last-of-type button{flex-shrink:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-top:8px;height:unset;padding:8px 10px}.bx-settings-tabs-container > div:last-of-type button svg{width:16px;height:16px}.bx-settings-tabs{display:flex;flex-direction:column;border-radius:0 0 0 8px;box-shadow:0 0 6px #000;overflow:overlay;flex:1}.bx-settings-tabs svg{width:24px;height:24px;padding:10px;flex-shrink:0;box-sizing:content-box;background:#131313;cursor:pointer;border-left:4px solid #1e1e1e}.bx-settings-tabs svg.bx-active{background:#222;border-color:#008746}.bx-settings-tabs svg:not(.bx-active):hover{background:#2f2f2f;border-color:#484848}.bx-settings-tabs svg:focus{border-color:#fff}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]{background:var(--bx-danger-button-color) !important}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]:hover{background:var(--bx-danger-button-hover-color) !important}.bx-settings-tab-contents{flex-direction:column;padding:10px;margin-left:48px;width:450px;max-width:calc(100vw - tabsWidth);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-title-font);text-align:center;box-shadow:0 0 6px #000;overflow:overlay;z-index:1}.bx-settings-tab-contents > div[data-tab-group=mkb]{display:flex;flex-direction:column;height:100%;overflow:hidden}.bx-settings-tab-contents .bx-top-buttons{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}.bx-settings-tab-contents .bx-top-buttons .bx-button{display:block}.bx-settings-tab-contents h2{margin:16px 0 8px 0;display:flex;align-items:center}.bx-settings-tab-contents h2:first-of-type{margin-top:0}.bx-settings-tab-contents h2 span{display:inline-block;font-size:20px;font-weight:bold;text-align:left;flex:1;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-height:var(--bx-button-height);align-content:center}@media (max-width:500px){.bx-settings-tab-contents{width:calc(100vw - 48px)}}.bx-settings-row{display:flex;gap:10px;padding:16px 10px;margin:0;background:#2a2a2a;border-bottom:1px solid #343434}.bx-settings-row:hover,.bx-settings-row:focus-within{background-color:#242424}.bx-settings-row:not(:has(> input[type=checkbox])){flex-wrap:wrap}.bx-settings-row > span.bx-settings-label{font-size:14px;display:block;text-align:left;align-self:center;margin-bottom:0 !important;flex:1}.bx-settings-row > span.bx-settings-label + *{margin:0 0 0 auto}.bx-settings-row[data-multi-lines="true"]{flex-direction:column}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label{align-self:start}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label + *{margin:unset}.bx-settings-dialog-note{display:block;color:#afafb0;font-size:12px;font-weight:lighter;font-style:italic}.bx-settings-dialog-note:not(:has(a)){margin-top:4px}.bx-settings-dialog-note a{display:inline-block;padding:4px}.bx-settings-custom-user-agent{display:block;width:100%;padding:6px}.bx-donation-link{display:block;text-align:center;text-decoration:none;height:20px;line-height:20px;font-size:14px;margin-top:10px;margin-bottom:10px}.bx-debug-info button{margin-top:10px}.bx-debug-info pre{margin-top:10px;cursor:copy;color:#fff;padding:8px;border:1px solid #2d2d2d;background:#212121;white-space:break-spaces;text-align:left}.bx-debug-info pre:hover{background:#272727}.bx-settings-app-version{margin-top:10px;text-align:center;color:#747474;font-size:12px}.bx-note-unsupported{display:block;font-size:12px;font-style:italic;font-weight:normal;color:#828282}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row){border-top-left-radius:6px;border-top-right-radius:6px}.bx-settings-tab-contents > div .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-radius:6px}.bx-suggest-toggler{text-align:left;display:flex;border-radius:4px;overflow:hidden;background:#003861;height:45px;align-items:center}.bx-suggest-toggler label{flex:1;align-content:center;padding:0 10px;background:#004f87;height:100%}.bx-suggest-toggler span{display:inline-block;align-self:center;padding:10px;width:45px;text-align:center}.bx-suggest-toggler:hover,.bx-suggest-toggler:focus{cursor:pointer;background:#005da1}.bx-suggest-toggler:hover label,.bx-suggest-toggler:focus label{background:#006fbe}.bx-suggest-toggler[bx-open] span{transform:rotate(90deg)}.bx-suggest-toggler[bx-open]+ .bx-suggest-box{display:block}.bx-suggest-box{display:none}.bx-suggest-wrapper{display:flex;flex-direction:column;gap:10px;margin:10px}.bx-suggest-note{font-size:11px;color:#8c8c8c;font-style:italic;font-weight:100}.bx-suggest-link{font-size:14px;display:inline-block;margin-top:4px;padding:4px}.bx-suggest-row{display:flex;flex-direction:row;gap:10px}.bx-suggest-row label{flex:1;overflow:overlay;border-radius:4px}.bx-suggest-row label .bx-suggest-label{background:#323232;padding:4px 10px;font-size:12px;text-align:left}.bx-suggest-row label .bx-suggest-value{padding:6px;font-size:14px}.bx-suggest-row label .bx-suggest-value.bx-suggest-change{background-color:var(--bx-warning-color)}.bx-suggest-row.bx-suggest-ok input{visibility:hidden}.bx-suggest-row.bx-suggest-ok .bx-suggest-label{background-color:#008114}.bx-suggest-row.bx-suggest-ok .bx-suggest-value{background-color:#13a72a}.bx-suggest-row.bx-suggest-change .bx-suggest-label{background-color:#a65e08}.bx-suggest-row.bx-suggest-change .bx-suggest-value{background-color:#d57f18}.bx-suggest-row.bx-suggest-change:hover label{cursor:pointer}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-label{background-color:#995707}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-value{background-color:#bd7115}.bx-suggest-row.bx-suggest-change input:not(:checked) + label{opacity:.5}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-label{background-color:#2a2a2a}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-value{background-color:#393939}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label{opacity:1}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-label{background-color:#202020}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-value{background-color:#303030}.bx-sub-content-box{background:#161616;padding:10px;box-shadow:0 0 12px #0f0f0f inset;border-radius:10px}.bx-settings-row .bx-sub-content-box{background:#202020;padding:12px;box-shadow:0 0 4px #000 inset;border-radius:6px}.bx-controller-extra-settings[data-has-gamepad=true] > :first-child{display:none}.bx-controller-extra-settings[data-has-gamepad=true] > :last-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :first-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :last-child{display:none}.bx-controller-extra-settings .bx-controller-extra-wrapper{flex:1;min-width:1px}.bx-controller-extra-settings .bx-sub-content-box{flex:1;text-align:left;display:flex;flex-direction:column;margin-top:10px}.bx-controller-extra-settings .bx-sub-content-box > label{font-size:14px}.bx-preset-row{display:flex;gap:8px}.bx-preset-row .bx-select{flex:1}.bx-toast{user-select:none;-webkit-user-select:none;position:fixed;left:50%;top:24px;transform:translate(-50%,0);background:#000;border-radius:16px;color:#fff;z-index:var(--bx-toast-z-index);font-family:var(--bx-normal-font);border:2px solid #fff;display:flex;align-items:center;opacity:0;overflow:clip;transition:opacity .2s ease-in}.bx-toast.bx-show{opacity:.85}.bx-toast.bx-hide{opacity:0;pointer-events:none}.bx-toast-msg{font-size:14px;display:inline-block;padding:12px 16px;white-space:pre}.bx-toast-status{font-weight:bold;font-size:14px;text-transform:uppercase;display:inline-block;background:#515863;padding:12px 16px;color:#fff;white-space:pre}.bx-wait-time-box{position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);color:#fff;z-index:var(--bx-wait-time-box-z-index);padding:12px;border-radius:0 0 0 8px}.bx-wait-time-box label{display:block;text-transform:uppercase;text-align:right;font-size:12px;font-weight:bold;margin:0}.bx-wait-time-box span{display:block;font-family:var(--bx-monospaced-font);text-align:right;font-size:16px;margin-bottom:10px}.bx-wait-time-box span:last-of-type{margin-bottom:0}.bx-remote-play-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:420px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:16px}.bx-remote-play-container > .bx-button{display:table;margin:0 0 0 auto}.bx-remote-play-settings{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2d2d2d}.bx-remote-play-settings > div{display:flex}.bx-remote-play-settings label{flex:1}.bx-remote-play-settings label p{margin:4px 0 0;padding:0;color:#888;font-size:12px}.bx-remote-play-resolution{display:block}.bx-remote-play-resolution input[type="radio"]{accent-color:var(--bx-primary-button-color);margin-right:6px}.bx-remote-play-resolution input[type="radio"]:focus{accent-color:var(--bx-primary-button-hover-color)}.bx-remote-play-device-wrapper{display:flex;margin-bottom:12px}.bx-remote-play-device-wrapper:last-child{margin-bottom:2px}.bx-remote-play-device-info{flex:1;padding:4px 0}.bx-remote-play-device-name{font-size:20px;font-weight:bold;display:inline-block;vertical-align:middle}.bx-remote-play-console-type{font-size:12px;background:#004c87;color:#fff;display:inline-block;border-radius:14px;padding:2px 10px;margin-left:8px;vertical-align:middle}.bx-remote-play-power-state{color:#888;font-size:12px}.bx-remote-play-connect-button{min-height:100%;margin:4px 0}.bx-remote-play-buttons{display:flex;justify-content:space-between}select.bx-select{min-height:30px}div.bx-select{display:flex;align-items:center;flex:0 1 auto;gap:8px}div.bx-select select{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}div.bx-select select:disabled ~ button{display:none}div.bx-select select:disabled ~ div{background:#131416;color:#fff;pointer-events:none}div.bx-select select:disabled ~ div .bx-select-indicators{visibility:hidden}div.bx-select > div,div.bx-select button.bx-select-value{min-width:120px;text-align:left;line-height:24px;vertical-align:middle;background:#fff;color:#000;border-radius:4px;padding:2px 8px;display:flex;flex:1;flex-direction:column}div.bx-select > div{min-height:24px;box-sizing:content-box}div.bx-select > div input{display:inline-block;margin-right:8px}div.bx-select > div label{margin-bottom:0;font-size:14px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:15px}div.bx-select > div label span{display:block;font-size:10px;font-weight:bold;text-align:left;line-height:initial;white-space:pre;min-height:15px;align-content:center}div.bx-select button.bx-select-value{border:none;cursor:pointer;min-height:30px;font-size:.9rem;align-items:center}div.bx-select button.bx-select-value > div{display:flex;width:100%}div.bx-select button.bx-select-value span{flex:1;text-align:left;display:inline-block}div.bx-select button.bx-select-value input{margin:0 4px;accent-color:var(--bx-primary-button-color);pointer-events:none}div.bx-select button.bx-select-value:hover input,div.bx-select button.bx-select-value:focus input{accent-color:var(--bx-danger-button-color)}div.bx-select button.bx-select-value:hover::after,div.bx-select button.bx-select-value:focus::after{border-color:#4d4d4d !important}div.bx-select button.bx-button{border:none;height:24px;width:24px;padding:0;line-height:24px;color:#fff;border-radius:4px;font-weight:bold;font-size:12px;font-family:var(--bx-monospaced-font);flex-shrink:0}div.bx-select button.bx-button span{line-height:unset}.bx-select-indicators{display:flex;height:4px;gap:2px;margin-bottom:2px}.bx-select-indicators span{content:\' \';display:inline-block;flex:1;background:#cfcfcf;border-radius:4px}.bx-select-indicators span[data-highlighted]{background:#9c9c9c}.bx-select-indicators span[data-selected]{background:#aacfe7}.bx-select-indicators span[data-highlighted][data-selected]{background:#5fa3d0}.bx-guide-home-achievements-progress{display:flex;gap:10px;flex-direction:row}.bx-guide-home-achievements-progress .bx-button{margin-bottom:0 !important}body[data-bx-media-type=tv] .bx-guide-home-achievements-progress{flex-direction:column}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress{flex-direction:row}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:first-of-type{flex:1}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type{width:40px}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type span{display:none}.bx-guide-home-buttons > div{display:flex;flex-direction:row;gap:12px}body[data-bx-media-type=tv] .bx-guide-home-buttons > div{flex-direction:column}body[data-bx-media-type=tv] .bx-guide-home-buttons > div button{margin-bottom:0 !important}body:not([data-bx-media-type=tv]) .bx-guide-home-buttons > div button span{display:none}.bx-guide-home-buttons[data-is-playing="true"] button[data-state=\'normal\']{display:none}.bx-guide-home-buttons[data-is-playing="false"] button[data-state=\'playing\']{display:none}div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]{overflow:visible}.bx-stream-menu-button-on{fill:#000 !important;background-color:#2d2d2d !important;color:#000 !important}.bx-stream-refresh-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px) !important}body[data-media-type=default] .bx-stream-refresh-button{left:calc(env(safe-area-inset-left, 0px) + 11px) !important}body[data-media-type=tv] .bx-stream-refresh-button{top:calc(var(--gds-focus-borderSize) + 80px) !important}.bx-stream-home-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px * 2) !important}body[data-media-type=default] .bx-stream-home-button{left:calc(env(safe-area-inset-left, 0px) + 12px) !important}body[data-media-type=tv] .bx-stream-home-button{top:calc(var(--gds-focus-borderSize) + 80px * 2) !important}div[data-testid=media-container][data-position=center]{display:flex}div[data-testid=media-container][data-position=top] video,div[data-testid=media-container][data-position=top] canvas{top:0}div[data-testid=media-container][data-position=bottom] video,div[data-testid=media-container][data-position=bottom] canvas{bottom:0}#game-stream video{margin:auto;align-self:center;background:#000;position:absolute;left:0;right:0}#game-stream canvas{align-self:center;margin:auto;position:absolute;left:0;right:0}#game-stream.bx-taking-screenshot:before{animation:bx-anim-taking-screenshot .5s ease;content:\' \';position:absolute;width:100%;height:100%;z-index:var(--bx-screenshot-animation-z-index)}#gamepass-dialog-root div[class^=Guide-module__guide] .bx-button{overflow:visible;margin-bottom:12px}@-moz-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-webkit-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-o-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}.bx-number-stepper{text-align:center}.bx-number-stepper > div{display:flex;align-items:center}.bx-number-stepper > div span{flex:1;display:inline-block;min-width:40px;font-family:var(--bx-monospaced-font);font-size:13px;margin:0 4px}.bx-number-stepper > div button{flex-shrink:0;border:none;width:24px;height:24px;margin:0;line-height:24px;background-color:var(--bx-default-button-color);color:#fff;border-radius:4px;font-weight:bold;font-size:14px;font-family:var(--bx-monospaced-font)}@media (hover:hover){.bx-number-stepper > div button:hover{background-color:var(--bx-default-button-hover-color)}}.bx-number-stepper > div button:active{background-color:var(--bx-default-button-hover-color)}.bx-number-stepper > div button:disabled + span{font-family:var(--bx-title-font)}.bx-number-stepper input[type="range"]{display:block;margin:8px 0 2px auto;min-width:180px;width:100%;color:#959595 !important}.bx-number-stepper input[type=range]:disabled,.bx-number-stepper button:disabled{display:none}.bx-number-stepper[data-disabled=true] input[type=range],.bx-number-stepper[disabled=true] input[type=range],.bx-number-stepper[data-disabled=true] button,.bx-number-stepper[disabled=true] button{display:none}#bx-game-bar{z-index:var(--bx-game-bar-z-index);position:fixed;bottom:0;width:40px;height:90px;overflow:visible;cursor:pointer}#bx-game-bar > svg{display:none;pointer-events:none;position:absolute;height:28px;margin-top:16px}@media (hover:hover){#bx-game-bar:hover > svg{display:block}}#bx-game-bar .bx-game-bar-container{opacity:0;position:absolute;display:flex;overflow:hidden;background:rgba(26,27,30,0.91);box-shadow:0 0 6px #1c1c1c;transition:opacity .1s ease-in}#bx-game-bar .bx-game-bar-container.bx-show{opacity:.9}#bx-game-bar .bx-game-bar-container.bx-show + svg{display:none !important}#bx-game-bar .bx-game-bar-container.bx-hide{opacity:0;pointer-events:none}#bx-game-bar .bx-game-bar-container button{width:60px;height:60px;border-radius:0}#bx-game-bar .bx-game-bar-container button svg{width:28px;height:28px;transition:transform .08s ease 0s}#bx-game-bar .bx-game-bar-container button:hover{border-radius:0}#bx-game-bar .bx-game-bar-container button:active svg{transform:scale(.75)}#bx-game-bar .bx-game-bar-container button.bx-activated{background-color:#fff}#bx-game-bar .bx-game-bar-container button.bx-activated svg{filter:invert(1)}#bx-game-bar .bx-game-bar-container div[data-activated] button{display:none}#bx-game-bar .bx-game-bar-container div[data-activated=\'false\'] button:first-of-type{display:block}#bx-game-bar .bx-game-bar-container div[data-activated=\'true\'] button:last-of-type{display:block}#bx-game-bar[data-position="bottom-left"]{left:0;direction:ltr}#bx-game-bar[data-position="bottom-left"] .bx-game-bar-container{border-radius:0 10px 10px 0}#bx-game-bar[data-position="bottom-right"]{right:0;direction:rtl}#bx-game-bar[data-position="bottom-right"] .bx-game-bar-container{direction:ltr;border-radius:10px 0 0 10px}.bx-badges{margin-left:0;user-select:none;-webkit-user-select:none}.bx-badge{border:none;display:inline-block;line-height:24px;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;font-weight:400;margin:0 8px 8px 0;box-shadow:0 0 6px #000;border-radius:4px}.bx-badge-name{background-color:#2d3036;border-radius:4px 0 0 4px}.bx-badge-name svg{width:16px;height:16px}.bx-badge-value{background-color:#808080;border-radius:0 4px 4px 0}.bx-badge-name,.bx-badge-value{display:inline-block;padding:0 8px;line-height:30px;vertical-align:bottom}.bx-badge-battery[data-charging=true] span:first-of-type::after{content:\' ⚡️\'}div[class^=StreamMenu-module__container] .bx-badges{position:absolute;max-width:500px}#gamepass-dialog-root .bx-badges{position:fixed;top:60px;left:460px;max-width:500px}@media (min-width:568px) and (max-height:480px){#gamepass-dialog-root .bx-badges{position:unset;top:unset;left:unset;margin:8px 0}}.bx-stats-bar{display:flex;flex-direction:row;gap:8px;user-select:none;-webkit-user-select:none;position:fixed;top:0;background-color:#000;color:#fff;font-family:var(--bx-monospaced-font);font-size:.9rem;padding-left:8px;z-index:var(--bx-stats-bar-z-index);text-wrap:nowrap}.bx-stats-bar[data-stats*="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats*="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats*="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats*="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats*="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats*="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats*="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats*="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats*="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats*="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats*="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats*="[ul]"] > .bx-stat-ul{display:inline-flex;align-items:baseline}.bx-stats-bar[data-stats$="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats$="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats$="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats$="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats$="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats$="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats$="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats$="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats$="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats$="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats$="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats$="[ul]"] > .bx-stat-ul{border-right:none}.bx-stats-bar::before{display:none;content:\'👀\';vertical-align:middle;margin-right:8px}.bx-stats-bar[data-display=glancing]::before{display:inline-block}.bx-stats-bar[data-position=top-left]{left:0;border-radius:0 0 4px 0}.bx-stats-bar[data-position=top-right]{right:0;border-radius:0 0 0 4px}.bx-stats-bar[data-position=top-center]{transform:translate(-50%,0);left:50%;border-radius:0 0 4px 4px}.bx-stats-bar[data-shadow=true]{background:none;filter:drop-shadow(1px 0 0 rgba(0,0,0,0.941)) drop-shadow(-1px 0 0 rgba(0,0,0,0.941)) drop-shadow(0 1px 0 rgba(0,0,0,0.941)) drop-shadow(0 -1px 0 rgba(0,0,0,0.941))}.bx-stats-bar > div{display:none;border-right:1px solid #fff;padding-right:8px}.bx-stats-bar label{margin:0 8px 0 0;font-family:var(--bx-title-font);font-size:70%;font-weight:bold;vertical-align:middle;cursor:help}.bx-stats-bar span{display:inline-block;text-align:right;vertical-align:middle;white-space:pre}.bx-stats-bar span[data-grade=good]{color:#6bffff}.bx-stats-bar span[data-grade=ok]{color:#fff16b}.bx-stats-bar span[data-grade=bad]{color:#ff5f5f}.bx-mkb-settings{display:flex;flex-direction:column;flex:1;padding-bottom:10px;overflow:hidden}.bx-mkb-pointer-lock-msg{user-select:none;-webkit-user-select:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);margin:auto;background:#151515;z-index:var(--bx-mkb-pointer-lock-msg-z-index);color:#fff;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem;padding:12px;border-radius:8px;align-items:center;box-shadow:0 0 6px #000;min-width:300px;opacity:.9;display:flex;flex-direction:column;gap:10px}.bx-mkb-pointer-lock-msg:hover{opacity:1}.bx-mkb-pointer-lock-msg > p{margin:0;width:100%;font-size:22px;margin-bottom:4px;font-weight:bold;text-align:left}.bx-mkb-pointer-lock-msg > div{width:100%;display:flex;flex-direction:row;gap:10px}.bx-mkb-pointer-lock-msg > div button:first-of-type{flex-shrink:1}.bx-mkb-pointer-lock-msg > div button:last-of-type{flex-grow:1}.bx-mkb-key-row{display:flex;margin-bottom:10px;align-items:center;gap:20px}.bx-mkb-key-row label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center}.bx-mkb-settings.bx-editing .bx-mkb-key-row button{background:#393939;border-radius:4px;border:none}.bx-mkb-settings.bx-editing .bx-mkb-key-row button:hover{background:#333;cursor:pointer}.bx-mkb-action-buttons > div{text-align:right;display:none}.bx-mkb-action-buttons button{margin-left:8px}.bx-mkb-settings:not(.bx-editing) .bx-mkb-action-buttons > div:first-child{display:block}.bx-mkb-settings.bx-editing .bx-mkb-action-buttons > div:last-child{display:block}.bx-mkb-note{display:block;margin:0 0 10px;font-size:12px;text-align:center}button.bx-binding-button{flex:1;min-height:38px;border:none;border-radius:4px;font-size:14px;color:#fff;display:flex;align-items:center;align-self:center;padding:0 6px}button.bx-binding-button:disabled{background:#131416;padding:0 8px}button.bx-binding-button:not(:disabled){border:2px solid transparent;border-top:none;border-bottom:4px solid #252525;background:#3b3b3b;cursor:pointer}button.bx-binding-button:not(:disabled):hover,button.bx-binding-button:not(:disabled).bx-focusable:focus{background:#20b217;border-bottom-color:#186c13}button.bx-binding-button:not(:disabled):active{background:#16900f;border-bottom:3px solid #0c4e08;border-left-width:2px;border-right-width:2px}button.bx-binding-button:not(:disabled).bx-focusable:focus::after{top:-6px;left:-8px;right:-8px;bottom:-10px}.bx-settings-row .bx-binding-button-wrapper button.bx-binding-button{min-width:60px}.bx-product-details-buttons{display:flex;gap:10px;flex-direction:row}.bx-product-details-buttons button{max-width:max-content;margin:10px 0 0 0;display:flex}@media (min-width:568px) and (max-height:480px){.bx-product-details-buttons{flex-direction:column}.bx-product-details-buttons button{margin:8px 0 0 10px}}', PREF_HIDE_SECTIONS = getPref("ui.hideSections"), selectorToHide = [];
+ let css = ':root{--bx-title-font:Bahnschrift,Arial,Helvetica,sans-serif;--bx-title-font-semibold:Bahnschrift Semibold,Arial,Helvetica,sans-serif;--bx-normal-font:"Segoe UI",Arial,Helvetica,sans-serif;--bx-monospaced-font:Consolas,"Courier New",Courier,monospace;--bx-promptfont-font:promptfont;--bx-button-height:40px;--bx-default-button-color:#2d3036;--bx-default-button-rgb:45,48,54;--bx-default-button-hover-color:#515863;--bx-default-button-hover-rgb:81,88,99;--bx-default-button-active-color:#222428;--bx-default-button-active-rgb:34,36,40;--bx-default-button-disabled-color:#8e8e8e;--bx-default-button-disabled-rgb:142,142,142;--bx-primary-button-color:#008746;--bx-primary-button-rgb:0,135,70;--bx-primary-button-hover-color:#04b358;--bx-primary-button-hover-rgb:4,179,88;--bx-primary-button-active-color:#044e2a;--bx-primary-button-active-rgb:4,78,42;--bx-primary-button-disabled-color:#448262;--bx-primary-button-disabled-rgb:68,130,98;--bx-warning-button-color:#c16e04;--bx-warning-button-rgb:193,110,4;--bx-warning-button-hover-color:#fa9005;--bx-warning-button-hover-rgb:250,144,5;--bx-warning-button-active-color:#965603;--bx-warning-button-active-rgb:150,86,3;--bx-warning-button-disabled-color:#a2816c;--bx-warning-button-disabled-rgb:162,129,108;--bx-danger-button-color:#c10404;--bx-danger-button-rgb:193,4,4;--bx-danger-button-hover-color:#e61d1d;--bx-danger-button-hover-rgb:230,29,29;--bx-danger-button-active-color:#a26c6c;--bx-danger-button-active-rgb:162,108,108;--bx-danger-button-disabled-color:#df5656;--bx-danger-button-disabled-rgb:223,86,86;--bx-fullscreen-text-z-index:9999;--bx-toast-z-index:6000;--bx-key-binding-dialog-z-index:5010;--bx-key-binding-dialog-overlay-z-index:5000;--bx-stats-bar-z-index:4010;--bx-navigation-dialog-z-index:3010;--bx-navigation-dialog-overlay-z-index:3000;--bx-mkb-pointer-lock-msg-z-index:2000;--bx-game-bar-z-index:1000;--bx-screenshot-animation-z-index:200;--bx-wait-time-box-z-index:100}@font-face{font-family:\'promptfont\';src:url("https://redphx.github.io/better-xcloud/fonts/promptfont.otf");unicode-range:U+2196-E011}div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]){opacity:0;pointer-events:none !important;position:absolute;top:-9999px;left:-9999px}@media screen and (max-width:640px){header a[href="/play"]{display:none}}.bx-full-width{width:100% !important}.bx-full-height{height:100% !important}.bx-auto-height{height:auto !important}.bx-no-scroll{overflow:hidden !important}.bx-hide-scroll-bar{scrollbar-width:none}.bx-hide-scroll-bar::-webkit-scrollbar{display:none}.bx-gone{display:none !important}.bx-offscreen{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}.bx-hidden{visibility:hidden !important}.bx-invisible{opacity:0}.bx-unclickable{pointer-events:none}.bx-pixel{width:1px !important;height:1px !important}.bx-no-margin{margin:0 !important}.bx-no-padding{padding:0 !important}.bx-prompt{font-family:var(--bx-promptfont-font) !important}.bx-monospaced{font-family:var(--bx-monospaced-font) !important}.bx-line-through{text-decoration:line-through !important}.bx-normal-case{text-transform:none !important}.bx-normal-link{text-transform:none !important;text-align:left !important;font-weight:400 !important;font-family:var(--bx-normal-font) !important}select[multiple],select[multiple]:focus{overflow:auto;border:none}select[multiple] option,select[multiple]:focus option{padding:4px 6px}select[multiple] option:checked,select[multiple]:focus option:checked{background:#1a7bc0 linear-gradient(0deg,#1a7bc0 0%,#1a7bc0 100%)}select[multiple] option:checked::before,select[multiple]:focus option:checked::before{content:\'☑️\';font-size:12px;display:inline-block;margin-right:6px;height:100%;line-height:100%;vertical-align:middle}#headerArea,#uhfSkipToMain,.uhf-footer{display:none}div[class*=NotFocusedDialog]{position:absolute !important;top:-9999px !important;left:-9999px !important;width:0 !important;height:0 !important}#game-stream video:not([src]){visibility:hidden}div[class*=SupportedInputsBadge]:not(:has(:nth-child(2))),div[class*=SupportedInputsBadge] svg:first-of-type{display:none}.bx-game-tile-wait-time{position:absolute;top:0;left:0;z-index:1;background:rgba(0,0,0,0.5);display:flex;border-radius:4px 0 4px 0;align-items:center;padding:4px 8px}.bx-game-tile-wait-time svg{width:14px;height:16px;margin-right:2px}.bx-game-tile-wait-time span{display:inline-block;height:16px;line-height:16px;font-size:12px;font-weight:bold;margin-left:2px}.bx-game-tile-wait-time[data-duration=short]{background-color:rgba(0,133,133,0.75)}.bx-game-tile-wait-time[data-duration=medium]{background-color:rgba(213,133,0,0.75)}.bx-game-tile-wait-time[data-duration=long]{background-color:rgba(150,0,0,0.75)}.bx-fullscreen-text{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);z-index:var(--bx-fullscreen-text-z-index);line-height:100vh;color:#fff;text-align:center;font-weight:400;font-family:var(--bx-normal-font);font-size:1.3rem;user-select:none;-webkit-user-select:none}#root section[class*=DeviceCodePage-module__page]{margin-left:20px !important;margin-right:20px !important;margin-top:20px !important;max-width:800px !important}#root div[class*=DeviceCodePage-module__back]{display:none}.bx-blink-me{animation:bx-blinker 1s linear infinite}.bx-horizontal-shaking{animation:bx-horizontal-shaking .4s ease-in-out 2}@-moz-keyframes bx-blinker{100%{opacity:0}}@-webkit-keyframes bx-blinker{100%{opacity:0}}@-o-keyframes bx-blinker{100%{opacity:0}}@keyframes bx-blinker{100%{opacity:0}}@-moz-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@-webkit-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@-o-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}.bx-button{--button-rgb:var(--bx-default-button-rgb);--button-hover-rgb:var(--bx-default-button-hover-rgb);--button-active-rgb:var(--bx-default-button-active-rgb);--button-disabled-rgb:var(--bx-default-button-disabled-rgb);background-color:rgb(var(--button-rgb));user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;border:none;font-weight:400;height:var(--bx-button-height);border-radius:4px;padding:0 8px;text-transform:uppercase;cursor:pointer;overflow:hidden}.bx-button:not([disabled]):active{background-color:rgb(var(--button-active-rgb))}.bx-button:focus{outline:none !important}.bx-button:not([disabled]):not(:active):hover,.bx-button:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button:disabled{cursor:default;background-color:rgb(var(--button-disabled-rgb))}.bx-button.bx-ghost{background-color:transparent}.bx-button.bx-ghost:not([disabled]):not(:active):hover,.bx-button.bx-ghost:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button.bx-primary{--button-rgb:var(--bx-primary-button-rgb)}.bx-button.bx-primary:not([disabled]):active{--button-active-rgb:var(--bx-primary-button-active-rgb)}.bx-button.bx-primary:not([disabled]):not(:active):hover,.bx-button.bx-primary:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-primary-button-hover-rgb)}.bx-button.bx-primary:disabled{--button-disabled-rgb:var(--bx-primary-button-disabled-rgb)}.bx-button.bx-warning{--button-rgb:var(--bx-warning-button-rgb)}.bx-button.bx-warning:not([disabled]):active{--button-active-rgb:var(--bx-warning-button-active-rgb)}.bx-button.bx-warning:not([disabled]):not(:active):hover,.bx-button.bx-warning:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-warning-button-hover-rgb)}.bx-button.bx-warning:disabled{--button-disabled-rgb:var(--bx-warning-button-disabled-rgb)}.bx-button.bx-danger{--button-rgb:var(--bx-danger-button-rgb)}.bx-button.bx-danger:not([disabled]):active{--button-active-rgb:var(--bx-danger-button-active-rgb)}.bx-button.bx-danger:not([disabled]):not(:active):hover,.bx-button.bx-danger:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-danger-button-hover-rgb)}.bx-button.bx-danger:disabled{--button-disabled-rgb:var(--bx-danger-button-disabled-rgb)}.bx-button.bx-frosted{--button-alpha:.2;background-color:rgba(var(--button-rgb), var(--button-alpha));backdrop-filter:blur(4px) brightness(1.5)}.bx-button.bx-frosted:not([disabled]):not(:active):hover,.bx-button.bx-frosted:not([disabled]):not(:active).bx-focusable:focus{background-color:rgba(var(--button-hover-rgb), var(--button-alpha))}.bx-button.bx-drop-shadow{box-shadow:0 0 4px rgba(0,0,0,0.502)}.bx-button.bx-tall{height:calc(var(--bx-button-height) * 1.5) !important}.bx-button.bx-circular{border-radius:var(--bx-button-height);width:var(--bx-button-height);height:var(--bx-button-height)}.bx-button svg{display:inline-block;width:16px;height:var(--bx-button-height)}.bx-button span{display:inline-block;line-height:var(--bx-button-height);vertical-align:middle;color:#fff;overflow:hidden;white-space:nowrap}.bx-button span:not(:only-child){margin-left:10px}.bx-button.bx-button-multi-lines{height:auto;text-align:left;padding:10px 0}.bx-button.bx-button-multi-lines span{line-height:unset;display:block}.bx-button.bx-button-multi-lines span:last-of-type{text-transform:none;font-weight:normal;font-family:"Segoe Sans Variable Text";font-size:12px;margin-top:4px}.bx-focusable{position:relative;overflow:visible}.bx-focusable::after{border:2px solid transparent;border-radius:10px}.bx-focusable:focus::after{content:\'\';border-color:#fff;position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px}html[data-active-input=touch] .bx-focusable:focus::after,html[data-active-input=mouse] .bx-focusable:focus::after{border-color:transparent !important}.bx-focusable.bx-circular::after{border-radius:var(--bx-button-height)}a.bx-button{display:inline-block}a.bx-button.bx-full-width{text-align:center}button.bx-inactive{pointer-events:none;opacity:.2;background:transparent !important}.bx-header-remote-play-button{height:auto;margin-right:8px !important}.bx-header-remote-play-button svg{width:24px;height:24px}.bx-header-settings-button{line-height:30px;font-size:14px;text-transform:uppercase;position:relative}.bx-header-settings-button[data-update-available]::before{content:\'🌟\' !important;line-height:var(--bx-button-height);display:inline-block;margin-left:4px}.bx-key-binding-dialog-overlay{position:fixed;inset:0;z-index:var(--bx-key-binding-dialog-overlay-z-index);background:#000;opacity:50%}.bx-key-binding-dialog{display:flex;flex-flow:column;max-height:90vh;position:fixed;top:50%;left:50%;margin-right:-50%;transform:translate(-50%,-50%);min-width:420px;padding:16px;border-radius:8px;z-index:var(--bx-key-binding-dialog-z-index);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-normal-font);box-shadow:0 0 6px #000;user-select:none;-webkit-user-select:none}.bx-key-binding-dialog *:focus{outline:none !important}.bx-key-binding-dialog h2{margin-bottom:12px;color:#fff;display:block;font-family:var(--bx-title-font);font-size:32px;font-weight:400;line-height:var(--bx-button-height)}.bx-key-binding-dialog > div{overflow:auto;padding:2px 0}.bx-key-binding-dialog > button{padding:8px 32px;margin:10px auto 0;border:none;border-radius:4px;display:block;background-color:#2d3036;text-align:center;color:#fff;text-transform:uppercase;font-family:var(--bx-title-font);font-weight:400;line-height:18px;font-size:14px}@media (hover:hover){.bx-key-binding-dialog > button:hover{background-color:#515863}}.bx-key-binding-dialog > button:focus{background-color:#515863}.bx-key-binding-dialog ul{margin-bottom:1rem}.bx-key-binding-dialog ul li{display:none}.bx-key-binding-dialog ul[data-flags*="[1]"] > li[data-flag="1"],.bx-key-binding-dialog ul[data-flags*="[2]"] > li[data-flag="2"],.bx-key-binding-dialog ul[data-flags*="[4]"] > li[data-flag="4"],.bx-key-binding-dialog ul[data-flags*="[8]"] > li[data-flag="8"]{display:list-item}@media screen and (max-width:450px){.bx-key-binding-dialog{min-width:100%}}.bx-navigation-dialog{position:absolute;z-index:var(--bx-navigation-dialog-z-index);font-family:var(--bx-title-font)}.bx-navigation-dialog *:focus{outline:none !important}.bx-navigation-dialog select:disabled{-webkit-appearance:none;text-align-last:right;text-align:right;color:#fff;background:#131416;border:none;border-radius:4px;padding:0 5px}.bx-navigation-dialog .bx-focusable::after{border-radius:4px}.bx-navigation-dialog .bx-focusable:focus::after{top:0;left:0;right:0;bottom:0}.bx-navigation-dialog-overlay{position:fixed;background:rgba(11,11,11,0.89);top:0;left:0;right:0;bottom:0;z-index:var(--bx-navigation-dialog-overlay-z-index)}.bx-navigation-dialog-overlay[data-is-playing="true"]{background:transparent}.bx-centered-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;min-width:min(calc(100vw - 20px), 500px);max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:16px;max-height:95vh;flex-direction:column;overflow:hidden;display:flex;flex-direction:column}.bx-centered-dialog .bx-dialog-title{display:flex;flex-direction:row;align-items:center;margin-bottom:10px}.bx-centered-dialog .bx-dialog-title p{padding:0;margin:0;flex:1;font-size:1.2rem;font-weight:bold}.bx-centered-dialog .bx-dialog-title button{flex-shrink:0}.bx-centered-dialog .bx-dialog-content{flex:1;padding:6px;overflow:auto;overflow-x:hidden}.bx-centered-dialog .bx-dialog-preset-tools{display:flex;margin-bottom:12px;gap:6px}.bx-centered-dialog .bx-dialog-preset-tools button{align-self:center;min-height:50px}.bx-centered-dialog .bx-default-preset-note{font-size:12px;font-style:italic;text-align:center;margin-bottom:10px}.bx-centered-dialog input,.bx-settings-dialog input{accent-color:var(--bx-primary-button-color)}.bx-centered-dialog input:focus,.bx-settings-dialog input:focus{accent-color:var(--bx-danger-button-color)}.bx-centered-dialog select:disabled,.bx-settings-dialog select:disabled{-webkit-appearance:none;background:transparent;text-align-last:right;border:none;color:#fff}.bx-centered-dialog select option:disabled,.bx-settings-dialog select option:disabled{display:none}.bx-centered-dialog input[type=checkbox]:focus,.bx-settings-dialog input[type=checkbox]:focus,.bx-centered-dialog select:focus,.bx-settings-dialog select:focus{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}.bx-centered-dialog a,.bx-settings-dialog a{color:#1c9d1c;text-decoration:none}.bx-centered-dialog a:hover,.bx-settings-dialog a:hover,.bx-centered-dialog a:focus,.bx-settings-dialog a:focus{color:#5dc21e}.bx-centered-dialog label,.bx-settings-dialog label{margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-note{margin-top:10px;font-size:14px;text-align:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt{flex-shrink:0;font-size:32px;margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt::first-letter{letter-spacing:6px}.bx-controller-shortcuts-manager-container select:disabled{text-align:left;text-align-last:left}.bx-keyboard-shortcuts-manager-container{display:flex;flex-direction:column;gap:16px}.bx-keyboard-shortcuts-manager-container fieldset{background:#2a2a2a;border:1px solid #2a2a2a;border-radius:4px;padding:4px}.bx-keyboard-shortcuts-manager-container legend{width:auto;padding:4px 8px;margin:0 4px 4px;background:#004f87;box-shadow:0 2px 0 #071e3d;border-radius:4px;font-size:14px;font-weight:bold;text-transform:uppercase}.bx-keyboard-shortcuts-manager-container .bx-settings-row{background:none;padding:10px}.bx-settings-dialog{display:flex;position:fixed;top:0;right:0;bottom:0;opacity:.98;user-select:none;-webkit-user-select:none}.bx-settings-dialog .bx-settings-reload-note{font-size:.8rem;display:block;padding:8px;font-style:italic;font-weight:normal;height:var(--bx-button-height)}.bx-settings-tabs-container{position:fixed;width:48px;max-height:100vh;display:flex;flex-direction:column}.bx-settings-tabs-container > div:last-of-type{display:flex;flex-direction:column;align-items:end}.bx-settings-tabs-container > div:last-of-type button{flex-shrink:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-top:8px;height:unset;padding:8px 10px}.bx-settings-tabs-container > div:last-of-type button svg{width:16px;height:16px}.bx-settings-tabs{display:flex;flex-direction:column;border-radius:0 0 0 8px;box-shadow:0 0 6px #000;overflow:overlay;flex:1}.bx-settings-tabs svg{width:24px;height:24px;padding:10px;flex-shrink:0;box-sizing:content-box;background:#131313;cursor:pointer;border-left:4px solid #1e1e1e}.bx-settings-tabs svg.bx-active{background:#222;border-color:#008746}.bx-settings-tabs svg:not(.bx-active):hover{background:#2f2f2f;border-color:#484848}.bx-settings-tabs svg:focus{border-color:#fff}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]{background:var(--bx-danger-button-color) !important}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]:hover{background:var(--bx-danger-button-hover-color) !important}.bx-settings-tab-contents{flex-direction:column;padding:10px;margin-left:48px;width:450px;max-width:calc(100vw - tabsWidth);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-title-font);text-align:center;box-shadow:0 0 6px #000;overflow:overlay;z-index:1}.bx-settings-tab-contents > div[data-tab-group=mkb]{display:flex;flex-direction:column;height:100%;overflow:hidden}.bx-settings-tab-contents .bx-top-buttons{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}.bx-settings-tab-contents .bx-top-buttons .bx-button{display:block}.bx-settings-tab-contents h2{margin:16px 0 8px 0;display:flex;align-items:center}.bx-settings-tab-contents h2:first-of-type{margin-top:0}.bx-settings-tab-contents h2 span{display:inline-block;font-size:20px;font-weight:bold;text-align:left;flex:1;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-height:var(--bx-button-height);align-content:center}@media (max-width:500px){.bx-settings-tab-contents{width:calc(100vw - 48px)}}.bx-settings-row{display:flex;gap:10px;padding:16px 10px;margin:0;background:#2a2a2a;border-bottom:1px solid #343434}.bx-settings-row:hover,.bx-settings-row:focus-within{background-color:#242424}.bx-settings-row:not(:has(> input[type=checkbox])){flex-wrap:wrap}.bx-settings-row > span.bx-settings-label{font-size:14px;display:block;text-align:left;align-self:center;margin-bottom:0 !important;flex:1}.bx-settings-row > span.bx-settings-label + *{margin:0 0 0 auto}.bx-settings-row[data-multi-lines="true"]{flex-direction:column}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label{align-self:start}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label + *{margin:unset}.bx-settings-dialog-note{display:block;color:#afafb0;font-size:12px;font-weight:lighter;font-style:italic}.bx-settings-dialog-note:not(:has(a)){margin-top:4px}.bx-settings-dialog-note a{display:inline-block;padding:4px}.bx-settings-custom-user-agent{display:block;width:100%;padding:6px}.bx-donation-link{display:block;text-align:center;text-decoration:none;height:20px;line-height:20px;font-size:14px;margin-top:10px;margin-bottom:10px}.bx-debug-info button{margin-top:10px}.bx-debug-info pre{margin-top:10px;cursor:copy;color:#fff;padding:8px;border:1px solid #2d2d2d;background:#212121;white-space:break-spaces;text-align:left}.bx-debug-info pre:hover{background:#272727}.bx-settings-app-version{margin-top:10px;text-align:center;color:#747474;font-size:12px}.bx-note-unsupported{display:block;font-size:12px;font-style:italic;font-weight:normal;color:#828282}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row){border-top-left-radius:6px;border-top-right-radius:6px}.bx-settings-tab-contents > div .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-radius:6px}.bx-suggest-toggler{text-align:left;display:flex;border-radius:4px;overflow:hidden;background:#003861;height:45px;align-items:center}.bx-suggest-toggler label{flex:1;align-content:center;padding:0 10px;background:#004f87;height:100%}.bx-suggest-toggler span{display:inline-block;align-self:center;padding:10px;width:45px;text-align:center}.bx-suggest-toggler:hover,.bx-suggest-toggler:focus{cursor:pointer;background:#005da1}.bx-suggest-toggler:hover label,.bx-suggest-toggler:focus label{background:#006fbe}.bx-suggest-toggler[bx-open] span{transform:rotate(90deg)}.bx-suggest-toggler[bx-open]+ .bx-suggest-box{display:block}.bx-suggest-box{display:none}.bx-suggest-wrapper{display:flex;flex-direction:column;gap:10px;margin:10px}.bx-suggest-note{font-size:11px;color:#8c8c8c;font-style:italic;font-weight:100}.bx-suggest-link{font-size:14px;display:inline-block;margin-top:4px;padding:4px}.bx-suggest-row{display:flex;flex-direction:row;gap:10px}.bx-suggest-row label{flex:1;overflow:overlay;border-radius:4px}.bx-suggest-row label .bx-suggest-label{background:#323232;padding:4px 10px;font-size:12px;text-align:left}.bx-suggest-row label .bx-suggest-value{padding:6px;font-size:14px}.bx-suggest-row label .bx-suggest-value.bx-suggest-change{background-color:var(--bx-warning-color)}.bx-suggest-row.bx-suggest-ok input{visibility:hidden}.bx-suggest-row.bx-suggest-ok .bx-suggest-label{background-color:#008114}.bx-suggest-row.bx-suggest-ok .bx-suggest-value{background-color:#13a72a}.bx-suggest-row.bx-suggest-change .bx-suggest-label{background-color:#a65e08}.bx-suggest-row.bx-suggest-change .bx-suggest-value{background-color:#d57f18}.bx-suggest-row.bx-suggest-change:hover label{cursor:pointer}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-label{background-color:#995707}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-value{background-color:#bd7115}.bx-suggest-row.bx-suggest-change input:not(:checked) + label{opacity:.5}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-label{background-color:#2a2a2a}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-value{background-color:#393939}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label{opacity:1}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-label{background-color:#202020}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-value{background-color:#303030}.bx-sub-content-box{background:#161616;padding:10px;box-shadow:0 0 12px #0f0f0f inset;border-radius:10px}.bx-settings-row .bx-sub-content-box{background:#202020;padding:12px;box-shadow:0 0 4px #000 inset;border-radius:6px}.bx-controller-extra-settings[data-has-gamepad=true] > :first-child{display:none}.bx-controller-extra-settings[data-has-gamepad=true] > :last-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :first-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :last-child{display:none}.bx-controller-extra-settings .bx-controller-extra-wrapper{flex:1;min-width:1px}.bx-controller-extra-settings .bx-sub-content-box{flex:1;text-align:left;display:flex;flex-direction:column;margin-top:10px}.bx-controller-extra-settings .bx-sub-content-box > label{font-size:14px}.bx-preset-row{display:flex;gap:8px}.bx-preset-row .bx-select{flex:1}.bx-toast{user-select:none;-webkit-user-select:none;position:fixed;left:50%;top:24px;transform:translate(-50%,0);background:#000;border-radius:16px;color:#fff;z-index:var(--bx-toast-z-index);font-family:var(--bx-normal-font);border:2px solid #fff;display:flex;align-items:center;opacity:0;overflow:clip;transition:opacity .2s ease-in}.bx-toast.bx-show{opacity:.85}.bx-toast.bx-hide{opacity:0;pointer-events:none}.bx-toast-msg{font-size:14px;display:inline-block;padding:12px 16px;white-space:pre}.bx-toast-status{font-weight:bold;font-size:14px;text-transform:uppercase;display:inline-block;background:#515863;padding:12px 16px;color:#fff;white-space:pre}.bx-wait-time-box{position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);color:#fff;z-index:var(--bx-wait-time-box-z-index);padding:12px;border-radius:0 0 0 8px}.bx-wait-time-box label{display:block;text-transform:uppercase;text-align:right;font-size:12px;font-weight:bold;margin:0}.bx-wait-time-box span{display:block;font-family:var(--bx-monospaced-font);text-align:right;font-size:16px;margin-bottom:10px}.bx-wait-time-box span:last-of-type{margin-bottom:0}.bx-remote-play-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;width:420px;max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:16px}.bx-remote-play-container > .bx-button{display:table;margin:0 0 0 auto}.bx-remote-play-settings{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2d2d2d}.bx-remote-play-settings > div{display:flex}.bx-remote-play-settings label{flex:1}.bx-remote-play-settings label p{margin:4px 0 0;padding:0;color:#888;font-size:12px}.bx-remote-play-resolution{display:block}.bx-remote-play-resolution input[type="radio"]{accent-color:var(--bx-primary-button-color);margin-right:6px}.bx-remote-play-resolution input[type="radio"]:focus{accent-color:var(--bx-primary-button-hover-color)}.bx-remote-play-device-wrapper{display:flex;margin-bottom:12px}.bx-remote-play-device-wrapper:last-child{margin-bottom:2px}.bx-remote-play-device-info{flex:1;padding:4px 0}.bx-remote-play-device-name{font-size:20px;font-weight:bold;display:inline-block;vertical-align:middle}.bx-remote-play-console-type{font-size:12px;background:#004c87;color:#fff;display:inline-block;border-radius:14px;padding:2px 10px;margin-left:8px;vertical-align:middle}.bx-remote-play-power-state{color:#888;font-size:12px}.bx-remote-play-connect-button{min-height:100%;margin:4px 0}.bx-remote-play-buttons{display:flex;justify-content:space-between}select.bx-select{min-height:30px}div.bx-select{display:flex;align-items:stretch;flex:0 1 auto;gap:8px}div.bx-select select:disabled ~ button{display:none}div.bx-select select:disabled ~ div{background:#131416;color:#fff;pointer-events:none}div.bx-select select:disabled ~ div .bx-select-indicators{visibility:hidden}div.bx-select > div,div.bx-select button.bx-select-value{min-width:120px;text-align:left;line-height:24px;vertical-align:middle;background:#fff;color:#000;border-radius:4px;padding:2px 8px;display:flex;flex:1;flex-direction:column}div.bx-select > div{min-height:24px}div.bx-select > div input{display:inline-block;margin-right:8px}div.bx-select > div label{margin-bottom:0;font-size:14px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:15px}div.bx-select > div label span{display:block;font-size:10px;font-weight:bold;text-align:left;line-height:20px;white-space:pre;min-height:15px;align-content:center}div.bx-select button.bx-select-value{border:none;cursor:pointer;min-height:30px;font-size:.9rem;align-items:center}div.bx-select button.bx-select-value > div{display:flex;width:100%}div.bx-select button.bx-select-value span{flex:1;text-align:left;display:inline-block}div.bx-select button.bx-select-value input{margin:0 4px;accent-color:var(--bx-primary-button-color);pointer-events:none}div.bx-select button.bx-select-value:hover input,div.bx-select button.bx-select-value:focus input{accent-color:var(--bx-danger-button-color)}div.bx-select button.bx-select-value:hover::after,div.bx-select button.bx-select-value:focus::after{border-color:#4d4d4d !important}div.bx-select button.bx-button{border:none;width:24px;height:auto;padding:0;color:#fff;border-radius:4px;font-weight:bold;font-size:12px;font-family:var(--bx-monospaced-font);flex-shrink:0}div.bx-select button.bx-button span{line-height:unset}div.bx-select[data-controller-friendly=true] > div{box-sizing:content-box}div.bx-select[data-controller-friendly=true] select{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}div.bx-select[data-controller-friendly=false]{position:relative}div.bx-select[data-controller-friendly=false] > div{box-sizing:border-box}div.bx-select[data-controller-friendly=false] > div label{margin-right:24px}div.bx-select[data-controller-friendly=false] select:disabled{display:none}div.bx-select[data-controller-friendly=false] select:not(:disabled){cursor:pointer;position:absolute;top:0;right:0;bottom:0;display:block;opacity:0;z-index:calc(var(--bx-settings-z-index) + 1)}div.bx-select[data-controller-friendly=false] select:not(:disabled):hover + div{background:#f0f0f0}div.bx-select[data-controller-friendly=false] select:not(:disabled) + div label::after{content:\'▾\';font-size:14px;position:absolute;right:8px;pointer-events:none}.bx-select-indicators{display:flex;height:4px;gap:2px;margin-bottom:2px}.bx-select-indicators span{content:\' \';display:inline-block;flex:1;background:#cfcfcf;border-radius:4px;min-width:1px}.bx-select-indicators span[data-highlighted]{background:#9c9c9c;min-width:6px}.bx-select-indicators span[data-selected]{background:#aacfe7}.bx-select-indicators span[data-highlighted][data-selected]{background:#5fa3d0}.bx-guide-home-achievements-progress{display:flex;gap:10px;flex-direction:row}.bx-guide-home-achievements-progress .bx-button{margin-bottom:0 !important}body[data-bx-media-type=tv] .bx-guide-home-achievements-progress{flex-direction:column}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress{flex-direction:row}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:first-of-type{flex:1}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type{width:40px}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type span{display:none}.bx-guide-home-buttons > div{display:flex;flex-direction:row;gap:12px}body[data-bx-media-type=tv] .bx-guide-home-buttons > div{flex-direction:column}body[data-bx-media-type=tv] .bx-guide-home-buttons > div button{margin-bottom:0 !important}body:not([data-bx-media-type=tv]) .bx-guide-home-buttons > div button span{display:none}.bx-guide-home-buttons[data-is-playing="true"] button[data-state=\'normal\']{display:none}.bx-guide-home-buttons[data-is-playing="false"] button[data-state=\'playing\']{display:none}div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]{overflow:visible}.bx-stream-menu-button-on{fill:#000 !important;background-color:#2d2d2d !important;color:#000 !important}.bx-stream-refresh-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px) !important}body[data-media-type=default] .bx-stream-refresh-button{left:calc(env(safe-area-inset-left, 0px) + 11px) !important}body[data-media-type=tv] .bx-stream-refresh-button{top:calc(var(--gds-focus-borderSize) + 80px) !important}.bx-stream-home-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px * 2) !important}body[data-media-type=default] .bx-stream-home-button{left:calc(env(safe-area-inset-left, 0px) + 12px) !important}body[data-media-type=tv] .bx-stream-home-button{top:calc(var(--gds-focus-borderSize) + 80px * 2) !important}div[data-testid=media-container][data-position=center]{display:flex}div[data-testid=media-container][data-position=top] video,div[data-testid=media-container][data-position=top] canvas{top:0}div[data-testid=media-container][data-position=bottom] video,div[data-testid=media-container][data-position=bottom] canvas{bottom:0}#game-stream video{margin:auto;align-self:center;background:#000;position:absolute;left:0;right:0}#game-stream canvas{align-self:center;margin:auto;position:absolute;left:0;right:0}#game-stream.bx-taking-screenshot:before{animation:bx-anim-taking-screenshot .5s ease;content:\' \';position:absolute;width:100%;height:100%;z-index:var(--bx-screenshot-animation-z-index)}#gamepass-dialog-root div[class^=Guide-module__guide] .bx-button{overflow:visible;margin-bottom:12px}@-moz-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-webkit-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-o-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}.bx-number-stepper{text-align:center}.bx-number-stepper > div{display:flex;align-items:center}.bx-number-stepper > div span{flex:1;display:inline-block;min-width:40px;font-family:var(--bx-monospaced-font);white-space:pre;font-size:13px;margin:0 4px}.bx-number-stepper > div button{flex-shrink:0;border:none;width:24px;height:24px;margin:0;line-height:24px;background-color:var(--bx-default-button-color);color:#fff;border-radius:4px;font-weight:bold;font-size:14px;font-family:var(--bx-monospaced-font)}@media (hover:hover){.bx-number-stepper > div button:hover{background-color:var(--bx-default-button-hover-color)}}.bx-number-stepper > div button:active{background-color:var(--bx-default-button-hover-color)}.bx-number-stepper > div button:disabled + span{font-family:var(--bx-title-font)}.bx-number-stepper input[type=range]{display:block;margin:8px 0 2px auto;min-width:180px;width:100%;color:#959595 !important}.bx-number-stepper input[type=range]:disabled,.bx-number-stepper button:disabled{display:none}.bx-number-stepper[data-disabled=true] input[type=range],.bx-number-stepper[disabled=true] input[type=range],.bx-number-stepper[data-disabled=true] button,.bx-number-stepper[disabled=true] button{display:none}.bx-dual-number-stepper > span{display:block;font-family:var(--bx-monospaced-font);font-size:13px;white-space:pre;margin:0 4px;text-align:center}.bx-dual-number-stepper > div input[type=range]{display:block;width:100%;min-width:180px;background:transparent;color:#959595 !important;appearance:none;padding:8px 0}.bx-dual-number-stepper > div input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff var(--from),var(--bx-primary-button-color) var(--from) var(--to),#fff var(--to) 100%);height:8px;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-moz-range-track{background:linear-gradient(90deg,#fff var(--from),var(--bx-primary-button-color) var(--from) var(--to),#fff var(--to) 100%);height:8px;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-webkit-slider-thumb{margin-top:-4px;appearance:none;width:4px;height:16px;background:#00b85f;border:none;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-moz-range-thumb{margin-top:-4px;appearance:none;width:4px;height:16px;background:#00b85f;border:none;border-radius:2px}.bx-dual-number-stepper > div input[type=range]:hover::-webkit-slider-runnable-track,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-webkit-slider-runnable-track,.bx-dual-number-stepper > div input[type=range]:focus::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff var(--from),#006635 var(--from) var(--to),#fff var(--to) 100%)}.bx-dual-number-stepper > div input[type=range]:hover::-moz-range-track,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-moz-range-track,.bx-dual-number-stepper > div input[type=range]:focus::-moz-range-track{background:linear-gradient(90deg,#fff var(--from),#006635 var(--from) var(--to),#fff var(--to) 100%)}.bx-dual-number-stepper > div input[type=range]:hover::-webkit-slider-thumb,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-webkit-slider-thumb,.bx-dual-number-stepper > div input[type=range]:focus::-webkit-slider-thumb{background:#fb3232}.bx-dual-number-stepper > div input[type=range]:hover::-moz-range-thumb,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-moz-range-thumb,.bx-dual-number-stepper > div input[type=range]:focus::-moz-range-thumb{background:#fb3232}.bx-dual-number-stepper[data-disabled=true] input[type=range],.bx-dual-number-stepper[disabled=true] input[type=range]{display:none}#bx-game-bar{z-index:var(--bx-game-bar-z-index);position:fixed;bottom:0;width:40px;height:90px;overflow:visible;cursor:pointer}#bx-game-bar > svg{display:none;pointer-events:none;position:absolute;height:28px;margin-top:16px}@media (hover:hover){#bx-game-bar:hover > svg{display:block}}#bx-game-bar .bx-game-bar-container{opacity:0;position:absolute;display:flex;overflow:hidden;background:rgba(26,27,30,0.91);box-shadow:0 0 6px #1c1c1c;transition:opacity .1s ease-in}#bx-game-bar .bx-game-bar-container.bx-show{opacity:.9}#bx-game-bar .bx-game-bar-container.bx-show + svg{display:none !important}#bx-game-bar .bx-game-bar-container.bx-hide{opacity:0;pointer-events:none}#bx-game-bar .bx-game-bar-container button{width:60px;height:60px;border-radius:0}#bx-game-bar .bx-game-bar-container button svg{width:28px;height:28px;transition:transform .08s ease 0s}#bx-game-bar .bx-game-bar-container button:hover{border-radius:0}#bx-game-bar .bx-game-bar-container button:active svg{transform:scale(.75)}#bx-game-bar .bx-game-bar-container button.bx-activated{background-color:#fff}#bx-game-bar .bx-game-bar-container button.bx-activated svg{filter:invert(1)}#bx-game-bar .bx-game-bar-container div[data-activated] button{display:none}#bx-game-bar .bx-game-bar-container div[data-activated=\'false\'] button:first-of-type{display:block}#bx-game-bar .bx-game-bar-container div[data-activated=\'true\'] button:last-of-type{display:block}#bx-game-bar[data-position="bottom-left"]{left:0;direction:ltr}#bx-game-bar[data-position="bottom-left"] .bx-game-bar-container{border-radius:0 10px 10px 0}#bx-game-bar[data-position="bottom-right"]{right:0;direction:rtl}#bx-game-bar[data-position="bottom-right"] .bx-game-bar-container{direction:ltr;border-radius:10px 0 0 10px}.bx-badges{margin-left:0;user-select:none;-webkit-user-select:none}.bx-badge{border:none;display:inline-block;line-height:24px;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;font-weight:400;margin:0 8px 8px 0;box-shadow:0 0 6px #000;border-radius:4px}.bx-badge-name{background-color:#2d3036;border-radius:4px 0 0 4px}.bx-badge-name svg{width:16px;height:16px}.bx-badge-value{background-color:#808080;border-radius:0 4px 4px 0}.bx-badge-name,.bx-badge-value{display:inline-block;padding:0 8px;line-height:30px;vertical-align:bottom}.bx-badge-battery[data-charging=true] span:first-of-type::after{content:\' ⚡️\'}div[class^=StreamMenu-module__container] .bx-badges{position:absolute;max-width:500px}#gamepass-dialog-root .bx-badges{position:fixed;top:60px;left:460px;max-width:500px}@media (min-width:568px) and (max-height:480px){#gamepass-dialog-root .bx-badges{position:unset;top:unset;left:unset;margin:8px 0}}.bx-stats-bar{display:flex;flex-direction:row;gap:8px;user-select:none;-webkit-user-select:none;position:fixed;top:0;background-color:#000;color:#fff;font-family:var(--bx-monospaced-font);font-size:.9rem;padding-left:8px;z-index:var(--bx-stats-bar-z-index);text-wrap:nowrap}.bx-stats-bar[data-stats*="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats*="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats*="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats*="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats*="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats*="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats*="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats*="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats*="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats*="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats*="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats*="[ul]"] > .bx-stat-ul{display:inline-flex;align-items:baseline}.bx-stats-bar[data-stats$="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats$="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats$="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats$="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats$="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats$="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats$="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats$="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats$="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats$="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats$="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats$="[ul]"] > .bx-stat-ul{border-right:none}.bx-stats-bar::before{display:none;content:\'👀\';vertical-align:middle;margin-right:8px}.bx-stats-bar[data-display=glancing]::before{display:inline-block}.bx-stats-bar[data-position=top-left]{left:0;border-radius:0 0 4px 0}.bx-stats-bar[data-position=top-right]{right:0;border-radius:0 0 0 4px}.bx-stats-bar[data-position=top-center]{transform:translate(-50%,0);left:50%;border-radius:0 0 4px 4px}.bx-stats-bar[data-shadow=true]{background:none;filter:drop-shadow(1px 0 0 rgba(0,0,0,0.941)) drop-shadow(-1px 0 0 rgba(0,0,0,0.941)) drop-shadow(0 1px 0 rgba(0,0,0,0.941)) drop-shadow(0 -1px 0 rgba(0,0,0,0.941))}.bx-stats-bar > div{display:none;border-right:1px solid #fff;padding-right:8px}.bx-stats-bar label{margin:0 8px 0 0;font-family:var(--bx-title-font);font-size:70%;font-weight:bold;vertical-align:middle;cursor:help}.bx-stats-bar span{display:inline-block;text-align:right;vertical-align:middle;white-space:pre}.bx-stats-bar span[data-grade=good]{color:#6bffff}.bx-stats-bar span[data-grade=ok]{color:#fff16b}.bx-stats-bar span[data-grade=bad]{color:#ff5f5f}.bx-mkb-settings{display:flex;flex-direction:column;flex:1;padding-bottom:10px;overflow:hidden}.bx-mkb-pointer-lock-msg{user-select:none;-webkit-user-select:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);margin:auto;background:#151515;z-index:var(--bx-mkb-pointer-lock-msg-z-index);color:#fff;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem;padding:12px;border-radius:8px;align-items:center;box-shadow:0 0 6px #000;min-width:300px;opacity:.9;display:flex;flex-direction:column;gap:10px}.bx-mkb-pointer-lock-msg:hover{opacity:1}.bx-mkb-pointer-lock-msg > p{margin:0;width:100%;font-size:22px;margin-bottom:4px;font-weight:bold;text-align:left}.bx-mkb-pointer-lock-msg > div{width:100%;display:flex;flex-direction:row;gap:10px}.bx-mkb-pointer-lock-msg > div button:first-of-type{flex-shrink:1}.bx-mkb-pointer-lock-msg > div button:last-of-type{flex-grow:1}.bx-mkb-key-row{display:flex;margin-bottom:10px;align-items:center;gap:20px}.bx-mkb-key-row label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center}.bx-mkb-settings.bx-editing .bx-mkb-key-row button{background:#393939;border-radius:4px;border:none}.bx-mkb-settings.bx-editing .bx-mkb-key-row button:hover{background:#333;cursor:pointer}.bx-mkb-action-buttons > div{text-align:right;display:none}.bx-mkb-action-buttons button{margin-left:8px}.bx-mkb-settings:not(.bx-editing) .bx-mkb-action-buttons > div:first-child{display:block}.bx-mkb-settings.bx-editing .bx-mkb-action-buttons > div:last-child{display:block}.bx-mkb-note{display:block;margin:0 0 10px;font-size:12px;text-align:center}button.bx-binding-button{flex:1;min-height:38px;border:none;border-radius:4px;font-size:14px;color:#fff;display:flex;align-items:center;align-self:center;padding:0 6px}button.bx-binding-button:disabled{background:#131416;padding:0 8px}button.bx-binding-button:not(:disabled){border:2px solid transparent;border-top:none;border-bottom:4px solid #252525;background:#3b3b3b;cursor:pointer}button.bx-binding-button:not(:disabled):hover,button.bx-binding-button:not(:disabled).bx-focusable:focus{background:#20b217;border-bottom-color:#186c13}button.bx-binding-button:not(:disabled):active{background:#16900f;border-bottom:3px solid #0c4e08;border-left-width:2px;border-right-width:2px}button.bx-binding-button:not(:disabled).bx-focusable:focus::after{top:-6px;left:-8px;right:-8px;bottom:-10px}.bx-settings-row .bx-binding-button-wrapper button.bx-binding-button{min-width:60px}.bx-controller-customizations-container .bx-btn-detect{display:block;margin-bottom:20px}.bx-controller-customizations-container .bx-btn-detect.bx-monospaced{background:none;font-weight:bold;font-size:12px}.bx-controller-customizations-container .bx-buttons-grid{display:grid;grid-template-columns:auto auto;column-gap:20px;row-gap:10px;margin-bottom:20px}.bx-controller-key-row{display:flex;align-items:stretch}.bx-controller-key-row > label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center;min-width:50px;flex-shrink:0;display:flex;align-self:center}.bx-controller-key-row > label::after{content:\'❯\';margin:0 12px;font-size:16px;align-self:center}.bx-controller-key-row .bx-select{width:100% !important}.bx-controller-key-row .bx-select > div{min-width:50px}.bx-controller-key-row .bx-select label{font-family:var(--bx-promptfont-font),var(--bx-normal-font);font-size:32px;text-align:center;margin-bottom:6px;height:40px;line-height:40px}.bx-controller-key-row:hover > label{color:#ffe64b}.bx-controller-key-row:hover > label::after{color:#fff}.bx-product-details-buttons{display:flex;gap:10px;flex-direction:row}.bx-product-details-buttons button{max-width:max-content;margin:10px 0 0 0;display:flex}@media (min-width:568px) and (max-height:480px){.bx-product-details-buttons{flex-direction:column}.bx-product-details-buttons button{margin:8px 0 0 10px}}', PREF_HIDE_SECTIONS = getPref("ui.hideSections"), selectorToHide = [];
  if (PREF_HIDE_SECTIONS.includes("news")) selectorToHide.push("#BodyContent > div[class*=CarouselRow-module]");
  if (getPref("block.features").includes("byog")) selectorToHide.push("#BodyContent > div[class*=ByogRow-module__container___]");
  if (PREF_HIDE_SECTIONS.includes("all-games")) selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__gridContainer]"), selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__rowHeader]");
@@ -9171,7 +9423,7 @@ class RootDialogObserver {
  static $btnShortcut = AppInterface && createButton({
   icon: BxIcon.CREATE_SHORTCUT,
   label: t("create-shortcut"),
-  style: 64 | 8 | 128 | 2048 | 4096,
+  style: 64 | 8 | 128 | 4096 | 8192,
   onClick: (e) => {
    window.BX_EXPOSED.dialogRoutes?.closeAll();
    let $btn = e.target.closest("button");
@@ -9181,7 +9433,7 @@ class RootDialogObserver {
  static $btnWallpaper = AppInterface && createButton({
   icon: BxIcon.DOWNLOAD,
   label: t("wallpaper"),
-  style: 64 | 8 | 128 | 2048 | 4096,
+  style: 64 | 8 | 128 | 4096 | 8192,
   onClick: (e) => {
    window.BX_EXPOSED.dialogRoutes?.closeAll();
    let $btn = e.target.closest("button"), details = parseDetailsPath($btn.dataset.path);

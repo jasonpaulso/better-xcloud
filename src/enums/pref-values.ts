@@ -84,6 +84,12 @@ export const enum StreamStat {
     CLOCK = 'time',
 };
 
+export const enum StreamStatPosition {
+    TOP_LEFT = 'top-left',
+    TOP_CENTER = 'top-center',
+    TOP_RIGHT = 'top-right',
+}
+
 export const enum VideoRatio {
     '16:9' = '16:9',
     '18:9' = '18:9',
@@ -99,6 +105,12 @@ export const enum VideoPosition {
     TOP_HALF = 'top-half',
     BOTTOM = 'bottom',
     BOTTOM_HALF = 'bottom-half',
+}
+
+export const enum VideoPowerPreference {
+    DEFAULT = 'default',
+    LOW_POWER = 'low-power',
+    HIGH_PERFORMANCE = 'high-performance',
 }
 
 export const enum StreamPlayerType {

@@ -18,8 +18,8 @@ export function checkForUpdate() {
 
     const CHECK_INTERVAL_SECONDS = 2 * 3600; // check every 2 hours
 
-    const currentVersion = getPref<VersionCurrent>(PrefKey.VERSION_CURRENT);
-    const lastCheck = getPref<VersionLastCheck>(PrefKey.VERSION_LAST_CHECK);
+    const currentVersion = getPref(PrefKey.VERSION_CURRENT);
+    const lastCheck = getPref(PrefKey.VERSION_LAST_CHECK);
     const now = Math.round((+new Date) / 1000);
 
     if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
@@ -77,13 +77,10 @@ export function hashCode(str: string): number {
 
 
 export function renderString(str: string, obj: any){
-    return str.replace(/\$\{.+?\}/g, match => {
-        const key = match.substring(2, match.length - 1);
-        if (key in obj) {
-            return obj[key];
-        }
-
-        return match;
+    // Accept ${var} and $var$
+    return str.replace(/\$\{([A-Za-z0-9_$]+)\}|\$([A-Za-z0-9_$]+)\$/g, (match, p1, p2) => {
+        const name = p1 || p2;
+        return name in obj ? obj[name] : match;
     });
 }
 
@@ -158,13 +155,13 @@ export function clearAllData() {
 }
 
 export function blockAllNotifications() {
-    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
     const blockAll = [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES].every(value => blockFeatures.includes(value));
     return blockAll;
 }
 
 export function blockSomeNotifications() {
-    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
     if (blockAllNotifications()) {
         return false;
     }

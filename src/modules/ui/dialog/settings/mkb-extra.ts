@@ -12,6 +12,7 @@ import { KeyboardShortcutsTable } from "@/utils/local-db/keyboard-shortcuts-tabl
 import { SettingElement } from "@/utils/setting-element";
 import { STORAGE } from "@/utils/global";
 import { EmulatedMkbHandler } from "@/modules/mkb/mkb-handler";
+import { BxIcon } from "@/utils/bx-icon";
 
 export class MkbExtraSettings extends HTMLElement {
     private $mappingPresets!: BxSelectElement;
@@ -28,14 +29,14 @@ export class MkbExtraSettings extends HTMLElement {
         $container.saveMkbSettings = MkbExtraSettings.saveMkbSettings.bind($container);
         $container.saveShortcutsSettings = MkbExtraSettings.saveShortcutsSettings.bind($container);
 
-        const $mappingPresets = BxSelectElement.create(CE<HTMLSelectElement>('select', {
+        const $mappingPresets = BxSelectElement.create(CE('select', {
             autocomplete: 'off',
             _on: {
                 input: $container.saveMkbSettings,
             },
         }));
 
-        const $shortcutsPresets = BxSelectElement.create(CE<HTMLSelectElement>('select', {
+        const $shortcutsPresets = BxSelectElement.create(CE('select', {
             autocomplete: 'off',
             _on: {
                 input: $container.saveShortcutsSettings,
@@ -54,8 +55,9 @@ export class MkbExtraSettings extends HTMLElement {
                     },
                         $mappingPresets,
                         createButton({
-                            label: t('manage'),
-                            style: ButtonStyle.FOCUSABLE,
+                            title: t('manage'),
+                            icon: BxIcon.MANAGE,
+                            style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY | ButtonStyle.AUTO_HEIGHT,
                             onClick: () => MkbMappingManagerDialog.getInstance().show({
                                 id: parseInt($container.$mappingPresets.value),
                             }),
@@ -73,7 +75,7 @@ export class MkbExtraSettings extends HTMLElement {
             ] : []),
 
             createSettingRow(
-                t('keyboard-shortcuts-in-game'),
+                t('in-game-keyboard-shortcuts'),
                 CE('div', {
                     class: 'bx-preset-row',
                     _nearby: {
@@ -82,8 +84,9 @@ export class MkbExtraSettings extends HTMLElement {
                 },
                     $shortcutsPresets,
                     createButton({
-                        label: t('manage'),
-                        style: ButtonStyle.FOCUSABLE,
+                        title: t('manage'),
+                        icon: BxIcon.MANAGE,
+                        style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY | ButtonStyle.AUTO_HEIGHT,
                         onClick: () => KeyboardShortcutsManagerDialog.getInstance().show({
                             id: parseInt($container.$shortcutsPresets.value),
                         }),
@@ -108,23 +111,23 @@ export class MkbExtraSettings extends HTMLElement {
     private static async updateLayout(this: MkbExtraSettings) {
         // Render shortcut presets
         const mappingPresets = await MkbMappingPresetsTable.getInstance().getPresets();
-        renderPresetsList(this.$mappingPresets, mappingPresets, getPref<MkbPresetId>(PrefKey.MKB_P1_MAPPING_PRESET_ID));
+        renderPresetsList(this.$mappingPresets, mappingPresets, getPref(PrefKey.MKB_P1_MAPPING_PRESET_ID));
 
         // Render shortcut presets
         const shortcutsPresets = await KeyboardShortcutsTable.getInstance().getPresets();
-        renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref<MkbPresetId>(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID), { addOffValue: true });
+        renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID), { addOffValue: true });
     }
 
     private static async saveMkbSettings(this: MkbExtraSettings) {
         const presetId = parseInt(this.$mappingPresets.value);
-        setPref<MkbPresetId>(PrefKey.MKB_P1_MAPPING_PRESET_ID, presetId);
+        setPref(PrefKey.MKB_P1_MAPPING_PRESET_ID, presetId);
 
         StreamSettings.refreshMkbSettings();
     }
 
     private static async saveShortcutsSettings(this: MkbExtraSettings) {
         const presetId = parseInt(this.$shortcutsPresets.value);
-        setPref<KeyboardShortcutsPresetId>(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId);
+        setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId);
 
         StreamSettings.refreshKeyboardShortcuts();
     }

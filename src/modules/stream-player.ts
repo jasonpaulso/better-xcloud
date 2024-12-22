@@ -7,7 +7,7 @@ import { STATES } from "@/utils/global";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { BX_FLAGS } from "@/utils/bx-flags";
-import { StreamPlayerType, StreamVideoProcessing, VideoPosition, VideoRatio } from "@/enums/pref-values";
+import { StreamPlayerType, StreamVideoProcessing, VideoPosition } from "@/enums/pref-values";
 
 export type StreamPlayerOptions = Partial<{
     processing: string,
@@ -44,7 +44,7 @@ export class StreamPlayer {
 
         const $fragment = document.createDocumentFragment();
 
-        this.$videoCss = CE<HTMLStyleElement>('style', { id: 'bx-video-css' });
+        this.$videoCss = CE('style', { id: 'bx-video-css' });
         $fragment.appendChild(this.$videoCss);
 
         // Setup SVG filters
@@ -60,7 +60,7 @@ export class StreamPlayer {
                     id: 'bx-filter-usm-matrix',
                     order: '3',
                     xmlns: 'http://www.w3.org/2000/svg',
-                })),
+                }) as unknown as SVGFEConvolveMatrixElement),
             ),
         );
         $fragment.appendChild($svg);
@@ -98,7 +98,7 @@ export class StreamPlayer {
     }
 
     private resizePlayer() {
-        const PREF_RATIO = getPref<VideoRatio>(PrefKey.VIDEO_RATIO);
+        const PREF_RATIO = getPref(PrefKey.VIDEO_RATIO);
         const $video = this.$video;
         const isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport;
 
@@ -142,7 +142,7 @@ export class StreamPlayer {
 
             // Set position
             const $parent = $video.parentElement!;
-            const position = getPref<VideoPosition>(PrefKey.VIDEO_POSITION);
+            const position = getPref(PrefKey.VIDEO_POSITION);
             $parent.style.removeProperty('padding-top');
 
             $parent.dataset.position = position;

@@ -1,14 +1,16 @@
 import { BxEvent } from "@/utils/bx-event";
 import { getUniqueGamepadNames } from "@/utils/gamepad";
-import { CE, removeChildElements, createButton, ButtonStyle, createSettingRow, renderPresetsList } from "@/utils/html";
+import { CE, removeChildElements, createButton, ButtonStyle, createSettingRow, renderPresetsList, calculateSelectBoxes } from "@/utils/html";
 import { t } from "@/utils/translation";
 import { BxSelectElement } from "@/web-components/bx-select";
 import { ControllerShortcutsManagerDialog } from "../profile-manger/controller-shortcuts-manager-dialog";
 import type { SettingsDialog } from "../settings-dialog";
 import { ControllerShortcutsTable } from "@/utils/local-db/controller-shortcuts-table";
-import { BxNumberStepper } from "@/web-components/bx-number-stepper";
 import { ControllerSettingsTable } from "@/utils/local-db/controller-settings-table";
 import { StreamSettings } from "@/utils/stream-settings";
+import { ControllerCustomizationsTable } from "@/utils/local-db/controller-customizations-table";
+import { ControllerCustomizationsManagerDialog } from "../profile-manger/controller-customizations-manager-dialog";
+import { BxIcon } from "@/utils/bx-icon";
 
 export class ControllerExtraSettings extends HTMLElement {
     currentControllerId!: string;
@@ -16,7 +18,7 @@ export class ControllerExtraSettings extends HTMLElement {
 
     $selectControllers!: BxSelectElement;
     $selectShortcuts!: BxSelectElement;
-    $vibrationIntensity!: BxNumberStepper;
+    $selectCustomization!: BxSelectElement;
 
     updateLayout!: () => void;
     switchController!: (id: string) => void;
@@ -24,16 +26,17 @@ export class ControllerExtraSettings extends HTMLElement {
     saveSettings!: () => void;
 
     static renderSettings(this: SettingsDialog): HTMLElement {
-        const $container = CE<ControllerExtraSettings>('label', {
+        const $container = CE('label', {
             class: 'bx-settings-row bx-controller-extra-settings',
-        });
+        }) as unknown as ControllerExtraSettings;
 
         $container.updateLayout = ControllerExtraSettings.updateLayout.bind($container);
         $container.switchController = ControllerExtraSettings.switchController.bind($container);
         $container.getCurrentControllerId = ControllerExtraSettings.getCurrentControllerId.bind($container);
         $container.saveSettings = ControllerExtraSettings.saveSettings.bind($container);
 
-        const $selectControllers = BxSelectElement.create(CE<HTMLSelectElement>('select', {
+        const $selectControllers = BxSelectElement.create(CE('select', {
+            class: 'bx-full-width',
             autocomplete: 'off',
             _on: {
                 input: (e: Event) => {
@@ -41,24 +44,16 @@ export class ControllerExtraSettings extends HTMLElement {
                 },
             },
         }));
-        $selectControllers.classList.add('bx-full-width');
 
-        const $selectShortcuts = BxSelectElement.create(CE<HTMLSelectElement>('select', {
+        const $selectShortcuts = BxSelectElement.create(CE('select', {
             autocomplete: 'off',
-            _on: {
-                input: $container.saveSettings,
-            },
+            _on: { input: $container.saveSettings },
         }));
 
-        const $vibrationIntensity = BxNumberStepper.create('controller_vibration_intensity', 50, 0, 100, {
-            steps: 10,
-            suffix: '%',
-            exactTicks: 20,
-            customTextValue: (value: any) => {
-                value = parseInt(value);
-                return value === 0 ? t('off') : value + '%';
-            },
-        }, $container.saveSettings);
+        const $selectCustomization = BxSelectElement.create(CE('select', {
+            autocomplete: 'off',
+            _on: { input: $container.saveSettings },
+        }));
 
         $container.append(
             CE('span', {}, t('no-controllers-connected')),
@@ -67,17 +62,16 @@ export class ControllerExtraSettings extends HTMLElement {
 
                 CE('div', { class: 'bx-sub-content-box' },
                     createSettingRow(
-                        t('controller-shortcuts-in-game'),
+                        t('in-game-controller-shortcuts'),
                         CE('div', {
                             class: 'bx-preset-row',
-                            _nearby: {
-                                orientation: 'horizontal',
-                            },
+                            _nearby: { orientation: 'horizontal' },
                         },
                             $selectShortcuts,
                             createButton({
-                                label: t('manage'),
-                                style: ButtonStyle.FOCUSABLE,
+                                title: t('manage'),
+                                icon: BxIcon.MANAGE,
+                                style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY | ButtonStyle.AUTO_HEIGHT,
                                 onClick: () => ControllerShortcutsManagerDialog.getInstance().show({
                                     id: parseInt($container.$selectShortcuts.value),
                                 }),
@@ -87,8 +81,25 @@ export class ControllerExtraSettings extends HTMLElement {
                     ),
 
                     createSettingRow(
-                        t('vibration-intensity'),
-                        $vibrationIntensity,
+                        t('in-game-controller-customization'),
+                        CE('div', {
+                            class: 'bx-preset-row',
+                            _nearby: { orientation: 'horizontal' },
+                        },
+                            $selectCustomization,
+                            createButton({
+                                title: t('manage'),
+                                icon: BxIcon.MANAGE,
+                                style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY | ButtonStyle.AUTO_HEIGHT,
+                                onClick: () => ControllerCustomizationsManagerDialog.getInstance().show({
+                                    id: $container.$selectCustomization.value ? parseInt($container.$selectCustomization.value) : null,
+                                }),
+                            }),
+                        ),
+                        {
+                            multiLines: true,
+                            $note: CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('slightly-increase-input-latency')),
+                        },
                     ),
                 ),
             ),
@@ -96,7 +107,7 @@ export class ControllerExtraSettings extends HTMLElement {
 
         $container.$selectControllers = $selectControllers;
         $container.$selectShortcuts = $selectShortcuts;
-        $container.$vibrationIntensity = $vibrationIntensity;
+        $container.$selectCustomization = $selectCustomization;
 
         $container.updateLayout();
 
@@ -128,7 +139,7 @@ export class ControllerExtraSettings extends HTMLElement {
 
         // Render controller list
         for (const name of this.controllerIds) {
-            const $option = CE<HTMLOptionElement>('option', { value: name }, name);
+            const $option = CE('option', { value: name }, name);
             $fragment.appendChild($option);
         }
 
@@ -138,12 +149,17 @@ export class ControllerExtraSettings extends HTMLElement {
         const allShortcutPresets = await ControllerShortcutsTable.getInstance().getPresets();
         renderPresetsList(this.$selectShortcuts, allShortcutPresets, null, { addOffValue: true });
 
+        // Render customization presets
+        const allCustomizationPresets = await ControllerCustomizationsTable.getInstance().getPresets();
+        renderPresetsList(this.$selectCustomization, allCustomizationPresets, null, { addOffValue: true });
+
         for (const name of this.controllerIds) {
-            const $option = CE<HTMLOptionElement>('option', { value: name }, name);
+            const $option = CE('option', { value: name }, name);
             $fragment.appendChild($option);
         }
 
         BxEvent.dispatch(this.$selectControllers, 'input');
+        calculateSelectBoxes(this);
     }
 
     private static async switchController(this: ControllerExtraSettings, id: string) {
@@ -156,7 +172,7 @@ export class ControllerExtraSettings extends HTMLElement {
 
         // Update UI
         this.$selectShortcuts.value = controllerSettings.shortcutPresetId.toString();
-        this.$vibrationIntensity.value = controllerSettings.vibrationIntensity.toString();
+        this.$selectCustomization.value = controllerSettings.customizationPresetId.toString();
     }
 
     private static getCurrentControllerId(this: ControllerExtraSettings) {
@@ -190,7 +206,7 @@ export class ControllerExtraSettings extends HTMLElement {
             id: this.currentControllerId,
             data: {
                 shortcutPresetId: parseInt(this.$selectShortcuts.value),
-                vibrationIntensity: parseInt(this.$vibrationIntensity.value),
+                customizationPresetId: parseInt(this.$selectCustomization.value),
             },
         };
 

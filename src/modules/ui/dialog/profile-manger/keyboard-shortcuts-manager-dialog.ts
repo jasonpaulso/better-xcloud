@@ -37,7 +37,7 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
                 continue;
             }
 
-            const $fieldSet = CE<HTMLFieldSetElement>('fieldset', {}, CE('legend', {}, groupLabel));
+            const $fieldSet = CE('fieldset', {}, CE('legend', {}, groupLabel));
             for (const action in items) {
                 const crumbs = items[action as keyof typeof items];
                 if (!crumbs) {
@@ -144,15 +144,19 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
             }
         }
 
-        const oldPreset = this.allPresets.data[this.currentPresetId];
+        const oldPreset = this.allPresets.data[this.currentPresetId!];
         const newPreset = {
-            id: this.currentPresetId,
+            id: this.currentPresetId!,
             name: oldPreset.name,
             data: presetData,
         };
         this.presetsDb.updatePreset(newPreset);
 
-        this.allPresets.data[this.currentPresetId] = newPreset;
+        this.allPresets.data[this.currentPresetId!] = newPreset;
+    }
+
+    onBeforeUnmount(): void {
         StreamSettings.refreshKeyboardShortcuts();
+        super.onBeforeUnmount();
     }
 }

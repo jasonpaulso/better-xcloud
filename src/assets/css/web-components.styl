@@ -4,17 +4,11 @@ select.bx-select {
 
 div.bx-select {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     flex: 0 1 auto;
     gap: 8px;
 
     select {
-        // Render offscreen instead of "display: none" so we could get its size
-        position: absolute !important;
-        top: -9999px !important;
-        left: -9999px !important;
-        visibility: hidden !important;
-
         &:disabled {
             & ~ button {
                 display: none;
@@ -48,7 +42,6 @@ div.bx-select {
 
     > div {
         min-height: 24px;
-        box-sizing: content-box;
 
         input {
             display: inline-block;
@@ -69,7 +62,7 @@ div.bx-select {
                 font-size: 10px;
                 font-weight: bold;
                 text-align: left;
-                line-height: initial;
+                line-height: 20px;
                 white-space: pre;
                 min-height: 15px;
                 align-content: center;
@@ -115,10 +108,9 @@ div.bx-select {
 
     button.bx-button {
         border: none;
-        height: 24px;
         width: 24px;
+        height: auto;
         padding: 0;
-        line-height: 24px;
         color: #fff;
         border-radius: 4px;
         font-weight: bold;
@@ -128,6 +120,68 @@ div.bx-select {
 
         span {
             line-height: unset;
+        }
+    }
+
+    &[data-controller-friendly=true] {
+        > div {
+            box-sizing: content-box;
+        }
+
+        select {
+            // Render offscreen instead of "display: none" so we could get its size
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            visibility: hidden !important;
+        }
+    }
+
+    &[data-controller-friendly=false] {
+        position: relative;
+
+        > div {
+            box-sizing: border-box;
+
+            label {
+                margin-right: 24px;
+            }
+        }
+
+        select {
+            &:disabled {
+                display: none;
+            }
+
+            &:not(:disabled) {
+                cursor: pointer;
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                display: block;
+
+                opacity: 0;
+                z-index: calc(var(--bx-settings-z-index) + 1);
+
+                &:hover {
+                    + div {
+                        background: #f0f0f0;
+                    }
+                }
+
+                + div {
+                    label {
+                        &::after {
+                            content: '▾';
+                            font-size: 14px;
+                            position: absolute;
+                            right: 8px;
+                            pointer-events: none;
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -144,9 +198,11 @@ div.bx-select {
         flex: 1;
         background: #cfcfcf;
         border-radius: 4px;
+        min-width: 1px;
 
         &[data-highlighted] {
             background: #9c9c9c;
+            min-width: 6px;
         }
 
         &[data-selected] {

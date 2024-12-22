@@ -8,7 +8,7 @@ import { CE } from "../html";
 import { t, SUPPORTED_LANGUAGES } from "../translation";
 import { UserAgent } from "../user-agent";
 import { BaseSettingsStore as BaseSettingsStorage } from "./base-settings-storage";
-import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat, VideoPosition, BlockFeature } from "@/enums/pref-values";
+import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat, VideoPosition, BlockFeature, StreamStatPosition, VideoPowerPreference } from "@/enums/pref-values";
 import { MkbMappingDefaultPresetId } from "../local-db/mkb-mapping-presets-table";
 import { KeyboardShortcutDefaultId } from "../local-db/keyboard-shortcuts-table";
 import { GhPagesUtils } from "../gh-pages";
@@ -322,7 +322,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             label: t('enable-local-co-op-support'),
             default: false,
             note: () => CE('div', {},
-                CE<HTMLAnchorElement>('a', {
+                CE('a', {
                     href: 'https://github.com/redphx/better-xcloud/discussions/275',
                     target: '_blank',
                 }, t('enable-local-co-op-support-note')),
@@ -399,7 +399,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                     url = 'https://better-xcloud.github.io/mouse-and-keyboard/#disclaimer';
                 }
 
-                setting.unsupportedNote = () => CE<HTMLAnchorElement>('a', {
+                setting.unsupportedNote = () => CE('a', {
                     href: url,
                     target: '_blank',
                 }, '⚠️ ' + note);
@@ -649,11 +649,11 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         },
         [PrefKey.VIDEO_POWER_PREFERENCE]: {
             label: t('renderer-configuration'),
-            default: 'default',
+            default: VideoPowerPreference.DEFAULT,
             options: {
-                default: t('default'),
-                'low-power': t('battery-saving'),
-                'high-performance': t('high-performance'),
+                [VideoPowerPreference.DEFAULT]: t('default'),
+                [VideoPowerPreference.LOW_POWER]: t('battery-saving'),
+                [VideoPowerPreference.HIGH_PERFORMANCE]: t('high-performance'),
             },
             suggest: {
                 highest: 'low-power',
@@ -813,11 +813,11 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         },
         [PrefKey.STATS_POSITION]: {
             label: t('position'),
-            default: 'top-right',
+            default: StreamStatPosition.TOP_RIGHT,
             options: {
-                'top-left': t('top-left'),
-                'top-center': t('top-center'),
-                'top-right': t('top-right'),
+                [StreamStatPosition.TOP_LEFT]: t('top-left'),
+                [StreamStatPosition.TOP_CENTER]: t('top-center'),
+                [StreamStatPosition.TOP_RIGHT]: t('top-right'),
             },
         },
         [PrefKey.STATS_TEXT_SIZE]: {

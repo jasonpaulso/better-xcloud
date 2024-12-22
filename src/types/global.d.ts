@@ -3,6 +3,7 @@ import type { AllPresets, ControllerShortcutPresetRecord } from "./presets";
 import type { PrefKey } from "@/enums/pref-keys";
 import type { StreamSettings, type StreamSettingsData } from "@/utils/stream-settings";
 import type { BxEvent } from "@/utils/bx-event";
+import type { BxEventBus } from "@/utils/bx-event-bus";
 import type { BxLogger } from "@/utils/bx-logger";
 
 export {};

@@ -2,12 +2,10 @@ import { t } from "@/utils/translation";
 import { BaseProfileManagerDialog } from "./base-profile-manager-dialog";
 import { CE } from "@/utils/html";
 import { GamepadKey, GamepadKeyName } from "@/enums/gamepad";
-import { PrefKey } from "@/enums/pref-keys";
 import { PrompFont } from "@/enums/prompt-font";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { deepClone } from "@/utils/global";
 import { setNearby } from "@/utils/navigation-utils";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
 import { BxSelectElement } from "@/web-components/bx-select";
 import type { ControllerShortcutPresetData, ControllerShortcutPresetRecord } from "@/types/presets";
 import { ControllerShortcutsTable } from "@/utils/local-db/controller-shortcuts-table";
@@ -21,7 +19,7 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
     // private readonly LOG_TAG = 'ControllerShortcutsManagerDialog';
 
     protected $content: HTMLElement;
-    private selectActions: Partial<Record<GamepadKey, [HTMLSelectElement, HTMLSelectElement | null]>> = {};
+    private selectActions: Partial<Record<GamepadKey, HTMLSelectElement>> = {};
 
     protected readonly BLANK_PRESET_DATA = {
         mapping: {},
@@ -39,19 +37,18 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
     constructor(title: string) {
         super(title, ControllerShortcutsTable.getInstance());
 
-        const PREF_CONTROLLER_FRIENDLY_UI = getPref(PrefKey.UI_CONTROLLER_FRIENDLY);
+        const $baseSelect = CE('select', {
+            class: 'bx-full-width',
+            autocomplete: 'off',
+        }, CE('option', { value: '' }, '---'));
 
-        // Read actions from localStorage
-        // ControllerShortcut.ACTIONS = ControllerShortcut.getActionsFromStorage();
-
-        const $baseSelect = CE<HTMLSelectElement>('select', { autocomplete: 'off' }, CE('option', { value: '' }, '---'));
         for (const groupLabel in SHORTCUT_ACTIONS) {
             const items = SHORTCUT_ACTIONS[groupLabel];
             if (!items) {
                 continue;
             }
 
-            const $optGroup = CE<HTMLOptGroupElement>('optgroup', { label: groupLabel });
+            const $optGroup = CE('optgroup', { label: groupLabel });
             for (const action in items) {
                 const crumbs = items[action as keyof typeof items];
                 if (!crumbs) {
@@ -59,7 +56,7 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
                 }
 
                 const label = crumbs.join(' ❯ ');
-                const $option = CE<HTMLOptionElement>('option', { value: action }, label);
+                const $option = CE('option', { value: action }, label);
                 $optGroup.appendChild($option);
             }
 
@@ -71,23 +68,6 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
         });
 
         const onActionChanged = (e: Event) => {
-            const $target = e.target as HTMLSelectElement;
-
-            // const profile = $selectProfile.value;
-            // const button: unknown = $target.dataset.button;
-            const action = $target.value as ShortcutAction;
-
-            if (!PREF_CONTROLLER_FRIENDLY_UI) {
-                const $fakeSelect = $target.previousElementSibling! as HTMLSelectElement;
-                let fakeText = '---';
-                if (action) {
-                    const $selectedOption =  $target.options[$target.selectedIndex];
-                    const $optGroup = $selectedOption.parentElement as HTMLOptGroupElement;
-                    fakeText = $optGroup.label + ' ❯ ' + $selectedOption.text;
-                }
-                ($fakeSelect.firstElementChild as HTMLOptionElement).text = fakeText;
-            }
-
             // Update preset
             if (!(e as any).ignoreOnChange) {
                 this.updatePreset();
@@ -110,30 +90,18 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
                 },
             });
             const $label = CE('label', { class: 'bx-prompt' }, `${PrompFont.HOME}${prompt}`);
-            const $div = CE('div', { class: 'bx-shortcut-actions' });
-
-            let $fakeSelect: HTMLSelectElement | null = null;
-            if (!PREF_CONTROLLER_FRIENDLY_UI) {
-                $fakeSelect = CE<HTMLSelectElement>('select', { autocomplete: 'off' },
-                    CE('option', {}, '---'),
-                );
-
-                $div.appendChild($fakeSelect);
-            }
 
             const $select = BxSelectElement.create($baseSelect.cloneNode(true) as HTMLSelectElement);
             $select.dataset.button = button.toString();
-            $select.classList.add('bx-full-width');
             $select.addEventListener('input', onActionChanged);
 
-            this.selectActions[button] = [$select, $fakeSelect];
+            this.selectActions[button] = $select;
 
-            $div.appendChild($select);
             setNearby($row, {
                 focus: $select,
             });
 
-            $row.append($label, $div);
+            $row.append($label, $select);
             fragment.appendChild($row);
         }
 
@@ -156,10 +124,9 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
         // Reset selects' values
         let button: unknown;
         for (button in this.selectActions) {
-            const [$select, $fakeSelect] = this.selectActions[button as GamepadKey]!;
+            const $select = this.selectActions[button as GamepadKey]!;
             $select.value = actions.mapping[button as GamepadKey] || '';
             $select.disabled = isDefaultPreset;
-            $fakeSelect && ($fakeSelect.disabled = isDefaultPreset);
 
             BxEvent.dispatch($select, 'input', {
                 ignoreOnChange: true,
@@ -175,8 +142,7 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
 
         let button: unknown;
         for (button in this.selectActions) {
-            const [$select, _] = this.selectActions[button as GamepadKey]!;
-
+            const $select = this.selectActions[button as GamepadKey]!;
             const action = $select.value;
             if (!action) {
                 continue;
@@ -185,10 +151,13 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
             newData.mapping[button as GamepadKey] = action as ShortcutAction;
         }
 
-        const preset = this.allPresets.data[this.currentPresetId];
+        const preset = this.allPresets.data[this.currentPresetId!];
         preset.data = newData;
         this.presetsDb.updatePreset(preset);
+    }
 
+    onBeforeUnmount() {
         StreamSettings.refreshControllerSettings();
+        super.onBeforeUnmount();
     }
 }

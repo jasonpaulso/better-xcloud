@@ -43,7 +43,7 @@ export class NativeMkbHandler extends MkbHandler {
     private readonly LOG_TAG = 'NativeMkbHandler';
 
     static isAllowed = () => {
-        return STATES.browser.capabilities.emulatedNativeMkb && getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON;
+        return STATES.browser.capabilities.emulatedNativeMkb && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON;
     }
 
     private pointerClient: PointerClient | undefined;

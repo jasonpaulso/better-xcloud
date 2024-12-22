@@ -18,9 +18,9 @@ export class ScreenshotManager {
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
 
-        this.$download = CE<HTMLAnchorElement>('a');
+        this.$download = CE('a');
 
-        this.$canvas = CE<HTMLCanvasElement>('canvas', { class: 'bx-gone' });
+        this.$canvas = CE('canvas', { class: 'bx-gone' });
         this.canvasContext = this.$canvas.getContext('2d', {
             alpha: false,
             willReadFrequently: false,

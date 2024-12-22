@@ -4,10 +4,10 @@ import { BxLogger } from "@utils/bx-logger";
 import { blockSomeNotifications, hashCode, renderString } from "@utils/utils";
 import { BxEvent } from "@/utils/bx-event";
 
-import codeControllerShortcuts from "./patches/controller-shortcuts.js" with { type: "text" };
+import codeControllerCustomization from "./patches/controller-customization.js" with { type: "text" };
+import codePollGamepad from "./patches/poll-gamepad.js" with { type: "text" };
 import codeExposeStreamSession from "./patches/expose-stream-session.js" with { type: "text" };
 import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "text" };
-import codeRemotePlayEnable from "./patches/remote-play-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
 import { PrefKey, StorageKey } from "@/enums/pref-keys.js";
@@ -88,7 +88,7 @@ const PATCHES = {
             return false;
         }
 
-        const layout = getPref<UiLayout>(PrefKey.UI_LAYOUT) === UiLayout.TV ? UiLayout.TV : UiLayout.DEFAULT;
+        const layout = getPref(PrefKey.UI_LAYOUT) === UiLayout.TV ? UiLayout.TV : UiLayout.DEFAULT;
         return str.replace(text, `?"${layout}":"${layout}"`);
     },
 
@@ -120,7 +120,9 @@ const PATCHES = {
             return false;
         }
 
-        return str.replace(text, codeRemotePlayEnable);
+        const newCode = `connectMode: window.BX_REMOTE_PLAY_CONFIG ? "xhome-connect" : "cloud-connect",
+remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFIG.serverId) || '',`;
+        return str.replace(text, newCode);
     },
 
     // Remote Play: Disable achievement toast
@@ -191,16 +193,33 @@ const PATCHES = {
             codeBlock = codeBlock.replace('this.inputPollingDurationStats.addValue', '');
         }
 
-        // Map the Share button on Xbox Series controller with the capturing screenshot feature
-        const match = codeBlock.match(/this\.gamepadTimestamps\.set\((\w+)\.index/);
-        if (match) {
-            const gamepadVar = match[1];
-            const newCode = renderString(codeControllerShortcuts, {
-                gamepadVar,
-            });
-
-            codeBlock = codeBlock.replace('this.gamepadTimestamps.set', newCode + 'this.gamepadTimestamps.set');
+        // Controller shortcuts
+        let match = codeBlock.match(/this\.gamepadTimestamps\.set\(([A-Za-z0-9_$]+)\.index/);
+        if (!match) {
+            return false;
         }
+
+        let newCode = renderString(codePollGamepad, {
+            gamepadVar: match[1],
+        });
+        codeBlock = codeBlock.replace('this.gamepadTimestamps.set', newCode + 'this.gamepadTimestamps.set');
+
+        // Controller customization
+        match = codeBlock.match(/let ([A-Za-z0-9_$]+)=this\.gamepadMappings\.find/);
+        if (!match) {
+            return false;
+        }
+
+        const xCloudGamepadVar = match[1];
+        const inputFeedbackManager = PatcherUtils.indexOf(codeBlock, 'this.inputFeedbackManager.onGamepadConnected(', 0, 10000);
+        const backetIndex = PatcherUtils.indexOf(codeBlock, '}', inputFeedbackManager, 100);
+        if (backetIndex < 0) {
+            return false;
+        }
+
+        let customizationCode = ';';  // End previous code line
+        customizationCode += renderString(codeControllerCustomization, { xCloudGamepadVar });
+        codeBlock = PatcherUtils.insertAt(codeBlock, backetIndex, customizationCode);
 
         str = str.substring(0, index) + codeBlock + str.substring(setTimeoutIndex);
         return str;
@@ -357,7 +376,7 @@ if (window.BX_EXPOSED.stopTakRendering) {
         }
 
         let autoOffCode = '';
-        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
+        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
             autoOffCode = 'return;';
         } else if (getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) {
             autoOffCode = `
@@ -414,7 +433,7 @@ e.guideUI = null;
 `;
 
         // Remove the TAK Edit button when the touch controller is disabled
-        if (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
+        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
             newCode += 'e.canShowTakHUD = false;';
         }
 
@@ -534,7 +553,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
             return false;
         }
 
-        const opacity = (getPref<TouchControllerDefaultOpacity>(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) / 100).toFixed(1);
+        const opacity = (getPref(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) / 100).toFixed(1);
         const newCode = `opacityMultiplier: ${opacity}`;
         str = str.replace(text, newCode);
         return str;
@@ -771,7 +790,7 @@ true` + text;
             return false;
         }
 
-        const PREF_HIDE_SECTIONS = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
+        const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS);
         const siglIds: GamePassCloudGallery[] = [];
 
         const sections: PartialRecord<UiSection, GamePassCloudGallery> = {
@@ -962,7 +981,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
 
         // Find index after {
         index = str.indexOf('{', index) + 1;
-        const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+        const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
         const filters = [];
         if (blockFeatures.includes(BlockFeature.NOTIFICATIONS_INVITES)) {
             filters.push('GameInvite', 'PartyInvite');
@@ -987,7 +1006,7 @@ ${subsVar} = subs;
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
-    ...(AppInterface && getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+    ...(AppInterface && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
         'exposeInputSink',
         'disableAbsoluteMouse',
@@ -1019,7 +1038,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     'overrideStorageGetSettings',
     getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentFocus',
 
-    getPref<UiLayout>(PrefKey.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
+    getPref(PrefKey.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
     getPref(PrefKey.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',
 
     ...(STATES.userAgent.capabilities.touch ? [
@@ -1055,7 +1074,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []),
 ]);
 
-const hideSections = getPref<UiSection[]>(PrefKey.UI_HIDE_SECTIONS);
+const hideSections = getPref(PrefKey.UI_HIDE_SECTIONS);
 let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
     hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
@@ -1086,11 +1105,11 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     getPref(PrefKey.UI_DISABLE_FEEDBACK_DIALOG) && 'skipFeedbackDialog',
 
     ...(STATES.userAgent.capabilities.touch ? [
-        getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'patchShowSensorControls',
-        getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
-        (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
-        getPref<TouchControllerDefaultOpacity>(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
-        (getPref<TouchControllerMode>(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF && (getPref(PrefKey.MKB_ENABLED) || getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) && 'patchBabylonRendererClass',
+        getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'patchShowSensorControls',
+        getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
+        (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
+        getPref(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
+        (getPref(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF && (getPref(PrefKey.MKB_ENABLED) || getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) && 'patchBabylonRendererClass',
     ] : []),
 
     BX_FLAGS.EnableXcloudLogging && 'enableConsoleLogging',
@@ -1105,7 +1124,7 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []),
 
     // Native MKB
-    ...(AppInterface && getPref<NativeMkbMode>(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+    ...(AppInterface && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'patchMouseAndKeyboardEnabled',
         'disableNativeRequestPointerLock',
     ] : []),

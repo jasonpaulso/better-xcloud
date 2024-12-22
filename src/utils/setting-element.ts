@@ -23,10 +23,10 @@ export interface BxSelectSettingElement extends HTMLSelectElement, BxBaseSetting
 
 export class SettingElement {
     private static renderOptions(key: string, setting: PreferenceSetting, currentValue: any, onChange: any): BxSelectSettingElement {
-        const $control = CE<BxSelectSettingElement>('select', {
+        const $control = CE('select', {
             // title: setting.label,
             tabindex: 0,
-        });
+        }) as BxSelectSettingElement;
 
         let $parent: HTMLElement;
         if (setting.optionsGroup) {
@@ -41,7 +41,7 @@ export class SettingElement {
         for (let value in setting.options) {
             const label = setting.options[value];
 
-            const $option = CE<HTMLOptionElement>('option', { value }, label);
+            const $option = CE('option', { value }, label);
             $parent.appendChild($option);
         }
 
@@ -62,11 +62,11 @@ export class SettingElement {
     }
 
     private static renderMultipleOptions(key: string, setting: PreferenceSetting, currentValue: any, onChange: any, params: MultipleOptionsParams={}): BxSelectSettingElement {
-        const $control = CE<BxSelectSettingElement>('select', {
+        const $control = CE('select', {
             // title: setting.label,
             multiple: true,
             tabindex: 0,
-        });
+        }) as BxSelectSettingElement;
 
         const totalOptions = Object.keys(setting.multipleOptions!).length;
         const size = params.size ? Math.min(params.size, totalOptions) : totalOptions;
@@ -75,7 +75,7 @@ export class SettingElement {
         for (const value in setting.multipleOptions) {
             const label = setting.multipleOptions[value];
 
-            const $option = CE<HTMLOptionElement>('option', { value }, label) as HTMLOptionElement;
+            const $option = CE('option', { value }, label) as HTMLOptionElement;
             $option.selected = currentValue.indexOf(value) > -1;
 
             $option.addEventListener('mousedown', function(e) {
@@ -156,6 +156,7 @@ export class SettingElement {
 
     static fromPref(key: PrefKey, storage: BaseSettingsStore, onChange: any, overrideParams={}) {
         const definition = storage.getDefinition(key);
+        // @ts-ignore
         let currentValue = storage.getSetting(key);
 
         let type;

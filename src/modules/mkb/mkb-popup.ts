@@ -7,6 +7,7 @@ import { NativeMkbHandler } from "./native-mkb-handler";
 import { StreamSettings } from "@/utils/stream-settings";
 import { KeyHelper } from "./key-helper";
 import { BxEventBus } from "@/utils/bx-event-bus";
+import { BxIcon } from "@/utils/bx-icon";
 
 type MkbPopupType = 'virtual' | 'native';
 
@@ -90,6 +91,7 @@ export class MkbPopup {
 
                 createButton({
                     label: t('manage'),
+                    icon: BxIcon.MANAGE,
                     style: ButtonStyle.FOCUSABLE,
                     onClick: () => {
                         const dialog = SettingsDialog.getInstance();

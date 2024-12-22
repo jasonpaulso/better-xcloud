@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { sys } from "typescript";
 // @ts-ignore
@@ -56,7 +56,23 @@ function minifyCodeImports(str: string): string {
     return str;
 }
 
-const postProcess = (str: string): string => {
+function minifyIfElse(str: string): string {
+    // Collapse if/else blocks without curly braces
+    return str.replaceAll(/((if \(.*?\)|else)\n\s+)/g, '$2 ');
+}
+
+function removeComments(str: string): string {
+    // Remove enum's inlining comments
+    str = str.replaceAll(/ \/\* [A-Z0-9_:]+ \*\//g, '');
+    str = str.replaceAll('/* @__PURE__ */ ', '');
+
+    // Remove comments from import
+    str = str.replaceAll(/\/\/ src.*\n/g, '');
+
+    return str;
+}
+
+function postProcess(str: string): string {
     // Unescape unicode charaters
     str = unescape((str.replace(/\\u/g, '%u')));
     // Replace \x00 to normal character
@@ -65,12 +81,7 @@ const postProcess = (str: string): string => {
     // Replace "globalThis." with "var";
     str = str.replaceAll('globalThis.', 'var ');
 
-    // Remove enum's inlining comments
-    str = str.replaceAll(/ \/\* [A-Z0-9_:]+ \*\//g, '');
-    str = str.replaceAll('/* @__PURE__ */ ', '');
-
-    // Remove comments from import
-    str = str.replaceAll(/\/\/ src.*\n/g, '');
+    str = removeComments(str);
 
     // Add ADDITIONAL CODE block
     str = str.replace('var DEFAULT_FLAGS', '\n/* ADDITIONAL CODE */\n\nvar DEFAULT_FLAGS');
@@ -114,8 +125,7 @@ const postProcess = (str: string): string => {
 
     // Set indent to 1 space
     if (MINIFY_SYNTAX) {
-        // Collapse if/else blocks without curly braces
-        str = str.replaceAll(/((if \(.*?\)|else)\n\s+)/g, '$2 ');
+        str = minifyIfElse(str);
 
         str = str.replaceAll(/\n(\s+)/g, (match, p1) => {
             const len = p1.length / 2;
@@ -134,7 +144,47 @@ const postProcess = (str: string): string => {
     return str;
 }
 
-const build = async (target: BuildTarget, version: string, variant: BuildVariant, config: any={}) => {
+async function buildPatches() {
+    const inputDir = './src/modules/patcher/patches/src';
+    const outputDir = './src/modules/patcher/patches';
+
+    const files = await readdir(inputDir);
+    const tsFiles = files.filter(file => file.endsWith('.ts'));
+
+    tsFiles.forEach(async file => {
+        // You can perform any operation with each TypeScript file
+        console.log(`Building patch: ${file}`);
+        const filePath = `${inputDir}/${file}`;
+
+        await Bun.build({
+            entrypoints: [filePath],
+            outdir: outputDir,
+            target: 'browser',
+            format: 'esm',
+            minify: {
+                syntax: true,
+                whitespace: true,
+            },
+        });
+
+        const outputFile = `${outputDir}/${file.replace('.ts', '.js')}`;
+
+        let code = await readFile(outputFile, 'utf-8');
+
+        // Replace "$this$" to "this"
+        code = code.replaceAll('$this$', 'this');
+
+        // Minify code
+        code = removeComments(code);
+        code = minifyIfElse(code);
+
+        // Save
+        await Bun.write(outputFile, code);
+        console.log(`Patch built successfully: ${file}`)
+      });
+}
+
+async function build(target: BuildTarget, version: string, variant: BuildVariant, config: any={}) {
     console.log('-- Target:', target);
     const startTime = performance.now();
 
@@ -152,6 +202,8 @@ const build = async (target: BuildTarget, version: string, variant: BuildVariant
     outputMetaName += '.meta.js';
 
     const outDir = './dist';
+
+    await buildPatches();
 
     let output = await Bun.build({
         entrypoints: ['src/index.ts'],

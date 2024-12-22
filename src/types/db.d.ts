@@ -6,7 +6,7 @@ interface BaseRecord {
 interface ControllerSettingsRecord extends BaseRecord {
     id: string;
     data: {
-        vibrationIntensity: number;
         shortcutPresetId: number;
+        customizationPresetId: number;
     };
 };

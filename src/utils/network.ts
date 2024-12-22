@@ -141,7 +141,7 @@ export function interceptHttpRequests() {
 
     // 'https://notificationinbox.xboxlive.com',
     // 'https://accounts.xboxlive.com/family/memberXuid',
-    const blockFeatures = getPref<BlockFeature[]>(PrefKey.BLOCK_FEATURES);
+    const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
     if (blockFeatures.includes(BlockFeature.CHAT)) {
         BLOCKED_URLS.push(
             'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',

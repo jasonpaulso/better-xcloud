@@ -60,7 +60,7 @@ export function patchVideoApi() {
 
 
 export function patchRtcCodecs() {
-    const codecProfile = getPref<CodecProfile>(PrefKey.STREAM_CODEC_PROFILE);
+    const codecProfile = getPref(PrefKey.STREAM_CODEC_PROFILE);
     if (codecProfile === 'default') {
         return;
     }
@@ -81,8 +81,8 @@ export function patchRtcPeerConnection() {
     }
 
     const maxVideoBitrateDef = getPrefDefinition(PrefKey.STREAM_MAX_VIDEO_BITRATE) as Extract<SettingDefinition, { min: number }>;
-    const maxVideoBitrate = getPref<VideoMaxBitrate>(PrefKey.STREAM_MAX_VIDEO_BITRATE);
-    const codec = getPref<CodecProfile>(PrefKey.STREAM_CODEC_PROFILE);
+    const maxVideoBitrate = getPref(PrefKey.STREAM_MAX_VIDEO_BITRATE);
+    const codec = getPref(PrefKey.STREAM_CODEC_PROFILE);
 
     if (codec !== CodecProfile.DEFAULT || maxVideoBitrate < maxVideoBitrateDef.max) {
         const nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
@@ -134,7 +134,7 @@ export function patchAudioContext() {
 
         ctx.createGain = function() {
             const gainNode = nativeCreateGain.apply(this);
-            gainNode.gain.value = getPref<AudioVolume>(PrefKey.AUDIO_VOLUME) / 100;
+            gainNode.gain.value = getPref(PrefKey.AUDIO_VOLUME) / 100;
 
             STATES.currentStream.audioGainNode = gainNode;
             return gainNode;

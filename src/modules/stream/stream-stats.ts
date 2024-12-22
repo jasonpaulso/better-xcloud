@@ -192,8 +192,8 @@ export class StreamStats {
     }
 
     refreshStyles() {
-        const PREF_ITEMS = getPref<StreamStat[]>(PrefKey.STATS_ITEMS);
-        const PREF_OPACITY_BG = getPref<number>(PrefKey.STATS_OPACITY_BACKGROUND);
+        const PREF_ITEMS = getPref(PrefKey.STATS_ITEMS);
+        const PREF_OPACITY_BG = getPref(PrefKey.STATS_OPACITY_BACKGROUND);
 
         const $container = this.$container;
         $container.dataset.stats = '[' + PREF_ITEMS.join('][') + ']';

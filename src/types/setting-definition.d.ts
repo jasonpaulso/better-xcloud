@@ -20,7 +20,7 @@ interface BaseSettingDefinition {
     default: any;
 
     label?: string;
-    note?: string | (() => HTMLElement);
+    note?: string | (() => HTMLElement) | HTMLElement;
     experimental?: boolean;
     unsupported?: boolean;
     unsupportedValue?: SettingDefinition['default'];
@@ -76,3 +76,14 @@ export type NumberStepperParams = Partial<{
     customTextValue: (value: any, min?: number, max?: number) => string | null;
     reverse: boolean;
 }>
+
+export type DualNumberStepperParams = {
+    min: number;
+    minDiff: number;
+    max: number;
+
+    steps?: number;
+    suffix?: string;
+    disabled?: boolean;
+    customTextValue?: (values: [number, number], min?: number, max?: number) => string | null;
+};

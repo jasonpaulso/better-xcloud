@@ -1,7 +1,7 @@
 import { isFullVersion } from "@macros/build" with { type: "macro" };
 
 import { limitVideoPlayerFps, onChangeVideoPlayerType, updateVideoPlayer } from "@/modules/stream/stream-settings-utils";
-import { ButtonStyle, CE, createButton, createSettingRow, createSvgIcon, escapeCssSelector, type BxButtonOptions } from "@/utils/html";
+import { ButtonStyle, calculateSelectBoxes, CE, createButton, createSettingRow, createSvgIcon, escapeCssSelector, type BxButtonOptions } from "@/utils/html";
 import { NavigationDialog, NavigationDirection } from "./navigation-dialog";
 import { SoundShortcut } from "@/modules/shortcuts/sound-shortcut";
 import { StreamStats } from "@/modules/stream/stream-stats";
@@ -37,7 +37,7 @@ type SettingTabSectionItem = Partial<{
     pref: PrefKey;
     multiLines: boolean;
     label: string;
-    note: string | (() => HTMLElement);
+    note: string | (() => HTMLElement) | HTMLElement;
     experimental: string;
     content: HTMLElement | (() => HTMLElement);
     options: { [key: string]: string };
@@ -56,7 +56,7 @@ type SettingTabSection = {
         | 'stats';
     label?: string;
     unsupported?: boolean;
-    unsupportedNote?: string | Text | null;
+    unsupportedNote?: HTMLElement | string | Text | null;
     helpUrl?: string;
     content?: HTMLElement;
     lazyContent?: boolean | (() => HTMLElement);
@@ -86,7 +86,7 @@ export class SettingsDialog extends NavigationDialog {
     private $btnReload!: HTMLElement;
     private $btnGlobalReload!: HTMLButtonElement;
     private $noteGlobalReload!: HTMLElement;
-    private $btnSuggestion!: HTMLButtonElement;
+    private $btnSuggestion!: HTMLDivElement;
 
     private renderFullSettings: boolean;
 
@@ -106,7 +106,7 @@ export class SettingsDialog extends NavigationDialog {
         items: [
             // Top buttons
             ($parent) => {
-                const PREF_LATEST_VERSION = getPref<VersionLatest>(PrefKey.VERSION_LATEST);
+                const PREF_LATEST_VERSION = getPref(PrefKey.VERSION_LATEST);
                 const topButtons = [];
 
                 // "New version available" button
@@ -322,7 +322,7 @@ export class SettingsDialog extends NavigationDialog {
                 onCreated: (setting, $control) => {
                     const defaultUserAgent = window.navigator.orgUserAgent || window.navigator.userAgent;
 
-                    const $inpCustomUserAgent = CE<HTMLInputElement>('input', {
+                    const $inpCustomUserAgent = CE('input', {
                         type: 'text',
                         placeholder: defaultUserAgent,
                         autocomplete: 'off',
@@ -494,20 +494,7 @@ export class SettingsDialog extends NavigationDialog {
         }],
     }];
 
-    private readonly TAB_CONTROLLER_ITEMS: Array<SettingTabSection | HTMLElement | false> = [isFullVersion() && STATES.browser.capabilities.deviceVibration && {
-        group: 'device',
-        label: t('device'),
-        items: [{
-            pref: PrefKey.DEVICE_VIBRATION_MODE,
-            multiLines: true,
-            unsupported: !STATES.browser.capabilities.deviceVibration,
-            onChange: () => StreamSettings.refreshControllerSettings(),
-        }, {
-            pref: PrefKey.DEVICE_VIBRATION_INTENSITY,
-            unsupported: !STATES.browser.capabilities.deviceVibration,
-            onChange: () => StreamSettings.refreshControllerSettings(),
-        }],
-    }, {
+    private readonly TAB_CONTROLLER_ITEMS: Array<SettingTabSection | HTMLElement | false> = [{
         group: 'controller',
         label: t('controller'),
         helpUrl: 'https://better-xcloud.github.io/ingame-features/#controller',
@@ -575,6 +562,19 @@ export class SettingsDialog extends NavigationDialog {
                     $elm.value = customLayouts.default_layout;
                 });
             },
+        }],
+    }, isFullVersion() && STATES.browser.capabilities.deviceVibration && {
+        group: 'device',
+        label: t('device'),
+        items: [{
+            pref: PrefKey.DEVICE_VIBRATION_MODE,
+            multiLines: true,
+            unsupported: !STATES.browser.capabilities.deviceVibration,
+            onChange: () => StreamSettings.refreshControllerSettings(),
+        }, {
+            pref: PrefKey.DEVICE_VIBRATION_INTENSITY,
+            unsupported: !STATES.browser.capabilities.deviceVibration,
+            onChange: () => StreamSettings.refreshControllerSettings(),
         }],
     }];
 
@@ -764,9 +764,7 @@ export class SettingsDialog extends NavigationDialog {
                 $child.classList.remove('bx-gone');
 
                 // Calculate size of controller-friendly select boxes
-                if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
-                    this.dialogManager.calculateSelectBoxes($child as HTMLElement);
-                }
+                calculateSelectBoxes($child as HTMLElement);
             } else {
                 // Hide tab content
                 $child.classList.add('bx-gone');
@@ -804,7 +802,7 @@ export class SettingsDialog extends NavigationDialog {
     }
 
     private renderServerSetting(setting: SettingTabSectionItem): HTMLElement {
-        let selectedValue = getPref<ServerRegionName>(PrefKey.SERVER_REGION);
+        let selectedValue = getPref(PrefKey.SERVER_REGION);
 
         const continents: Record<ServerContinent, {
             label: string,
@@ -830,9 +828,8 @@ export class SettingsDialog extends NavigationDialog {
             },
         };
 
-        const $control = CE<HTMLSelectElement>('select', {
+        const $control = CE('select', {
             id: `bx_setting_${escapeCssSelector(setting.pref!)}`,
-            title: setting.label,
             tabindex: 0,
         });
         $control.name = $control.id;
@@ -859,7 +856,7 @@ export class SettingsDialog extends NavigationDialog {
 
             setting.options[value] = label;
 
-            const $option = CE<HTMLOptionElement>('option', { value }, label);
+            const $option = CE('option', { value }, label);
             const continent = continents[region.contintent];
             if (!continent.children) {
                 continent.children = [];

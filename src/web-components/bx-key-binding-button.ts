@@ -35,10 +35,10 @@ export class BxKeyBindingButton extends HTMLButtonElement {
     unbindKey!: typeof BxKeyBindingButton['unbindKey'];
 
     static create(options: BxKeyBindingButtonOptions) {
-        const $btn = CE<BxKeyBindingButton>('button', {
+        const $btn = CE('button', {
             class: 'bx-binding-button bx-focusable',
             type: 'button',
-        });
+        }) as BxKeyBindingButton;
 
         $btn.title = options.title;
         $btn.isPrompt = !!options.isPrompt;

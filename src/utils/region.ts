@@ -4,7 +4,7 @@ import { getPref } from "./settings-storages/global-settings-storage";
 
 
 export function getPreferredServerRegion(shortName = false): string | null {
-    let preferredRegion = getPref<ServerRegionName>(PrefKey.SERVER_REGION);
+    let preferredRegion = getPref(PrefKey.SERVER_REGION);
     const serverRegions = STATES.serverRegions;
 
     // Return preferred region

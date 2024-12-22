@@ -1,4 +1,4 @@
-import type { PrefKey, StorageKey } from "@/enums/pref-keys";
+import type { PrefKey, PrefTypeMap, StorageKey } from "@/enums/pref-keys";
 import type { NumberStepperParams, SettingAction, SettingDefinitions } from "@/types/setting-definition";
 import { t } from "../translation";
 import { SCRIPT_VARIANT } from "../global";
@@ -63,20 +63,20 @@ export class BaseSettingsStore {
         return this.definitions[key];
     }
 
-    getSetting<T=boolean>(key: PrefKey, checkUnsupported = true): T {
+    getSetting<T extends keyof PrefTypeMap>(key: T, checkUnsupported = true): PrefTypeMap[T] {
         const definition = this.definitions[key];
 
         // Return default value if build variant is different
         if (definition.requiredVariants && !definition.requiredVariants.includes(SCRIPT_VARIANT)) {
-            return definition.default as T;
+            return definition.default as PrefTypeMap[T];
         }
 
         // Return default value if the feature is not supported
         if (checkUnsupported && definition.unsupported) {
             if ('unsupportedValue' in definition) {
-                return definition.unsupportedValue as T;
+                return definition.unsupportedValue as PrefTypeMap[T];
             } else {
-                return definition.default as T;
+                return definition.default as PrefTypeMap[T];
             }
         }
 
@@ -84,7 +84,7 @@ export class BaseSettingsStore {
             this.settings[key] = this.validateValue('get', key, null);
         }
 
-        return this.settings[key] as T;
+        return this.settings[key] as PrefTypeMap[T];
     }
 
     setSetting<T=any>(key: PrefKey, value: T, emitEvent = false) {

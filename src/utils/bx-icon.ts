@@ -12,6 +12,7 @@ import iconEyeSlash from "@assets/svg/eye-slash.svg" with { type: "text" };
 import iconHome from "@assets/svg/home.svg" with { type: "text" };
 import iconNativeMkb from "@assets/svg/native-mkb.svg" with { type: "text" };
 import iconNew from "@assets/svg/new.svg" with { type: "text" };
+import iconPencil from "@assets/svg/pencil-simple-line.svg" with { type: "text" };
 import iconPower from "@assets/svg/power.svg" with { type: "text" };
 import iconQuestion from "@assets/svg/question.svg" with { type: "text" };
 import iconRefresh from "@assets/svg/refresh.svg" with { type: "text" };
@@ -53,6 +54,7 @@ export const BxIcon = {
     HOME: iconHome,
     NATIVE_MKB: iconNativeMkb,
     NEW: iconNew,
+    MANAGE: iconPencil,
     COPY: iconCopy,
     TRASH: iconTrash,
     CURSOR_TEXT: iconCursorText,

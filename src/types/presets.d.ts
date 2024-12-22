@@ -12,15 +12,9 @@ interface PresetRecord extends BaseRecord {
 
 interface PresetRecords<T extends PresetRecord> {
     [key: number]: T;
-  }
+}
 
-
-interface MkbPresetRecord extends PresetRecord {
-    data: MkbPresetData;
-};
-
-type MkbPresetRecords = PresetRecords<MkbPresetRecord>;
-
+// MKB
 type MkbPresetData = {
     mapping: Partial<Record<GamepadKey, Array<KeyCode | MouseButtonCode | WheelCode | null>>>;
     mouse: Omit<{
@@ -30,29 +24,31 @@ type MkbPresetData = {
     };
 };
 
-interface MkbConvertedPresetRecord extends PresetRecord {
-    data: MkbConvertedPresetData;
-};
-
 type MkbConvertedPresetData = MkbPresetData & {
     mapping: Record<string, number?>;
 };
 
+interface MkbPresetRecord extends PresetRecord {
+    data: MkbPresetData;
+};
+
+interface MkbConvertedPresetRecord extends PresetRecord {
+    data: MkbConvertedPresetData;
+};
+
+// Controller shortcuts
 interface ControllerShortcutPresetRecord extends PresetRecord {
     data: ControllerShortcutPresetData;
 };
-
-type ControllerShortcutPresetRecords = PresetRecords<ControllerShortcutPresetRecord>;
 
 type ControllerShortcutPresetData = {
     mapping: Partial<Record<GamepadKey, ShortcutAction>>,
 };
 
+// Keyboard shortcuts
 interface KeyboardShortcutPresetRecord extends PresetRecord {
     data: KeyboardShortcutPresetData;
 };
-
-type KeyboardShortcutPresetRecords = PresetRecords<KeyboardShortcutPresetRecord>;
 
 type KeyboardShortcutPresetData = {
     mapping: Partial<Record<ShortcutAction, KeyEventInfo>>,
@@ -62,12 +58,39 @@ type KeyboardShortcutConvertedPresetData = KeyboardShortcutPresetData & {
     mapping: { [key: string]: ShortcutAction };
 };
 
+// All presets
 interface AllPresets<T extends PresetRecord> {
-    default: Array<number>,
-    custom: Array<number>,
-    data: { [key: string]: T },
+    default: Array<number>;
+    custom: Array<number>;
+    data: { [key: string]: T };
 };
 
 interface AllPresetsData<T extends PresetRecord> {
-    [presetId: string]: T['data'],
+    [presetId: string]: T['data'];
 };
+
+// Controller customization
+type ControllerCustomizationPresetData = {
+    mapping: Partial<Record<GamepadKey, GamepadKey | false | undefined>>;
+    settings: {
+        leftTriggerRange?: [number, number];
+        rightTriggerRange?: [number, number];
+
+        leftStickDeadzone?: [number, number];
+        rightStickDeadzone?: [number, number];
+
+        vibrationIntensity: number;
+    },
+};
+
+interface ControllerCustomizationPresetRecord extends PresetRecord {
+    data: ControllerCustomizationPresetData;
+};
+
+type ControllerCustomizationConvertedPresetData = {
+    mapping: Partial<Record<keyof XcloudGamepad, keyof XcloudGamepad | false>>;
+    ranges: {
+        [key in keyof Pick<XcloudGamepad, 'LeftTrigger' | 'RightTrigger' | 'LeftThumb' | 'RightThumb'>]?: [number, number];
+    };
+    vibrationIntensity: number;
+}

@@ -580,7 +580,7 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     updateGamepadSlots() {
         // Set gamepad slot
-        this.VIRTUAL_GAMEPAD.index = getPref<number>(PrefKey.MKB_P1_SLOT) - 1;
+        this.VIRTUAL_GAMEPAD.index = getPref(PrefKey.MKB_P1_SLOT) - 1;
     }
 
     start() {

@@ -96,7 +96,7 @@ export class StreamStatsCollector {
             current: -1,
             grades: [40, 75, 100],
             toString() {
-                return this.current === -1 ? '???' : this.current.toString().padStart(3, ' ');
+                return this.current === -1 ? '???' : this.current.toString().padStart(3);
             },
         },
 
@@ -104,22 +104,22 @@ export class StreamStatsCollector {
             current: 0,
             grades: [30, 40, 60],
             toString() {
-                return `${this.current.toFixed(1)}ms`.padStart(6, ' ');
+                return `${this.current.toFixed(1)}ms`.padStart(6);
             },
         },
 
         [StreamStat.FPS]: {
             current: 0,
             toString() {
-                const maxFps = getPref<VideoMaxFps>(PrefKey.VIDEO_MAX_FPS);
-                return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5, ' ') : this.current.toString();
+                const maxFps = getPref(PrefKey.VIDEO_MAX_FPS);
+                return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5) : this.current.toString();
             },
         },
 
         [StreamStat.BITRATE]: {
             current: 0,
             toString() {
-                return `${this.current.toFixed(1)} Mbps`.padStart(9, ' ');
+                return `${this.current.toFixed(1)} Mbps`.padStart(9);
             },
         },
 
@@ -146,14 +146,14 @@ export class StreamStatsCollector {
             total: 0,
             grades: [6, 9, 12],
             toString() {
-                return isNaN(this.current) ? '??ms' : `${this.current.toFixed(1)}ms`.padStart(6, ' ');
+                return isNaN(this.current) ? '??ms' : `${this.current.toFixed(1)}ms`.padStart(6);
             },
         },
 
         [StreamStat.DOWNLOAD]: {
             total: 0,
             toString() {
-                return humanFileSize(this.total).padStart(8, ' ');
+                return humanFileSize(this.total).padStart(8);
             },
         },
 
