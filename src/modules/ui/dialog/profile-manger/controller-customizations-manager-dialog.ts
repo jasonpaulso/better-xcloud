@@ -40,7 +40,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         },
     } satisfies ControllerCustomizationPresetData;
 
-    private selectsMap: Partial<Record<GamepadKey, HTMLSelectElement>> = {};
+    private selectsMap: PartialRecord<GamepadKey, HTMLSelectElement> = {};
     private selectsOrder: GamepadKey[] = [];
 
     private isDetectingButton: boolean = false;

@@ -19,7 +19,7 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
     // private readonly LOG_TAG = 'ControllerShortcutsManagerDialog';
 
     protected $content: HTMLElement;
-    private selectActions: Partial<Record<GamepadKey, HTMLSelectElement>> = {};
+    private selectActions: PartialRecord<GamepadKey, HTMLSelectElement> = {};
 
     protected readonly BLANK_PRESET_DATA = {
         mapping: {},

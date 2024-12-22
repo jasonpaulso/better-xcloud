@@ -16,7 +16,7 @@ interface PresetRecords<T extends PresetRecord> {
 
 // MKB
 type MkbPresetData = {
-    mapping: Partial<Record<GamepadKey, Array<KeyCode | MouseButtonCode | WheelCode | null>>>;
+    mapping: PartialRecord<GamepadKey, Array<KeyCode | MouseButtonCode | WheelCode | null>>;
     mouse: Omit<{
         [index in MkbPresetKey]: number;
     }, MkbPresetKey.MOUSE_MAP_TO> & {
@@ -42,7 +42,7 @@ interface ControllerShortcutPresetRecord extends PresetRecord {
 };
 
 type ControllerShortcutPresetData = {
-    mapping: Partial<Record<GamepadKey, ShortcutAction>>,
+    mapping: PartialRecord<GamepadKey, ShortcutAction>,
 };
 
 // Keyboard shortcuts
@@ -51,7 +51,7 @@ interface KeyboardShortcutPresetRecord extends PresetRecord {
 };
 
 type KeyboardShortcutPresetData = {
-    mapping: Partial<Record<ShortcutAction, KeyEventInfo>>,
+    mapping: PartialRecord<ShortcutAction, KeyEventInfo>,
 };
 
 type KeyboardShortcutConvertedPresetData = KeyboardShortcutPresetData & {
@@ -71,7 +71,7 @@ interface AllPresetsData<T extends PresetRecord> {
 
 // Controller customization
 type ControllerCustomizationPresetData = {
-    mapping: Partial<Record<GamepadKey, GamepadKey | false | undefined>>;
+    mapping: PartialRecord<GamepadKey, GamepadKey | false | undefined>;
     settings: {
         leftTriggerRange?: [number, number];
         rightTriggerRange?: [number, number];
@@ -88,7 +88,7 @@ interface ControllerCustomizationPresetRecord extends PresetRecord {
 };
 
 type ControllerCustomizationConvertedPresetData = {
-    mapping: Partial<Record<keyof XcloudGamepad, keyof XcloudGamepad | false>>;
+    mapping: PartialRecord<keyof XcloudGamepad, keyof XcloudGamepad | false>;
     ranges: {
         [key in keyof Pick<XcloudGamepad, 'LeftTrigger' | 'RightTrigger' | 'LeftThumb' | 'RightThumb'>]?: [number, number];
     };

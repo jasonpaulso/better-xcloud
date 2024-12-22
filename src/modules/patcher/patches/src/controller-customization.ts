@@ -16,8 +16,8 @@ if (currentGamepad.id in window.BX_STREAM_SETTINGS.controllers) {
         const MIN_RANGE = 0.1;
 
         const { mapping, ranges } = controller.customization;
-        const pressedButtons: Partial<Record<keyof XcloudGamepad, number>> = {};
-        const releasedButtons: Partial<Record<keyof XcloudGamepad, number>> = {};
+        const pressedButtons: PartialRecord<keyof XcloudGamepad, number> = {};
+        const releasedButtons: PartialRecord<keyof XcloudGamepad, number> = {};
         let isModified = false;
 
         // Limit left trigger range

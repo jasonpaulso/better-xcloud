@@ -18,7 +18,7 @@ import { ControllerCustomizationsTable } from "./local-db/controller-customizati
 
 
 export type StreamSettingsData = {
-    settings: Partial<Record<PrefKey, any>>;
+    settings: PartialRecord<PrefKey, any>;
     xCloudPollingMode: 'none' | 'callbacks' | 'navigation' | 'all';
 
     deviceVibrationIntensity: number;
