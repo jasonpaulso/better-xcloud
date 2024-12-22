@@ -116,9 +116,9 @@ function postProcess(str: string): string {
     str = str.replaceAll(/\\n\/\/.*?(?=\\n)/g, '');
 
     // Replace ${"time".toUpperCase()} with "TIME"
-    str = str.replaceAll(/\$\{"([^"]+)"\.toUpperCase\(\)\}/g, (match, p1) => {
-        return p1.toUpperCase();
-    });
+    // str = str.replaceAll(/\$\{"([^"]+)"\.toUpperCase\(\)\}/g, (match, p1) => {
+    //    return p1.toUpperCase();
+    // });
 
     // Replace " (e) =>" to " e =>"
     // str = str.replaceAll(/ \(([^\s,.$()]+)\) =>/g, ' $1 =>');
