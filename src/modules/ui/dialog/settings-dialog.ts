@@ -7,7 +7,7 @@ import { SoundShortcut } from "@/modules/shortcuts/sound-shortcut";
 import { StreamStats } from "@/modules/stream/stream-stats";
 import { TouchController } from "@/modules/touch-controller";
 import { BxEvent } from "@/utils/bx-event";
-import { BxIcon } from "@/utils/bx-icon";
+import { BxIcon, type BxIconRaw } from "@/utils/bx-icon";
 import { STATES, AppInterface, deepClone, SCRIPT_VERSION, STORAGE, SCRIPT_VARIANT } from "@/utils/global";
 import { t, Translations } from "@/utils/translation";
 import { BxSelectElement } from "@/web-components/bx-select";
@@ -65,7 +65,7 @@ type SettingTabSection = {
 };
 
 type SettingTab = {
-    icon: SVGElement;
+    icon: BxIconRaw;
     group: SettingTabGroup,
     items: Array<SettingTabSection | HTMLElement | false> | (() => Array<SettingTabSection | false>);
     requiredVariants?: BuildVariant | Array<BuildVariant>;

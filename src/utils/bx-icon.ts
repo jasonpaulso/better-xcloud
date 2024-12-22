@@ -83,3 +83,5 @@ export const BxIcon = {
     UPLOAD: iconUpload,
     AUDIO: iconSpeakerHigh,
 } as const;
+
+export type BxIconRaw = (typeof BxIcon)[keyof typeof BxIcon];

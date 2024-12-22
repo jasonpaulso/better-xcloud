@@ -787,7 +787,7 @@ function createElement(elmName, props, ..._) {
 }
 var domParser = new DOMParser;
 function createSvgIcon(icon) {
- return domParser.parseFromString(icon.toString(), "image/svg+xml").documentElement;
+ return domParser.parseFromString(icon, "image/svg+xml").documentElement;
 }
 var ButtonStyleIndices = Object.keys(ButtonStyleClass).map((i) => parseInt(i));
 function createButton(options) {

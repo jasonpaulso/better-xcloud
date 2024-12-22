@@ -1,6 +1,6 @@
 import { STATES } from "@utils/global.ts";
 import { createSvgIcon } from "@utils/html.ts";
-import { BxIcon } from "@utils/bx-icon";
+import { BxIcon, type BxIconRaw } from "@utils/bx-icon";
 import { t } from "@utils/translation.ts";
 import { StreamBadges } from "./stream-badges.ts";
 import { StreamStats } from "./stream-stats.ts";
@@ -15,7 +15,7 @@ export class StreamUiHandler {
     private static $btnHome: HTMLElement | null | undefined;
     private static observer: MutationObserver | undefined;
 
-    private static cloneStreamHudButton($btnOrg: HTMLElement, label: string, svgIcon: typeof BxIcon): HTMLElement | null {
+    private static cloneStreamHudButton($btnOrg: HTMLElement, label: string, svgIcon: BxIconRaw): HTMLElement | null {
         if (!$btnOrg) {
             return null;
         }
@@ -78,7 +78,7 @@ export class StreamUiHandler {
         return $container;
     }
 
-    private static cloneCloseButton($btnOrg: HTMLElement, icon: typeof BxIcon, className: string, onChange: any): HTMLElement | null {
+    private static cloneCloseButton($btnOrg: HTMLElement, icon: BxIconRaw, className: string, onChange: any): HTMLElement | null {
         if (!$btnOrg) {
             return null;
         }

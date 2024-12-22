@@ -1,4 +1,4 @@
-import type { BxIcon } from "@utils/bx-icon";
+import type { BxIconRaw } from "@utils/bx-icon";
 import { setNearby } from "./navigation-utils";
 import type { NavigationNearbyElements } from "@/modules/ui/dialog/navigation-dialog";
 import type { PresetRecord, AllPresets } from "@/types/presets";
@@ -43,7 +43,7 @@ export type BxButtonOptions = Partial<{
     style: ButtonStyle;
     url: string;
     classes: string[];
-    icon: typeof BxIcon;
+    icon: BxIconRaw;
     label: string;
     secondaryText: HTMLElement | string;
     title: string;
@@ -149,8 +149,8 @@ function createElement<T extends keyof HTMLElementTagNameMap>(elmName: T, props?
 
 
 const domParser = new DOMParser();
-export function createSvgIcon(icon: typeof BxIcon) {
-    return domParser.parseFromString(icon.toString(), 'image/svg+xml').documentElement;
+export function createSvgIcon(icon: BxIconRaw) {
+    return domParser.parseFromString(icon, 'image/svg+xml').documentElement;
 }
 
 const ButtonStyleIndices = Object.keys(ButtonStyleClass).map(i => parseInt(i));

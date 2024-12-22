@@ -5,7 +5,7 @@ import { BxEvent } from "@utils/bx-event";
 import { CE, createSvgIcon, humanFileSize } from "@utils/html";
 import { STATES } from "@utils/global";
 import { BxLogger } from "@/utils/bx-logger";
-import { BxIcon } from "@/utils/bx-icon";
+import { BxIcon, type BxIconRaw } from "@/utils/bx-icon";
 import { GuideMenuTab } from "../ui/guide-menu";
 import { StreamStatsCollector } from "@/utils/stream-stats-collector";
 import { StreamStat } from "@/enums/pref-values";
@@ -14,7 +14,7 @@ import { StreamStat } from "@/enums/pref-values";
 type StreamBadgeInfo = {
     name: string,
     $element?: HTMLElement,
-    icon: typeof BxIcon,
+    icon: BxIconRaw,
     color: string,
 };
 

@@ -101,12 +101,27 @@ type XcloudWaitTimeInfo = Partial<{
     estimatedTotalWaitTimeInSeconds: number,
 }>;
 
-declare module '*.js';
-declare module '*.svg';
-declare module '*.styl';
+declare module '*.js' {
+  const content: string;
+  export default content;
+}
+declare module '*.svg' {
+  const content: string;
+  export default content;
+}
+declare module '*.styl' {
+  const content: string;
+  export default content;
+}
 
-declare module '*.fs';
-declare module '*.vert';
+declare module '*.fs' {
+    const content: string;
+    export default content;
+}
+declare module '*.vert' {
+    const content: string;
+    export default content;
+}
 
 type MkbMouseMove = {
     movementX: number;
