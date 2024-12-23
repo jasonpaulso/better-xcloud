@@ -47,7 +47,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
     private isDetectingButton: boolean = false;
     private detectIntervalId: number | null = null;
 
-    private readonly BUTTONS_ORDER = [
+    static readonly BUTTONS_ORDER = [
         GamepadKey.A, GamepadKey.B,
         GamepadKey.X, GamepadKey.Y,
 
@@ -89,7 +89,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
 
         const boundUpdatePreset = this.updatePreset.bind(this);
 
-        for (const gamepadKey of this.BUTTONS_ORDER) {
+        for (const gamepadKey of ControllerCustomizationsManagerDialog.BUTTONS_ORDER) {
             if (gamepadKey === GamepadKey.SHARE) {
                 continue;
             }
@@ -102,7 +102,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
             }, name));
         }
 
-        for (const gamepadKey of this.BUTTONS_ORDER) {
+        for (const gamepadKey of ControllerCustomizationsManagerDialog.BUTTONS_ORDER) {
             const [buttonName, buttonPrompt] = GamepadKeyName[gamepadKey];
             const $sourceSelect = (gamepadKey === GamepadKey.LS || gamepadKey === GamepadKey.RS) ? $baseStickSelect : $baseButtonSelect;
 
@@ -257,7 +257,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
             return super.handleGamepad(button);
         }
 
-        if (button in this.BUTTONS_ORDER) {
+        if (button in ControllerCustomizationsManagerDialog.BUTTONS_ORDER) {
             this.stopDetectingButton();
 
             const $select = this.selectsMap[button]!;
@@ -382,10 +382,12 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         if (Object.keys(presetData.mapping).length > 0) {
             $content = CE('div', { class: 'bx-controller-customization-summary'});
 
-            for (const key in presetData.mapping) {
-                const gamepadKey = parseInt(key) as GamepadKey;
-                const mappedKey = presetData.mapping[gamepadKey]!;
+            for (const gamepadKey of ControllerCustomizationsManagerDialog.BUTTONS_ORDER) {
+                if (!(gamepadKey in presetData.mapping)) {
+                    continue;
+                }
 
+                const mappedKey = presetData.mapping[gamepadKey]!;
                 $content.append(CE('span', { class: 'bx-prompt' }, getGamepadPrompt(gamepadKey) + ' > ' + (mappedKey === false ? '🚫' : getGamepadPrompt(mappedKey))));
             }
 
