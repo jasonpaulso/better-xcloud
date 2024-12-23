@@ -19,11 +19,13 @@ export class ControllerExtraSettings extends HTMLElement {
     $selectControllers!: BxSelectElement;
     $selectShortcuts!: BxSelectElement;
     $selectCustomization!: BxSelectElement;
+    $summaryCustomization!: HTMLElement;
 
-    updateLayout!: () => void;
-    switchController!: (id: string) => void;
-    getCurrentControllerId!: () => string | null;
-    saveSettings!: () => void;
+    updateLayout!: typeof ControllerExtraSettings['updateLayout'];
+    switchController!: typeof ControllerExtraSettings['switchController'];
+    getCurrentControllerId!: typeof ControllerExtraSettings['getCurrentControllerId'];
+    saveSettings!: typeof ControllerExtraSettings['saveSettings'];
+    updateCustomizationSummary!: typeof ControllerExtraSettings['updateCustomizationSummary'];
 
     static renderSettings(this: SettingsDialog): HTMLElement {
         const $container = CE('label', {
@@ -52,8 +54,39 @@ export class ControllerExtraSettings extends HTMLElement {
 
         const $selectCustomization = BxSelectElement.create(CE('select', {
             autocomplete: 'off',
-            _on: { input: $container.saveSettings },
+            _on: {
+                input: async () => {
+                    // Update summary
+                    ControllerExtraSettings.updateCustomizationSummary.call($container);
+                    // Save settings
+                    $container.saveSettings();
+                },
+            },
         }));
+
+        const $rowCustomization = createSettingRow(
+            t('in-game-controller-customization'),
+            CE('div', {
+                class: 'bx-preset-row',
+                _nearby: { orientation: 'horizontal' },
+            },
+                $selectCustomization,
+                createButton({
+                    title: t('manage'),
+                    icon: BxIcon.MANAGE,
+                    style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY | ButtonStyle.AUTO_HEIGHT,
+                    onClick: () => ControllerCustomizationsManagerDialog.getInstance().show({
+                        id: $container.$selectCustomization.value ? parseInt($container.$selectCustomization.value) : null,
+                    }),
+                }),
+            ),
+            {
+                multiLines: true,
+            },
+        );
+        $rowCustomization.appendChild(
+            $container.$summaryCustomization = CE('div'),
+        );
 
         $container.append(
             CE('span', false, t('no-controllers-connected')),
@@ -80,27 +113,7 @@ export class ControllerExtraSettings extends HTMLElement {
                         { multiLines: true },
                     ),
 
-                    createSettingRow(
-                        t('in-game-controller-customization'),
-                        CE('div', {
-                            class: 'bx-preset-row',
-                            _nearby: { orientation: 'horizontal' },
-                        },
-                            $selectCustomization,
-                            createButton({
-                                title: t('manage'),
-                                icon: BxIcon.MANAGE,
-                                style: ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY | ButtonStyle.AUTO_HEIGHT,
-                                onClick: () => ControllerCustomizationsManagerDialog.getInstance().show({
-                                    id: $container.$selectCustomization.value ? parseInt($container.$selectCustomization.value) : null,
-                                }),
-                            }),
-                        ),
-                        {
-                            multiLines: true,
-                            $note: CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('slightly-increases-input-latency')),
-                        },
-                    ),
+                    $rowCustomization,
                 ),
             ),
         );
@@ -123,7 +136,17 @@ export class ControllerExtraSettings extends HTMLElement {
         return $container;
     }
 
-    private static async updateLayout(this: ControllerExtraSettings, e?: GamepadEvent) {
+    private static async updateCustomizationSummary(this: ControllerExtraSettings) {
+        const presetId = parseInt(this.$selectCustomization.value);
+        const $summaryContent = await ControllerCustomizationsManagerDialog.getInstance().renderSummary(presetId);
+
+        removeChildElements(this.$summaryCustomization);
+        if ($summaryContent) {
+            this.$summaryCustomization.appendChild($summaryContent);
+        }
+    }
+
+    private static async updateLayout(this: ControllerExtraSettings) {
         this.controllerIds = getUniqueGamepadNames();
 
         this.dataset.hasGamepad = (this.controllerIds.length > 0).toString();
@@ -173,6 +196,9 @@ export class ControllerExtraSettings extends HTMLElement {
         // Update UI
         this.$selectShortcuts.value = controllerSettings.shortcutPresetId.toString();
         this.$selectCustomization.value = controllerSettings.customizationPresetId.toString();
+
+        // Update summary
+        ControllerExtraSettings.updateCustomizationSummary.call(this);
     }
 
     private static getCurrentControllerId(this: ControllerExtraSettings) {

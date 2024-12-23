@@ -34,6 +34,9 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
     }
 
     protected abstract switchPreset(id: number): void;
+    async renderSummary(presetId: number): Promise<HTMLElement | DocumentFragment | null> {
+        return null;
+    }
 
     protected updateButtonStates() {
         const isDefaultPreset = this.currentPresetId === null || this.currentPresetId <= 0;

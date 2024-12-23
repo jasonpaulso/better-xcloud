@@ -15,6 +15,7 @@ import { NavigationDirection, type NavigationElement } from "../navigation-dialo
 import { setNearby } from "@/utils/navigation-utils";
 import type { DualNumberStepperParams } from "@/types/setting-definition";
 import { BxNumberStepper } from "@/web-components/bx-number-stepper";
+import { getGamepadPrompt } from "@/utils/gamepad";
 
 export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog<ControllerCustomizationPresetRecord> {
     private static instance: ControllerCustomizationsManagerDialog;
@@ -366,5 +367,47 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         const preset = this.allPresets.data[this.currentPresetId!];
         preset.data = newData;
         this.presetsDb.updatePreset(preset);
+    }
+
+    async renderSummary(presetId: number) {
+        const preset = await this.presetsDb.getPreset(presetId);
+        if (!preset) {
+            return null;
+        }
+
+        const presetData = preset.data;
+        let $content: HTMLElement | undefined;
+        let showNote = false;
+
+        if (Object.keys(presetData.mapping).length > 0) {
+            $content = CE('div', { class: 'bx-controller-customization-summary'});
+
+            for (const key in presetData.mapping) {
+                const gamepadKey = parseInt(key) as GamepadKey;
+                const mappedKey = presetData.mapping[gamepadKey]!;
+
+                $content.append(CE('span', { class: 'bx-prompt' }, getGamepadPrompt(gamepadKey) + ' > ' + (mappedKey === false ? '🚫' : getGamepadPrompt(mappedKey))));
+            }
+
+            showNote = true;
+        }
+
+        // Show note if it has settings other than 'vibrationIntensity'
+        const settingKeys = Object.keys(presetData.settings) as Array<keyof typeof presetData.settings>;
+        if (settingKeys.filter(key => key !== 'vibrationIntensity').length) {
+            showNote = true;
+        }
+
+        const fragment = document.createDocumentFragment();
+        if (showNote) {
+            const $note = CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('slightly-increases-input-latency'));
+            fragment.appendChild($note);
+        }
+
+        if ($content) {
+            fragment.appendChild($content);
+        }
+
+        return fragment.childElementCount ? fragment : null;
     }
 }

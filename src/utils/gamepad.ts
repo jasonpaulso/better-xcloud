@@ -4,6 +4,7 @@ import { Toast } from "@utils/toast";
 import { BxLogger } from "@utils/bx-logger";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
+import { GamepadKeyName, type GamepadKey } from "@/enums/gamepad";
 
 // Show a toast when connecting/disconecting controller
 export function showGamepadToast(gamepad: Gamepad) {
@@ -89,4 +90,8 @@ export function generateVirtualControllerMapping(override: {}={}) {
     };
 
     return Object.assign({}, mapping, override);
+}
+
+export function getGamepadPrompt(gamepadKey: GamepadKey): string {
+    return GamepadKeyName[gamepadKey][1];
 }
