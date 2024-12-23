@@ -323,7 +323,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         }
 
         // Add missing settings
-        presetData.settings = Object.assign(this.BLANK_PRESET_DATA.settings, presetData.settings);
+        presetData.settings = Object.assign({}, this.BLANK_PRESET_DATA.settings, presetData.settings);
 
         // Vibration intensity
         $vibrationIntensity.value = presetData.settings.vibrationIntensity.toString();
