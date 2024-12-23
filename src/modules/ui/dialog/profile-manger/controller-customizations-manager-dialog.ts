@@ -29,7 +29,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
     private $rightStickDeadzone!: BxDualNumberStepper;
     private $btnDetect!: HTMLButtonElement;
 
-    protected BLANK_PRESET_DATA = {
+    protected readonly BLANK_PRESET_DATA = {
         mapping: {},
         settings: {
             leftTriggerRange: [0, 100],
@@ -393,9 +393,18 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         }
 
         // Show note if it has settings other than 'vibrationIntensity'
-        const settingKeys = Object.keys(presetData.settings) as Array<keyof typeof presetData.settings>;
-        if (settingKeys.filter(key => key !== 'vibrationIntensity').length) {
-            showNote = true;
+        let key: keyof typeof presetData.settings;
+        for (key in presetData.settings) {
+            if (key === 'vibrationIntensity') {
+                continue;
+            }
+
+            const value = presetData.settings[key];
+            // Non-default value
+            if (Array.isArray(value) && (value[0] !== 0 || value[1] !== 100)) {
+                showNote = true;
+                break;
+            }
         }
 
         const fragment = document.createDocumentFragment();
