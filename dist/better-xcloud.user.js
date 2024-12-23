@@ -5415,12 +5415,12 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
   5,
   6,
   7,
-  8,
-  9,
   10,
   11,
   104,
   204,
+  8,
+  9,
   17
  ];
  constructor(title) {

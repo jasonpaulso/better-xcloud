@@ -56,11 +56,10 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         GamepadKey.LB, GamepadKey.RB,
         GamepadKey.LT, GamepadKey.RT,
 
-        GamepadKey.SELECT, GamepadKey.START,
-
         GamepadKey.L3, GamepadKey.R3,
         GamepadKey.LS, GamepadKey.RS,
 
+        GamepadKey.SELECT, GamepadKey.START,
         GamepadKey.SHARE,
     ];
 
