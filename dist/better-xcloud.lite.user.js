@@ -1246,6 +1246,15 @@ class MkbMappingPresetsTable extends BasePresetsTable {
    }
   }
  };
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  mouse: {
+   mapTo: 2,
+   sensitivityX: 100,
+   sensitivityY: 100,
+   deadzoneCounterweight: 20
+  }
+ };
  DEFAULT_PRESET_ID = -1;
  constructor() {
   super(LocalDb.TABLE_VIRTUAL_CONTROLLERS);
@@ -1272,6 +1281,9 @@ class KeyboardShortcutsTable extends BasePresetsTable {
     }
    }
   }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {}
  };
  DEFAULT_PRESET_ID = -1;
  constructor() {
@@ -2617,6 +2629,9 @@ class ControllerShortcutsTable extends BasePresetsTable {
    }
   }
  };
+ BLANK_PRESET_DATA = {
+  mapping: {}
+ };
  DEFAULT_PRESET_ID = -1;
  constructor() {
   super(LocalDb.TABLE_CONTROLLER_SHORTCUTS);
@@ -2646,6 +2661,16 @@ class ControllerCustomizationsTable extends BasePresetsTable {
      vibrationIntensity: 100
     }
    }
+  }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  settings: {
+   leftTriggerRange: [0, 100],
+   rightTriggerRange: [0, 100],
+   leftStickDeadzone: [0, 100],
+   rightStickDeadzone: [0, 100],
+   vibrationIntensity: 100
   }
  };
  DEFAULT_PRESET_ID = 0;

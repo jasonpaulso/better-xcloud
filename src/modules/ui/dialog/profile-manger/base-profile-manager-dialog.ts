@@ -24,8 +24,6 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
     private $btnRename!: HTMLButtonElement;
     private $btnDelete!: HTMLButtonElement;
 
-    protected abstract readonly BLANK_PRESET_DATA: T['data'];
-
     constructor(title: string, presetsDb: BasePresetsTable<T>) {
         super();
 
@@ -138,7 +136,7 @@ export abstract class BaseProfileManagerDialog<T extends PresetRecord> extends N
                     }
 
                     // Create new preset selected name
-                    const newId = await this.presetsDb.newPreset(newName, this.BLANK_PRESET_DATA);
+                    const newId = await this.presetsDb.newPreset(newName, this.presetsDb.BLANK_PRESET_DATA);
                     this.currentPresetId = newId;
 
                     await this.refresh();

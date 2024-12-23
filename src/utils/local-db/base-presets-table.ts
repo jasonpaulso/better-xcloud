@@ -6,6 +6,7 @@ export abstract class BasePresetsTable<T extends PresetRecord> extends BaseLocal
     protected abstract TABLE_PRESETS: string;
     protected abstract DEFAULT_PRESETS: PresetRecords<T>;
     protected abstract readonly DEFAULT_PRESET_ID: number;
+    abstract readonly BLANK_PRESET_DATA: T['data'];
 
     async newPreset(name: string, data: T['data']) {
         const newRecord = { name, data } as T;

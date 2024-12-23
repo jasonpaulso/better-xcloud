@@ -1,4 +1,4 @@
-import type { ControllerCustomizationPresetRecord, PresetRecords } from "@/types/presets";
+import type { ControllerCustomizationPresetData, ControllerCustomizationPresetRecord, PresetRecords } from "@/types/presets";
 import { LocalDb } from "./local-db";
 import { BasePresetsTable } from "./base-presets-table";
 import { GamepadKey } from "@/enums/gamepad";
@@ -40,6 +40,17 @@ export class ControllerCustomizationsTable extends BasePresetsTable<ControllerCu
         },
     };
 
-    protected DEFAULT_PRESET_ID = ControllerCustomizationDefaultPresetId.DEFAULT;
+    readonly BLANK_PRESET_DATA = {
+        mapping: {},
+        settings: {
+            leftTriggerRange: [0, 100],
+            rightTriggerRange: [0, 100],
+            leftStickDeadzone: [0, 100],
+            rightStickDeadzone: [0, 100],
 
+            vibrationIntensity: 100,
+        },
+    } satisfies ControllerCustomizationPresetData;
+
+    protected DEFAULT_PRESET_ID = ControllerCustomizationDefaultPresetId.DEFAULT;
 }

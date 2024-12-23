@@ -52,6 +52,10 @@ export class ControllerShortcutsTable extends BasePresetsTable<ControllerShortcu
         },
     };
 
+    readonly BLANK_PRESET_DATA = {
+        mapping: {},
+    };
+
     protected readonly DEFAULT_PRESET_ID = ControllerShortcutDefaultId.DEFAULT;
 
     private constructor() {

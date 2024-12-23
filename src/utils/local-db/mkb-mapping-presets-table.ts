@@ -117,6 +117,17 @@ export class MkbMappingPresetsTable extends BasePresetsTable<MkbPresetRecord> {
             },
         },
     };
+
+    readonly BLANK_PRESET_DATA = {
+        mapping: {},
+        mouse: {
+            [MkbPresetKey.MOUSE_MAP_TO]: MouseMapTo.RS,
+            [MkbPresetKey.MOUSE_SENSITIVITY_X]: 100,
+            [MkbPresetKey.MOUSE_SENSITIVITY_Y]: 100,
+            [MkbPresetKey.MOUSE_DEADZONE_COUNTERWEIGHT]: 20,
+        },
+    };
+
     protected readonly DEFAULT_PRESET_ID = MkbMappingDefaultPresetId.DEFAULT;
 
     private constructor() {

@@ -22,10 +22,6 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
     private $unbindNote: HTMLElement;
     private readonly allKeyElements: BxKeyBindingButton[] = [];
 
-    protected readonly BLANK_PRESET_DATA: KeyboardShortcutPresetData = {
-        mapping: {},
-    };
-
     constructor(title: string) {
         super(title, KeyboardShortcutsTable.getInstance());
 
@@ -132,7 +128,7 @@ export class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog<Key
     }
 
     private savePreset() {
-        const presetData = deepClone(this.BLANK_PRESET_DATA) as KeyboardShortcutPresetData;
+        const presetData = deepClone(this.presetsDb.BLANK_PRESET_DATA) as KeyboardShortcutPresetData;
 
         // Get mapping
         for (const $elm of this.allKeyElements) {

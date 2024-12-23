@@ -36,6 +36,10 @@ export class KeyboardShortcutsTable extends BasePresetsTable<KeyboardShortcutPre
         },
     };
 
+    readonly BLANK_PRESET_DATA = {
+        mapping: {},
+    };
+
     protected readonly DEFAULT_PRESET_ID = KeyboardShortcutDefaultId.DEFAULT;
 
     private constructor() {

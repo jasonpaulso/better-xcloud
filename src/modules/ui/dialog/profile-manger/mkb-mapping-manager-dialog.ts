@@ -4,7 +4,7 @@ import { t } from "@/utils/translation";
 import { MkbMappingPresetsTable } from "@/utils/local-db/mkb-mapping-presets-table";
 import { GamepadKey, GamepadKeyName } from "@/enums/gamepad";
 import { CE, createSettingRow } from "@/utils/html";
-import { MouseMapTo, MkbPresetKey, type KeyCode } from "@/enums/mkb";
+import { MouseMapTo, type KeyCode } from "@/enums/mkb";
 import { BxKeyBindingButton, BxKeyBindingButtonFlag } from "@/web-components/bx-key-binding-button";
 import { StreamSettings } from "@/utils/stream-settings";
 import { BxNumberStepper } from "@/web-components/bx-number-stepper";
@@ -32,16 +32,6 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
         GamepadKey.L3, GamepadKey.LS_UP, GamepadKey.LS_DOWN, GamepadKey.LS_LEFT, GamepadKey.LS_RIGHT,
         GamepadKey.R3, GamepadKey.RS_UP, GamepadKey.RS_DOWN, GamepadKey.RS_LEFT, GamepadKey.RS_RIGHT,
     ];
-
-    protected readonly BLANK_PRESET_DATA: MkbPresetData = {
-        mapping: {},
-        mouse: {
-            [MkbPresetKey.MOUSE_MAP_TO]: MouseMapTo.RS,
-            [MkbPresetKey.MOUSE_SENSITIVITY_X]: 100,
-            [MkbPresetKey.MOUSE_SENSITIVITY_Y]: 100,
-            [MkbPresetKey.MOUSE_DEADZONE_COUNTERWEIGHT]: 20,
-        },
-    };
 
     private readonly allKeyElements: BxKeyBindingButton[] = [];
     private $mouseMapTo!: BxSelectElement;
@@ -217,7 +207,7 @@ export class MkbMappingManagerDialog extends BaseProfileManagerDialog<MkbPresetR
     }
 
     private savePreset() {
-        const presetData = deepClone(this.BLANK_PRESET_DATA) as MkbPresetData;
+        const presetData = deepClone(this.presetsDb.BLANK_PRESET_DATA) as MkbPresetData;
 
         // Get mapping
         for (const $elm of this.allKeyElements) {

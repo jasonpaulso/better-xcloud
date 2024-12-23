@@ -29,18 +29,6 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
     private $rightStickDeadzone!: BxDualNumberStepper;
     private $btnDetect!: HTMLButtonElement;
 
-    protected readonly BLANK_PRESET_DATA = {
-        mapping: {},
-        settings: {
-            leftTriggerRange: [0, 100],
-            rightTriggerRange: [0, 100],
-            leftStickDeadzone: [0, 100],
-            rightStickDeadzone: [0, 100],
-
-            vibrationIntensity: 100,
-        },
-    } satisfies ControllerCustomizationPresetData;
-
     private selectsMap: PartialRecord<GamepadKey, HTMLSelectElement> = {};
     private selectsOrder: GamepadKey[] = [];
 
@@ -153,6 +141,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
             }
         }
 
+        const blankSettings = this.presetsDb.BLANK_PRESET_DATA.settings;
         const params: DualNumberStepperParams = {
             min: 0,
             minDiff: 1,
@@ -189,19 +178,19 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
 
             // Range settings
             createSettingRow(t('left-trigger-range'),
-                this.$leftTriggerRange = BxDualNumberStepper.create('left-trigger-range', this.BLANK_PRESET_DATA.settings.leftTriggerRange, params, boundUpdatePreset),
+                this.$leftTriggerRange = BxDualNumberStepper.create('left-trigger-range', blankSettings.leftTriggerRange!, params, boundUpdatePreset),
             ),
 
             createSettingRow(t('right-trigger-range'),
-                this.$rightTriggerRange = BxDualNumberStepper.create('right-trigger-range', this.BLANK_PRESET_DATA.settings.rightTriggerRange, params, boundUpdatePreset),
+                this.$rightTriggerRange = BxDualNumberStepper.create('right-trigger-range', blankSettings.rightTriggerRange!, params, boundUpdatePreset),
             ),
 
             createSettingRow(t('left-stick-deadzone'),
-                this.$leftStickDeadzone = BxDualNumberStepper.create('left-stick-deadzone', this.BLANK_PRESET_DATA.settings.leftStickDeadzone, params, boundUpdatePreset),
+                this.$leftStickDeadzone = BxDualNumberStepper.create('left-stick-deadzone', blankSettings.leftStickDeadzone!, params, boundUpdatePreset),
             ),
 
             createSettingRow(t('right-stick-deadzone'),
-                this.$rightStickDeadzone = BxDualNumberStepper.create('right-stick-deadzone', this.BLANK_PRESET_DATA.settings.rightStickDeadzone, params, boundUpdatePreset),
+                this.$rightStickDeadzone = BxDualNumberStepper.create('right-stick-deadzone', blankSettings.rightStickDeadzone!, params, boundUpdatePreset),
             ),
         );
     }
@@ -323,7 +312,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         }
 
         // Add missing settings
-        presetData.settings = Object.assign({}, this.BLANK_PRESET_DATA.settings, presetData.settings);
+        presetData.settings = Object.assign({}, this.presetsDb.BLANK_PRESET_DATA.settings, presetData.settings);
 
         // Vibration intensity
         $vibrationIntensity.value = presetData.settings.vibrationIntensity.toString();
@@ -338,7 +327,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
     }
 
     private updatePreset() {
-        const newData: ControllerCustomizationPresetData = deepClone(this.BLANK_PRESET_DATA);
+        const newData: ControllerCustomizationPresetData = deepClone(this.presetsDb.BLANK_PRESET_DATA);
 
         // Set mappings
         let gamepadKey: unknown;

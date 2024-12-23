@@ -21,10 +21,6 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
     protected $content: HTMLElement;
     private selectActions: PartialRecord<GamepadKey, HTMLSelectElement> = {};
 
-    protected readonly BLANK_PRESET_DATA = {
-        mapping: {},
-    };
-
     private readonly BUTTONS_ORDER = [
         GamepadKey.Y, GamepadKey.A, GamepadKey.X, GamepadKey.B,
         GamepadKey.UP, GamepadKey.DOWN, GamepadKey.LEFT, GamepadKey.RIGHT,
@@ -138,7 +134,7 @@ export class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog<C
     }
 
     private updatePreset() {
-        const newData: ControllerShortcutPresetData = deepClone(this.BLANK_PRESET_DATA);
+        const newData: ControllerShortcutPresetData = deepClone(this.presetsDb.BLANK_PRESET_DATA);
 
         let button: unknown;
         for (button in this.selectActions) {

@@ -1318,6 +1318,15 @@ class MkbMappingPresetsTable extends BasePresetsTable {
    }
   }
  };
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  mouse: {
+   mapTo: 2,
+   sensitivityX: 100,
+   sensitivityY: 100,
+   deadzoneCounterweight: 20
+  }
+ };
  DEFAULT_PRESET_ID = -1;
  constructor() {
   super(LocalDb.TABLE_VIRTUAL_CONTROLLERS);
@@ -1344,6 +1353,9 @@ class KeyboardShortcutsTable extends BasePresetsTable {
     }
    }
   }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {}
  };
  DEFAULT_PRESET_ID = -1;
  constructor() {
@@ -2727,6 +2739,9 @@ class ControllerShortcutsTable extends BasePresetsTable {
    }
   }
  };
+ BLANK_PRESET_DATA = {
+  mapping: {}
+ };
  DEFAULT_PRESET_ID = -1;
  constructor() {
   super(LocalDb.TABLE_CONTROLLER_SHORTCUTS);
@@ -2756,6 +2771,16 @@ class ControllerCustomizationsTable extends BasePresetsTable {
      vibrationIntensity: 100
     }
    }
+  }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  settings: {
+   leftTriggerRange: [0, 100],
+   rightTriggerRange: [0, 100],
+   leftStickDeadzone: [0, 100],
+   rightStickDeadzone: [0, 100],
+   vibrationIntensity: 100
   }
  };
  DEFAULT_PRESET_ID = 0;
@@ -5134,7 +5159,7 @@ class BaseProfileManagerDialog extends NavigationDialog {
    onClick: async (e) => {
     let newName = this.promptNewName(t("new"));
     if (!newName) return;
-    let newId = await this.presetsDb.newPreset(newName, this.BLANK_PRESET_DATA);
+    let newId = await this.presetsDb.newPreset(newName, this.presetsDb.BLANK_PRESET_DATA);
     this.currentPresetId = newId, await this.refresh();
    }
   }), createButton({
@@ -5219,9 +5244,6 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
  static getInstance = () => ControllerShortcutsManagerDialog.instance ?? (ControllerShortcutsManagerDialog.instance = new ControllerShortcutsManagerDialog(t("controller-shortcuts")));
  $content;
  selectActions = {};
- BLANK_PRESET_DATA = {
-  mapping: {}
- };
  BUTTONS_ORDER = [
   3,
   0,
@@ -5295,7 +5317,7 @@ class ControllerShortcutsManagerDialog extends BaseProfileManagerDialog {
   super.updateButtonStates();
  }
  updatePreset() {
-  let newData = deepClone(this.BLANK_PRESET_DATA), button;
+  let newData = deepClone(this.presetsDb.BLANK_PRESET_DATA), button;
   for (button in this.selectActions) {
    let action = this.selectActions[button].value;
    if (!action) continue;
@@ -5402,16 +5424,6 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
  $leftStickDeadzone;
  $rightStickDeadzone;
  $btnDetect;
- BLANK_PRESET_DATA = {
-  mapping: {},
-  settings: {
-   leftTriggerRange: [0, 100],
-   rightTriggerRange: [0, 100],
-   leftStickDeadzone: [0, 100],
-   rightStickDeadzone: [0, 100],
-   vibrationIntensity: 100
-  }
- };
  selectsMap = {};
  selectsOrder = [];
  isDetectingButton = !1;
@@ -5480,7 +5492,7 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
      });
     }
    }
-  let params = {
+  let blankSettings = this.presetsDb.BLANK_PRESET_DATA.settings, params = {
    min: 0,
    minDiff: 1,
    max: 100,
@@ -5500,7 +5512,7 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
    customTextValue: (value) => {
     return value = parseInt(value), value === 0 ? t("off") : value + "%";
    }
-  }, boundUpdatePreset)), createSettingRow(t("left-trigger-range"), this.$leftTriggerRange = BxDualNumberStepper.create("left-trigger-range", this.BLANK_PRESET_DATA.settings.leftTriggerRange, params, boundUpdatePreset)), createSettingRow(t("right-trigger-range"), this.$rightTriggerRange = BxDualNumberStepper.create("right-trigger-range", this.BLANK_PRESET_DATA.settings.rightTriggerRange, params, boundUpdatePreset)), createSettingRow(t("left-stick-deadzone"), this.$leftStickDeadzone = BxDualNumberStepper.create("left-stick-deadzone", this.BLANK_PRESET_DATA.settings.leftStickDeadzone, params, boundUpdatePreset)), createSettingRow(t("right-stick-deadzone"), this.$rightStickDeadzone = BxDualNumberStepper.create("right-stick-deadzone", this.BLANK_PRESET_DATA.settings.rightStickDeadzone, params, boundUpdatePreset)));
+  }, boundUpdatePreset)), createSettingRow(t("left-trigger-range"), this.$leftTriggerRange = BxDualNumberStepper.create("left-trigger-range", blankSettings.leftTriggerRange, params, boundUpdatePreset)), createSettingRow(t("right-trigger-range"), this.$rightTriggerRange = BxDualNumberStepper.create("right-trigger-range", blankSettings.rightTriggerRange, params, boundUpdatePreset)), createSettingRow(t("left-stick-deadzone"), this.$leftStickDeadzone = BxDualNumberStepper.create("left-stick-deadzone", blankSettings.leftStickDeadzone, params, boundUpdatePreset)), createSettingRow(t("right-stick-deadzone"), this.$rightStickDeadzone = BxDualNumberStepper.create("right-stick-deadzone", blankSettings.rightStickDeadzone, params, boundUpdatePreset)));
  }
  startDetectingButton() {
   this.isDetectingButton = !0;
@@ -5566,10 +5578,10 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
     manualTrigger: !0
    });
   }
-  presetData.settings = Object.assign({}, this.BLANK_PRESET_DATA.settings, presetData.settings), $vibrationIntensity.value = presetData.settings.vibrationIntensity.toString(), $vibrationIntensity.dataset.disabled = isDefaultPreset.toString(), $leftStickDeadzone.dataset.disabled = $rightStickDeadzone.dataset.disabled = $leftTriggerRange.dataset.disabled = $rightTriggerRange.dataset.disabled = isDefaultPreset.toString(), $leftStickDeadzone.setValue(presetData.settings.leftStickDeadzone), $rightStickDeadzone.setValue(presetData.settings.rightStickDeadzone), $leftTriggerRange.setValue(presetData.settings.leftTriggerRange), $rightTriggerRange.setValue(presetData.settings.rightTriggerRange);
+  presetData.settings = Object.assign({}, this.presetsDb.BLANK_PRESET_DATA.settings, presetData.settings), $vibrationIntensity.value = presetData.settings.vibrationIntensity.toString(), $vibrationIntensity.dataset.disabled = isDefaultPreset.toString(), $leftStickDeadzone.dataset.disabled = $rightStickDeadzone.dataset.disabled = $leftTriggerRange.dataset.disabled = $rightTriggerRange.dataset.disabled = isDefaultPreset.toString(), $leftStickDeadzone.setValue(presetData.settings.leftStickDeadzone), $rightStickDeadzone.setValue(presetData.settings.rightStickDeadzone), $leftTriggerRange.setValue(presetData.settings.leftTriggerRange), $rightTriggerRange.setValue(presetData.settings.rightTriggerRange);
  }
  updatePreset() {
-  let newData = deepClone(this.BLANK_PRESET_DATA), gamepadKey;
+  let newData = deepClone(this.presetsDb.BLANK_PRESET_DATA), gamepadKey;
   for (gamepadKey in this.selectsMap) {
    let value = this.selectsMap[gamepadKey].value;
    if (!value) continue;
@@ -6016,15 +6028,6 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
   202,
   203
  ];
- BLANK_PRESET_DATA = {
-  mapping: {},
-  mouse: {
-   mapTo: 2,
-   sensitivityX: 100,
-   sensitivityY: 100,
-   deadzoneCounterweight: 20
-  }
- };
  allKeyElements = [];
  $mouseMapTo;
  $mouseSensitivityX;
@@ -6105,7 +6108,7 @@ class MkbMappingManagerDialog extends BaseProfileManagerDialog {
   this.$mouseMapTo.value = mouse.mapTo.toString(), this.$mouseSensitivityX.value = mouse.sensitivityX.toString(), this.$mouseSensitivityY.value = mouse.sensitivityY.toString(), this.$mouseDeadzone.value = mouse.deadzoneCounterweight.toString(), this.$mouseMapTo.disabled = isDefaultPreset, this.$mouseSensitivityX.dataset.disabled = isDefaultPreset.toString(), this.$mouseSensitivityY.dataset.disabled = isDefaultPreset.toString(), this.$mouseDeadzone.dataset.disabled = isDefaultPreset.toString();
  }
  savePreset() {
-  let presetData = deepClone(this.BLANK_PRESET_DATA);
+  let presetData = deepClone(this.presetsDb.BLANK_PRESET_DATA);
   for (let $elm of this.allKeyElements) {
    let { buttonIndex, keySlot } = this.parseDataset($elm), mapping = presetData.mapping;
    if (!mapping[buttonIndex]) mapping[buttonIndex] = [];
@@ -6131,9 +6134,6 @@ class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
  $content;
  $unbindNote;
  allKeyElements = [];
- BLANK_PRESET_DATA = {
-  mapping: {}
- };
  constructor(title) {
   super(title, KeyboardShortcutsTable.getInstance());
   let $rows = CE("div", { class: "bx-keyboard-shortcuts-manager-container" });
@@ -6189,7 +6189,7 @@ class KeyboardShortcutsManagerDialog extends BaseProfileManagerDialog {
   }
  }
  savePreset() {
-  let presetData = deepClone(this.BLANK_PRESET_DATA);
+  let presetData = deepClone(this.presetsDb.BLANK_PRESET_DATA);
   for (let $elm of this.allKeyElements) {
    let { action } = this.parseDataset($elm), mapping = presetData.mapping;
    if ($elm.keyInfo) mapping[action] = $elm.keyInfo;
