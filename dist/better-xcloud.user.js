@@ -186,7 +186,7 @@ var GamepadKeyName = {
  202: ["Right Stick Left", "↽"],
  203: ["Right Stick Right", "⇁"],
  204: ["Right Stick", "⇲"],
- 17: ["Screenshot", "📸"]
+ 17: ["Screenshot", "⇧"]
 };
 class BxEventBus {
  listeners = new Map;

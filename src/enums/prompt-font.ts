@@ -32,5 +32,5 @@ export enum PrompFont {
     RS_LEFT = '↽',
     RS_RIGHT = '⇁',
 
-    SHARE = '📸',
+    SHARE = '⇧',
 }
