@@ -5,6 +5,7 @@ import { BxEventBus } from "@/utils/bx-event-bus";
 import { BxLogger } from "@/utils/bx-logger";
 import { calculateSelectBoxes, CE, isElementVisible } from "@/utils/html";
 import { setNearby } from "@/utils/navigation-utils";
+import { BxNumberStepper } from "@/web-components/bx-number-stepper";
 
 export enum NavigationDirection {
     UP = 1,
@@ -378,8 +379,13 @@ export class NavigationDialogManager {
         if (document.activeElement instanceof HTMLInputElement && document.activeElement.type === 'range') {
             const $range = document.activeElement;
             if (direction === NavigationDirection.LEFT || direction === NavigationDirection.RIGHT) {
-                $range.value = (parseInt($range.value) + parseInt($range.step) * (direction === NavigationDirection.LEFT ? -1 : 1)).toString();
-                $range.dispatchEvent(new InputEvent('input'));
+                const $numberStepper = $range.closest('.bx-number-stepper') as BxNumberStepper;
+                if ($numberStepper) {
+                    BxNumberStepper.change.call($numberStepper, direction === NavigationDirection.LEFT ? 'dec' : 'inc');
+                } else {
+                    $range.value = (parseInt($range.value) + parseInt($range.step) * (direction === NavigationDirection.LEFT ? -1 : 1)).toString();
+                    $range.dispatchEvent(new InputEvent('input'));
+                }
                 handled = true;
             }
         }

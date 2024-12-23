@@ -114,7 +114,6 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
         self.$range = $range;
         options.hideSlider && $range.classList.add('bx-gone');
 
-        $range.addEventListener('input', self.onRangeInput);
         self.addEventListener('input', self.onRangeInput);
         self.appendChild($range);
 
@@ -165,7 +164,7 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
 
         this.$text.textContent = BxNumberStepper.updateTextValue.call(this);
         if (this.$range) {
-            this.$range.value = this.options.reverse ? -value : value;
+            this.$range.value = (this.options.reverse ? -this.controlValue : this.controlValue).toString();
         }
 
         BxNumberStepper.updateButtonsVisibility.call(this);
@@ -258,11 +257,14 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
     }
 
     private static buttonPressed(this: BxNumberStepper, e: Event, $btn: HTMLElement) {
+        BxNumberStepper.change.call(this, $btn.dataset.type as ButtonType);
+    }
+
+    static change(this: BxNumberStepper, direction:'inc' | 'dec') {
         let value = this.controlValue;
         value = this.options.reverse ? -value : value;
 
-        const btnType = $btn.dataset.type as ButtonType;
-        if (btnType === 'dec') {
+        if (direction === 'dec') {
             value = Math.max(this.uiMin, value - this.steps);
         } else {
             value = Math.min(this.uiMax, value + this.steps);
@@ -271,7 +273,8 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
         value = this.options.reverse ? -value : value;
         BxNumberStepper.setValue.call(this, value);
         BxNumberStepper.updateButtonsVisibility.call(this);
-        this.onChange && this.onChange(e, value);
+
+        this.onChange && this.onChange(null, this.controlValue);
     }
 
     private static clearIntervalId(this: BxNumberStepper) {
