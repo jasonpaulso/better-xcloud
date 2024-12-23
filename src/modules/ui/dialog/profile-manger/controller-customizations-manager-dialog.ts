@@ -400,7 +400,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
 
         const fragment = document.createDocumentFragment();
         if (showNote) {
-            const $note = CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('slightly-increases-input-latency'));
+            const $note = CE('div', { class: 'bx-settings-dialog-note' }, 'ⓘ ' + t('controller-customization-input-latency-note'));
             fragment.appendChild($note);
         }
 

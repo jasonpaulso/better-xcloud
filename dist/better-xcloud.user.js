@@ -361,6 +361,7 @@ var SUPPORTED_LANGUAGES = {
  contrast: "Contrast",
  controller: "Controller",
  "controller-customization": "Controller customization",
+ "controller-customization-input-latency-note": "May slightly increase input latency",
  "controller-friendly-ui": "Controller-friendly UI",
  "controller-shortcuts": "Controller shortcuts",
  "controller-shortcuts-connect-note": "Connect a controller to use this feature",
@@ -598,7 +599,6 @@ var SUPPORTED_LANGUAGES = {
  "show-wait-time-in-game-card": "Show wait time in game card",
  "simplify-stream-menu": "Simplify Stream's menu",
  "skip-splash-video": "Skip Xbox splash video",
- "slightly-increases-input-latency": "Slightly increases input latency",
  slow: "Slow",
  small: "Small",
  "smart-tv": "Smart TV",
@@ -5622,7 +5622,7 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
   }
   let fragment = document.createDocumentFragment();
   if (showNote) {
-   let $note = CE("div", { class: "bx-settings-dialog-note" }, "ⓘ " + t("slightly-increases-input-latency"));
+   let $note = CE("div", { class: "bx-settings-dialog-note" }, "ⓘ " + t("controller-customization-input-latency-note"));
    fragment.appendChild($note);
   }
   if ($content) fragment.appendChild($content);
