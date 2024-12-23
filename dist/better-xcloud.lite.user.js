@@ -2133,16 +2133,16 @@ class StreamStatsCollector {
    received: 0,
    dropped: 0,
    toString() {
-    let framesDroppedPercentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(1);
-    return framesDroppedPercentage === "0.0" ? this.dropped.toString() : `${this.dropped} (${framesDroppedPercentage}%)`;
+    let percentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(1);
+    return percentage.startsWith("0.") ? this.dropped.toString() : `${this.dropped} (${percentage}%)`;
    }
   },
   pl: {
    received: 0,
    dropped: 0,
    toString() {
-    let packetsLostPercentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(1);
-    return packetsLostPercentage === "0.0" ? this.dropped.toString() : `${this.dropped} (${packetsLostPercentage}%)`;
+    let percentage = (this.dropped * 100 / (this.dropped + this.received || 1)).toFixed(1);
+    return percentage.startsWith("0.") ? this.dropped.toString() : `${this.dropped} (${percentage}%)`;
    }
   },
   dt: {
