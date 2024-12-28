@@ -2,17 +2,11 @@
     <img src="https://raw.githubusercontent.com/redphx/better-xcloud/refs/heads/typescript/resources/logos/better-xcloud.png" width="256"/>  
     <h1>Better xCloud</h1>
     <!-- Latest Version Badge -->
-    <a href="https://github.com/redphx/better-xcloud/releases">
-        <img src="https://img.shields.io/github/v/release/redphx/better-xcloud?label=latest" alt="Latest    version" />
-    </a>
+    <a href="https://github.com/redphx/better-xcloud/releases"><img src="https://img.shields.io/github/v/release/redphx/better-xcloud?label=latest" alt="Latest version" /></a>
     <!-- Total Downloads Badge -->
-    <a href="https://github.com/redphx/better-xcloud/releases">
-        <img src="https://img.shields.io/github/downloads/redphx/better-xcloud/total?color=%23e15f2c" alt="Total downloads" />
-    </a>
+    <a href="https://github.com/redphx/better-xcloud/releases"><img src="https://img.shields.io/github/downloads/redphx/better-xcloud/total?color=%23e15f2c" alt="Total downloads" /></a>
     <!-- Total Stars Badge -->
-    <a href="https://github.com/redphx/better-xcloud/stargazers">
-        <img src="https://img.shields.io/github/stars/redphx/better-xcloud?color=%23cca400" alt="Total stars" />
-    </a>
+    <a href="https://github.com/redphx/better-xcloud/stargazers"><img src="https://img.shields.io/github/stars/redphx/better-xcloud?color=%23cca400" alt="Total stars" /></a>
 </div>
 
 ### Improve Xbox Cloud Gaming (xCloud) experience on [xbox.com/play](https://www.xbox.com/play). It also allows you to use Remote Play on the xCloud website.  
