@@ -2519,6 +2519,7 @@ class PointerClient {
  static instance;
  static getInstance = () => PointerClient.instance ?? (PointerClient.instance = new PointerClient);
  LOG_TAG = "PointerClient";
+ REQUIRED_PROTOCOL_VERSION = 2;
  socket;
  mkbHandler;
  constructor() {
@@ -2535,6 +2536,10 @@ class PointerClient {
   }), this.socket.addEventListener("message", (event) => {
    let dataView = new DataView(event.data), messageType = dataView.getInt8(0), offset = Int8Array.BYTES_PER_ELEMENT;
    switch (messageType) {
+    case 127:
+     let protocolVersion = this.onProtocolVersion(dataView, offset);
+     if (BxLogger.info(this.LOG_TAG, "Protocol version", protocolVersion), protocolVersion !== this.REQUIRED_PROTOCOL_VERSION) alert("Required MKB protocol: " + protocolVersion), this.stop();
+     break;
     case 1:
      this.onMove(dataView, offset);
      break;
@@ -2549,6 +2554,9 @@ class PointerClient {
      this.onPointerCaptureChanged(dataView, offset);
    }
   });
+ }
+ onProtocolVersion(dataView, offset) {
+  return dataView.getUint16(offset);
  }
  onMove(dataView, offset) {
   let x = dataView.getInt16(offset);
@@ -3029,8 +3037,8 @@ class NativeMkbHandler extends MkbHandler {
    X: data.movementX,
    Y: data.movementY,
    Buttons: this.mouseButtonsPressed,
-   WheelX: this.mouseWheelX,
-   WheelY: this.mouseWheelY
+   WheelX: 0,
+   WheelY: 0
   });
  }
  handleMouseClick(data) {
