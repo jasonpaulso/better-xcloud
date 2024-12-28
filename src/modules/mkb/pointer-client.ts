@@ -8,6 +8,7 @@ enum PointerAction {
     BUTTON_RELEASE = 3,
     SCROLL = 4,
     POINTER_CAPTURE_CHANGED = 5,
+    PROTOCOL_VERSION = 127,
 }
 
 
@@ -15,6 +16,7 @@ export class PointerClient {
     private static instance: PointerClient;
     public static getInstance = () => PointerClient.instance ?? (PointerClient.instance = new PointerClient());
     private readonly LOG_TAG = 'PointerClient';
+    private readonly REQUIRED_PROTOCOL_VERSION = 2;
 
     private socket: WebSocket | undefined | null;
     private mkbHandler: MkbHandler | undefined;
@@ -56,6 +58,15 @@ export class PointerClient {
             let messageType = dataView.getInt8(0);
             let offset = Int8Array.BYTES_PER_ELEMENT;
             switch (messageType) {
+                case PointerAction.PROTOCOL_VERSION:
+                    const protocolVersion = this.onProtocolVersion(dataView, offset);
+                    BxLogger.info(this.LOG_TAG, 'Protocol version', protocolVersion);
+
+                    if (protocolVersion !== this.REQUIRED_PROTOCOL_VERSION) {
+                        alert('Required MKB protocol: ' + protocolVersion);
+                        this.stop();
+                    }
+                    break;
                 case PointerAction.MOVE:
                     this.onMove(dataView, offset);
                     break;
@@ -73,6 +84,10 @@ export class PointerClient {
                     this.onPointerCaptureChanged(dataView, offset);
             }
         });
+    }
+
+    private onProtocolVersion(dataView: DataView, offset: number) {
+        return dataView.getUint16(offset);
     }
 
     onMove(dataView: DataView, offset: number) {
