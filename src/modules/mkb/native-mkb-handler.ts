@@ -50,8 +50,6 @@ export class NativeMkbHandler extends MkbHandler {
     private enabled = false;
 
     private mouseButtonsPressed = 0;
-    private mouseWheelX = 0;
-    private mouseWheelY = 0;
 
     private mouseVerticalMultiply = 0;
     private mouseHorizontalMultiply = 0;
@@ -229,30 +227,30 @@ export class NativeMkbHandler extends MkbHandler {
             X: 0,
             Y: 0,
             Buttons: this.mouseButtonsPressed,
-            WheelX: this.mouseWheelX,
-            WheelY: this.mouseWheelY,
+            WheelX: 0,
+            WheelY: 0,
         });
     }
 
     handleMouseWheel(data: MkbMouseWheel): boolean {
         const { vertical, horizontal } = data;
 
-        this.mouseWheelX = horizontal;
+        let mouseWheelX = horizontal;
         if (this.mouseHorizontalMultiply && this.mouseHorizontalMultiply !== 1) {
-            this.mouseWheelX *= this.mouseHorizontalMultiply;
+            mouseWheelX *= this.mouseHorizontalMultiply;
         }
 
-        this.mouseWheelY = vertical;
+        let mouseWheelY = vertical;
         if (this.mouseVerticalMultiply && this.mouseVerticalMultiply !== 1) {
-            this.mouseWheelY *= this.mouseVerticalMultiply;
+            mouseWheelY *= this.mouseVerticalMultiply;
         }
 
         this.sendMouseInput({
             X: 0,
             Y: 0,
             Buttons: this.mouseButtonsPressed,
-            WheelX: this.mouseWheelX,
-            WheelY: this.mouseWheelY,
+            WheelX: mouseWheelX,
+            WheelY: mouseWheelY,
         });
 
         return true;
