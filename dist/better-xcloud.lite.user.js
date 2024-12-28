@@ -2948,8 +2948,6 @@ class NativeMkbHandler extends MkbHandler {
  pointerClient;
  enabled = !1;
  mouseButtonsPressed = 0;
- mouseWheelX = 0;
- mouseWheelY = 0;
  mouseVerticalMultiply = 0;
  mouseHorizontalMultiply = 0;
  inputSink;
@@ -3030,7 +3028,7 @@ class NativeMkbHandler extends MkbHandler {
   this.resetMouseInput(), this.enabled = !1, this.updateInputConfigurationAsync(!1), this.waitForMouseData(!0);
  }
  destroy() {
-  this.pointerClient?.stop(), this.stop(), window.removeEventListener("keyup", this), window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this), BxEventBus.Script.off("dialog.shown", this.onDialogShown), this.waitForMouseData(!1), document.pointerLockElement && document.exitPointerLock();
+  this.pointerClient?.stop(), this.stop(), window.removeEventListener("keyup", this), window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this), BxEventBus.Script.off("dialog.shown", this.onDialogShown), this.waitForMouseData(!1), document.exitPointerLock();
  }
  handleMouseMove(data) {
   this.sendMouseInput({
@@ -3049,20 +3047,21 @@ class NativeMkbHandler extends MkbHandler {
    X: 0,
    Y: 0,
    Buttons: this.mouseButtonsPressed,
-   WheelX: this.mouseWheelX,
-   WheelY: this.mouseWheelY
+   WheelX: 0,
+   WheelY: 0
   });
  }
  handleMouseWheel(data) {
-  let { vertical, horizontal } = data;
-  if (this.mouseWheelX = horizontal, this.mouseHorizontalMultiply && this.mouseHorizontalMultiply !== 1) this.mouseWheelX *= this.mouseHorizontalMultiply;
-  if (this.mouseWheelY = vertical, this.mouseVerticalMultiply && this.mouseVerticalMultiply !== 1) this.mouseWheelY *= this.mouseVerticalMultiply;
+  let { vertical, horizontal } = data, mouseWheelX = horizontal;
+  if (this.mouseHorizontalMultiply && this.mouseHorizontalMultiply !== 1) mouseWheelX *= this.mouseHorizontalMultiply;
+  let mouseWheelY = vertical;
+  if (this.mouseVerticalMultiply && this.mouseVerticalMultiply !== 1) mouseWheelY *= this.mouseVerticalMultiply;
   return this.sendMouseInput({
    X: 0,
    Y: 0,
    Buttons: this.mouseButtonsPressed,
-   WheelX: this.mouseWheelX,
-   WheelY: this.mouseWheelY
+   WheelX: mouseWheelX,
+   WheelY: mouseWheelY
   }), !0;
  }
  setVerticalScrollMultiplier(vertical) {
@@ -3358,7 +3357,7 @@ class EmulatedMkbHandler extends MkbHandler {
  }
  destroy() {
   if (!this.initialized) return;
-  if (this.initialized = !1, this.isPolling = !1, this.enabled = !1, this.stop(), this.waitForMouseData(!1), document.pointerLockElement && document.exitPointerLock(), window.removeEventListener("keydown", this.onKeyboardEvent), window.removeEventListener("keyup", this.onKeyboardEvent), AppInterface) window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this);
+  if (this.initialized = !1, this.isPolling = !1, this.enabled = !1, this.stop(), this.waitForMouseData(!1), document.exitPointerLock(), window.removeEventListener("keydown", this.onKeyboardEvent), window.removeEventListener("keyup", this.onKeyboardEvent), AppInterface) window.removeEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.removeEventListener(BxEvent.POINTER_LOCK_EXITED, this);
   else document.removeEventListener("pointerlockchange", this.onPointerLockChange), document.removeEventListener("pointerlockerror", this.onPointerLockError);
   window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged), BxEventBus.Script.off("dialog.shown", this.onDialogShown), this.mouseDataProvider?.destroy(), window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged);
  }
