@@ -1,4 +1,7 @@
 # Better xCloud
+
+![logo](./resoures/logos/better-xcloud.png)
+
 Improve Xbox Cloud Gaming (xCloud) experience on [xbox.com/play](https://www.xbox.com/play). It also allows you to use Remote Play on the xCloud website.  
 
 > [!TIP]
