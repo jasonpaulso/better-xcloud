@@ -210,8 +210,8 @@ export class NativeMkbHandler extends MkbHandler {
             X: data.movementX,
             Y: data.movementY,
             Buttons: this.mouseButtonsPressed,
-            WheelX: this.mouseWheelX,
-            WheelY: this.mouseWheelY,
+            WheelX: 0,
+            WheelY: 0,
         });
     }
 
