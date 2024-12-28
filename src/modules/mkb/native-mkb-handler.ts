@@ -200,7 +200,7 @@ export class NativeMkbHandler extends MkbHandler {
         BxEventBus.Script.off('dialog.shown', this.onDialogShown);
 
         this.waitForMouseData(false);
-        document.pointerLockElement && document.exitPointerLock();
+        document.exitPointerLock();
     }
 
     handleMouseMove(data: MkbMouseMove): void {

@@ -557,7 +557,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         this.stop();
 
         this.waitForMouseData(false);
-        document.pointerLockElement && document.exitPointerLock();
+        document.exitPointerLock();
 
         window.removeEventListener('keydown', this.onKeyboardEvent);
         window.removeEventListener('keyup', this.onKeyboardEvent);
