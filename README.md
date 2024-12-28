@@ -1,13 +1,23 @@
-# Better xCloud
+<div align="center">
+    <img src="https://raw.githubusercontent.com/redphx/better-xcloud/refs/heads/typescript/resources/logos/better-xcloud.png" width="256"/>  
+    <h1>Better xCloud</h1>
+    <!-- Latest Version Badge -->
+    <a href="https://github.com/redphx/better-xcloud/releases">
+        <img src="https://img.shields.io/github/v/release/redphx/better-xcloud?label=latest" alt="Latest    version" />
+    </a>
+    <!-- Total Downloads Badge -->
+    <a href="https://github.com/redphx/better-xcloud/releases">
+        <img src="https://img.shields.io/github/downloads/redphx/better-xcloud/total?color=%23e15f2c" alt="Total downloads" />
+    </a>
+    <!-- Total Stars Badge -->
+    <a href="https://github.com/redphx/better-xcloud/stargazers">
+        <img src="https://img.shields.io/github/stars/redphx/better-xcloud?color=%23cca400" alt="Total stars" />
+    </a>
+</div>
 
-![logo](./resoures/logos/better-xcloud.png)
+### Improve Xbox Cloud Gaming (xCloud) experience on [xbox.com/play](https://www.xbox.com/play). It also allows you to use Remote Play on the xCloud website.  
 
-Improve Xbox Cloud Gaming (xCloud) experience on [xbox.com/play](https://www.xbox.com/play). It also allows you to use Remote Play on the xCloud website.  
-
-> [!TIP]
-> The Android app is in development at [redphx/better-xcloud-android](https://github.com/redphx/better-xcloud-android)
-
-> [!IMPORTANT]
+> [!IMPORTANT]  
 > I only accept pull requests for:
 > - Custom touch controls
 > - Bug fixes
@@ -16,15 +26,11 @@ Improve Xbox Cloud Gaming (xCloud) experience on [xbox.com/play](https://www.xbo
 - Windows
 - macOS
 - Linux, SteamOS (including Steam Deck)
-- Android, Android TV (including Meta Quest VR Headsets)
+- Android, Android TV (including Meta Quest VR Headsets): [redphx/better-xcloud-android](https://github.com/redphx/better-xcloud-android)
 - iOS, iPadOS
 
 This script makes me spend more time with xCloud, and I hope the same thing happens to you.  
 If you like this project please give it a 🌟. Thank you 🙏.
-
-[![Latest version](https://img.shields.io/github/v/release/redphx/better-xcloud?label=latest)](https://github.com/redphx/better-xcloud/releases) 
-[![Total downloads](https://img.shields.io/github/downloads/redphx/better-xcloud/total?color=%23e15f2c)](https://github.com/redphx/better-xcloud/releases) 
-[![Total stars](https://img.shields.io/github/stars/redphx/better-xcloud?color=%23cca400)](https://github.com/redphx/better-xcloud/stargazers)  
 
 ## How to install
 Visit the [home page](https://better-xcloud.github.io) to know how to install Better xCloud on your device.
