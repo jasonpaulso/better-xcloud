@@ -279,8 +279,6 @@ export class NativeMkbHandler extends MkbHandler {
 
     private resetMouseInput() {
         this.mouseButtonsPressed = 0;
-        this.mouseWheelX = 0;
-        this.mouseWheelY = 0;
 
         this.sendMouseInput({
             X: 0,

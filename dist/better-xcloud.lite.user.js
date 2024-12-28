@@ -3080,7 +3080,7 @@ class NativeMkbHandler extends MkbHandler {
   data.Type = 0, this.inputSink?.onMouseInput(data);
  }
  resetMouseInput() {
-  this.mouseButtonsPressed = 0, this.mouseWheelX = 0, this.mouseWheelY = 0, this.sendMouseInput({
+  this.mouseButtonsPressed = 0, this.sendMouseInput({
    X: 0,
    Y: 0,
    Buttons: 0,
