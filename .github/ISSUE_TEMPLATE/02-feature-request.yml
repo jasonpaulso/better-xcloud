@@ -13,7 +13,7 @@ body:
   - type: dropdown
     id: device_type
     attributes:
-      label: Device
+      label: Device type
       description: "Which device type is this feature for?"
       options:
         - All devices
@@ -23,10 +23,20 @@ body:
       multiple: false
     validations:
       required: true
+
+  - type: input
+    id: device_name
+    attributes:
+      label: "Device"
+      description: "Name of the device"
+      placeholder: "e.g., Google Pixel 8"
+    validations:
+      required: true
+  
   - type: textarea
     id: suggestion
     attributes:
       label: "Suggestion"
-      description: "What do you want to suggest?"
+      description: "What do you want to suggest? Include (mockup) screenshot if possible."
     validations:
       required: true
