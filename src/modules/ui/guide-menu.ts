@@ -41,6 +41,7 @@ export class GuideMenu {
         const buttons = {
             scriptSettings: createButton({
                 label: t('better-xcloud'),
+                icon: BxIcon.BETTER_XCLOUD,
                 style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE | ButtonStyle.PRIMARY,
                 onClick: () => {
                     // Wait until the Guide dialog is closed
