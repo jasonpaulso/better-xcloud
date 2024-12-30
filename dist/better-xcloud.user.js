@@ -3445,9 +3445,11 @@ class EmulatedMkbHandler extends MkbHandler {
   if (!this.initialized) return;
   if (typeof force !== "undefined") this.enabled = force;
   else this.enabled = !this.enabled;
-  if (this.enabled) document.body.requestPointerLock({
-    unadjustedMovement: !0
-   });
+  if (this.enabled) try {
+    document.body.requestPointerLock({ unadjustedMovement: !0 });
+   } catch (e) {
+    document.body.requestPointerLock(), console.log(e);
+   }
   else document.pointerLockElement && document.exitPointerLock();
  }
  refreshPresetData() {

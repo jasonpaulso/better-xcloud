@@ -440,9 +440,12 @@ export class EmulatedMkbHandler extends MkbHandler {
         }
 
         if (this.enabled) {
-            document.body.requestPointerLock({
-                unadjustedMovement: true,
-            });
+            try {
+                document.body.requestPointerLock({ unadjustedMovement: true });
+            } catch (e) {
+                document.body.requestPointerLock();
+                console.log(e);
+            }
         } else {
             document.pointerLockElement && document.exitPointerLock();
         }
