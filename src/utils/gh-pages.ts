@@ -83,4 +83,24 @@ export class GhPagesUtils {
         const customList = JSON.parse(window.localStorage.getItem(key) || '[]');
         return customList;
     }
+
+    static getLocalCoOpList() {
+        const supportedSchema = 1;
+        const key = StorageKey.LIST_LOCAL_CO_OP;
+
+        NATIVE_FETCH(GhPagesUtils.getUrl('local-co-op/ids.json'))
+            .then(response => response.json())
+            .then(json => {
+                if (json.$schemaVersion === supportedSchema) {
+                    window.localStorage.setItem(key, JSON.stringify(json));
+                    BxEventBus.Script.emit('list.localCoOp.updated', { data: json });
+                } else {
+                    window.localStorage.removeItem(key);
+                    BxEventBus.Script.emit('list.localCoOp.updated', { data: { data: {} } });
+                }
+            });
+
+        const customList = JSON.parse(window.localStorage.getItem(key) || '[]');
+        return customList;
+    }
 }

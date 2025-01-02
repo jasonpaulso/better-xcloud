@@ -50,4 +50,50 @@ export class PatcherUtils {
 
         return str;
     }
+
+    private static isVarCharacter(char: string) {
+        const code = char.charCodeAt(0);
+
+        // Check for uppercase letters (A-Z)
+        const isUppercase = code >= 65 && code <= 90;
+
+        // Check for lowercase letters (a-z)
+        const isLowercase = code >= 97 && code <= 122;
+
+        // Check for digits (0-9)
+        const isDigit = code >= 48 && code <= 57;
+
+        // Check for special characters '_' and '$'
+        const isSpecial = char === '_' || char === '$';
+
+        return isUppercase || isLowercase || isDigit || isSpecial;
+    }
+
+    static getVariableNameBefore(str: string, index: number) {
+        if (index < 0) {
+            return null;
+        }
+
+        const end = index;
+        let start = end - 1;
+        while (PatcherUtils.isVarCharacter(str[start])) {
+            start -= 1;
+        }
+
+        return str.substring(start + 1, end);
+    }
+
+    static getVariableNameAfter(str: string, index: number) {
+        if (index < 0) {
+            return null;
+        }
+
+        const start = index;
+        let end = start + 1;
+        while (PatcherUtils.isVarCharacter(str[end])) {
+            end += 1;
+        }
+
+        return str.substring(start, end);
+    }
 }

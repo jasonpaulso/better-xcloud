@@ -31,6 +31,12 @@ type ScriptEvents = {
             data: any;
         };
     };
+
+    'list.localCoOp.updated': {
+        data: {
+            data: any;
+        };
+    };
 };
 
 type StreamEvents = {

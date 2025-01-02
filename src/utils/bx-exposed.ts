@@ -13,6 +13,7 @@ import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
 import { Patcher, type PatchPage } from "@/modules/patcher/patcher";
 import { BxEventBus } from "./bx-event-bus";
 import { FeatureGates } from "./feature-gates";
+import { LocalCoOpManager } from "./local-co-op-manager";
 
 export enum SupportedInputType {
     CONTROLLER = 'Controller',
@@ -229,5 +230,26 @@ export const BxExposed = {
     beforePageLoad: isFullVersion() ? (page: PatchPage) => {
         BxLogger.info('beforePageLoad', page);
         Patcher.patchPage(page);
+    } : () => {},
+
+    localCoOpManager: LocalCoOpManager.getInstance(),
+    reactCreateElement: function(...args: any[]) {},
+
+    createReactLocalCoOpIcon: isFullVersion() ? (): any => {
+        const reactCE = window.BX_EXPOSED.reactCreateElement;
+
+        // local-co-op.svg
+        return reactCE(
+            'svg',
+            { xmlns: 'http://www.w3.org/2000/svg', width: '1em', height: '1em', viewBox: '0 0 32 32', 'fill-rule': 'evenodd', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+            reactCE(
+                'g',
+                null,
+                reactCE('path', { d: 'M24.272 11.165h-3.294l-3.14 3.564c-.391.391-.922.611-1.476.611a2.1 2.1 0 0 1-2.087-2.088 2.09 2.09 0 0 1 .031-.362l1.22-6.274a3.89 3.89 0 0 1 3.81-3.206h6.57c1.834 0 3.439 1.573 3.833 3.295l1.205 6.185a2.09 2.09 0 0 1 .031.362 2.1 2.1 0 0 1-2.087 2.088c-.554 0-1.085-.22-1.476-.611l-3.14-3.564', fill: 'none', stroke: '#fff', 'stroke-width': '2' }),
+                reactCE('circle', { cx: '22.625', cy: '5.874', r: '.879' }),
+                reactCE('path', { d: 'M11.022 24.415H7.728l-3.14 3.564c-.391.391-.922.611-1.476.611a2.1 2.1 0 0 1-2.087-2.088 2.09 2.09 0 0 1 .031-.362l1.22-6.274a3.89 3.89 0 0 1 3.81-3.206h6.57c1.834 0 3.439 1.573 3.833 3.295l1.205 6.185a2.09 2.09 0 0 1 .031.362 2.1 2.1 0 0 1-2.087 2.088c-.554 0-1.085-.22-1.476-.611l-3.14-3.564', fill: 'none', stroke: '#fff', 'stroke-width': '2' }),
+                reactCE('circle', { cx: '9.375', cy: '19.124', r: '.879' })
+            ),
+        );
     } : () => {},
 };

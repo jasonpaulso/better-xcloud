@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud (Lite)
 // @namespace    https://github.com/redphx
-// @version      6.1.2-beta
+// @version      6.1.3-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -105,7 +105,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.1.2-beta", SCRIPT_VARIANT = "lite", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.1.3-beta", SCRIPT_VARIANT = "lite", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -245,6 +245,13 @@ class GhPagesUtils {
   let key = "BetterXcloud.GhPages.CustomTouchLayouts";
   return NATIVE_FETCH(GhPagesUtils.getUrl("touch-layouts/ids.json")).then((response) => response.json()).then((json) => {
    if (Array.isArray(json)) window.localStorage.setItem(key, JSON.stringify(json));
+  }), JSON.parse(window.localStorage.getItem(key) || "[]");
+ }
+ static getLocalCoOpList() {
+  let key = "BetterXcloud.GhPages.LocalCoOp";
+  return NATIVE_FETCH(GhPagesUtils.getUrl("local-co-op/ids.json")).then((response) => response.json()).then((json) => {
+   if (json.$schemaVersion === 1) window.localStorage.setItem(key, JSON.stringify(json)), BxEventBus.Script.emit("list.localCoOp.updated", { data: json });
+   else window.localStorage.removeItem(key), BxEventBus.Script.emit("list.localCoOp.updated", { data: { data: {} } });
   }), JSON.parse(window.localStorage.getItem(key) || "[]");
  }
 }
@@ -1622,7 +1629,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    default: [],
    unsupported: !AppInterface && UserAgent.isMobile(),
    ready: (setting) => {
-    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), BxEventBus.Script.on("list.forcedNativeMkb.updated", (payload) => {
+    if (!setting.unsupported) setting.multipleOptions = GhPagesUtils.getNativeMkbCustomList(!0), BxEventBus.Script.once("list.forcedNativeMkb.updated", (payload) => {
       setting.multipleOptions = payload.data.data;
      });
    },
@@ -5002,6 +5009,19 @@ if (blockFeatures.includes("chat")) FeatureGates.EnableGuideChatTab = !1;
 if (blockFeatures.includes("friends")) FeatureGates.EnableFriendsAndFollowers = !1;
 if (blockFeatures.includes("byog")) FeatureGates.EnableBYOG = !1, FeatureGates.EnableBYOGPurchase = !1;
 if (BX_FLAGS.FeatureGates) FeatureGates = Object.assign(BX_FLAGS.FeatureGates, FeatureGates);
+class LocalCoOpManager {
+ static instance;
+ static getInstance = () => LocalCoOpManager.instance ?? (LocalCoOpManager.instance = new LocalCoOpManager);
+ supportedIds = [];
+ constructor() {
+  BxEventBus.Script.once("list.localCoOp.updated", (e) => {
+   this.supportedIds = Object.keys(e.data.data), console.log("supportedIds", this.supportedIds);
+  }), GhPagesUtils.getLocalCoOpList();
+ }
+ isSupported(productId) {
+  return this.supportedIds.includes(productId);
+ }
+}
 var BxExposed = {
  getTitleInfo: () => STATES.currentStream.titleInfo,
  modifyPreloadedState: !1,
@@ -5047,7 +5067,10 @@ var BxExposed = {
   / /g
  ],
  toggleLocalCoOp(enable) {},
- beforePageLoad: () => {}
+ beforePageLoad: () => {},
+ localCoOpManager: LocalCoOpManager.getInstance(),
+ reactCreateElement: function(...args) {},
+ createReactLocalCoOpIcon: () => {}
 };
 function localRedirect(path) {
  let url = window.location.href.substring(0, 31) + path, $pageContent = document.getElementById("PageContent");

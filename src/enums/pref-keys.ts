@@ -12,6 +12,7 @@ export const enum StorageKey {
     GH_PAGES_COMMIT_HASH = 'BetterXcloud.GhPages.CommitHash',
     LIST_CUSTOM_TOUCH_LAYOUTS = 'BetterXcloud.GhPages.CustomTouchLayouts',
     LIST_FORCE_NATIVE_MKB = 'BetterXcloud.GhPages.ForceNativeMkb',
+    LIST_LOCAL_CO_OP = 'BetterXcloud.GhPages.LocalCoOp',
 }
 
 

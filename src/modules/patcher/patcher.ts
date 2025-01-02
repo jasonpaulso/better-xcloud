@@ -7,6 +7,7 @@ import { BxEvent } from "@/utils/bx-event";
 import codeControllerCustomization from "./patches/controller-customization.js" with { type: "text" };
 import codePollGamepad from "./patches/poll-gamepad.js" with { type: "text" };
 import codeExposeStreamSession from "./patches/expose-stream-session.js" with { type: "text" };
+import codeGameCardIcons from "./patches/game-card-icons.js" with { type: "text" };
 import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
@@ -1003,6 +1004,56 @@ ${subsVar} = subs;
         str = PatcherUtils.insertAt(str, index, newCode);
         return str;
     },
+
+    exposeReactCreateComponent(str: string) {
+        let index = str.indexOf('.prototype.isReactComponent={}');
+
+        index > -1 && (index = PatcherUtils.indexOf(str, '.createElement=', index));
+        if (index < 0) {
+            return false;
+        }
+
+        const newCode = 'window.BX_EXPOSED.reactCreateElement=';
+        str = PatcherUtils.insertAt(str, index - 1, newCode);
+
+        return str;
+    },
+
+    // 27.0.6-hotfix.1, 73704.js
+    gameCardCustomIcons(str: string) {
+        let initialIndex = str.indexOf('const{supportedInputIcons:');
+        if (initialIndex < 0) {
+            return false;
+        }
+
+        const returnIndex = PatcherUtils.lastIndexOf(str, 'return ', str.indexOf('SupportedInputsBadge'));
+        if (returnIndex < 0) {
+            return false;
+        }
+
+        // Find function's parameter
+        const arrowIndex = PatcherUtils.lastIndexOf(str, '=>{', initialIndex, 300);
+        if (arrowIndex < 0) {
+            return false;
+        }
+
+        const paramVar = PatcherUtils.getVariableNameBefore(str, arrowIndex);
+
+        // Find supportedInputIcons and title var names
+        const supportedInputIconsVar = PatcherUtils.getVariableNameAfter(str, PatcherUtils.indexOf(str, 'supportedInputIcons:', initialIndex, 100, true));
+
+        if (!paramVar || !supportedInputIconsVar) {
+            return false;
+        }
+
+        const newCode = renderString(codeGameCardIcons, {
+            param: paramVar,
+            supportedInputIcons: supportedInputIconsVar,
+        });
+
+        str = PatcherUtils.insertAt(str, returnIndex, newCode);
+        return str;
+    },
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1011,6 +1062,9 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
         'exposeInputSink',
         'disableAbsoluteMouse',
     ] : []),
+
+    'exposeReactCreateComponent',
+    'gameCardCustomIcons',
 
     'modifyPreloadedState',
 
