@@ -1054,6 +1054,33 @@ ${subsVar} = subs;
         str = PatcherUtils.insertAt(str, returnIndex, newCode);
         return str;
     },
+
+    /*
+    // 27.0.6-hotfix.1, 28444.js
+    gameCardPassTitle(str: string) {
+        // Pass gameTitle info to gameCardCustomIcons()
+        let index = str.indexOf('=["productId","showInputBadges","ownershipBadgeType"');
+        index > -1 && (index = PatcherUtils.indexOf(str, ',gameTitle:', index, 500, true));
+        if (index < 0) {
+            return false;
+        }
+
+        const gameTitleVar = PatcherUtils.getVariableNameAfter(str, index);
+        if (!gameTitleVar) {
+            return false;
+        }
+
+        index = PatcherUtils.indexOf(str, 'return', index);
+        index = PatcherUtils.indexOf(str, 'productId:', index);
+        if (index < 0) {
+            return false;
+        }
+
+        const newCode = `gameTitle: ${gameTitleVar},`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
+    */
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1065,6 +1092,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     'exposeReactCreateComponent',
     'gameCardCustomIcons',
+    // 'gameCardPassTitle',
 
     'modifyPreloadedState',
 
@@ -1185,7 +1213,7 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
 ]);
 
 let PRODUCT_DETAIL_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
-    AppInterface && 'detectProductDetailPage',
+    'detectProductDetailPage',
 ]);
 
 const ALL_PATCHES = [...PATCH_ORDERS, ...HOME_PAGE_PATCH_ORDERS, ...STREAM_PAGE_PATCH_ORDERS, ...PRODUCT_DETAIL_PAGE_PATCH_ORDERS];

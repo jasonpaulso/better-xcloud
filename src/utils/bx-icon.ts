@@ -10,6 +10,7 @@ import iconDisplay from "@assets/svg/display.svg" with { type: "text" };
 import iconEye from "@assets/svg/eye.svg" with { type: "text" };
 import iconEyeSlash from "@assets/svg/eye-slash.svg" with { type: "text" };
 import iconHome from "@assets/svg/home.svg" with { type: "text" };
+import iconLocalCoOp from "@assets/svg/local-co-op.svg" with { type: "text" };
 import iconNativeMkb from "@assets/svg/native-mkb.svg" with { type: "text" };
 import iconNew from "@assets/svg/new.svg" with { type: "text" };
 import iconPencil from "@assets/svg/pencil-simple-line.svg" with { type: "text" };
@@ -52,6 +53,7 @@ export const BxIcon = {
     EYE: iconEye,
     EYE_SLASH: iconEyeSlash,
     HOME: iconHome,
+    LOCAL_CO_OP: iconLocalCoOp,
     NATIVE_MKB: iconNativeMkb,
     NEW: iconNew,
     MANAGE: iconPencil,
