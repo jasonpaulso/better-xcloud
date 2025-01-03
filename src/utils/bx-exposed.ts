@@ -235,13 +235,13 @@ export const BxExposed = {
     localCoOpManager: LocalCoOpManager.getInstance(),
     reactCreateElement: function(...args: any[]) {},
 
-    createReactLocalCoOpIcon: isFullVersion() ? (): any => {
+    createReactLocalCoOpIcon: isFullVersion() ? (attrs: any): any => {
         const reactCE = window.BX_EXPOSED.reactCreateElement;
 
         // local-co-op.svg
         return reactCE(
             'svg',
-            { xmlns: 'http://www.w3.org/2000/svg', width: '1em', height: '1em', viewBox: '0 0 32 32', 'fill-rule': 'evenodd', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+            { xmlns: 'http://www.w3.org/2000/svg', width: '1em', height: '1em', viewBox: '0 0 32 32', 'fill-rule': 'evenodd', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', ...attrs },
             reactCE(
                 'g',
                 null,
