@@ -3456,12 +3456,12 @@ class EmulatedMkbHandler extends MkbHandler {
    this.prevWheelCode = null, this.pressButton(buttonIndex, !1);
   }, 20), !0;
  }
- toggle(force) {
+ async toggle(force) {
   if (!this.initialized) return;
   if (typeof force !== "undefined") this.enabled = force;
   else this.enabled = !this.enabled;
   if (this.enabled) try {
-    document.body.requestPointerLock({ unadjustedMovement: !0 });
+    await document.body.requestPointerLock({ unadjustedMovement: !0 });
    } catch (e) {
     document.body.requestPointerLock(), console.log(e);
    }

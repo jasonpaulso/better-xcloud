@@ -428,7 +428,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         return true;
     }
 
-    toggle(force?: boolean) {
+    async toggle(force?: boolean) {
         if (!this.initialized) {
             return;
         }
@@ -441,7 +441,7 @@ export class EmulatedMkbHandler extends MkbHandler {
 
         if (this.enabled) {
             try {
-                document.body.requestPointerLock({ unadjustedMovement: true });
+                await document.body.requestPointerLock({ unadjustedMovement: true });
             } catch (e) {
                 document.body.requestPointerLock();
                 console.log(e);
