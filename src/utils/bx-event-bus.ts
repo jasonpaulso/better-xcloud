@@ -33,9 +33,7 @@ type ScriptEvents = {
     };
 
     'list.localCoOp.updated': {
-        data: {
-            data: any;
-        };
+        ids: Set<string>,
     };
 };
 

@@ -56,6 +56,8 @@ export class GhPagesUtils {
                     BxEventBus.Script.emit('list.forcedNativeMkb.updated', {
                         data: json,
                     });
+                } else {
+                    window.localStorage.removeItem(key);
                 }
             });
 
@@ -70,6 +72,7 @@ export class GhPagesUtils {
     }
 
     static getTouchControlCustomList() {
+        // TODO: use Set()
         const key = StorageKey.LIST_CUSTOM_TOUCH_LAYOUTS;
 
         NATIVE_FETCH(GhPagesUtils.getUrl('touch-layouts/ids.json'))
@@ -84,7 +87,7 @@ export class GhPagesUtils {
         return customList;
     }
 
-    static getLocalCoOpList() {
+    static getLocalCoOpList(): Set<string> {
         const supportedSchema = 1;
         const key = StorageKey.LIST_LOCAL_CO_OP;
 
@@ -93,14 +96,21 @@ export class GhPagesUtils {
             .then(json => {
                 if (json.$schemaVersion === supportedSchema) {
                     window.localStorage.setItem(key, JSON.stringify(json));
-                    BxEventBus.Script.emit('list.localCoOp.updated', { data: json });
+                    const ids = new Set(Object.keys(json.data));
+                    BxEventBus.Script.emit('list.localCoOp.updated', { ids });
                 } else {
                     window.localStorage.removeItem(key);
-                    BxEventBus.Script.emit('list.localCoOp.updated', { data: { data: {} } });
+                    BxEventBus.Script.emit('list.localCoOp.updated', { ids: new Set() });
                 }
             });
 
-        const customList = JSON.parse(window.localStorage.getItem(key) || '[]');
-        return customList;
+        const info = JSON.parse(window.localStorage.getItem(key) || '{}');
+        if (info.$schemaVersion !== supportedSchema) {
+            // Delete storage;
+            window.localStorage.removeItem(key);
+            return new Set();
+        }
+
+        return new Set(Object.keys(info.data || {}));
     }
 }
