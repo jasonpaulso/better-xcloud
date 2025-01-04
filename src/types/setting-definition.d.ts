@@ -20,6 +20,7 @@ interface BaseSettingDefinition {
     default: any;
 
     label?: string;
+    labelIcon?: BxIconRaw,
     note?: string | (() => HTMLElement) | HTMLElement;
     experimental?: boolean;
     unsupported?: boolean;

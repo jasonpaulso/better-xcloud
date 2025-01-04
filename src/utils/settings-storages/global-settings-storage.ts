@@ -13,6 +13,7 @@ import { MkbMappingDefaultPresetId } from "../local-db/mkb-mapping-presets-table
 import { KeyboardShortcutDefaultId } from "../local-db/keyboard-shortcuts-table";
 import { GhPagesUtils } from "../gh-pages";
 import { BxEventBus } from "../bx-event-bus";
+import { BxIcon } from "../bx-icon";
 
 
 function getSupportedCodecProfiles() {
@@ -338,6 +339,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         [PrefKey.LOCAL_CO_OP_ENABLED]: {
             requiredVariants: 'full',
             label: t('enable-local-co-op-support'),
+            labelIcon: BxIcon.LOCAL_CO_OP,
             default: false,
             note: () => CE('div', false,
                 CE('a', {

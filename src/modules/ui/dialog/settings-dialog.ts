@@ -1008,6 +1008,7 @@ export class SettingsDialog extends NavigationDialog {
         const $row = createSettingRow(label, !prefDefinition?.unsupported && $control, {
             $note,
             multiLines: setting.multiLines,
+            icon: prefDefinition?.labelIcon,
         });
         if (pref) {
             $row.htmlFor = `bx_setting_${escapeCssSelector(pref)}`;

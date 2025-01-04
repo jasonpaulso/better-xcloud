@@ -54,6 +54,7 @@ export type BxButtonOptions = Partial<{
 }>;
 
 export type SettingsRowOptions = Partial<{
+    icon: BxIconRaw,
     multiLines: boolean;
     $note: HTMLElement;
 }>;
@@ -210,6 +211,7 @@ export function createSettingRow(label: string, $control: HTMLElement | false | 
 
     const $row = CE('label', { class: 'bx-settings-row' },
         $label = CE('span', { class: 'bx-settings-label' },
+            options.icon && createSvgIcon(options.icon),
             label,
             options.$note,
         ),
