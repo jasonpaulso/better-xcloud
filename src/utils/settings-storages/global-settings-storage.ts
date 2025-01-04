@@ -200,6 +200,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             params: {
                 steps: 10,
                 exactTicks: 20,
+                hideSlider: true,
                 customTextValue(value, min, max) {
                     if (value === 90) {
                         return t('default');

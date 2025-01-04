@@ -1518,6 +1518,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    params: {
     steps: 10,
     exactTicks: 20,
+    hideSlider: !0,
     customTextValue(value, min, max) {
      if (value === 90) return t("default");
      return value + "%";
