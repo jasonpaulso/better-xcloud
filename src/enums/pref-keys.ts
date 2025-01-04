@@ -86,6 +86,7 @@ export const enum PrefKey {
     UI_SKIP_SPLASH_VIDEO = 'ui.splashVideo.skip',
     UI_HIDE_SYSTEM_MENU_ICON = 'ui.systemMenu.hideHandle',
     UI_REDUCE_ANIMATIONS = 'ui.reduceAnimations',
+    UI_IMAGE_QUALITY = 'ui.imageQuality',
 
     VIDEO_PLAYER_TYPE = 'video.player.type',
     VIDEO_POWER_PREFERENCE = 'video.player.powerPreference',
@@ -172,6 +173,7 @@ export type PrefTypeMap = {
     [PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME]: boolean,
     [PrefKey.UI_HIDE_SECTIONS]: UiSection[],
     [PrefKey.UI_HIDE_SYSTEM_MENU_ICON]: boolean,
+    [PrefKey.UI_IMAGE_QUALITY]: number,
     [PrefKey.UI_LAYOUT]: UiLayout,
     [PrefKey.UI_REDUCE_ANIMATIONS]: boolean,
     [PrefKey.UI_SCROLLBAR_HIDE]: boolean,

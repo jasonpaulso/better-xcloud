@@ -192,6 +192,23 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             label: t('hide-system-menu-icon'),
             default: false,
         },
+        [PrefKey.UI_IMAGE_QUALITY]: {
+            label: t('image-quality'),
+            default: 90,
+            min: 10,
+            max: 90,
+            params: {
+                steps: 10,
+                exactTicks: 20,
+                customTextValue(value, min, max) {
+                    if (value === 90) {
+                        return t('default');
+                    }
+
+                    return value + '%';
+                },
+            },
+        },
 
         [PrefKey.STREAM_COMBINE_SOURCES]: {
             requiredVariants: 'full',

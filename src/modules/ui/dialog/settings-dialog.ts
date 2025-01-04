@@ -274,6 +274,7 @@ export class SettingsDialog extends NavigationDialog {
         label: t('ui'),
         items: [
             PrefKey.UI_LAYOUT,
+            PrefKey.UI_IMAGE_QUALITY,
             PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME,
             PrefKey.UI_CONTROLLER_SHOW_STATUS,
             PrefKey.UI_SIMPLIFY_STREAM_MENU,

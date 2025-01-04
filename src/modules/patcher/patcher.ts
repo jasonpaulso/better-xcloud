@@ -1081,6 +1081,28 @@ ${subsVar} = subs;
         return str;
     },
     */
+
+    // 27.0.6-hotfix.1, 78831.js
+    setImageQuality(str: string) {
+        let index = str.indexOf('const{size:{width:');
+        index > -1 && (index = PatcherUtils.indexOf(str, '=new URLSearchParams', index, 500));
+        if (index < 0) {
+            return false;
+        }
+
+        const paramVar = PatcherUtils.getVariableNameBefore(str, index);
+        if (!paramVar) {
+            return false;
+        }
+
+        // Find "return" keyword
+        index = PatcherUtils.indexOf(str, 'return', index, 200);
+
+        const newCode = `${paramVar}.set('q', ${getPref(PrefKey.UI_IMAGE_QUALITY)});`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+
+        return str;
+    },
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1093,6 +1115,8 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     'exposeReactCreateComponent',
     'gameCardCustomIcons',
     // 'gameCardPassTitle',
+
+    getPref(PrefKey.UI_IMAGE_QUALITY) < 90 && 'setImageQuality',
 
     'modifyPreloadedState',
 

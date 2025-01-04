@@ -407,6 +407,7 @@ var SUPPORTED_LANGUAGES = {
  "how-to-fix": "How to fix",
  "how-to-improve-app-performance": "How to improve app's performance",
  ignore: "Ignore",
+ "image-quality": "Image quality",
  import: "Import",
  "in-game-controller-customization": "In-game controller customization",
  "in-game-controller-shortcuts": "In-game controller shortcuts",
@@ -1436,6 +1437,20 @@ class GlobalSettingsStorage extends BaseSettingsStore {
   "ui.systemMenu.hideHandle": {
    label: t("hide-system-menu-icon"),
    default: !1
+  },
+  "ui.imageQuality": {
+   label: t("image-quality"),
+   default: 90,
+   min: 10,
+   max: 90,
+   params: {
+    steps: 10,
+    exactTicks: 20,
+    customTextValue(value, min, max) {
+     if (value === 90) return t("default");
+     return value + "%";
+    }
+   }
   },
   "stream.video.combineAudio": {
    requiredVariants: "full",
@@ -4369,6 +4384,7 @@ class SettingsDialog extends NavigationDialog {
   label: t("ui"),
   items: [
    "ui.layout",
+   "ui.imageQuality",
    "ui.gameCard.waitTime.show",
    "ui.controllerStatus.show",
    "ui.streamMenu.simplify",

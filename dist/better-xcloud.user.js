@@ -439,6 +439,7 @@ var SUPPORTED_LANGUAGES = {
  "how-to-fix": "How to fix",
  "how-to-improve-app-performance": "How to improve app's performance",
  ignore: "Ignore",
+ "image-quality": "Image quality",
  import: "Import",
  "in-game-controller-customization": "In-game controller customization",
  "in-game-controller-shortcuts": "In-game controller shortcuts",
@@ -1508,6 +1509,20 @@ class GlobalSettingsStorage extends BaseSettingsStore {
   "ui.systemMenu.hideHandle": {
    label: t("hide-system-menu-icon"),
    default: !1
+  },
+  "ui.imageQuality": {
+   label: t("image-quality"),
+   default: 90,
+   min: 10,
+   max: 90,
+   params: {
+    steps: 10,
+    exactTicks: 20,
+    customTextValue(value, min, max) {
+     if (value === 90) return t("default");
+     return value + "%";
+    }
+   }
   },
   "stream.video.combineAudio": {
    requiredVariants: "full",
@@ -4857,6 +4872,15 @@ ${subsVar} = subs;
    supportedInputIcons: supportedInputIconsVar
   });
   return str = PatcherUtils.insertAt(str, returnIndex, newCode), str;
+ },
+ setImageQuality(str) {
+  let index = str.indexOf("const{size:{width:");
+  if (index > -1 && (index = PatcherUtils.indexOf(str, "=new URLSearchParams", index, 500)), index < 0) return !1;
+  let paramVar = PatcherUtils.getVariableNameBefore(str, index);
+  if (!paramVar) return !1;
+  index = PatcherUtils.indexOf(str, "return", index, 200);
+  let newCode = `${paramVar}.set('q', ${getPref("ui.imageQuality")});`;
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
@@ -4866,6 +4890,7 @@ ${subsVar} = subs;
  ] : [],
  "exposeReactCreateComponent",
  "gameCardCustomIcons",
+ getPref("ui.imageQuality") < 90 && "setImageQuality",
  "modifyPreloadedState",
  "optimizeGameSlugGenerator",
  "detectBrowserRouterReady",
@@ -6488,6 +6513,7 @@ class SettingsDialog extends NavigationDialog {
   label: t("ui"),
   items: [
    "ui.layout",
+   "ui.imageQuality",
    "ui.gameCard.waitTime.show",
    "ui.controllerStatus.show",
    "ui.streamMenu.simplify",
