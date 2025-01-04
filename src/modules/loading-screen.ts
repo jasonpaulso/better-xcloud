@@ -63,6 +63,11 @@ export class LoadingScreen {
         // Limit max width to reduce image size
         imageUrl = imageUrl + '?w=1920';
 
+        const imageQuality = getPref(PrefKey.UI_IMAGE_QUALITY);
+        if (imageQuality !== 90) {
+            imageUrl += '&q=' + imageQuality;
+        }
+
         $bgStyle.textContent! += compressCss(`
 #game-stream {
     background-color: transparent !important;

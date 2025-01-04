@@ -407,7 +407,7 @@ var SUPPORTED_LANGUAGES = {
  "how-to-fix": "How to fix",
  "how-to-improve-app-performance": "How to improve app's performance",
  ignore: "Ignore",
- "image-quality": "Image quality",
+ "image-quality": "Website's image quality",
  import: "Import",
  "in-game-controller-customization": "In-game controller customization",
  "in-game-controller-shortcuts": "In-game controller shortcuts",
@@ -5378,7 +5378,10 @@ class LoadingScreen {
  }
  static setBackground(imageUrl) {
   let $bgStyle = LoadingScreen.$bgStyle;
-  imageUrl = imageUrl + "?w=1920", $bgStyle.textContent += '#game-stream{background-color:transparent !important;background-position:center center !important;background-repeat:no-repeat !important;background-size:cover !important}#game-stream rect[width="800"]{transition:opacity .3s ease-in-out !important}' + `#game-stream {background-image: linear-gradient(#00000033, #000000e6), url(${imageUrl}) !important;}`;
+  imageUrl = imageUrl + "?w=1920";
+  let imageQuality = getPref("ui.imageQuality");
+  if (imageQuality !== 90) imageUrl += "&q=" + imageQuality;
+  $bgStyle.textContent += '#game-stream{background-color:transparent !important;background-position:center center !important;background-repeat:no-repeat !important;background-size:cover !important}#game-stream rect[width="800"]{transition:opacity .3s ease-in-out !important}' + `#game-stream {background-image: linear-gradient(#00000033, #000000e6), url(${imageUrl}) !important;}`;
   let bg = new Image;
   bg.onload = (e) => {
    $bgStyle.textContent += '#game-stream rect[width="800"]{opacity:0 !important}';

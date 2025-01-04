@@ -151,7 +151,7 @@ const Texts = {
     "how-to-fix": "How to fix",
     "how-to-improve-app-performance": "How to improve app's performance",
     "ignore": "Ignore",
-    "image-quality": "Image quality",
+    "image-quality": "Website's image quality",
     "import": "Import",
     "in-game-controller-customization": "In-game controller customization",
     "in-game-controller-shortcuts": "In-game controller shortcuts",

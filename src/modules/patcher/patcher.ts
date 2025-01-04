@@ -1103,6 +1103,18 @@ ${subsVar} = subs;
 
         return str;
     },
+
+    setBackgroundImageQuality(str: string) {
+        let index = str.indexOf('}?w=${');
+        index > -1 && (index = PatcherUtils.indexOf(str, '}', index + 1, 10, true));
+
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.insertAt(str, index, `&q=${getPref(PrefKey.UI_IMAGE_QUALITY)}`);
+        return str;
+    }
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1116,7 +1128,10 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     'gameCardCustomIcons',
     // 'gameCardPassTitle',
 
-    getPref(PrefKey.UI_IMAGE_QUALITY) < 90 && 'setImageQuality',
+    ...(getPref(PrefKey.UI_IMAGE_QUALITY) < 90 ? [
+        'setImageQuality',
+        'setBackgroundImageQuality',
+    ] : []),
 
     'modifyPreloadedState',
 
