@@ -1,5 +1,5 @@
 import { CE } from "@utils/html";
-import { compressCss, renderStylus } from "@macros/build" with { type: "macro" };
+import { compressCss, isLiteVersion, renderStylus } from "@macros/build" with { type: "macro" };
 import { BlockFeature, UiSection } from "@/enums/pref-values";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
@@ -11,6 +11,11 @@ export function addCss() {
 
     const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS);
     const selectorToHide = [];
+
+    if (isLiteVersion()) {
+        // Hide Controller icon in Game tiles
+        selectorToHide.push('div[class*=SupportedInputsBadge] svg:first-of-type');
+    }
 
     // Hide "News" section
     if (PREF_HIDE_SECTIONS.includes(UiSection.NEWS)) {
