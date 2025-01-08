@@ -5,6 +5,7 @@ import type { StreamSettings, type StreamSettingsData } from "@/utils/stream-set
 import type { BxEvent } from "@/utils/bx-event";
 import type { BxEventBus } from "@/utils/bx-event-bus";
 import type { BxLogger } from "@/utils/bx-logger";
+import type { XcloudInputChannel } from "@/utils/gamepad";
 
 export {};
 
@@ -20,7 +21,7 @@ declare global {
                 closeAll: () => void;
             };
             showStreamMenu: () => void;
-            inputSink: any;
+            inputChannel: XcloudInputChannel | undefined;
             streamSession: any;
             touchLayoutManager: any;
         }>;

@@ -4,7 +4,21 @@ import { Toast } from "@utils/toast";
 import { BxLogger } from "@utils/bx-logger";
 import { PrefKey } from "@/enums/pref-keys";
 import { getPref } from "./settings-storages/global-settings-storage";
-import { GamepadKeyName, type GamepadKey } from "@/enums/gamepad";
+import { GamepadKey, GamepadKeyName } from "@/enums/gamepad";
+
+export type NativeMouseData = {
+    X: number,
+    Y: number,
+    Buttons: number,
+    WheelX: number,
+    WheelY: number,
+    Type?: 0,  // 0: Relative, 1: Absolute
+}
+
+export type XcloudInputChannel = {
+    sendGamepadInput: (timestamp: number, gamepads: XcloudGamepad[]) => void;
+    queueMouseInput: (data: NativeMouseData) => void;
+}
 
 // Show a toast when connecting/disconecting controller
 export function showGamepadToast(gamepad: Gamepad) {
@@ -59,9 +73,9 @@ export function hasGamepad() {
     return false;
 }
 
-export function generateVirtualControllerMapping(override: {}={}) {
+export function generateVirtualControllerMapping(index: number, override: Partial<XcloudGamepad>={}) {
     const mapping = {
-        GamepadIndex: 0,
+        GamepadIndex: index,
         A: 0,
         B: 0,
         X: 0,
@@ -94,4 +108,45 @@ export function generateVirtualControllerMapping(override: {}={}) {
 
 export function getGamepadPrompt(gamepadKey: GamepadKey): string {
     return GamepadKeyName[gamepadKey][1];
+}
+
+const XCLOUD_GAMEPAD_KEY_MAPPING: { [key in GamepadKey]?: keyof XcloudGamepad } = {
+    [GamepadKey.A]: 'A',
+    [GamepadKey.B]: 'B',
+    [GamepadKey.X]: 'X',
+    [GamepadKey.Y]: 'Y',
+
+    [GamepadKey.UP]: 'DPadUp',
+    [GamepadKey.RIGHT]: 'DPadRight',
+    [GamepadKey.DOWN]: 'DPadDown',
+    [GamepadKey.LEFT]: 'DPadLeft',
+
+    [GamepadKey.LB]: 'LeftShoulder',
+    [GamepadKey.RB]: 'RightShoulder',
+    [GamepadKey.LT]: 'LeftTrigger',
+    [GamepadKey.RT]: 'RightTrigger',
+
+    [GamepadKey.L3]: 'LeftThumb',
+    [GamepadKey.R3]: 'RightThumb',
+    [GamepadKey.LS]: 'LeftStickAxes',
+    [GamepadKey.RS]: 'RightStickAxes',
+
+    [GamepadKey.SELECT]: 'View',
+    [GamepadKey.START]: 'Menu',
+    [GamepadKey.HOME]: 'Nexus',
+    [GamepadKey.SHARE]: 'Share',
+
+    [GamepadKey.LS_LEFT]: 'LeftThumbXAxis',
+    [GamepadKey.LS_RIGHT]: 'LeftThumbXAxis',
+    [GamepadKey.LS_UP]: 'LeftThumbYAxis',
+    [GamepadKey.LS_DOWN]: 'LeftThumbYAxis',
+
+    [GamepadKey.RS_LEFT]: 'RightThumbXAxis',
+    [GamepadKey.RS_RIGHT]: 'RightThumbXAxis',
+    [GamepadKey.RS_UP]: 'RightThumbYAxis',
+    [GamepadKey.RS_DOWN]: 'RightThumbYAxis',
+};
+
+export function toXcloudGamepadKey(gamepadKey: GamepadKey) {
+    return XCLOUD_GAMEPAD_KEY_MAPPING[gamepadKey];
 }

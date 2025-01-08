@@ -19,6 +19,7 @@ import type { MkbConvertedPresetData } from "@/types/presets";
 import { StreamSettings } from "@/utils/stream-settings";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { BxEventBus } from "@/utils/bx-event-bus";
+import { generateVirtualControllerMapping, toXcloudGamepadKey } from "@/utils/gamepad";
 
 const PointerToMouseButton = {
     1: 0,
@@ -152,6 +153,8 @@ export class EmulatedMkbHandler extends MkbHandler {
     };
     private nativeGetGamepads: Navigator['getGamepads'];
 
+    private xCloudGamepad: XcloudGamepad = generateVirtualControllerMapping(0);
+
     private initialized = false;
     private enabled = false;
     private mouseDataProvider: MouseDataProvider | undefined;
@@ -171,16 +174,16 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     private popup: MkbPopup;
 
-    private STICK_MAP: { [key in GamepadKey]?: [GamepadKey[], number, number] } = {
-        [GamepadKey.LS_LEFT]: [this.LEFT_STICK_X, 0, -1],
-        [GamepadKey.LS_RIGHT]: [this.LEFT_STICK_X, 0, 1],
-        [GamepadKey.LS_UP]: [this.LEFT_STICK_Y, 1, -1],
-        [GamepadKey.LS_DOWN]: [this.LEFT_STICK_Y, 1, 1],
+    private STICK_MAP: { [key in GamepadKey]?: [GamepadKey[], number] } = {
+        [GamepadKey.LS_LEFT]: [this.LEFT_STICK_X, -1],
+        [GamepadKey.LS_RIGHT]: [this.LEFT_STICK_X, 1],
+        [GamepadKey.LS_UP]: [this.LEFT_STICK_Y, 1],
+        [GamepadKey.LS_DOWN]: [this.LEFT_STICK_Y, -1],
 
-        [GamepadKey.RS_LEFT]: [this.RIGHT_STICK_X, 2, -1],
-        [GamepadKey.RS_RIGHT]: [this.RIGHT_STICK_X, 2, 1],
-        [GamepadKey.RS_UP]: [this.RIGHT_STICK_Y, 3, -1],
-        [GamepadKey.RS_DOWN]: [this.RIGHT_STICK_Y, 3, 1],
+        [GamepadKey.RS_LEFT]: [this.RIGHT_STICK_X, -1],
+        [GamepadKey.RS_RIGHT]: [this.RIGHT_STICK_X, 1],
+        [GamepadKey.RS_UP]: [this.RIGHT_STICK_Y, 1],
+        [GamepadKey.RS_DOWN]: [this.RIGHT_STICK_Y, -1],
     };
 
     private constructor() {
@@ -205,11 +208,16 @@ export class EmulatedMkbHandler extends MkbHandler {
     private getVirtualGamepad = () => this.VIRTUAL_GAMEPAD;
 
     private updateStick(stick: GamepadStick, x: number, y: number) {
-        const virtualGamepad = this.getVirtualGamepad();
-        virtualGamepad.axes[stick * 2] = x;
-        virtualGamepad.axes[stick * 2 + 1] = y;
+        const gamepad = this.xCloudGamepad;
+        if (stick === GamepadStick.LEFT) {
+            gamepad.LeftThumbXAxis = x;
+            gamepad.LeftThumbYAxis = -y;
+        } else {
+            gamepad.RightThumbXAxis = x;
+            gamepad.RightThumbYAxis = -y;
+        }
 
-        virtualGamepad.timestamp = performance.now();
+        window.BX_EXPOSED.inputChannel?.sendGamepadInput(performance.now(), [this.xCloudGamepad]);
     }
 
     /*
@@ -224,29 +232,20 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     private vectorLength = (x: number, y: number): number => Math.sqrt(x ** 2 + y ** 2);
 
-    private resetGamepad() {
-        const gamepad = this.getVirtualGamepad();
+    resetXcloudGamepads() {
+        const index = getPref(PrefKey.MKB_P1_SLOT) - 1;
 
-        // Reset axes
-        gamepad.axes = [0, 0, 0, 0];
-
-        // Reset buttons
-        for (const button of gamepad.buttons) {
-            button.pressed = false;
-            button.value = 0;
-        }
-
-        gamepad.timestamp = performance.now();
+        this.xCloudGamepad = generateVirtualControllerMapping(0, {
+            GamepadIndex: getPref(PrefKey.LOCAL_CO_OP_ENABLED) ? index : 0,
+            Dirty: true,
+        });
+        this.VIRTUAL_GAMEPAD.index = index;
     }
 
     private pressButton(buttonIndex: GamepadKey, pressed: boolean) {
-        const virtualGamepad = this.getVirtualGamepad();
-
+        const xCloudKey = toXcloudGamepadKey(buttonIndex)!;
         if (buttonIndex >= 100) {
-            let [valueArr, axisIndex] = this.STICK_MAP[buttonIndex]!;
-            valueArr = valueArr as number[];
-            axisIndex = axisIndex as number;
-
+            let [valueArr]: [GamepadKey[], number] = this.STICK_MAP[buttonIndex]!;
             // Remove old index of the array
             for (let i = valueArr.length - 1; i >= 0; i--) {
                 if (valueArr[i] === buttonIndex) {
@@ -259,18 +258,19 @@ export class EmulatedMkbHandler extends MkbHandler {
             let value;
             if (valueArr.length) {
                 // Get value of the last key of the axis
-                value = this.STICK_MAP[valueArr[valueArr.length - 1]]![2] as number;
+                value = this.STICK_MAP[valueArr[valueArr.length - 1]]![1] as number;
             } else {
                 value = 0;
             }
 
-            virtualGamepad.axes[axisIndex] = value;
+            // @ts-ignore
+            this.xCloudGamepad[xCloudKey] = value;
         } else {
-            virtualGamepad.buttons[buttonIndex].pressed = pressed;
-            virtualGamepad.buttons[buttonIndex].value = pressed ? 1 : 0;
+            // @ts-ignore
+            this.xCloudGamepad[xCloudKey] = pressed ? 1 : 0;
         }
 
-        virtualGamepad.timestamp = performance.now();
+        window.BX_EXPOSED.inputChannel?.sendGamepadInput(performance.now(), [this.xCloudGamepad]);
     }
 
     private onKeyboardEvent = (e: KeyboardEvent) => {
@@ -453,7 +453,7 @@ export class EmulatedMkbHandler extends MkbHandler {
 
     refreshPresetData() {
         this.PRESET = window.BX_STREAM_SETTINGS.mkbPreset;
-        this.resetGamepad();
+        this.resetXcloudGamepads();
     }
 
     waitForMouseData(showPopup: boolean) {
@@ -581,11 +581,6 @@ export class EmulatedMkbHandler extends MkbHandler {
         window.removeEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this.onPollingModeChanged);
     }
 
-    updateGamepadSlots() {
-        // Set gamepad slot
-        this.VIRTUAL_GAMEPAD.index = getPref(PrefKey.MKB_P1_SLOT) - 1;
-    }
-
     start() {
         if (!this.enabled) {
             this.enabled = true;
@@ -595,8 +590,8 @@ export class EmulatedMkbHandler extends MkbHandler {
         this.isPolling = true;
         this.escKeyDownTime = -1;
 
-        this.resetGamepad();
-        this.updateGamepadSlots();
+        window.BX_EXPOSED.toggleLocalCoOp(getPref(PrefKey.LOCAL_CO_OP_ENABLED));
+        this.resetXcloudGamepads();
         window.navigator.getGamepads = this.patchedGetGamepads;
 
         this.waitForMouseData(false);
@@ -625,7 +620,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         const virtualGamepad = this.getVirtualGamepad();
         if (virtualGamepad.connected) {
             // Dispatch "gamepaddisconnected" event
-            this.resetGamepad();
+            this.resetXcloudGamepads();
 
             virtualGamepad.connected = false;
             virtualGamepad.timestamp = performance.now();

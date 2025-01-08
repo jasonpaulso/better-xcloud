@@ -7,8 +7,8 @@ export class VirtualControllerShortcut {
             return;
         }
 
-        const released = generateVirtualControllerMapping();
-        const pressed = generateVirtualControllerMapping({
+        const released = generateVirtualControllerMapping(0);
+        const pressed = generateVirtualControllerMapping(0, {
             Nexus: 1,
             VirtualPhysicality: 1024, // Home
         });

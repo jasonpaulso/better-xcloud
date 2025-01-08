@@ -13,19 +13,7 @@ import { StreamSettings } from "@/utils/stream-settings";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { NativeMkbMode } from "@/enums/pref-values";
 import { BxEventBus } from "@/utils/bx-event-bus";
-
-type NativeMouseData = {
-    X: number,
-    Y: number,
-    Buttons: number,
-    WheelX: number,
-    WheelY: number,
-    Type?: 0,  // 0: Relative, 1: Absolute
-}
-
-type XcloudInputSink = {
-    onMouseInput: (data: NativeMouseData) => void;
-}
+import type { NativeMouseData, XcloudInputChannel } from "@/utils/gamepad";
 
 export class NativeMkbHandler extends MkbHandler {
     private static instance: NativeMkbHandler | null | undefined;
@@ -54,7 +42,7 @@ export class NativeMkbHandler extends MkbHandler {
     private mouseVerticalMultiply = 0;
     private mouseHorizontalMultiply = 0;
 
-    private inputSink: XcloudInputSink | undefined;
+    private inputChannel: XcloudInputChannel | undefined;
 
     private popup!: MkbPopup;
 
@@ -114,7 +102,7 @@ export class NativeMkbHandler extends MkbHandler {
 
     init() {
         this.pointerClient = PointerClient.getInstance();
-        this.inputSink = window.BX_EXPOSED.inputSink;
+        this.inputChannel = window.BX_EXPOSED.inputChannel;
 
         // Stop keyboard input at startup
         this.updateInputConfigurationAsync(false);
@@ -274,7 +262,7 @@ export class NativeMkbHandler extends MkbHandler {
 
     private sendMouseInput(data: NativeMouseData) {
         data.Type = 0;  // Relative
-        this.inputSink?.onMouseInput(data);
+        this.inputChannel?.queueMouseInput(data);
     }
 
     private resetMouseInput() {

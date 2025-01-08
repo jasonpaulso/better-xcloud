@@ -6,7 +6,7 @@ import type { ControllerCustomizationConvertedPresetData, ControllerCustomizatio
 import { STATES } from "./global";
 import { DeviceVibrationMode } from "@/enums/pref-values";
 import { VIRTUAL_GAMEPAD_ID } from "@/modules/mkb/mkb-handler";
-import { hasGamepad } from "./gamepad";
+import { hasGamepad, toXcloudGamepadKey } from "./gamepad";
 import { MkbMappingPresetsTable } from "./local-db/mkb-mapping-presets-table";
 import { GamepadKey } from "@/enums/gamepad";
 import { MkbPresetKey, MouseConstant } from "@/enums/mkb";
@@ -49,32 +49,6 @@ export class StreamSettings {
         mkbPreset: null,
 
         keyboardShortcuts: {},
-    };
-
-    private static CONTROLLER_CUSTOMIZATION_MAPPING: { [key in GamepadKey]?: keyof XcloudGamepad } = {
-        [GamepadKey.A]: 'A',
-        [GamepadKey.B]: 'B',
-        [GamepadKey.X]: 'X',
-        [GamepadKey.Y]: 'Y',
-
-        [GamepadKey.UP]: 'DPadUp',
-        [GamepadKey.RIGHT]: 'DPadRight',
-        [GamepadKey.DOWN]: 'DPadDown',
-        [GamepadKey.LEFT]: 'DPadLeft',
-
-        [GamepadKey.LB]: 'LeftShoulder',
-        [GamepadKey.RB]: 'RightShoulder',
-        [GamepadKey.LT]: 'LeftTrigger',
-        [GamepadKey.RT]: 'RightTrigger',
-
-        [GamepadKey.L3]: 'LeftThumb',
-        [GamepadKey.R3]: 'RightThumb',
-        [GamepadKey.LS]: 'LeftStickAxes',
-        [GamepadKey.RS]: 'RightStickAxes',
-
-        [GamepadKey.SELECT]: 'View',
-        [GamepadKey.START]: 'Menu',
-        [GamepadKey.SHARE]: 'Share',
     };
 
     static getPref<T extends keyof PrefTypeMap>(key: T) {
@@ -146,14 +120,14 @@ export class StreamSettings {
         // Swap GamepadKey.A with "A"
         let gamepadKey: unknown;
         for (gamepadKey in customization.mapping) {
-            const gamepadStr = StreamSettings.CONTROLLER_CUSTOMIZATION_MAPPING[gamepadKey as GamepadKey];
+            const gamepadStr = toXcloudGamepadKey(gamepadKey as GamepadKey);
             if (!gamepadStr) {
                 continue;
             }
 
             const mappedKey = customization.mapping[gamepadKey as GamepadKey];
             if (typeof mappedKey === 'number') {
-                converted.mapping[gamepadStr] = StreamSettings.CONTROLLER_CUSTOMIZATION_MAPPING[mappedKey as GamepadKey];
+                converted.mapping[gamepadStr] = toXcloudGamepadKey(mappedKey as GamepadKey);
             } else {
                 converted.mapping[gamepadStr] = false;
             }

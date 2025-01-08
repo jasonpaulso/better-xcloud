@@ -69,7 +69,7 @@ export class MkbExtraSettings extends HTMLElement {
                 createSettingRow(
                     t('virtual-controller-slot'),
                     SettingElement.fromPref(PrefKey.MKB_P1_SLOT, STORAGE.Global, () => {
-                        EmulatedMkbHandler.getInstance()?.updateGamepadSlots();
+                        EmulatedMkbHandler.getInstance()?.resetXcloudGamepads();
                     }),
                 ),
             ] : []),

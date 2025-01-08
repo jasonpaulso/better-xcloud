@@ -643,15 +643,14 @@ true` + text;
         return str;
     },
 
-    exposeInputSink(str: string) {
-        let text = 'this.controlChannel=null,this.inputChannel=null';
-        if (!str.includes(text)) {
+    exposeInputChannel(str: string) {
+        let index = str.indexOf('this.flushData=');
+        if (index < 0) {
             return false;
         }
 
-        const newCode = 'window.BX_EXPOSED.inputSink = this;';
-
-        str = str.replace(text, newCode + text);
+        const newCode = 'window.BX_EXPOSED.inputChannel = this,';
+        str = PatcherUtils.insertAt(str, index, newCode);
         return str;
     },
 
@@ -1120,7 +1119,6 @@ ${subsVar} = subs;
 let PATCH_ORDERS = PatcherUtils.filterPatches([
     ...(AppInterface && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
-        'exposeInputSink',
         'disableAbsoluteMouse',
     ] : []),
 
@@ -1208,6 +1206,8 @@ let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
 // TODO: check this
 // @ts-ignore
 let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+    'exposeInputChannel',
+
     'patchXcloudTitleInfo',
     'disableGamepadDisconnectedScreen',
     'patchStreamHud',
@@ -1377,6 +1377,7 @@ export class Patcher {
 
             // Apply patched functions
             if (modified) {
+                BX_FLAGS.Debug && console.time(LOG_TAG);
                 try {
                     chunkData[chunkId] = eval(patchedFuncStr);
                 } catch (e: unknown) {
@@ -1384,6 +1385,7 @@ export class Patcher {
                         BxLogger.error(LOG_TAG, 'Error', appliedPatches, e.message, patchedFuncStr);
                     }
                 }
+                BX_FLAGS.Debug && console.timeEnd(LOG_TAG);
             }
 
             // Save to cache
