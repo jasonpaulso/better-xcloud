@@ -46,7 +46,7 @@ export class MkbMappingPresetsTable extends BasePresetsTable<MkbPresetRecord> {
                     [GamepadKey.A]: ['Space', 'KeyE'],
                     [GamepadKey.X]: ['KeyR'],
                     [GamepadKey.B]: ['KeyC', 'Backspace'],
-                    [GamepadKey.Y]: ['KeyE'],
+                    [GamepadKey.Y]: ['KeyV'],
 
                     [GamepadKey.START]: ['Enter'],
                     [GamepadKey.SELECT]: ['Tab'],
