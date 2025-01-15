@@ -221,8 +221,12 @@ export function interceptHttpRequests() {
         }
 
         // Ignore domains
-        const domain = (new URL(url)).hostname;
-        if (IGNORED_DOMAINS.includes(domain)) {
+        try {
+            const domain = (new URL(url)).hostname;
+            if (IGNORED_DOMAINS.includes(domain)) {
+                return NATIVE_FETCH(request, init);
+            }
+        } catch (e) {
             return NATIVE_FETCH(request, init);
         }
 
