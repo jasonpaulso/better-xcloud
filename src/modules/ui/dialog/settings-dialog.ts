@@ -579,20 +579,20 @@ export class SettingsDialog extends NavigationDialog {
         }],
     }];
 
-    private readonly TAB_MKB_ITEMS: (() => Array<SettingTabSection | false>) = () => [
-        isFullVersion() && {
+    private readonly TAB_MKB_ITEMS: (() => Array<SettingTabSection | false>) = isFullVersion() ? () => [
+        {
             requiredVariants: 'full',
             group: 'mkb',
             label: t('mouse-and-keyboard'),
             helpUrl: 'https://better-xcloud.github.io/mouse-and-keyboard/',
             items: [
-                isFullVersion() && (($parent: HTMLElement) => {
+                ($parent: HTMLElement) => {
                     $parent.appendChild(MkbExtraSettings.renderSettings.apply(this));
-                })
+                },
             ],
         },
 
-        isFullVersion() && NativeMkbHandler.isAllowed() && {
+        NativeMkbHandler.isAllowed() && {
             requiredVariants: 'full',
             group: 'native-mkb',
             label: t('native-mkb'),
@@ -607,7 +607,7 @@ export class SettingsDialog extends NavigationDialog {
                     NativeMkbHandler.getInstance()?.setHorizontalScrollMultiplier(value / 100);
                 },
         }] : [],
-    }];
+    }] : () => [];
 
     private readonly TAB_STATS_ITEMS: Array<SettingTabSection | false> = [{
         group: 'stats',
