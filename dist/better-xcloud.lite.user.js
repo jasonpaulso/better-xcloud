@@ -5039,19 +5039,6 @@ if (blockFeatures.includes("chat")) FeatureGates.EnableGuideChatTab = !1;
 if (blockFeatures.includes("friends")) FeatureGates.EnableFriendsAndFollowers = !1;
 if (blockFeatures.includes("byog")) FeatureGates.EnableBYOG = !1, FeatureGates.EnableBYOGPurchase = !1;
 if (BX_FLAGS.FeatureGates) FeatureGates = Object.assign(BX_FLAGS.FeatureGates, FeatureGates);
-class LocalCoOpManager {
- static instance;
- static getInstance = () => LocalCoOpManager.instance ?? (LocalCoOpManager.instance = new LocalCoOpManager);
- supportedIds;
- constructor() {
-  BxEventBus.Script.once("list.localCoOp.updated", (e) => {
-   this.supportedIds = e.ids;
-  }), this.supportedIds = GhPagesUtils.getLocalCoOpList(), console.log("this.supportedIds", this.supportedIds);
- }
- isSupported(productId) {
-  return this.supportedIds.has(productId);
- }
-}
 var BxExposed = {
  getTitleInfo: () => STATES.currentStream.titleInfo,
  modifyPreloadedState: !1,
@@ -5098,7 +5085,7 @@ var BxExposed = {
  ],
  toggleLocalCoOp(enable) {},
  beforePageLoad: () => {},
- localCoOpManager: LocalCoOpManager.getInstance(),
+ localCoOpManager: null,
  reactCreateElement: function(...args) {},
  createReactLocalCoOpIcon: () => {}
 };
@@ -6534,11 +6521,7 @@ window.addEventListener("pagehide", (e) => {
  BxEventBus.Stream.emit("state.stopped", {});
 });
 function main() {
- if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkb.mode") !== "off") {
-  let customList = getPref("nativeMkb.forcedGames");
-  BX_FLAGS.ForceNativeMkbTitles.push(...customList);
- }
- if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), getPref("audio.volume.booster.enabled") && patchAudioContext(), getPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
+ if (GhPagesUtils.fetchLatestCommit(), StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), getPref("audio.volume.booster.enabled") && patchAudioContext(), getPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
  if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), getPref("ui.controllerStatus.show")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));
 }
 main();

@@ -361,9 +361,11 @@ isFullVersion() && window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, e => {
 function main() {
     GhPagesUtils.fetchLatestCommit();
 
-    if (getPref(PrefKey.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
-        const customList = getPref(PrefKey.NATIVE_MKB_FORCED_GAMES);
-        BX_FLAGS.ForceNativeMkbTitles.push(...customList);
+    if (isFullVersion()) {
+        if (getPref(PrefKey.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
+            const customList = getPref(PrefKey.NATIVE_MKB_FORCED_GAMES);
+            BX_FLAGS.ForceNativeMkbTitles.push(...customList);
+        }
     }
 
     StreamSettings.setup();

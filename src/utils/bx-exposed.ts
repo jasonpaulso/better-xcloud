@@ -232,7 +232,7 @@ export const BxExposed = {
         Patcher.patchPage(page);
     } : () => {},
 
-    localCoOpManager: LocalCoOpManager.getInstance(),
+    localCoOpManager: isFullVersion() ? LocalCoOpManager.getInstance() : null,
     reactCreateElement: function(...args: any[]) {},
 
     createReactLocalCoOpIcon: isFullVersion() ? (attrs: any): any => {
