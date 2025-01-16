@@ -1128,7 +1128,6 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     ...(getPref(PrefKey.UI_IMAGE_QUALITY) < 90 ? [
         'setImageQuality',
-        'setBackgroundImageQuality',
     ] : []),
 
     'modifyPreloadedState',
@@ -1187,10 +1186,6 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
         'enableConsoleLogging',
         'enableXcloudLogger',
     ] : []),
-
-    ...(blockSomeNotifications() ? [
-        'changeNotificationsSubscription',
-    ] : []),
 ]);
 
 const hideSections = getPref(PrefKey.UI_HIDE_SECTIONS);
@@ -1200,6 +1195,14 @@ let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
     STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
     hideSections.some(value => [UiSection.NATIVE_MKB, UiSection.MOST_POPULAR].includes(value)) && 'ignoreSiglSections',
+
+    ...(getPref(PrefKey.UI_IMAGE_QUALITY) < 90 ? [
+        'setBackgroundImageQuality',
+    ] : []),
+
+    ...(blockSomeNotifications() ? [
+        'changeNotificationsSubscription',
+    ] : []),
 ]);
 
 // Only when playing

@@ -4910,8 +4910,7 @@ ${subsVar} = subs;
  "exposeReactCreateComponent",
  "gameCardCustomIcons",
  ...getPref("ui.imageQuality") < 90 ? [
-  "setImageQuality",
-  "setBackgroundImageQuality"
+  "setImageQuality"
  ] : [],
  "modifyPreloadedState",
  "optimizeGameSlugGenerator",
@@ -4953,16 +4952,19 @@ ${subsVar} = subs;
  ...BX_FLAGS.EnableXcloudLogging ? [
   "enableConsoleLogging",
   "enableXcloudLogger"
- ] : [],
- ...blockSomeNotifications() ? [
-  "changeNotificationsSubscription"
  ] : []
 ]), hideSections = getPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  hideSections.includes("news") && "ignoreNewsSection",
  hideSections.includes("friends") && "ignorePlayWithFriendsSection",
  hideSections.includes("all-games") && "ignoreAllGamesSection",
  STATES.browser.capabilities.touch && hideSections.includes("touch") && "ignorePlayWithTouchSection",
- hideSections.some((value) => ["native-mkb", "most-popular"].includes(value)) && "ignoreSiglSections"
+ hideSections.some((value) => ["native-mkb", "most-popular"].includes(value)) && "ignoreSiglSections",
+ ...getPref("ui.imageQuality") < 90 ? [
+  "setBackgroundImageQuality"
+ ] : [],
+ ...blockSomeNotifications() ? [
+  "changeNotificationsSubscription"
+ ] : []
 ]), STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  "exposeInputChannel",
  "patchXcloudTitleInfo",
