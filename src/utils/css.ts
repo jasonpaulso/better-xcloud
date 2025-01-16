@@ -15,6 +15,7 @@ export function addCss() {
     if (isLiteVersion()) {
         // Hide Controller icon in Game tiles
         selectorToHide.push('div[class*=SupportedInputsBadge] svg:first-of-type');
+        selectorToHide.push('div[class*=SupportedInputsBadge]:not(:has(:nth-child(2)))');
     }
 
     // Hide "News" section

@@ -236,8 +236,10 @@ BxEventBus.Stream.on('state.starting', () => {
 });
 
 BxEventBus.Stream.on('state.playing', payload => {
-    window.BX_STREAM_SETTINGS = StreamSettings.settings;
-    StreamSettings.refreshAllSettings();
+    if (isFullVersion()) {
+        window.BX_STREAM_SETTINGS = StreamSettings.settings;
+        StreamSettings.refreshAllSettings();
+    }
 
     STATES.isPlaying = true;
     StreamUiHandler.observe();

@@ -194,6 +194,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             default: false,
         },
         [PrefKey.UI_IMAGE_QUALITY]: {
+            requiredVariants: 'full',
             label: t('image-quality'),
             default: 90,
             min: 10,
@@ -617,6 +618,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             default: false,
         },
         [PrefKey.BLOCK_FEATURES]: {
+            requiredVariants: 'full',
             label: t('disable-features'),
             default: [],
             multipleOptions: {

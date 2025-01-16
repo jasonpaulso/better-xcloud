@@ -313,7 +313,7 @@ export class SettingsDialog extends NavigationDialog {
         items: [
             PrefKey.BLOCK_TRACKING,
         ],
-    }, {
+    }, isFullVersion() && {
         group: 'advanced',
         label: t('advanced'),
         items: [
@@ -495,24 +495,23 @@ export class SettingsDialog extends NavigationDialog {
         }],
     }];
 
-    private readonly TAB_CONTROLLER_ITEMS: Array<SettingTabSection | HTMLElement | false> = [{
+    private readonly TAB_CONTROLLER_ITEMS: Array<SettingTabSection | HTMLElement | false> = isFullVersion() ? [{
         group: 'controller',
         label: t('controller'),
         helpUrl: 'https://better-xcloud.github.io/ingame-features/#controller',
         items: [
-        isFullVersion() && {
+        {
             pref: PrefKey.LOCAL_CO_OP_ENABLED,
             onChange: () => { BxExposed.toggleLocalCoOp(getPref(PrefKey.LOCAL_CO_OP_ENABLED)); },
-        },
-        isFullVersion() && {
+        }, {
             pref: PrefKey.CONTROLLER_POLLING_RATE,
             onChange: () => StreamSettings.refreshControllerSettings(),
-        }, isFullVersion() && ($parent => {
+        }, ($parent => {
             $parent.appendChild(ControllerExtraSettings.renderSettings.apply(this));
         })],
     },
 
-    isFullVersion() && STATES.userAgent.capabilities.touch && {
+    STATES.userAgent.capabilities.touch && {
         group: 'touch-control',
         label: t('touch-controller'),
         items: [{
@@ -564,7 +563,9 @@ export class SettingsDialog extends NavigationDialog {
                 });
             },
         }],
-    }, isFullVersion() && STATES.browser.capabilities.deviceVibration && {
+    },
+
+    STATES.browser.capabilities.deviceVibration && {
         group: 'device',
         label: t('device'),
         items: [{
@@ -577,7 +578,7 @@ export class SettingsDialog extends NavigationDialog {
             unsupported: !STATES.browser.capabilities.deviceVibration,
             onChange: () => StreamSettings.refreshControllerSettings(),
         }],
-    }];
+    }] : [];
 
     private readonly TAB_MKB_ITEMS: (() => Array<SettingTabSection | false>) = isFullVersion() ? () => [
         {
