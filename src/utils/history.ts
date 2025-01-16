@@ -1,3 +1,5 @@
+import { isFullVersion } from "@macros/build" with { type: "macro" };
+
 import { BxEvent } from "@utils/bx-event";
 import { LoadingScreen } from "@modules/loading-screen";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
@@ -25,7 +27,9 @@ export function onHistoryChanged(e: PopStateEvent) {
         return;
     }
 
-    window.setTimeout(RemotePlayManager.detect, 10);
+    if (isFullVersion()) {
+        window.setTimeout(RemotePlayManager.detect, 10);
+    }
 
     // Hide Navigation dialog
     NavigationDialogManager.getInstance().hide();

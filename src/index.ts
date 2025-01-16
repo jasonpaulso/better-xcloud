@@ -164,7 +164,9 @@ document.addEventListener('readystatechange', e => {
 
     if (STATES.isSignedIn) {
         // Preload Remote Play
-        RemotePlayManager.getInstance()?.initialize();
+        if (isFullVersion()) {
+            RemotePlayManager.getInstance()?.initialize();
+        }
     } else {
         // Show Settings button in the header when not signed in
         window.setTimeout(HeaderSection.watchHeader, 2000);

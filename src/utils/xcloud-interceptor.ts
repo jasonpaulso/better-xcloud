@@ -59,7 +59,9 @@ export class XcloudInterceptor {
         const obj = await response.clone().json();
 
         // Store xCloud token
-        RemotePlayManager.getInstance()?.setXcloudToken(obj.gsToken);
+        if (isFullVersion()) {
+            RemotePlayManager.getInstance()?.setXcloudToken(obj.gsToken);
+        }
 
         // Get server list
         const serverRegex = /\/\/(\w+)\./;

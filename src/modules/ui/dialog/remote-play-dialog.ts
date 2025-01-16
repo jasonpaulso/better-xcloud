@@ -32,7 +32,11 @@ export class RemotePlayDialog extends NavigationDialog {
     }
 
     private setupDialog() {
-        const $fragment = CE('div', { class: 'bx-remote-play-container' });
+        const $fragment = CE('div', { class: 'bx-centered-dialog' },
+            CE('div', { class: 'bx-dialog-title' },
+                CE('p', false, t('remote-play')),
+            ),
+        );
 
         const $settingNote = CE('p', {});
 

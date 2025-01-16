@@ -1,3 +1,5 @@
+import { isFullVersion } from "@macros/build" with { type: "macro" };
+
 import { SCRIPT_VERSION } from "@utils/global";
 import { createButton, ButtonStyle, CE, isElementVisible } from "@utils/html";
 import { BxIcon } from "@utils/bx-icon";
@@ -14,7 +16,7 @@ export class HeaderSection {
     public static getInstance = () => HeaderSection.instance ?? (HeaderSection.instance = new HeaderSection());
     private readonly LOG_TAG = 'HeaderSection';
 
-    private $btnRemotePlay: HTMLElement;
+    private $btnRemotePlay: HTMLElement | null;
     private $btnSettings: HTMLElement;
     private $buttonsWrapper: HTMLElement;
 
@@ -24,13 +26,17 @@ export class HeaderSection {
     constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
 
-        this.$btnRemotePlay = createButton({
-            classes: ['bx-header-remote-play-button', 'bx-gone'],
-            icon: BxIcon.REMOTE_PLAY,
-            title: t('remote-play'),
-            style: ButtonStyle.GHOST | ButtonStyle.FOCUSABLE | ButtonStyle.CIRCULAR,
-            onClick: e => RemotePlayManager.getInstance()?.togglePopup(),
-        });
+        if (isFullVersion()) {
+            this.$btnRemotePlay = createButton({
+                classes: ['bx-header-remote-play-button', 'bx-gone'],
+                icon: BxIcon.REMOTE_PLAY,
+                title: t('remote-play'),
+                style: ButtonStyle.GHOST | ButtonStyle.FOCUSABLE | ButtonStyle.CIRCULAR,
+                onClick: e => RemotePlayManager.getInstance()?.togglePopup(),
+            });
+        } else {
+            this.$btnRemotePlay = null;
+        }
 
         this.$btnSettings = createButton({
             classes: ['bx-header-settings-button'],
@@ -98,7 +104,7 @@ export class HeaderSection {
     }
 
     showRemotePlayButton() {
-        this.$btnRemotePlay.classList.remove('bx-gone');
+        this.$btnRemotePlay?.classList.remove('bx-gone');
     }
 
     static watchHeader() {
