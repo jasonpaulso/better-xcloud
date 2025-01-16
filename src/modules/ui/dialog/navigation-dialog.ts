@@ -410,6 +410,9 @@ export class NavigationDialogManager {
 
         BxEventBus.Script.emit('dialog.shown', {});
 
+        // Stop xCloud's navigation polling
+        window.BX_EXPOSED.disableGamepadPolling = true;
+
         // Lock scroll bar
         document.body.classList.add('bx-no-scroll');
 
@@ -436,18 +439,11 @@ export class NavigationDialogManager {
         this.$container.addEventListener('keydown', this);
 
         // Start gamepad polling
-        if (isFullVersion()) {
-            this.startGamepadPolling();
-        }
+        this.startGamepadPolling();
     }
 
     hide() {
-        // Stop gamepad polling
-        if (isFullVersion()) {
-            this.clearGamepadHoldingInterval();
-            this.stopGamepadPolling();
-        }
-
+        this.clearGamepadHoldingInterval();
         if (!this.isShowing()) {
             return;
         }
@@ -465,6 +461,9 @@ export class NavigationDialogManager {
         // Remove event listeners
         this.$container.removeEventListener('keydown', this);
 
+        // Stop gamepad polling
+        this.stopGamepadPolling();
+
         // Remove current dialog and everything after it from dialogs stack
         if (this.dialog) {
             const dialogIndex = this.dialogsStack.indexOf(this.dialog);
@@ -475,6 +474,9 @@ export class NavigationDialogManager {
 
         // Unmount dialog
         this.unmountCurrentDialog();
+
+        // Enable xCloud's navigation polling
+        window.BX_EXPOSED.disableGamepadPolling = false;
 
         // Show the last dialog in dialogs stack
         if (this.dialogsStack.length) {
@@ -639,18 +641,16 @@ export class NavigationDialogManager {
     }
 
     private startGamepadPolling() {
-        // Stop xCloud's navigation polling
-        window.BX_EXPOSED.disableGamepadPolling = true;
-
         this.stopGamepadPolling();
-        this.gamepadPollingIntervalId = window.setInterval(this.pollGamepad, NavigationDialogManager.GAMEPAD_POLLING_INTERVAL);
+
+        if (isFullVersion()) {
+            this.gamepadPollingIntervalId = window.setInterval(this.pollGamepad, NavigationDialogManager.GAMEPAD_POLLING_INTERVAL);
+        }
     }
 
     private stopGamepadPolling() {
-        // Enable xCloud's navigation polling
-        window.BX_EXPOSED.disableGamepadPolling = false;
-
         this.gamepadLastStates = [];
+
         this.gamepadPollingIntervalId && window.clearInterval(this.gamepadPollingIntervalId);
         this.gamepadPollingIntervalId = null;
     }
