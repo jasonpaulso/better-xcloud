@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.2.2
+// @version      6.3.0-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -40,6 +40,89 @@ try {
 if (!BX_FLAGS.DeviceInfo.userAgent) BX_FLAGS.DeviceInfo.userAgent = window.navigator.userAgent;
 BxLogger.info("BxFlags", BX_FLAGS);
 var NATIVE_FETCH = window.fetch;
+var ALL_PREFS = {
+ global: [
+  "audio.mic.onPlaying",
+  "audio.volume.booster.enabled",
+  "block.features",
+  "block.tracking",
+  "gameBar.position",
+  "game.fortnite.forceConsole",
+  "loadingScreen.gameArt.show",
+  "loadingScreen.rocket",
+  "loadingScreen.waitTime.show",
+  "mkb.enabled",
+  "mkb.cursor.hideIdle",
+  "nativeMkb.forcedGames",
+  "nativeMkb.mode",
+  "xhome.enabled",
+  "xhome.video.resolution",
+  "screenshot.applyFilters",
+  "server.bypassRestriction",
+  "server.ipv6.prefer",
+  "server.region",
+  "stream.video.codecProfile",
+  "stream.video.combineAudio",
+  "stream.video.maxBitrate",
+  "stream.locale",
+  "stream.video.resolution",
+  "touchController.autoOff",
+  "touchController.opacity.default",
+  "touchController.mode",
+  "touchController.style.custom",
+  "touchController.style.standard",
+  "ui.controllerFriendly",
+  "ui.controllerStatus.show",
+  "ui.feedbackDialog.disabled",
+  "ui.gameCard.waitTime.show",
+  "ui.hideSections",
+  "ui.systemMenu.hideHandle",
+  "ui.imageQuality",
+  "ui.layout",
+  "ui.reduceAnimations",
+  "ui.hideScrollbar",
+  "ui.streamMenu.simplify",
+  "ui.splashVideo.skip",
+  "version.current",
+  "version.lastCheck",
+  "version.latest",
+  "bx.locale",
+  "userAgent.profile"
+ ],
+ stream: [
+  "audio.volume",
+  "controller.pollingRate",
+  "controller.settings",
+  "deviceVibration.intensity",
+  "deviceVibration.mode",
+  "keyboardShortcuts.preset.inGameId",
+  "localCoOp.enabled",
+  "mkb.p1.preset.mappingId",
+  "mkb.p1.slot",
+  "mkb.p2.preset.mappingId",
+  "mkb.p2.slot",
+  "nativeMkb.scroll.sensitivityX",
+  "nativeMkb.scroll.sensitivityY",
+  "stats.colors",
+  "stats.items",
+  "stats.opacity.all",
+  "stats.opacity.background",
+  "stats.position",
+  "stats.quickGlance.enabled",
+  "stats.showWhenPlaying",
+  "stats.textSize",
+  "video.brightness",
+  "video.contrast",
+  "video.maxFps",
+  "video.player.type",
+  "video.position",
+  "video.player.powerPreference",
+  "video.processing",
+  "video.ratio",
+  "video.saturation",
+  "video.processing.sharpness"
+ ]
+};
 var SMART_TV_UNIQUE_ID = "FC4A1DA2-711C-4E9C-BC7F-047AF8A672EA", CHROMIUM_VERSION = "125.0.0.0";
 if (!!window.chrome || window.navigator.userAgent.includes("Chrome")) {
  let match = window.navigator.userAgent.match(/\s(?:Chrome|Edg)\/([\d\.]+)/);
@@ -107,7 +190,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.2.2", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.3.0-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -135,7 +218,7 @@ var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.inclu
  currentStream: {},
  remotePlay: {},
  pointerServerPort: 9269
-}, STORAGE = {};
+};
 function deepClone(obj) {
  if (!obj) return {};
  if ("structuredClone" in window) return structuredClone(obj);
@@ -238,7 +321,7 @@ class BxEventBus {
    } catch (e) {
     console.log(e);
    }
-  BX_FLAGS.Debug && BxLogger.warning("EventBus", "emit", event, payload);
+  BX_FLAGS.Debug && BxLogger.warning("EventBus", "emit", `${this.group}.${event}`, payload);
  }
 }
 window.BxEventBus = BxEventBus;
@@ -776,7 +859,9 @@ class Translations {
   localStorage.setItem(Translations.KEY_LOCALE, locale);
  }
 }
-var t = Translations.get;
+var t = Translations.get, ut = (text) => {
+ return BxLogger.warning("Untranslated text", text), text;
+};
 Translations.init();
 class NavigationUtils {
  static setNearby($elm, nearby) {
@@ -860,7 +945,12 @@ function createButton(options) {
  return $btn;
 }
 function createSettingRow(label, $control, options = {}) {
- let $label, $row = CE("label", { class: "bx-settings-row" }, $label = CE("span", { class: "bx-settings-label" }, options.icon && createSvgIcon(options.icon), label, options.$note), $control), $link = $label.querySelector("a");
+ let $label, $row = CE("label", {
+  class: "bx-settings-row"
+ }, $label = CE("span", { class: "bx-settings-label" }, options.icon && createSvgIcon(options.icon), label, options.$note), $control);
+ if (options.pref) $row.prefKey = options.pref;
+ if (options.onContextMenu) $row.addEventListener("contextmenu", options.onContextMenu);
+ let $link = $label.querySelector("a");
  if ($link) $link.classList.add("bx-focusable"), setNearby($label, {
    focus: $link
   });
@@ -1007,107 +1097,6 @@ class MicrophoneShortcut {
   return !1;
  }
 }
-var BypassServers = {
- br: t("brazil"),
- jp: t("japan"),
- kr: t("korea"),
- pl: t("poland"),
- us: t("united-states")
-}, BypassServerIps = {
- br: "169.150.198.66",
- kr: "121.125.60.151",
- jp: "138.199.21.239",
- pl: "45.134.212.66",
- us: "143.244.47.65"
-};
-class BaseSettingsStore {
- storage;
- storageKey;
- _settings;
- definitions;
- constructor(storageKey, definitions) {
-  this.storage = window.localStorage, this.storageKey = storageKey;
-  let settingId;
-  for (settingId in definitions) {
-   let setting = definitions[settingId];
-   if (typeof setting.requiredVariants === "string") setting.requiredVariants = [setting.requiredVariants];
-   setting.ready && setting.ready.call(this, setting);
-  }
-  this.definitions = definitions, this._settings = null;
- }
- get settings() {
-  if (this._settings) return this._settings;
-  let settings = JSON.parse(this.storage.getItem(this.storageKey) || "{}");
-  for (let key in settings)
-   settings[key] = this.validateValue("get", key, settings[key]);
-  return this._settings = settings, settings;
- }
- getDefinition(key) {
-  if (!this.definitions[key]) {
-   let error = "Request invalid definition: " + key;
-   throw alert(error), Error(error);
-  }
-  return this.definitions[key];
- }
- getSetting(key, checkUnsupported = !0) {
-  let definition = this.definitions[key];
-  if (definition.requiredVariants && !definition.requiredVariants.includes(SCRIPT_VARIANT)) return definition.default;
-  if (checkUnsupported && definition.unsupported) if ("unsupportedValue" in definition) return definition.unsupportedValue;
-   else return definition.default;
-  if (!(key in this.settings)) this.settings[key] = this.validateValue("get", key, null);
-  return this.settings[key];
- }
- setSetting(key, value, emitEvent = !1) {
-  return value = this.validateValue("set", key, value), this.settings[key] = this.validateValue("get", key, value), this.saveSettings(), emitEvent && BxEventBus.Script.emit("setting.changed", {
-   storageKey: this.storageKey,
-   settingKey: key,
-   settingValue: value
-  }), value;
- }
- saveSettings() {
-  this.storage.setItem(this.storageKey, JSON.stringify(this.settings));
- }
- validateValue(action, key, value) {
-  let def = this.definitions[key];
-  if (!def) return value;
-  if (typeof value === "undefined" || value === null) value = def.default;
-  if (def.transformValue && action === "get") value = def.transformValue.get.call(def, value);
-  if ("min" in def) value = Math.max(def.min, value);
-  if ("max" in def) value = Math.min(def.max, value);
-  if ("options" in def) {
-   if (!(value in def.options)) value = def.default;
-  } else if ("multipleOptions" in def) {
-   if (value.length) {
-    let validOptions = Object.keys(def.multipleOptions);
-    value.forEach((item2, idx) => {
-     validOptions.indexOf(item2) === -1 && value.splice(idx, 1);
-    });
-   }
-   if (!value.length) value = def.default;
-  }
-  if (def.transformValue && action === "set") value = def.transformValue.set.call(def, value);
-  return value;
- }
- getLabel(key) {
-  return this.definitions[key].label || key;
- }
- getValueText(key, value) {
-  let definition = this.definitions[key];
-  if ("min" in definition) {
-   let params = definition.params;
-   if (params.customTextValue) {
-    if (definition.transformValue) value = definition.transformValue.get.call(definition, value);
-    let text = params.customTextValue(value, definition.min, definition.max);
-    if (text) return text;
-   }
-   return value.toString();
-  } else if ("options" in definition) {
-   let options = definition.options;
-   if (value in options) return options[value];
-  } else if (typeof value === "boolean") return value ? t("on") : t("off");
-  return value.toString();
- }
-}
 class LocalDb {
  static instance;
  static getInstance = () => LocalDb.instance ?? (LocalDb.instance = new LocalDb);
@@ -1156,226 +1145,107 @@ class LocalDb {
   });
  }
 }
-class BaseLocalTable {
- tableName;
- constructor(tableName) {
-  this.tableName = tableName;
+var BypassServers = {
+ br: t("brazil"),
+ jp: t("japan"),
+ kr: t("korea"),
+ pl: t("poland"),
+ us: t("united-states")
+}, BypassServerIps = {
+ br: "169.150.198.66",
+ kr: "121.125.60.151",
+ jp: "138.199.21.239",
+ pl: "45.134.212.66",
+ us: "143.244.47.65"
+};
+class BaseSettingsStorage {
+ storage;
+ storageKey;
+ _settings;
+ definitions;
+ constructor(storageKey, definitions) {
+  this.storage = window.localStorage, this.storageKey = storageKey;
+  for (let [_, setting] of Object.entries(definitions)) {
+   if (typeof setting.requiredVariants === "string") setting.requiredVariants = [setting.requiredVariants];
+   setting.ready && setting.ready.call(this, setting);
+  }
+  this.definitions = definitions, this._settings = null;
  }
- async prepareTable(type = "readonly") {
-  return (await LocalDb.getInstance().open()).transaction(this.tableName, type).objectStore(this.tableName);
+ get settings() {
+  if (this._settings) return this._settings;
+  let settings = JSON.parse(this.storage.getItem(this.storageKey) || "{}");
+  for (let key in settings)
+   settings[key] = this.validateValue("get", key, settings[key]);
+  return this._settings = settings, settings;
  }
- call(method) {
-  return new Promise((resolve) => {
-   let request = method.call(null, ...Array.from(arguments).slice(1));
-   request.onsuccess = (e) => {
-    resolve(e.target.result);
-   };
-  });
+ getDefinition(key) {
+  if (!this.definitions[key]) return alert("Request invalid definition: " + key), {};
+  return this.definitions[key];
  }
- async count() {
-  let table = await this.prepareTable();
-  return this.call(table.count.bind(table));
+ hasSetting(key) {
+  return key in this.settings;
  }
- async add(data) {
-  let table = await this.prepareTable("readwrite");
-  return this.call(table.add.bind(table), ...arguments);
+ getSetting(key, checkUnsupported = !0) {
+  let definition = this.definitions[key];
+  if (definition.requiredVariants && !definition.requiredVariants.includes(SCRIPT_VARIANT)) return isPlainObject(definition.default) ? deepClone(definition.default) : definition.default;
+  if (checkUnsupported && definition.unsupported) if ("unsupportedValue" in definition) return definition.unsupportedValue;
+   else return isPlainObject(definition.default) ? deepClone(definition.default) : definition.default;
+  if (!(key in this.settings)) this.settings[key] = this.validateValue("get", key, null);
+  return isPlainObject(this.settings[key]) ? deepClone(this.settings[key]) : this.settings[key];
  }
- async put(data) {
-  let table = await this.prepareTable("readwrite");
-  return this.call(table.put.bind(table), ...arguments);
+ setSetting(key, value, origin) {
+  if (value = this.validateValue("set", key, value), this.settings[key] = this.validateValue("get", key, value), this.saveSettings(), origin === "ui") if (isStreamPref(key)) BxEventBus.Stream.emit("setting.changed", {
+     storageKey: this.storageKey,
+     settingKey: key
+    });
+   else BxEventBus.Script.emit("setting.changed", {
+     storageKey: this.storageKey,
+     settingKey: key
+    });
+  return value;
  }
- async delete(id) {
-  let table = await this.prepareTable("readwrite");
-  return this.call(table.delete.bind(table), ...arguments);
+ saveSettings() {
+  this.storage.setItem(this.storageKey, JSON.stringify(this.settings));
  }
- async get(id) {
-  let table = await this.prepareTable();
-  return this.call(table.get.bind(table), ...arguments);
- }
- async getAll() {
-  let table = await this.prepareTable(), all = await this.call(table.getAll.bind(table), ...arguments), results = {};
-  return all.forEach((item2) => {
-   results[item2.id] = item2;
-  }), results;
- }
-}
-class BasePresetsTable extends BaseLocalTable {
- async newPreset(name, data) {
-  let newRecord = { name, data };
-  return await this.add(newRecord);
- }
- async updatePreset(preset) {
-  return await this.put(preset);
- }
- async deletePreset(id) {
-  return this.delete(id);
- }
- async getPreset(id) {
-  if (id === 0) return null;
-  if (id < 0) return this.DEFAULT_PRESETS[id];
-  let preset = await this.get(id);
-  if (!preset) preset = this.DEFAULT_PRESETS[this.DEFAULT_PRESET_ID];
-  return preset;
- }
- async getPresets() {
-  let all = deepClone(this.DEFAULT_PRESETS), presets = {
-   default: Object.keys(this.DEFAULT_PRESETS).map((key) => parseInt(key)),
-   custom: [],
-   data: {}
-  };
-  if (await this.count() > 0) {
-   let items = await this.getAll(), id;
-   for (id in items) {
-    let item2 = items[id];
-    presets.custom.push(item2.id), all[item2.id] = item2;
+ validateValue(action, key, value) {
+  let def = this.definitions[key];
+  if (!def) return value;
+  if (typeof value === "undefined" || value === null) value = def.default;
+  if (def.transformValue && action === "get") value = def.transformValue.get.call(def, value);
+  if ("min" in def) value = Math.max(def.min, value);
+  if ("max" in def) value = Math.min(def.max, value);
+  if ("options" in def) {
+   if (!(value in def.options)) value = def.default;
+  } else if ("multipleOptions" in def) {
+   if (value.length) {
+    let validOptions = Object.keys(def.multipleOptions);
+    value.forEach((item2, idx) => {
+     validOptions.indexOf(item2) === -1 && value.splice(idx, 1);
+    });
    }
+   if (!value.length) value = def.default;
   }
-  return presets.data = all, presets;
+  if (def.transformValue && action === "set") value = def.transformValue.set.call(def, value);
+  return value;
  }
- async getPresetsData() {
-  let presetsData = {};
-  for (let id in this.DEFAULT_PRESETS) {
-   let preset = this.DEFAULT_PRESETS[id];
-   presetsData[id] = deepClone(preset.data);
-  }
-  if (await this.count() > 0) {
-   let items = await this.getAll(), id;
-   for (id in items) {
-    let item2 = items[id];
-    presetsData[item2.id] = item2.data;
-   }
-  }
-  return presetsData;
+ getLabel(key) {
+  return this.definitions[key].label || key;
  }
-}
-class MkbMappingPresetsTable extends BasePresetsTable {
- static instance;
- static getInstance = () => MkbMappingPresetsTable.instance ?? (MkbMappingPresetsTable.instance = new MkbMappingPresetsTable);
- LOG_TAG = "MkbMappingPresetsTable";
- TABLE_PRESETS = LocalDb.TABLE_VIRTUAL_CONTROLLERS;
- DEFAULT_PRESETS = {
-  [-1]: {
-   id: -1,
-   name: t("standard"),
-   data: {
-    mapping: {
-     16: ["Backquote"],
-     12: ["ArrowUp", "Digit1"],
-     13: ["ArrowDown", "Digit2"],
-     14: ["ArrowLeft", "Digit3"],
-     15: ["ArrowRight", "Digit4"],
-     100: ["KeyW"],
-     101: ["KeyS"],
-     102: ["KeyA"],
-     103: ["KeyD"],
-     200: ["KeyU"],
-     201: ["KeyJ"],
-     202: ["KeyH"],
-     203: ["KeyK"],
-     0: ["Space", "KeyE"],
-     2: ["KeyR"],
-     1: ["KeyC", "Backspace"],
-     3: ["KeyV"],
-     9: ["Enter"],
-     8: ["Tab"],
-     4: ["KeyQ"],
-     5: ["KeyF"],
-     7: ["Mouse0"],
-     6: ["Mouse2"],
-     10: ["KeyX"],
-     11: ["KeyZ"]
-    },
-    mouse: {
-     mapTo: 2,
-     sensitivityX: 100,
-     sensitivityY: 100,
-     deadzoneCounterweight: 20
-    }
+ getValueText(key, value) {
+  let definition = this.definitions[key];
+  if ("min" in definition) {
+   let params = definition.params;
+   if (params.customTextValue) {
+    if (definition.transformValue) value = definition.transformValue.get.call(definition, value);
+    let text = params.customTextValue(value, definition.min, definition.max);
+    if (text) return text;
    }
-  },
-  [-2]: {
-   id: -2,
-   name: "Shooter",
-   data: {
-    mapping: {
-     16: ["Backquote"],
-     12: ["ArrowUp"],
-     13: ["ArrowDown"],
-     14: ["ArrowLeft"],
-     15: ["ArrowRight"],
-     100: ["KeyW"],
-     101: ["KeyS"],
-     102: ["KeyA"],
-     103: ["KeyD"],
-     200: ["KeyI"],
-     201: ["KeyK"],
-     202: ["KeyJ"],
-     203: ["KeyL"],
-     0: ["Space", "KeyE"],
-     2: ["KeyR"],
-     1: ["ControlLeft", "Backspace"],
-     3: ["KeyV"],
-     9: ["Enter"],
-     8: ["Tab"],
-     4: ["KeyC", "KeyG"],
-     5: ["KeyQ"],
-     7: ["Mouse0"],
-     6: ["Mouse2"],
-     10: ["ShiftLeft"],
-     11: ["KeyF"]
-    },
-    mouse: {
-     mapTo: 2,
-     sensitivityX: 100,
-     sensitivityY: 100,
-     deadzoneCounterweight: 20
-    }
-   }
-  }
- };
- BLANK_PRESET_DATA = {
-  mapping: {},
-  mouse: {
-   mapTo: 2,
-   sensitivityX: 100,
-   sensitivityY: 100,
-   deadzoneCounterweight: 20
-  }
- };
- DEFAULT_PRESET_ID = -1;
- constructor() {
-  super(LocalDb.TABLE_VIRTUAL_CONTROLLERS);
-  BxLogger.info(this.LOG_TAG, "constructor()");
- }
-}
-class KeyboardShortcutsTable extends BasePresetsTable {
- static instance;
- static getInstance = () => KeyboardShortcutsTable.instance ?? (KeyboardShortcutsTable.instance = new KeyboardShortcutsTable);
- LOG_TAG = "KeyboardShortcutsTable";
- TABLE_PRESETS = LocalDb.TABLE_KEYBOARD_SHORTCUTS;
- DEFAULT_PRESETS = {
-  [-1]: {
-   id: -1,
-   name: t("standard"),
-   data: {
-    mapping: {
-     "mkb.toggle": {
-      code: "F8"
-     },
-     "stream.screenshot.capture": {
-      code: "Slash"
-     }
-    }
-   }
-  }
- };
- BLANK_PRESET_DATA = {
-  mapping: {}
- };
- DEFAULT_PRESET_ID = -1;
- constructor() {
-  super(LocalDb.TABLE_KEYBOARD_SHORTCUTS);
-  BxLogger.info(this.LOG_TAG, "constructor()");
+   return value.toString();
+  } else if ("options" in definition) {
+   let options = definition.options;
+   if (value in options) return options[value];
+  } else if (typeof value === "boolean") return value ? t("on") : t("off");
+  return value.toString();
  }
 }
 var BxIcon = {
@@ -1437,7 +1307,7 @@ function getSupportedCodecProfiles() {
   else options["high"] = t("visual-quality-high");
  return options;
 }
-class GlobalSettingsStorage extends BaseSettingsStore {
+class GlobalSettingsStorage extends BaseSettingsStorage {
  static DEFINITIONS = {
   "version.lastCheck": {
    default: 0
@@ -1545,7 +1415,7 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    default: !1
   },
   "ui.systemMenu.hideHandle": {
-   label: t("hide-system-menu-icon"),
+   label: "⣿ " + t("hide-system-menu-icon"),
    default: !1
   },
   "ui.imageQuality": {
@@ -1675,59 +1545,9 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "bottom-right": t("bottom-right")
    }
   },
-  "localCoOp.enabled": {
-   requiredVariants: "full",
-   label: t("enable-local-co-op-support"),
-   labelIcon: BxIcon.LOCAL_CO_OP,
-   default: !1,
-   note: () => CE("div", !1, CE("a", {
-    href: "https://github.com/redphx/better-xcloud/discussions/275",
-    target: "_blank"
-   }, t("enable-local-co-op-support-note")), CE("br"), "⚠️ " + t("unexpected-behavior"))
-  },
   "ui.controllerStatus.show": {
    label: t("show-controller-connection-status"),
    default: !0
-  },
-  "deviceVibration.mode": {
-   requiredVariants: "full",
-   label: t("device-vibration"),
-   default: "off",
-   options: {
-    off: t("off"),
-    on: t("on"),
-    auto: t("device-vibration-not-using-gamepad")
-   }
-  },
-  "deviceVibration.intensity": {
-   requiredVariants: "full",
-   label: t("vibration-intensity"),
-   default: 50,
-   min: 10,
-   max: 100,
-   params: {
-    steps: 10,
-    suffix: "%",
-    exactTicks: 20
-   }
-  },
-  "controller.pollingRate": {
-   requiredVariants: "full",
-   label: t("polling-rate"),
-   default: 4,
-   min: 4,
-   max: 60,
-   params: {
-    steps: 4,
-    exactTicks: 20,
-    reverse: !0,
-    customTextValue(value) {
-     value = parseInt(value);
-     let text = +(1000 / value).toFixed(2) + " Hz";
-     if (value === 4) text = `${text} (${t("default")})`;
-     return text;
-    }
-   }
   },
   "mkb.enabled": {
    requiredVariants: "full",
@@ -1771,69 +1591,6 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    params: {
     size: 6
    }
-  },
-  "nativeMkb.scroll.sensitivityX": {
-   requiredVariants: "full",
-   label: t("horizontal-scroll-sensitivity"),
-   default: 0,
-   min: 0,
-   max: 1e4,
-   params: {
-    steps: 10,
-    exactTicks: 2000,
-    customTextValue: (value) => {
-     if (!value) return t("default");
-     return (value / 100).toFixed(1) + "x";
-    }
-   }
-  },
-  "nativeMkb.scroll.sensitivityY": {
-   requiredVariants: "full",
-   label: t("vertical-scroll-sensitivity"),
-   default: 0,
-   min: 0,
-   max: 1e4,
-   params: {
-    steps: 10,
-    exactTicks: 2000,
-    customTextValue: (value) => {
-     if (!value) return t("default");
-     return (value / 100).toFixed(1) + "x";
-    }
-   }
-  },
-  "mkb.p1.preset.mappingId": {
-   requiredVariants: "full",
-   default: -1
-  },
-  "mkb.p1.slot": {
-   requiredVariants: "full",
-   default: 1,
-   min: 1,
-   max: 4,
-   params: {
-    hideSlider: !0
-   }
-  },
-  "mkb.p2.preset.mappingId": {
-   requiredVariants: "full",
-   default: 0
-  },
-  "mkb.p2.slot": {
-   requiredVariants: "full",
-   default: 0,
-   min: 0,
-   max: 4,
-   params: {
-    hideSlider: !0,
-    customTextValue(value) {
-     return value = parseInt(value), value === 0 ? t("off") : value.toString();
-    }
-   }
-  },
-  "keyboardShortcuts.preset.inGameId": {
-   requiredVariants: "full",
-   default: -1
   },
   "ui.reduceAnimations": {
    label: t("reduce-animations"),
@@ -1925,6 +1682,461 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     "smarttv-tizen": "Samsung Smart TV",
     custom: t("custom")
    }
+  },
+  "audio.mic.onPlaying": {
+   label: t("enable-mic-on-startup"),
+   default: !1
+  },
+  "audio.volume.booster.enabled": {
+   requiredVariants: "full",
+   label: t("enable-volume-control"),
+   default: !1
+  },
+  "xhome.enabled": {
+   requiredVariants: "full",
+   label: t("enable-remote-play-feature"),
+   labelIcon: BxIcon.REMOTE_PLAY,
+   default: !1
+  },
+  "xhome.video.resolution": {
+   requiredVariants: "full",
+   default: "1080p",
+   options: {
+    "720p": "720p",
+    "1080p": "1080p",
+    "1080p-hq": "1080p (HQ)"
+   }
+  },
+  "game.fortnite.forceConsole": {
+   requiredVariants: "full",
+   label: "🎮 " + t("fortnite-force-console-version"),
+   default: !1,
+   note: t("fortnite-allow-stw-mode")
+  }
+ };
+ constructor() {
+  super("BetterXcloud", GlobalSettingsStorage.DEFINITIONS);
+ }
+}
+class BaseLocalTable {
+ tableName;
+ constructor(tableName) {
+  this.tableName = tableName;
+ }
+ async prepareTable(type = "readonly") {
+  return (await LocalDb.getInstance().open()).transaction(this.tableName, type).objectStore(this.tableName);
+ }
+ call(method) {
+  return new Promise((resolve) => {
+   let request = method.call(null, ...Array.from(arguments).slice(1));
+   request.onsuccess = (e) => {
+    resolve(e.target.result);
+   };
+  });
+ }
+ async count() {
+  let table = await this.prepareTable();
+  return this.call(table.count.bind(table));
+ }
+ async add(data) {
+  let table = await this.prepareTable("readwrite");
+  return this.call(table.add.bind(table), ...arguments);
+ }
+ async put(data) {
+  let table = await this.prepareTable("readwrite");
+  return this.call(table.put.bind(table), ...arguments);
+ }
+ async delete(id) {
+  let table = await this.prepareTable("readwrite");
+  return this.call(table.delete.bind(table), ...arguments);
+ }
+ async get(id) {
+  let table = await this.prepareTable();
+  return this.call(table.get.bind(table), ...arguments);
+ }
+ async getAll() {
+  let table = await this.prepareTable(), all = await this.call(table.getAll.bind(table), ...arguments), results = {};
+  return all.forEach((item2) => {
+   results[item2.id] = item2;
+  }), results;
+ }
+}
+class BasePresetsTable extends BaseLocalTable {
+ async newPreset(name, data) {
+  let newRecord = { name, data };
+  return await this.add(newRecord);
+ }
+ async updatePreset(preset) {
+  return await this.put(preset);
+ }
+ async deletePreset(id) {
+  return this.delete(id);
+ }
+ async getPreset(id) {
+  if (id === 0) return null;
+  if (id < 0) return this.DEFAULT_PRESETS[id];
+  let preset = await this.get(id);
+  if (!preset) preset = this.DEFAULT_PRESETS[this.DEFAULT_PRESET_ID];
+  return preset;
+ }
+ async getPresets() {
+  let all = deepClone(this.DEFAULT_PRESETS), presets = {
+   default: Object.keys(this.DEFAULT_PRESETS).map((key) => parseInt(key)),
+   custom: [],
+   data: {}
+  };
+  if (await this.count() > 0) {
+   let items = await this.getAll(), id;
+   for (id in items) {
+    let item2 = items[id];
+    presets.custom.push(item2.id), all[item2.id] = item2;
+   }
+  }
+  return presets.data = all, presets;
+ }
+ async getPresetsData() {
+  let presetsData = {};
+  for (let id in this.DEFAULT_PRESETS) {
+   let preset = this.DEFAULT_PRESETS[id];
+   presetsData[id] = deepClone(preset.data);
+  }
+  if (await this.count() > 0) {
+   let items = await this.getAll(), id;
+   for (id in items) {
+    let item2 = items[id];
+    presetsData[item2.id] = item2.data;
+   }
+  }
+  return presetsData;
+ }
+}
+class KeyboardShortcutsTable extends BasePresetsTable {
+ static instance;
+ static getInstance = () => KeyboardShortcutsTable.instance ?? (KeyboardShortcutsTable.instance = new KeyboardShortcutsTable);
+ LOG_TAG = "KeyboardShortcutsTable";
+ TABLE_PRESETS = LocalDb.TABLE_KEYBOARD_SHORTCUTS;
+ DEFAULT_PRESETS = {
+  [-1]: {
+   id: -1,
+   name: t("standard"),
+   data: {
+    mapping: {
+     "mkb.toggle": {
+      code: "F8"
+     },
+     "stream.screenshot.capture": {
+      code: "Slash"
+     }
+    }
+   }
+  }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {}
+ };
+ DEFAULT_PRESET_ID = -1;
+ constructor() {
+  super(LocalDb.TABLE_KEYBOARD_SHORTCUTS);
+  BxLogger.info(this.LOG_TAG, "constructor()");
+ }
+}
+class MkbMappingPresetsTable extends BasePresetsTable {
+ static instance;
+ static getInstance = () => MkbMappingPresetsTable.instance ?? (MkbMappingPresetsTable.instance = new MkbMappingPresetsTable);
+ LOG_TAG = "MkbMappingPresetsTable";
+ TABLE_PRESETS = LocalDb.TABLE_VIRTUAL_CONTROLLERS;
+ DEFAULT_PRESETS = {
+  [-1]: {
+   id: -1,
+   name: t("standard"),
+   data: {
+    mapping: {
+     16: ["Backquote"],
+     12: ["ArrowUp", "Digit1"],
+     13: ["ArrowDown", "Digit2"],
+     14: ["ArrowLeft", "Digit3"],
+     15: ["ArrowRight", "Digit4"],
+     100: ["KeyW"],
+     101: ["KeyS"],
+     102: ["KeyA"],
+     103: ["KeyD"],
+     200: ["KeyU"],
+     201: ["KeyJ"],
+     202: ["KeyH"],
+     203: ["KeyK"],
+     0: ["Space", "KeyE"],
+     2: ["KeyR"],
+     1: ["KeyC", "Backspace"],
+     3: ["KeyV"],
+     9: ["Enter"],
+     8: ["Tab"],
+     4: ["KeyQ"],
+     5: ["KeyF"],
+     7: ["Mouse0"],
+     6: ["Mouse2"],
+     10: ["KeyX"],
+     11: ["KeyZ"]
+    },
+    mouse: {
+     mapTo: 2,
+     sensitivityX: 100,
+     sensitivityY: 100,
+     deadzoneCounterweight: 20
+    }
+   }
+  },
+  [-2]: {
+   id: -2,
+   name: "Shooter",
+   data: {
+    mapping: {
+     16: ["Backquote"],
+     12: ["ArrowUp"],
+     13: ["ArrowDown"],
+     14: ["ArrowLeft"],
+     15: ["ArrowRight"],
+     100: ["KeyW"],
+     101: ["KeyS"],
+     102: ["KeyA"],
+     103: ["KeyD"],
+     200: ["KeyI"],
+     201: ["KeyK"],
+     202: ["KeyJ"],
+     203: ["KeyL"],
+     0: ["Space", "KeyE"],
+     2: ["KeyR"],
+     1: ["ControlLeft", "Backspace"],
+     3: ["KeyV"],
+     9: ["Enter"],
+     8: ["Tab"],
+     4: ["KeyC", "KeyG"],
+     5: ["KeyQ"],
+     7: ["Mouse0"],
+     6: ["Mouse2"],
+     10: ["ShiftLeft"],
+     11: ["KeyF"]
+    },
+    mouse: {
+     mapTo: 2,
+     sensitivityX: 100,
+     sensitivityY: 100,
+     deadzoneCounterweight: 20
+    }
+   }
+  }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  mouse: {
+   mapTo: 2,
+   sensitivityX: 100,
+   sensitivityY: 100,
+   deadzoneCounterweight: 20
+  }
+ };
+ DEFAULT_PRESET_ID = -1;
+ constructor() {
+  super(LocalDb.TABLE_VIRTUAL_CONTROLLERS);
+  BxLogger.info(this.LOG_TAG, "constructor()");
+ }
+}
+class GameSettingsStorage extends BaseSettingsStorage {
+ constructor(id) {
+  super(`${"BetterXcloud.Stream"}.${id}`, StreamSettingsStorage.DEFINITIONS);
+ }
+ deleteSetting(pref) {
+  if (this.hasSetting(pref)) return delete this.settings[pref], this.saveSettings(), !0;
+  return !1;
+ }
+}
+class ControllerCustomizationsTable extends BasePresetsTable {
+ static instance;
+ static getInstance = () => ControllerCustomizationsTable.instance ?? (ControllerCustomizationsTable.instance = new ControllerCustomizationsTable(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS));
+ TABLE_PRESETS = LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS;
+ DEFAULT_PRESETS = {
+  [-1]: {
+   id: -1,
+   name: "ABXY ⇄ BAYX",
+   data: {
+    mapping: {
+     0: 1,
+     1: 0,
+     2: 3,
+     3: 2
+    },
+    settings: {
+     leftStickDeadzone: [0, 100],
+     rightStickDeadzone: [0, 100],
+     leftTriggerRange: [0, 100],
+     rightTriggerRange: [0, 100],
+     vibrationIntensity: 100
+    }
+   }
+  }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {},
+  settings: {
+   leftTriggerRange: [0, 100],
+   rightTriggerRange: [0, 100],
+   leftStickDeadzone: [0, 100],
+   rightStickDeadzone: [0, 100],
+   vibrationIntensity: 100
+  }
+ };
+ DEFAULT_PRESET_ID = 0;
+}
+class ControllerShortcutsTable extends BasePresetsTable {
+ static instance;
+ static getInstance = () => ControllerShortcutsTable.instance ?? (ControllerShortcutsTable.instance = new ControllerShortcutsTable);
+ LOG_TAG = "ControllerShortcutsTable";
+ TABLE_PRESETS = LocalDb.TABLE_CONTROLLER_SHORTCUTS;
+ DEFAULT_PRESETS = {
+  [-1]: {
+   id: -1,
+   name: "Type A",
+   data: {
+    mapping: {
+     3: AppInterface ? "device.volume.inc" : "stream.volume.inc",
+     0: AppInterface ? "device.volume.dec" : "stream.volume.dec",
+     2: "stream.stats.toggle",
+     1: AppInterface ? "device.sound.toggle" : "stream.sound.toggle",
+     5: "stream.screenshot.capture",
+     9: "stream.menu.show"
+    }
+   }
+  },
+  [-2]: {
+   id: -2,
+   name: "Type B",
+   data: {
+    mapping: {
+     12: AppInterface ? "device.volume.inc" : "stream.volume.inc",
+     13: AppInterface ? "device.volume.dec" : "stream.volume.dec",
+     15: "stream.stats.toggle",
+     14: AppInterface ? "device.sound.toggle" : "stream.sound.toggle",
+     4: "stream.screenshot.capture",
+     8: "stream.menu.show"
+    }
+   }
+  }
+ };
+ BLANK_PRESET_DATA = {
+  mapping: {}
+ };
+ DEFAULT_PRESET_ID = -1;
+ constructor() {
+  super(LocalDb.TABLE_CONTROLLER_SHORTCUTS);
+  BxLogger.info(this.LOG_TAG, "constructor()");
+ }
+}
+class StreamSettingsStorage extends BaseSettingsStorage {
+ static DEFINITIONS = {
+  "deviceVibration.mode": {
+   requiredVariants: "full",
+   label: t("device-vibration"),
+   default: "off",
+   options: {
+    off: t("off"),
+    on: t("on"),
+    auto: t("device-vibration-not-using-gamepad")
+   }
+  },
+  "deviceVibration.intensity": {
+   requiredVariants: "full",
+   label: t("vibration-intensity"),
+   default: 50,
+   min: 10,
+   max: 100,
+   params: {
+    steps: 10,
+    suffix: "%",
+    exactTicks: 20
+   }
+  },
+  "controller.pollingRate": {
+   requiredVariants: "full",
+   label: t("polling-rate"),
+   default: 4,
+   min: 4,
+   max: 60,
+   params: {
+    steps: 4,
+    exactTicks: 20,
+    reverse: !0,
+    customTextValue(value) {
+     value = parseInt(value);
+     let text = +(1000 / value).toFixed(2) + " Hz";
+     if (value === 4) text = `${text} (${t("default")})`;
+     return text;
+    }
+   }
+  },
+  "controller.settings": {
+   default: {}
+  },
+  "nativeMkb.scroll.sensitivityX": {
+   requiredVariants: "full",
+   label: t("horizontal-scroll-sensitivity"),
+   default: 0,
+   min: 0,
+   max: 1e4,
+   params: {
+    steps: 10,
+    exactTicks: 2000,
+    customTextValue: (value) => {
+     if (!value) return t("default");
+     return (value / 100).toFixed(1) + "x";
+    }
+   }
+  },
+  "nativeMkb.scroll.sensitivityY": {
+   requiredVariants: "full",
+   label: t("vertical-scroll-sensitivity"),
+   default: 0,
+   min: 0,
+   max: 1e4,
+   params: {
+    steps: 10,
+    exactTicks: 2000,
+    customTextValue: (value) => {
+     if (!value) return t("default");
+     return (value / 100).toFixed(1) + "x";
+    }
+   }
+  },
+  "mkb.p1.preset.mappingId": {
+   requiredVariants: "full",
+   default: -1
+  },
+  "mkb.p1.slot": {
+   requiredVariants: "full",
+   default: 1,
+   min: 1,
+   max: 4,
+   params: {
+    hideSlider: !0
+   }
+  },
+  "mkb.p2.preset.mappingId": {
+   requiredVariants: "full",
+   default: 0
+  },
+  "mkb.p2.slot": {
+   requiredVariants: "full",
+   default: 0,
+   min: 0,
+   max: 4,
+   params: {
+    hideSlider: !0,
+    customTextValue(value) {
+     return value = parseInt(value), value === 0 ? t("off") : value.toString();
+    }
+   }
+  },
+  "keyboardShortcuts.preset.inGameId": {
+   requiredVariants: "full",
+   default: -1
   },
   "video.player.type": {
    label: t("renderer"),
@@ -2046,15 +2258,6 @@ class GlobalSettingsStorage extends BaseSettingsStore {
     ticks: 25
    }
   },
-  "audio.mic.onPlaying": {
-   label: t("enable-mic-on-startup"),
-   default: !1
-  },
-  "audio.volume.booster.enabled": {
-   requiredVariants: "full",
-   label: t("enable-volume-control"),
-   default: !1
-  },
   "audio.volume": {
    label: t("volume"),
    default: 100,
@@ -2145,39 +2348,94 @@ class GlobalSettingsStorage extends BaseSettingsStore {
    label: t("conditional-formatting"),
    default: !1
   },
-  "xhome.enabled": {
+  "localCoOp.enabled": {
    requiredVariants: "full",
-   label: t("enable-remote-play-feature"),
-   default: !1
-  },
-  "xhome.video.resolution": {
-   requiredVariants: "full",
-   default: "1080p",
-   options: {
-    "720p": "720p",
-    "1080p": "1080p",
-    "1080p-hq": "1080p (HQ)"
-   }
-  },
-  "game.fortnite.forceConsole": {
-   requiredVariants: "full",
-   label: "🎮 " + t("fortnite-force-console-version"),
+   label: t("enable-local-co-op-support"),
+   labelIcon: BxIcon.LOCAL_CO_OP,
    default: !1,
-   note: t("fortnite-allow-stw-mode")
+   note: () => CE("div", !1, CE("a", {
+    href: "https://github.com/redphx/better-xcloud/discussions/275",
+    target: "_blank"
+   }, t("enable-local-co-op-support-note")), CE("br"), "⚠️ " + t("unexpected-behavior"))
   }
  };
+ gameSettings = {};
+ xboxTitleId = -1;
  constructor() {
-  super("BetterXcloud", GlobalSettingsStorage.DEFINITIONS);
+  super("BetterXcloud.Stream", StreamSettingsStorage.DEFINITIONS);
+ }
+ setGameId(id) {
+  this.xboxTitleId = id;
+ }
+ getGameSettings(id) {
+  if (id > -1) {
+   if (!this.gameSettings[id]) this.gameSettings[id] = new GameSettingsStorage(id);
+   return this.gameSettings[id];
+  }
+  return null;
+ }
+ getSetting(key, checkUnsupported) {
+  return this.getSettingByGame(this.xboxTitleId, key, !0, checkUnsupported);
+ }
+ getSettingByGame(id, key, returnBaseValue = !0, checkUnsupported) {
+  let gameSettings = this.getGameSettings(id);
+  if (gameSettings?.hasSetting(key)) return gameSettings.getSetting(key, checkUnsupported);
+  if (returnBaseValue) return super.getSetting(key, checkUnsupported);
+  return;
+ }
+ setSetting(key, value, origin) {
+  return this.setSettingByGame(this.xboxTitleId, key, value, origin);
+ }
+ setSettingByGame(id, key, value, origin) {
+  let gameSettings = this.getGameSettings(id);
+  if (gameSettings) return BxLogger.info("setSettingByGame", id, key, value), gameSettings.setSetting(key, value, origin);
+  return BxLogger.info("setSettingByGame", id, key, value), super.setSetting(key, value, origin);
+ }
+ hasGameSetting(id, key) {
+  let gameSettings = this.getGameSettings(id);
+  return !!(gameSettings && gameSettings.hasSetting(key));
+ }
+ getControllerSetting(gamepadId) {
+  let controllerSetting = this.getSetting("controller.settings")[gamepadId];
+  if (!controllerSetting) controllerSetting = {};
+  if (!controllerSetting.hasOwnProperty("shortcutPresetId")) controllerSetting.shortcutPresetId = -1;
+  if (!controllerSetting.hasOwnProperty("customizationPresetId")) controllerSetting.customizationPresetId = 0;
+  return controllerSetting;
  }
 }
-var globalSettings = new GlobalSettingsStorage, getPrefDefinition = globalSettings.getDefinition.bind(globalSettings), getPref = globalSettings.getSetting.bind(globalSettings), setPref = globalSettings.setSetting.bind(globalSettings);
-STORAGE.Global = globalSettings;
+var STORAGE = {
+ Global: new GlobalSettingsStorage,
+ Stream: new StreamSettingsStorage
+}, streamSettingsStorage = STORAGE.Stream, getStreamPrefDefinition = streamSettingsStorage.getDefinition.bind(streamSettingsStorage), getStreamPref = streamSettingsStorage.getSetting.bind(streamSettingsStorage), setStreamPref = streamSettingsStorage.setSetting.bind(streamSettingsStorage), getGamePref = streamSettingsStorage.getSettingByGame.bind(streamSettingsStorage), setGamePref = streamSettingsStorage.setSettingByGame.bind(streamSettingsStorage), setGameIdPref = streamSettingsStorage.setGameId.bind(streamSettingsStorage), hasGamePref = streamSettingsStorage.hasGameSetting.bind(streamSettingsStorage);
+STORAGE.Stream = streamSettingsStorage;
+var globalSettingsStorage = STORAGE.Global, getGlobalPrefDefinition = globalSettingsStorage.getDefinition.bind(globalSettingsStorage), getGlobalPref = globalSettingsStorage.getSetting.bind(globalSettingsStorage), setGlobalPref = globalSettingsStorage.setSetting.bind(globalSettingsStorage);
+function isGlobalPref(prefKey) {
+ return ALL_PREFS.global.includes(prefKey);
+}
+function isStreamPref(prefKey) {
+ return ALL_PREFS.stream.includes(prefKey);
+}
+function getPrefInfo(prefKey) {
+ if (isGlobalPref(prefKey)) return {
+   storage: STORAGE.Global,
+   definition: getGlobalPrefDefinition(prefKey)
+  };
+ else if (isStreamPref(prefKey)) return {
+   storage: STORAGE.Stream,
+   definition: getStreamPrefDefinition(prefKey)
+  };
+ return alert("Missing pref definition: " + prefKey), {};
+}
+function setPref(prefKey, value, origin) {
+ if (isGlobalPref(prefKey)) setGlobalPref(prefKey, value, origin);
+ else if (isStreamPref(prefKey)) setStreamPref(prefKey, value, origin);
+}
 function checkForUpdate() {
  if (SCRIPT_VERSION.includes("beta")) return;
- let CHECK_INTERVAL_SECONDS = 7200, currentVersion = getPref("version.current"), lastCheck = getPref("version.lastCheck"), now = Math.round(+new Date / 1000);
+ let CHECK_INTERVAL_SECONDS = 7200, currentVersion = getGlobalPref("version.current"), lastCheck = getGlobalPref("version.lastCheck"), now = Math.round(+new Date / 1000);
  if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) return;
- setPref("version.lastCheck", now), fetch("https://api.github.com/repos/redphx/better-xcloud/releases/latest").then((response) => response.json()).then((json) => {
-  setPref("version.latest", json.tag_name.substring(1)), setPref("version.current", SCRIPT_VERSION);
+ setGlobalPref("version.lastCheck", now, "direct"), fetch("https://api.github.com/repos/redphx/better-xcloud/releases/latest").then((response) => response.json()).then((json) => {
+  setGlobalPref("version.latest", json.tag_name.substring(1), "direct"), setGlobalPref("version.current", SCRIPT_VERSION, "direct");
  }), Translations.updateTranslations(currentVersion === SCRIPT_VERSION);
 }
 function disablePwa() {
@@ -2235,32 +2493,35 @@ function clearAllData() {
  alert(t("clear-data-success"));
 }
 function blockAllNotifications() {
- let blockFeatures = getPref("block.features");
+ let blockFeatures = getGlobalPref("block.features");
  return ["friends", "notifications-achievements", "notifications-invites"].every((value) => blockFeatures.includes(value));
 }
 function blockSomeNotifications() {
- let blockFeatures = getPref("block.features");
+ let blockFeatures = getGlobalPref("block.features");
  if (blockAllNotifications()) return !1;
  return ["friends", "notifications-achievements", "notifications-invites"].some((value) => blockFeatures.includes(value));
 }
+function isPlainObject(input) {
+ return typeof input === "object" && input !== null && input.constructor === Object;
+}
 class SoundShortcut {
  static adjustGainNodeVolume(amount) {
-  if (!getPref("audio.volume.booster.enabled")) return 0;
-  let currentValue = getPref("audio.volume"), nearestValue;
+  if (!getGlobalPref("audio.volume.booster.enabled")) return 0;
+  let currentValue = getStreamPref("audio.volume"), nearestValue;
   if (amount > 0) nearestValue = ceilToNearest(currentValue, amount);
   else nearestValue = floorToNearest(currentValue, -1 * amount);
   let newValue;
   if (currentValue !== nearestValue) newValue = nearestValue;
   else newValue = currentValue + amount;
-  return newValue = setPref("audio.volume", newValue, !0), SoundShortcut.setGainNodeVolume(newValue), Toast.show(`${t("stream")} ❯ ${t("volume")}`, newValue + "%", { instant: !0 }), newValue;
+  return newValue = setStreamPref("audio.volume", newValue, "direct"), SoundShortcut.setGainNodeVolume(newValue), Toast.show(`${t("stream")} ❯ ${t("volume")}`, newValue + "%", { instant: !0 }), newValue;
  }
  static setGainNodeVolume(value) {
   STATES.currentStream.audioGainNode && (STATES.currentStream.audioGainNode.gain.value = value / 100);
  }
  static muteUnmute() {
-  if (getPref("audio.volume.booster.enabled") && STATES.currentStream.audioGainNode) {
-   let gainValue = STATES.currentStream.audioGainNode.gain.value, settingValue = getPref("audio.volume"), targetValue;
-   if (settingValue === 0) targetValue = 100, setPref("audio.volume", targetValue, !0);
+  if (getGlobalPref("audio.volume.booster.enabled") && STATES.currentStream.audioGainNode) {
+   let gainValue = STATES.currentStream.audioGainNode.gain.value, settingValue = getStreamPref("audio.volume"), targetValue;
+   if (settingValue === 0) targetValue = 100, setStreamPref("audio.volume", targetValue, "direct");
    else if (gainValue === 0) targetValue = settingValue;
    else targetValue = 0;
    let status;
@@ -2312,7 +2573,7 @@ class StreamStatsCollector {
   fps: {
    current: 0,
    toString() {
-    let maxFps = getPref("video.maxFps");
+    let maxFps = getStreamPref("video.maxFps");
     return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5) : this.current.toString();
    }
   },
@@ -2562,7 +2823,7 @@ class StreamStats {
    this.destroy();
    return;
   }
-  let PREF_STATS_CONDITIONAL_FORMATTING = getPref("stats.colors"), grade = "", statsCollector = StreamStatsCollector.getInstance();
+  let PREF_STATS_CONDITIONAL_FORMATTING = getStreamPref("stats.colors"), grade = "", statsCollector = StreamStatsCollector.getInstance();
   await statsCollector.collect();
   let statKey;
   for (statKey in this.stats) {
@@ -2573,13 +2834,13 @@ class StreamStats {
   }
  };
  refreshStyles() {
-  let PREF_ITEMS = getPref("stats.items"), PREF_OPACITY_BG = getPref("stats.opacity.background"), $container = this.$container;
-  if ($container.dataset.stats = "[" + PREF_ITEMS.join("][") + "]", $container.dataset.position = getPref("stats.position"), PREF_OPACITY_BG === 0) $container.style.removeProperty("background-color"), $container.dataset.shadow = "true";
+  let PREF_ITEMS = getStreamPref("stats.items"), PREF_OPACITY_BG = getStreamPref("stats.opacity.background"), $container = this.$container;
+  if ($container.dataset.stats = "[" + PREF_ITEMS.join("][") + "]", $container.dataset.position = getStreamPref("stats.position"), PREF_OPACITY_BG === 0) $container.style.removeProperty("background-color"), $container.dataset.shadow = "true";
   else delete $container.dataset.shadow, $container.style.backgroundColor = `rgba(0, 0, 0, ${PREF_OPACITY_BG}%)`;
-  $container.style.opacity = getPref("stats.opacity.all") + "%", $container.style.fontSize = getPref("stats.textSize");
+  $container.style.opacity = getStreamPref("stats.opacity.all") + "%", $container.style.fontSize = getStreamPref("stats.textSize");
  }
  hideSettingsUi() {
-  if (this.isGlancing() && !getPref("stats.quickGlance.enabled")) this.stop();
+  if (this.isGlancing() && !getStreamPref("stats.quickGlance.enabled")) this.stop();
  }
  async render() {
   this.$container = CE("div", { class: "bx-stats-bar bx-gone" });
@@ -2595,7 +2856,7 @@ class StreamStats {
  }
  static setupEvents() {
   BxEventBus.Stream.on("state.playing", () => {
-   let PREF_STATS_QUICK_GLANCE = getPref("stats.quickGlance.enabled"), PREF_STATS_SHOW_WHEN_PLAYING = getPref("stats.showWhenPlaying"), streamStats = StreamStats.getInstance();
+   let PREF_STATS_QUICK_GLANCE = getStreamPref("stats.quickGlance.enabled"), PREF_STATS_SHOW_WHEN_PLAYING = getStreamPref("stats.showWhenPlaying"), streamStats = StreamStats.getInstance();
    if (PREF_STATS_SHOW_WHEN_PLAYING) streamStats.start();
    else if (PREF_STATS_QUICK_GLANCE) streamStats.quickGlanceSetup(), !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(!0);
   });
@@ -2605,12 +2866,12 @@ class StreamStats {
  }
 }
 function onChangeVideoPlayerType() {
- let playerType = getPref("video.player.type"), $videoProcessing = document.getElementById(`bx_setting_${escapeCssSelector("video.processing")}`), $videoSharpness = document.getElementById(`bx_setting_${escapeCssSelector("video.processing.sharpness")}`), $videoPowerPreference = document.getElementById(`bx_setting_${escapeCssSelector("video.player.powerPreference")}`), $videoMaxFps = document.getElementById(`bx_setting_${escapeCssSelector("video.maxFps")}`);
+ let playerType = getStreamPref("video.player.type"), $videoProcessing = document.getElementById(`bx_setting_${escapeCssSelector("video.processing")}`), $videoSharpness = document.getElementById(`bx_setting_${escapeCssSelector("video.processing.sharpness")}`), $videoPowerPreference = document.getElementById(`bx_setting_${escapeCssSelector("video.player.powerPreference")}`), $videoMaxFps = document.getElementById(`bx_setting_${escapeCssSelector("video.maxFps")}`);
  if (!$videoProcessing) return;
  let isDisabled = !1, $optCas = $videoProcessing.querySelector(`option[value=${"cas"}]`);
  if (playerType === "webgl2") $optCas && ($optCas.disabled = !1);
- else if ($videoProcessing.value = "usm", setPref("video.processing", "usm"), $optCas && ($optCas.disabled = !0), UserAgent.isSafari()) isDisabled = !0;
- $videoProcessing.disabled = isDisabled, $videoSharpness.dataset.disabled = isDisabled.toString(), $videoPowerPreference.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), $videoMaxFps.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), updateVideoPlayer();
+ else if ($videoProcessing.value = "usm", setStreamPref("video.processing", "usm", "direct"), $optCas && ($optCas.disabled = !0), UserAgent.isSafari()) isDisabled = !0;
+ if ($videoProcessing.disabled = isDisabled, $videoSharpness.dataset.disabled = isDisabled.toString(), $videoPowerPreference.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), $videoMaxFps.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), STATES.isPlaying) updateVideoPlayer();
 }
 function limitVideoPlayerFps(targetFps) {
  STATES.currentStream.streamPlayer?.getWebGL2Player()?.setTargetFps(targetFps);
@@ -2618,15 +2879,15 @@ function limitVideoPlayerFps(targetFps) {
 function updateVideoPlayer() {
  let streamPlayer = STATES.currentStream.streamPlayer;
  if (!streamPlayer) return;
- limitVideoPlayerFps(getPref("video.maxFps"));
+ limitVideoPlayerFps(getStreamPref("video.maxFps"));
  let options = {
-  processing: getPref("video.processing"),
-  sharpness: getPref("video.processing.sharpness"),
-  saturation: getPref("video.saturation"),
-  contrast: getPref("video.contrast"),
-  brightness: getPref("video.brightness")
+  processing: getStreamPref("video.processing"),
+  sharpness: getStreamPref("video.processing.sharpness"),
+  saturation: getStreamPref("video.saturation"),
+  contrast: getStreamPref("video.contrast"),
+  brightness: getStreamPref("video.brightness")
  };
- streamPlayer.setPlayerType(getPref("video.player.type")), streamPlayer.updateOptions(options), streamPlayer.refreshPlayer();
+ streamPlayer.setPlayerType(getStreamPref("video.player.type")), streamPlayer.updateOptions(options), streamPlayer.refreshPlayer();
 }
 window.addEventListener("resize", updateVideoPlayer);
 class KeyHelper {
@@ -2783,120 +3044,21 @@ class MouseDataProvider {
  destroy() {}
 }
 class MkbHandler {}
-class ControllerShortcutsTable extends BasePresetsTable {
- static instance;
- static getInstance = () => ControllerShortcutsTable.instance ?? (ControllerShortcutsTable.instance = new ControllerShortcutsTable);
- LOG_TAG = "ControllerShortcutsTable";
- TABLE_PRESETS = LocalDb.TABLE_CONTROLLER_SHORTCUTS;
- DEFAULT_PRESETS = {
-  [-1]: {
-   id: -1,
-   name: "Type A",
-   data: {
-    mapping: {
-     3: AppInterface ? "device.volume.inc" : "stream.volume.inc",
-     0: AppInterface ? "device.volume.dec" : "stream.volume.dec",
-     2: "stream.stats.toggle",
-     1: AppInterface ? "device.sound.toggle" : "stream.sound.toggle",
-     5: "stream.screenshot.capture",
-     9: "stream.menu.show"
-    }
-   }
-  },
-  [-2]: {
-   id: -2,
-   name: "Type B",
-   data: {
-    mapping: {
-     12: AppInterface ? "device.volume.inc" : "stream.volume.inc",
-     13: AppInterface ? "device.volume.dec" : "stream.volume.dec",
-     15: "stream.stats.toggle",
-     14: AppInterface ? "device.sound.toggle" : "stream.sound.toggle",
-     4: "stream.screenshot.capture",
-     8: "stream.menu.show"
-    }
-   }
-  }
- };
- BLANK_PRESET_DATA = {
-  mapping: {}
- };
- DEFAULT_PRESET_ID = -1;
- constructor() {
-  super(LocalDb.TABLE_CONTROLLER_SHORTCUTS);
-  BxLogger.info(this.LOG_TAG, "constructor()");
- }
-}
-class ControllerCustomizationsTable extends BasePresetsTable {
- static instance;
- static getInstance = () => ControllerCustomizationsTable.instance ?? (ControllerCustomizationsTable.instance = new ControllerCustomizationsTable(LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS));
- TABLE_PRESETS = LocalDb.TABLE_CONTROLLER_CUSTOMIZATIONS;
- DEFAULT_PRESETS = {
-  [-1]: {
-   id: -1,
-   name: "ABXY ⇄ BAYX",
-   data: {
-    mapping: {
-     0: 1,
-     1: 0,
-     2: 3,
-     3: 2
-    },
-    settings: {
-     leftStickDeadzone: [0, 100],
-     rightStickDeadzone: [0, 100],
-     leftTriggerRange: [0, 100],
-     rightTriggerRange: [0, 100],
-     vibrationIntensity: 100
-    }
-   }
-  }
- };
- BLANK_PRESET_DATA = {
-  mapping: {},
-  settings: {
-   leftTriggerRange: [0, 100],
-   rightTriggerRange: [0, 100],
-   leftStickDeadzone: [0, 100],
-   rightStickDeadzone: [0, 100],
-   vibrationIntensity: 100
-  }
- };
- DEFAULT_PRESET_ID = 0;
-}
-class ControllerSettingsTable extends BaseLocalTable {
- static instance;
- static getInstance = () => ControllerSettingsTable.instance ?? (ControllerSettingsTable.instance = new ControllerSettingsTable(LocalDb.TABLE_CONTROLLER_SETTINGS));
- static DEFAULT_DATA = {
-  shortcutPresetId: -1,
-  customizationPresetId: 0
- };
- async getControllerData(id) {
-  let setting = await this.get(id);
-  if (!setting) return deepClone(ControllerSettingsTable.DEFAULT_DATA);
-  return setting.data;
- }
- async getControllersData() {
-  let all = await this.getAll(), results = {};
-  for (let key in all) {
-   if (!all[key]) continue;
-   let settings = Object.assign(all[key].data, ControllerSettingsTable.DEFAULT_DATA);
-   results[key] = settings;
-  }
-  return results;
- }
-}
 function showGamepadToast(gamepad) {
  if (gamepad.id === VIRTUAL_GAMEPAD_ID) return;
+ if (gamepad._noToast) return;
  BxLogger.info("Gamepad", gamepad);
  let text = "🎮";
- if (getPref("localCoOp.enabled")) text += ` #${gamepad.index + 1}`;
+ if (getStreamPref("localCoOp.enabled")) text += ` #${gamepad.index + 1}`;
  let gamepadId = gamepad.id.replace(/ \(.*?Vendor: \w+ Product: \w+\)$/, "");
  text += ` - ${gamepadId}`;
  let status;
  if (gamepad.connected) status = (gamepad.vibrationActuator ? "✅" : "❌") + " " + t("vibration-status");
  else status = t("disconnected");
  Toast.show(text, status, { instant: !1 });
+}
+function simplifyGamepadName(name) {
+ return name.replace(/\s+\(.*Vendor: ([0-9a-f]{4}) Product: ([0-9a-f]{4})\)$/, " ($1-$2)");
 }
 function getUniqueGamepadNames() {
  let gamepads = window.navigator.getGamepads(), names = [];
@@ -2986,21 +3148,18 @@ class StreamSettings {
   mkbPreset: null,
   keyboardShortcuts: {}
  };
- static getPref(key) {
-  return getPref(key);
- }
  static async refreshControllerSettings() {
-  let settings = StreamSettings.settings, controllers = {}, settingsTable = ControllerSettingsTable.getInstance(), shortcutsTable = ControllerShortcutsTable.getInstance(), mappingTable = ControllerCustomizationsTable.getInstance(), gamepads = window.navigator.getGamepads();
+  let settings = StreamSettings.settings, controllers = {}, shortcutsTable = ControllerShortcutsTable.getInstance(), mappingTable = ControllerCustomizationsTable.getInstance(), gamepads = window.navigator.getGamepads();
   for (let gamepad of gamepads) {
    if (!gamepad?.connected) continue;
    if (gamepad.id === VIRTUAL_GAMEPAD_ID) continue;
-   let settingsData = await settingsTable.getControllerData(gamepad.id), shortcutsPreset = await shortcutsTable.getPreset(settingsData.shortcutPresetId), shortcutsMapping = !shortcutsPreset ? null : shortcutsPreset.data.mapping, customizationPreset = await mappingTable.getPreset(settingsData.customizationPresetId), customizationData = StreamSettings.convertControllerCustomization(customizationPreset?.data);
+   let controllerSetting = STORAGE.Stream.getControllerSetting(gamepad.id), shortcutsPreset = await shortcutsTable.getPreset(controllerSetting.shortcutPresetId), shortcutsMapping = !shortcutsPreset ? null : shortcutsPreset.data.mapping, customizationPreset = await mappingTable.getPreset(controllerSetting.customizationPresetId), customizationData = StreamSettings.convertControllerCustomization(customizationPreset?.data);
    controllers[gamepad.id] = {
     shortcuts: shortcutsMapping,
     customization: customizationData
    };
   }
-  settings.controllers = controllers, settings.controllerPollingRate = StreamSettings.getPref("controller.pollingRate"), await StreamSettings.refreshDeviceVibration();
+  settings.controllers = controllers, settings.controllerPollingRate = getStreamPref("controller.pollingRate"), await StreamSettings.refreshDeviceVibration();
  }
  static preCalculateControllerRange(obj, target, values) {
   if (values && Array.isArray(values)) {
@@ -3026,12 +3185,12 @@ class StreamSettings {
  }
  static async refreshDeviceVibration() {
   if (!STATES.browser.capabilities.deviceVibration) return;
-  let mode = StreamSettings.getPref("deviceVibration.mode"), intensity = 0;
-  if (mode === "on" || mode === "auto" && !hasGamepad()) intensity = StreamSettings.getPref("deviceVibration.intensity") / 100;
-  StreamSettings.settings.deviceVibrationIntensity = intensity, BxEventBus.Script.emit("deviceVibration.updated", {});
+  let mode = getStreamPref("deviceVibration.mode"), intensity = 0;
+  if (mode === "on" || mode === "auto" && !hasGamepad()) intensity = getStreamPref("deviceVibration.intensity") / 100;
+  StreamSettings.settings.deviceVibrationIntensity = intensity, BxEventBus.Stream.emit("deviceVibration.updated", {});
  }
  static async refreshMkbSettings() {
-  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("mkb.p1.preset.mappingId"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
+  let settings = StreamSettings.settings, presetId = getStreamPref("mkb.p1.preset.mappingId"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
    mapping: {},
    mouse: Object.assign({}, orgPresetData.mouse)
   }, key;
@@ -3042,12 +3201,12 @@ class StreamSettings {
     if (typeof keyName === "string") converted.mapping[keyName] = buttonIndex;
   }
   let mouse = converted.mouse;
-  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setPref("mkb.p1.preset.mappingId", orgPreset.id), BxEventBus.Script.emit("mkb.setting.updated", {});
+  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setStreamPref("mkb.p1.preset.mappingId", orgPreset.id, "direct"), BxEventBus.Stream.emit("mkb.setting.updated", {});
  }
  static async refreshKeyboardShortcuts() {
-  let settings = StreamSettings.settings, presetId = StreamSettings.getPref("keyboardShortcuts.preset.inGameId");
+  let settings = StreamSettings.settings, presetId = getStreamPref("keyboardShortcuts.preset.inGameId");
   if (presetId === 0) {
-   settings.keyboardShortcuts = null, setPref("keyboardShortcuts.preset.inGameId", presetId), BxEventBus.Script.emit("keyboardShortcuts.updated", {});
+   settings.keyboardShortcuts = null, setStreamPref("keyboardShortcuts.preset.inGameId", presetId, "direct"), BxEventBus.Stream.emit("keyboardShortcuts.updated", {});
    return;
   }
   let orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
@@ -3055,7 +3214,7 @@ class StreamSettings {
    let info = orgPresetData[action], key = `${info.code}:${info.modifiers || 0}`;
    converted[key] = action;
   }
-  settings.keyboardShortcuts = converted, setPref("keyboardShortcuts.preset.inGameId", orgPreset.id), BxEventBus.Script.emit("keyboardShortcuts.updated", {});
+  settings.keyboardShortcuts = converted, setStreamPref("keyboardShortcuts.preset.inGameId", orgPreset.id, "direct"), BxEventBus.Stream.emit("keyboardShortcuts.updated", {});
  }
  static async refreshAllSettings() {
   window.BX_STREAM_SETTINGS = StreamSettings.settings, await StreamSettings.refreshControllerSettings(), await StreamSettings.refreshMkbSettings(), await StreamSettings.refreshKeyboardShortcuts();
@@ -3082,7 +3241,7 @@ class MkbPopup {
  $btnActivate;
  mkbHandler;
  constructor() {
-  this.render(), BxEventBus.Script.on("keyboardShortcuts.updated", () => {
+  this.render(), BxEventBus.Stream.on("keyboardShortcuts.updated", () => {
    let $newButton = this.createActivateButton();
    this.$btnActivate.replaceWith($newButton), this.$btnActivate = $newButton;
   });
@@ -3138,7 +3297,7 @@ class NativeMkbHandler extends MkbHandler {
  }
  LOG_TAG = "NativeMkbHandler";
  static isAllowed = () => {
-  return STATES.browser.capabilities.emulatedNativeMkb && getPref("nativeMkb.mode") === "on";
+  return STATES.browser.capabilities.emulatedNativeMkb && getGlobalPref("nativeMkb.mode") === "on";
  };
  pointerClient;
  enabled = !1;
@@ -3193,7 +3352,7 @@ class NativeMkbHandler extends MkbHandler {
   } catch (e) {
    Toast.show("Cannot enable Mouse & Keyboard feature");
   }
-  this.mouseVerticalMultiply = getPref("nativeMkb.scroll.sensitivityY"), this.mouseHorizontalMultiply = getPref("nativeMkb.scroll.sensitivityX"), window.addEventListener("keyup", this), window.addEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.addEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this), BxEventBus.Script.on("dialog.shown", this.onDialogShown);
+  this.mouseVerticalMultiply = getStreamPref("nativeMkb.scroll.sensitivityY"), this.mouseHorizontalMultiply = getStreamPref("nativeMkb.scroll.sensitivityX"), window.addEventListener("keyup", this), window.addEventListener(BxEvent.POINTER_LOCK_REQUESTED, this), window.addEventListener(BxEvent.POINTER_LOCK_EXITED, this), window.addEventListener(BxEvent.XCLOUD_POLLING_MODE_CHANGED, this), BxEventBus.Script.on("dialog.shown", this.onDialogShown);
   let shortcutKey = StreamSettings.findKeyboardShortcut("mkb.toggle");
   if (shortcutKey) {
    let msg = t("press-key-to-toggle-mkb", { key: `<b>${KeyHelper.codeToKeyName(shortcutKey)}</b>` });
@@ -3350,7 +3509,7 @@ class EmulatedMkbHandler extends MkbHandler {
  }
  static LOG_TAG = "EmulatedMkbHandler";
  static isAllowed() {
-  return getPref("mkb.enabled") && (AppInterface || !UserAgent.isMobile());
+  return getGlobalPref("mkb.enabled") && (AppInterface || !UserAgent.isMobile());
  }
  PRESET;
  VIRTUAL_GAMEPAD = {
@@ -3407,9 +3566,9 @@ class EmulatedMkbHandler extends MkbHandler {
  }
  vectorLength = (x, y) => Math.sqrt(x ** 2 + y ** 2);
  resetXcloudGamepads() {
-  let index = getPref("mkb.p1.slot") - 1;
+  let index = getStreamPref("mkb.p1.slot") - 1;
   this.xCloudGamepad = generateVirtualControllerMapping(0, {
-   GamepadIndex: getPref("localCoOp.enabled") ? index : 0,
+   GamepadIndex: getStreamPref("localCoOp.enabled") ? index : 0,
    Dirty: !0
   }), this.VIRTUAL_GAMEPAD.index = index;
  }
@@ -3562,7 +3721,7 @@ class EmulatedMkbHandler extends MkbHandler {
  }
  start() {
   if (!this.enabled) this.enabled = !0, Toast.show(t("virtual-controller"), t("enabled"), { instant: !0 });
-  this.isPolling = !0, this.escKeyDownTime = -1, window.BX_EXPOSED.toggleLocalCoOp(getPref("localCoOp.enabled")), this.resetXcloudGamepads(), window.navigator.getGamepads = this.patchedGetGamepads, this.waitForMouseData(!1), this.mouseDataProvider?.start();
+  this.isPolling = !0, this.escKeyDownTime = -1, window.BX_EXPOSED.toggleLocalCoOp(getStreamPref("localCoOp.enabled")), this.resetXcloudGamepads(), window.navigator.getGamepads = this.patchedGetGamepads, this.waitForMouseData(!1), this.mouseDataProvider?.start();
   let virtualGamepad = this.getVirtualGamepad();
   virtualGamepad.connected = !0, virtualGamepad.timestamp = performance.now(), BxEvent.dispatch(window, "gamepadconnected", {
    gamepad: virtualGamepad
@@ -3581,7 +3740,7 @@ class EmulatedMkbHandler extends MkbHandler {
    if (STATES.currentStream.titleInfo?.details.hasMkbSupport) NativeMkbHandler.getInstance()?.init();
    else EmulatedMkbHandler.getInstance()?.init();
   }), EmulatedMkbHandler.isAllowed())
-   BxEventBus.Script.on("mkb.setting.updated", () => {
+   BxEventBus.Stream.on("mkb.setting.updated", () => {
     EmulatedMkbHandler.getInstance()?.refreshPresetData();
    });
  }
@@ -3657,6 +3816,13 @@ class BxNumberStepper extends HTMLInputElement {
    },
    set(value2) {
     BxNumberStepper.setValue.call(self, value2);
+   }
+  }), Object.defineProperty(self, "disabled", {
+   get() {
+    return $range.disabled;
+   },
+   set(value2) {
+    $btnDec.disabled = value2, $btnInc.disabled = value2, $range.disabled = value2;
    }
   }), self;
  }
@@ -4158,7 +4324,7 @@ class TouchController {
   };
   let $style = document.createElement("style");
   document.documentElement.appendChild($style), TouchController.#$style = $style;
-  let PREF_STYLE_STANDARD = getPref("touchController.style.standard"), PREF_STYLE_CUSTOM = getPref("touchController.style.custom");
+  let PREF_STYLE_STANDARD = getGlobalPref("touchController.style.standard"), PREF_STYLE_CUSTOM = getGlobalPref("touchController.style.custom");
   BxEventBus.Stream.on("dataChannelCreated", (payload) => {
    let { dataChannel } = payload;
    if (dataChannel?.label !== "message") return;
@@ -4206,7 +4372,7 @@ class BxSelectElement extends HTMLSelectElement {
  $label;
  $checkBox;
  static create($select, forceFriendly = !1) {
-  let isControllerFriendly = forceFriendly || getPref("ui.controllerFriendly");
+  let isControllerFriendly = forceFriendly || getGlobalPref("ui.controllerFriendly");
   if ($select.multiple && !isControllerFriendly) return $select.classList.add("bx-select"), $select;
   $select.removeAttribute("tabindex");
   let $wrapper = CE("div", {
@@ -4319,7 +4485,7 @@ class BxSelectElement extends HTMLSelectElement {
   } else $label.textContent = content;
   if ($label.classList.toggle("bx-line-through", $option && $option.disabled), this.isMultiple) $checkBox.checked = $option?.selected || !1, $checkBox.classList.toggle("bx-gone", !content);
   let disableButtons = optionsList.length <= 1;
-  $btnPrev?.classList.toggle("bx-inactive", disableButtons), $btnNext?.classList.toggle("bx-inactive", disableButtons);
+  $btnPrev?.classList.toggle("bx-gone", disableButtons), $btnNext?.classList.toggle("bx-gone", disableButtons);
   for (let i = 0;i < optionsList.length; i++) {
    let $option2 = optionsList[i], $indicator = indicatorsList[i];
    if (!$option2 || !$indicator) continue;
@@ -4349,7 +4515,7 @@ var controller_customization_default = "var shareButtonPressed=currentGamepad.bu
 var poll_gamepad_default = "var self=this;if(window.BX_EXPOSED.disableGamepadPolling){self.inputConfiguration.useIntervalWorkerThreadForInput&&self.intervalWorker?self.intervalWorker.scheduleTimer(50):self.pollGamepadssetTimeoutTimerID=window.setTimeout(self.pollGamepads,50);return}var currentGamepad=$gamepadVar$,btnHome=currentGamepad.buttons[16];if(btnHome){if(!self.bxHomeStates)self.bxHomeStates={};let intervalMs=0,hijack=!1;if(btnHome.pressed)if(hijack=!0,intervalMs=16,self.gamepadIsIdle.set(currentGamepad.index,!1),self.bxHomeStates[currentGamepad.index]){let lastTimestamp=self.bxHomeStates[currentGamepad.index].timestamp;if(currentGamepad.timestamp!==lastTimestamp){if(self.bxHomeStates[currentGamepad.index].timestamp=currentGamepad.timestamp,window.BX_EXPOSED.handleControllerShortcut(currentGamepad))self.bxHomeStates[currentGamepad.index].shortcutPressed+=1}}else window.BX_EXPOSED.resetControllerShortcut(currentGamepad.index),self.bxHomeStates[currentGamepad.index]={shortcutPressed:0,timestamp:currentGamepad.timestamp};else if(self.bxHomeStates[currentGamepad.index]){hijack=!0;let info=structuredClone(self.bxHomeStates[currentGamepad.index]);if(self.bxHomeStates[currentGamepad.index]=null,info.shortcutPressed===0){let fakeGamepadMappings=[{GamepadIndex:currentGamepad.index,A:0,B:0,X:0,Y:0,LeftShoulder:0,RightShoulder:0,LeftTrigger:0,RightTrigger:0,View:0,Menu:0,LeftThumb:0,RightThumb:0,DPadUp:0,DPadDown:0,DPadLeft:0,DPadRight:0,Nexus:1,LeftThumbXAxis:0,LeftThumbYAxis:0,RightThumbXAxis:0,RightThumbYAxis:0,PhysicalPhysicality:0,VirtualPhysicality:0,Dirty:!0,Virtual:!1}];intervalMs=currentGamepad.timestamp-info.timestamp>=500?500:100,self.inputSink.onGamepadInput(performance.now()-intervalMs,fakeGamepadMappings)}else intervalMs=window.BX_STREAM_SETTINGS.controllerPollingRate}if(hijack&&intervalMs){self.inputConfiguration.useIntervalWorkerThreadForInput&&self.intervalWorker?self.intervalWorker.scheduleTimer(intervalMs):self.pollGamepadssetTimeoutTimerID=setTimeout(self.pollGamepads,intervalMs);return}}\n";
 var expose_stream_session_default = 'var self=this;window.BX_EXPOSED.streamSession=self;var orgSetMicrophoneState=self.setMicrophoneState.bind(self);self.setMicrophoneState=(state)=>{orgSetMicrophoneState(state),window.BxEventBus.Stream.emit("microphone.state.changed",{state})};window.dispatchEvent(new Event(BxEvent.STREAM_SESSION_READY));var updateDimensionsStr=self.updateDimensions.toString();if(updateDimensionsStr.startsWith("function "))updateDimensionsStr=updateDimensionsStr.substring(9);var renderTargetVar=updateDimensionsStr.match(/if\\((\\w+)\\){/)[1];updateDimensionsStr=updateDimensionsStr.replaceAll(renderTargetVar+".scroll","scroll");updateDimensionsStr=updateDimensionsStr.replace(`if(${renderTargetVar}){`,`\nif (${renderTargetVar}) {\nconst scrollWidth = ${renderTargetVar}.dataset.width ? parseInt(${renderTargetVar}.dataset.width) : ${renderTargetVar}.scrollWidth;\nconst scrollHeight = ${renderTargetVar}.dataset.height ? parseInt(${renderTargetVar}.dataset.height) : ${renderTargetVar}.scrollHeight;\n`);eval(`this.updateDimensions = function ${updateDimensionsStr}`);\n';
 var game_card_icons_default = `var supportedInputIcons=$supportedInputIcons$,{productId}=$param$;supportedInputIcons.shift();if(window.BX_EXPOSED.localCoOpManager.isSupported(productId))supportedInputIcons.push(window.BX_EXPOSED.createReactLocalCoOpIcon);`;
-var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
+var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;gamepad._noToast=!0,window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
 var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&!window.location.pathname.includes("/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
 var vibration_adjust_default = `if(e?.gamepad?.connected){let gamepadSettings=window.BX_STREAM_SETTINGS.controllers[e.gamepad.id];if(gamepadSettings?.customization){let intensity=gamepadSettings.customization.vibrationIntensity;if(intensity<=0){e.repeat=0;return}else if(intensity<1)e.leftMotorPercent*=intensity,e.rightMotorPercent*=intensity,e.leftTriggerMotorPercent*=intensity,e.rightTriggerMotorPercent*=intensity}}`;
 class PatcherUtils {
@@ -4434,7 +4600,7 @@ var LOG_TAG2 = "Patcher", PATCHES = {
  websiteLayout(str) {
   let text = '?"tv":"default"';
   if (!str.includes(text)) return !1;
-  let layout = getPref("ui.layout") === "tv" ? "tv" : "default";
+  let layout = getGlobalPref("ui.layout") === "tv" ? "tv" : "default";
   return str.replace(text, `?"${layout}":"${layout}"`);
  },
  remotePlayDirectConnectUrl(str) {
@@ -4482,7 +4648,7 @@ remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFI
   let setTimeoutIndex = str.indexOf("setTimeout(this.pollGamepads", index);
   if (setTimeoutIndex < 0) return !1;
   let codeBlock = str.substring(index, setTimeoutIndex), tmp = str.substring(setTimeoutIndex, setTimeoutIndex + 150), tmpPatched = tmp.replaceAll("Math.max(0,4-", "Math.max(0,window.BX_STREAM_SETTINGS.controllerPollingRate - ");
-  if (str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched), getPref("block.tracking")) codeBlock = codeBlock.replace("this.inputPollingIntervalStats.addValue", ""), codeBlock = codeBlock.replace("this.inputPollingDurationStats.addValue", "");
+  if (str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched), getGlobalPref("block.tracking")) codeBlock = codeBlock.replace("this.inputPollingIntervalStats.addValue", ""), codeBlock = codeBlock.replace("this.inputPollingDurationStats.addValue", "");
   let match = codeBlock.match(/this\.gamepadTimestamps\.set\(([A-Za-z0-9_$]+)\.index/);
   if (!match) return !1;
   let newCode = renderString(poll_gamepad_default, {
@@ -4574,8 +4740,8 @@ if (window.BX_EXPOSED.stopTakRendering) {
   let text = "const{TakRenderer:";
   if (!str.includes(text)) return !1;
   let autoOffCode = "";
-  if (getPref("touchController.mode") === "off") autoOffCode = "return;";
-  else if (getPref("touchController.autoOff")) autoOffCode = `
+  if (getGlobalPref("touchController.mode") === "off") autoOffCode = "return;";
+  else if (getGlobalPref("touchController.autoOff")) autoOffCode = `
 const gamepads = window.navigator.getGamepads();
 let gamepadFound = false;
 for (let gamepad of gamepads) {
@@ -4611,7 +4777,7 @@ window.BX_EXPOSED.showStreamMenu = e.onShowStreamMenu;
 // Restore the "..." button
 e.guideUI = null;
 `;
-  if (getPref("touchController.mode") === "off") newCode += "e.canShowTakHUD = false;";
+  if (getGlobalPref("touchController.mode") === "off") newCode += "e.canShowTakHUD = false;";
   return str = str.replace(text, newCode + text), str;
  },
  broadcastPollingMode(str) {
@@ -4669,7 +4835,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
  patchTouchControlDefaultOpacity(str) {
   let text = "opacityMultiplier:1";
   if (!str.includes(text)) return !1;
-  let newCode = `opacityMultiplier: ${(getPref("touchController.opacity.default") / 100).toFixed(1)}`;
+  let newCode = `opacityMultiplier: ${(getGlobalPref("touchController.opacity.default") / 100).toFixed(1)}`;
   return str = str.replace(text, newCode), str;
  },
  patchShowSensorControls(str) {
@@ -4761,7 +4927,7 @@ true` + text;
   let index = str.indexOf("SiglRow-module__heroCard___");
   if (index < 0) return !1;
   if (index = PatcherUtils.lastIndexOf(str, "const[", index, 300), index < 0) return !1;
-  let PREF_HIDE_SECTIONS = getPref("ui.hideSections"), siglIds = [], sections = {
+  let PREF_HIDE_SECTIONS = getGlobalPref("ui.hideSections"), siglIds = [], sections = {
    "native-mkb": "8fa264dd-124f-4af3-97e8-596fcdf4b486",
    "most-popular": "e7590b22-e299-44db-ae22-25c61405454c"
   };
@@ -4856,7 +5022,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   index += text.length;
   let subsVar = str[index];
   index = str.indexOf("{", index) + 1;
-  let blockFeatures = getPref("block.features"), filters = [];
+  let blockFeatures = getGlobalPref("block.features"), filters = [];
   if (blockFeatures.includes("notifications-invites")) filters.push("GameInvite", "PartyInvite");
   if (blockFeatures.includes("friends")) filters.push("Follower");
   if (blockFeatures.includes("notifications-achievements")) filters.push("AchievementUnlock");
@@ -4894,22 +5060,22 @@ ${subsVar} = subs;
   let paramVar = PatcherUtils.getVariableNameBefore(str, index);
   if (!paramVar) return !1;
   index = PatcherUtils.indexOf(str, "return", index, 200);
-  let newCode = `${paramVar}.set('q', ${getPref("ui.imageQuality")});`;
+  let newCode = `${paramVar}.set('q', ${getGlobalPref("ui.imageQuality")});`;
   return str = PatcherUtils.insertAt(str, index, newCode), str;
  },
  setBackgroundImageQuality(str) {
   let index = str.indexOf("}?w=${");
   if (index > -1 && (index = PatcherUtils.indexOf(str, "}", index + 1, 10, !0)), index < 0) return !1;
-  return str = PatcherUtils.insertAt(str, index, `&q=${getPref("ui.imageQuality")}`), str;
+  return str = PatcherUtils.insertAt(str, index, `&q=${getGlobalPref("ui.imageQuality")}`), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
- ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
+ ...AppInterface && getGlobalPref("nativeMkb.mode") === "on" ? [
   "enableNativeMkb",
   "disableAbsoluteMouse"
  ] : [],
  "exposeReactCreateComponent",
  "gameCardCustomIcons",
- ...getPref("ui.imageQuality") < 90 ? [
+ ...getGlobalPref("ui.imageQuality") < 90 ? [
   "setImageQuality"
  ] : [],
  "modifyPreloadedState",
@@ -4928,20 +5094,20 @@ ${subsVar} = subs;
  "enableTvRoutes",
  "supportLocalCoOp",
  "overrideStorageGetSettings",
- getPref("ui.gameCard.waitTime.show") && "patchSetCurrentFocus",
- getPref("ui.layout") !== "default" && "websiteLayout",
- getPref("game.fortnite.forceConsole") && "forceFortniteConsole",
+ getGlobalPref("ui.gameCard.waitTime.show") && "patchSetCurrentFocus",
+ getGlobalPref("ui.layout") !== "default" && "websiteLayout",
+ getGlobalPref("game.fortnite.forceConsole") && "forceFortniteConsole",
  ...STATES.userAgent.capabilities.touch ? [
   "disableTouchContextMenu"
  ] : [],
- ...getPref("block.tracking") ? [
+ ...getGlobalPref("block.tracking") ? [
   "disableAiTrack",
   "disableTelemetry",
   "blockWebRtcStatsCollector",
   "disableIndexDbLogging",
   "disableTelemetryProvider"
  ] : [],
- ...getPref("xhome.enabled") ? [
+ ...getGlobalPref("xhome.enabled") ? [
   "remotePlayKeepAlive",
   "remotePlayDirectConnectUrl",
   "remotePlayDisableAchievementToast",
@@ -4953,13 +5119,13 @@ ${subsVar} = subs;
   "enableConsoleLogging",
   "enableXcloudLogger"
  ] : []
-]), hideSections = getPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
+]), hideSections = getGlobalPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  hideSections.includes("news") && "ignoreNewsSection",
  hideSections.includes("friends") && "ignorePlayWithFriendsSection",
  hideSections.includes("all-games") && "ignoreAllGamesSection",
  STATES.browser.capabilities.touch && hideSections.includes("touch") && "ignorePlayWithTouchSection",
  hideSections.some((value) => ["native-mkb", "most-popular"].includes(value)) && "ignoreSiglSections",
- ...getPref("ui.imageQuality") < 90 ? [
+ ...getGlobalPref("ui.imageQuality") < 90 ? [
   "setBackgroundImageQuality"
  ] : [],
  ...blockSomeNotifications() ? [
@@ -4972,24 +5138,24 @@ ${subsVar} = subs;
  "patchStreamHud",
  "playVibration",
  "alwaysShowStreamHud",
- getPref("audio.volume.booster.enabled") && !getPref("stream.video.combineAudio") && "patchAudioMediaStream",
- getPref("audio.volume.booster.enabled") && getPref("stream.video.combineAudio") && "patchCombinedAudioVideoMediaStream",
- getPref("ui.feedbackDialog.disabled") && "skipFeedbackDialog",
+ getGlobalPref("audio.volume.booster.enabled") && !getGlobalPref("stream.video.combineAudio") && "patchAudioMediaStream",
+ getGlobalPref("audio.volume.booster.enabled") && getGlobalPref("stream.video.combineAudio") && "patchCombinedAudioVideoMediaStream",
+ getGlobalPref("ui.feedbackDialog.disabled") && "skipFeedbackDialog",
  ...STATES.userAgent.capabilities.touch ? [
-  getPref("touchController.mode") === "all" && "patchShowSensorControls",
-  getPref("touchController.mode") === "all" && "exposeTouchLayoutManager",
-  (getPref("touchController.mode") === "off" || getPref("touchController.autoOff")) && "disableTakRenderer",
-  getPref("touchController.opacity.default") !== 100 && "patchTouchControlDefaultOpacity",
-  getPref("touchController.mode") !== "off" && (getPref("mkb.enabled") || getPref("nativeMkb.mode") === "on") && "patchBabylonRendererClass"
+  getGlobalPref("touchController.mode") === "all" && "patchShowSensorControls",
+  getGlobalPref("touchController.mode") === "all" && "exposeTouchLayoutManager",
+  (getGlobalPref("touchController.mode") === "off" || getGlobalPref("touchController.autoOff")) && "disableTakRenderer",
+  getGlobalPref("touchController.opacity.default") !== 100 && "patchTouchControlDefaultOpacity",
+  getGlobalPref("touchController.mode") !== "off" && (getGlobalPref("mkb.enabled") || getGlobalPref("nativeMkb.mode") === "on") && "patchBabylonRendererClass"
  ] : [],
  BX_FLAGS.EnableXcloudLogging && "enableConsoleLogging",
  "patchPollGamepads",
- getPref("stream.video.combineAudio") && "streamCombineSources",
- ...getPref("xhome.enabled") ? [
+ getGlobalPref("stream.video.combineAudio") && "streamCombineSources",
+ ...getGlobalPref("xhome.enabled") ? [
   "patchRemotePlayMkb",
   "remotePlayConnectMode"
  ] : [],
- ...AppInterface && getPref("nativeMkb.mode") === "on" ? [
+ ...AppInterface && getGlobalPref("nativeMkb.mode") === "on" ? [
   "patchMouseAndKeyboardEnabled",
   "disableNativeRequestPointerLock"
  ] : []
@@ -5106,6 +5272,211 @@ class PatcherCache {
   window.localStorage.setItem(this.KEY_CACHE, JSON.stringify(this.CACHE));
  }
 }
+class XboxApi {
+ static CACHED_TITLES = {};
+ static async getProductTitle(xboxTitleId) {
+  if (xboxTitleId = xboxTitleId.toString(), XboxApi.CACHED_TITLES[xboxTitleId]) return XboxApi.CACHED_TITLES[xboxTitleId];
+  try {
+   let url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en&value=${xboxTitleId}&alternateId=XboxTitleId&fieldsTemplate=browse`, productTitle = (await (await NATIVE_FETCH(url)).json()).Products[0].LocalizedProperties[0].ProductTitle;
+   return XboxApi.CACHED_TITLES[xboxTitleId] = productTitle, productTitle;
+  } catch (e) {}
+  return;
+ }
+}
+class SettingsManager {
+ static instance;
+ static getInstance = () => SettingsManager.instance ?? (SettingsManager.instance = new SettingsManager);
+ $streamSettingsSelection;
+ $tips;
+ playingGameId = -1;
+ targetGameId = -1;
+ SETTINGS = {
+  "localCoOp.enabled": {
+   onChange: () => {
+    BxExposed.toggleLocalCoOp(getStreamPref("localCoOp.enabled"));
+   }
+  },
+  "deviceVibration.mode": {
+   onChange: StreamSettings.refreshControllerSettings
+  },
+  "deviceVibration.intensity": {
+   onChange: StreamSettings.refreshControllerSettings
+  },
+  "controller.pollingRate": {
+   onChange: StreamSettings.refreshControllerSettings
+  },
+  "controller.settings": {
+   onChange: StreamSettings.refreshControllerSettings
+  },
+  "nativeMkb.scroll.sensitivityX": {
+   onChange: () => {
+    let value = getStreamPref("nativeMkb.scroll.sensitivityX");
+    NativeMkbHandler.getInstance()?.setHorizontalScrollMultiplier(value / 100);
+   }
+  },
+  "nativeMkb.scroll.sensitivityY": {
+   onChange: () => {
+    let value = getStreamPref("nativeMkb.scroll.sensitivityY");
+    NativeMkbHandler.getInstance()?.setVerticalScrollMultiplier(value / 100);
+   }
+  },
+  "video.player.type": {
+   onChange: onChangeVideoPlayerType,
+   alwaysTriggerOnChange: !0
+  },
+  "video.player.powerPreference": {
+   onChange: () => {
+    let streamPlayer = STATES.currentStream.streamPlayer;
+    if (!streamPlayer) return;
+    streamPlayer.reloadPlayer(), updateVideoPlayer();
+   }
+  },
+  "video.processing": {
+   onChange: updateVideoPlayer
+  },
+  "video.processing.sharpness": {
+   onChange: updateVideoPlayer
+  },
+  "video.maxFps": {
+   onChange: () => {
+    let value = getStreamPref("video.maxFps");
+    limitVideoPlayerFps(value);
+   }
+  },
+  "video.ratio": {
+   onChange: updateVideoPlayer
+  },
+  "video.brightness": {
+   onChange: updateVideoPlayer
+  },
+  "video.contrast": {
+   onChange: updateVideoPlayer
+  },
+  "video.saturation": {
+   onChange: updateVideoPlayer
+  },
+  "video.position": {
+   onChange: updateVideoPlayer
+  },
+  "audio.volume": {
+   onChange: () => {
+    let value = getStreamPref("audio.volume");
+    SoundShortcut.setGainNodeVolume(value);
+   }
+  },
+  "stats.items": {
+   onChange: StreamStats.refreshStyles
+  },
+  "stats.quickGlance.enabled": {
+   onChange: () => {
+    let value = getStreamPref("stats.quickGlance.enabled"), streamStats = StreamStats.getInstance();
+    value ? streamStats.quickGlanceSetup() : streamStats.quickGlanceStop();
+   }
+  },
+  "stats.position": {
+   onChange: StreamStats.refreshStyles
+  },
+  "stats.textSize": {
+   onChange: StreamStats.refreshStyles
+  },
+  "stats.opacity.all": {
+   onChange: StreamStats.refreshStyles
+  },
+  "stats.opacity.background": {
+   onChange: StreamStats.refreshStyles
+  },
+  "stats.colors": {
+   onChange: StreamStats.refreshStyles
+  },
+  "mkb.p1.preset.mappingId": {
+   onChange: StreamSettings.refreshMkbSettings
+  },
+  "mkb.p1.slot": {
+   onChange: () => {
+    EmulatedMkbHandler.getInstance()?.resetXcloudGamepads();
+   }
+  },
+  "keyboardShortcuts.preset.inGameId": {
+   onChange: StreamSettings.refreshKeyboardShortcuts
+  }
+ };
+ constructor() {
+  BxEventBus.Stream.on("setting.changed", (data) => {
+   if (isStreamPref(data.settingKey)) this.updateStreamElement(data.settingKey);
+  }), BxEventBus.Stream.on("gameSettings.switched", ({ id }) => {
+   this.switchGameSettings(id);
+  }), this.renderStreamSettingsSelection();
+ }
+ updateStreamElement(key, onChanges) {
+  let info = this.SETTINGS[key];
+  if (info.onChange && (STATES.isPlaying || info.alwaysTriggerOnChange)) if (onChanges) onChanges.add(info.onChange);
+   else info.onChange();
+  let $elm = info.$element;
+  if (!$elm) return;
+  let value = getGamePref(this.targetGameId, key, !0);
+  if ("setValue" in $elm) $elm.setValue(value);
+  else $elm.value = value.toString();
+  this.updateDataset($elm, key);
+ }
+ switchGameSettings(id) {
+  if (setGameIdPref(id), this.targetGameId === id) return;
+  let onChanges = new Set, oldGameId = this.targetGameId;
+  this.targetGameId = id;
+  let key;
+  for (key in this.SETTINGS) {
+   if (!isStreamPref(key)) continue;
+   let oldValue = getGamePref(oldGameId, key, !0, !0), newValue = getGamePref(this.targetGameId, key, !0, !0);
+   if (oldValue === newValue) continue;
+   this.updateStreamElement(key, onChanges);
+  }
+  onChanges.forEach((onChange) => {
+   onChange && onChange();
+  }), this.$tips.classList.toggle("bx-gone", id < 0);
+ }
+ setElement(pref, $elm) {
+  if (!this.SETTINGS[pref]) this.SETTINGS[pref] = {};
+  this.updateDataset($elm, pref), this.SETTINGS[pref].$element = $elm;
+ }
+ getElement(pref) {
+  if (!this.SETTINGS[pref]) this.SETTINGS[pref] = {};
+  let $elm = this.SETTINGS[pref].$element;
+  if (!$elm) $elm = SettingElement.fromPref(pref, () => {}), this.SETTINGS[pref].$element = $elm;
+  return this.updateDataset($elm, pref), $elm;
+ }
+ updateDataset($elm, pref) {
+  if (this.targetGameId === this.playingGameId && hasGamePref(this.playingGameId, pref)) $elm.dataset.override = "true";
+  else delete $elm.dataset.override;
+ }
+ renderStreamSettingsSelection() {
+  this.$tips = CE("p", { class: "bx-gone" }, "⇐ Ｑ ⟶: Reset highlighted setting");
+  let $select = BxSelectElement.create(CE("select", !1, CE("optgroup", { label: ut("Settings for") }, CE("option", { value: -1 }, t("tc-all-games")))), !0);
+  $select.addEventListener("input", (e) => {
+   let id = parseInt($select.value);
+   BxEventBus.Stream.emit("gameSettings.switched", { id });
+  }), this.$streamSettingsSelection = CE("div", {
+   class: "bx-stream-settings-selection bx-gone",
+   _nearby: { orientation: "vertical" }
+  }, CE("div", !1, $select), this.$tips), BxEventBus.Stream.on("xboxTitleId.changed", async ({ id }) => {
+   this.playingGameId = id, setGameIdPref(id);
+   let $optGroup = $select.querySelector("optgroup");
+   while ($optGroup.childElementCount > 1)
+    $optGroup.lastElementChild?.remove();
+   if (id >= 0) {
+    let title = id === 0 ? ut("Xbox") : await XboxApi.getProductTitle(id);
+    $optGroup.appendChild(CE("option", {
+     value: id
+    }, title)), $select.value = id.toString();
+   } else $select.value = "-1";
+   BxEventBus.Stream.emit("gameSettings.switched", { id });
+  });
+ }
+ getStreamSettingsSelection() {
+  return this.$streamSettingsSelection;
+ }
+ getTargetGameId() {
+  return this.targetGameId;
+ }
+}
 class SettingElement {
  static renderOptions(key, setting, currentValue, onChange) {
   let $control = CE("select", {
@@ -5148,6 +5519,16 @@ class SettingElement {
   }), $control.addEventListener("mousemove", (e) => e.preventDefault()), onChange && $control.addEventListener("input", (e) => {
    let target = e.target, values = Array.from(target.selectedOptions).map((i) => i.value);
    !e.ignoreOnChange && onChange(e, values);
+  }), Object.defineProperty($control, "value", {
+   get() {
+    return Array.from($control.options).filter((option) => option.selected).map((option) => option.value);
+   },
+   set(value) {
+    let values = value.split(",");
+    Array.from($control.options).forEach((option) => {
+     option.selected = values.includes(option.value);
+    });
+   }
   }), $control;
  }
  static renderCheckbox(key, setting, currentValue, onChange) {
@@ -5173,8 +5554,10 @@ class SettingElement {
   if (type === "options" || type === "multiple-options") $control.name = $control.id;
   return $control;
  }
- static fromPref(key, storage, onChange, overrideParams = {}) {
-  let definition = storage.getDefinition(key), currentValue = storage.getSetting(key), type;
+ static fromPref(key, onChange, overrideParams = {}) {
+  let { definition, storage } = getPrefInfo(key);
+  if (!definition) return null;
+  let currentValue = storage.getSetting(key), type;
   if ("options" in definition) type = "options";
   else if ("multipleOptions" in definition) type = "multiple-options";
   else if (typeof definition.default === "number") type = "number-stepper";
@@ -5183,7 +5566,12 @@ class SettingElement {
   if ("params" in definition) params = Object.assign(overrideParams, definition.params || {});
   if (params.disabled) currentValue = definition.default;
   return SettingElement.render(type, key, definition, currentValue, (e, value) => {
-   storage.setSetting(key, value), onChange && onChange(e, value);
+   if (isGlobalPref(key)) setGlobalPref(key, value, "ui");
+   else {
+    let id = SettingsManager.getInstance().getTargetGameId();
+    setGamePref(id, key, value, "ui");
+   }
+   onChange && onChange(e, value);
   }, params);
  }
 }
@@ -5347,7 +5735,7 @@ var SHORTCUT_ACTIONS = {
   "stream.screenshot.capture": [t("take-screenshot")],
   "stream.video.toggle": [t("video"), t("toggle")],
   "stream.sound.toggle": [t("sound"), t("toggle")],
-  ...getPref("audio.volume.booster.enabled") ? {
+  ...getGlobalPref("audio.volume.booster.enabled") ? {
    "stream.volume.inc": [t("volume"), t("increase")],
    "stream.volume.dec": [t("volume"), t("decrease")]
   } : {},
@@ -5574,7 +5962,7 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
   this.render();
  }
  render() {
-  let isControllerFriendly = getPref("ui.controllerFriendly"), $rows = CE("div", { class: "bx-buttons-grid" }), $baseSelect = CE("select", { class: "bx-full-width" }, CE("option", { value: "" }, "---"), CE("option", { value: "false", _dataset: { label: "🚫" } }, isControllerFriendly ? "🚫" : t("off"))), $baseButtonSelect = $baseSelect.cloneNode(!0), $baseStickSelect = $baseSelect.cloneNode(!0), onButtonChanged = (e) => {
+  let isControllerFriendly = getGlobalPref("ui.controllerFriendly"), $rows = CE("div", { class: "bx-buttons-grid" }), $baseSelect = CE("select", { class: "bx-full-width" }, CE("option", { value: "" }, "---"), CE("option", { value: "false", _dataset: { label: "🚫" } }, isControllerFriendly ? "🚫" : t("off"))), $baseButtonSelect = $baseSelect.cloneNode(!0), $baseStickSelect = $baseSelect.cloneNode(!0), onButtonChanged = (e) => {
    if (!e.ignoreOnChange) this.updatePreset();
   }, boundUpdatePreset = this.updatePreset.bind(this);
   for (let gamepadKey of ControllerCustomizationsManagerDialog.BUTTONS_ORDER) {
@@ -5596,7 +5984,7 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
    }, CE("label", { title: buttonName }, buttonPrompt), $select);
    $rows.append($row);
   }
-  if (getPref("ui.controllerFriendly")) for (let i = 0;i < this.selectsOrder.length; i++) {
+  if (getGlobalPref("ui.controllerFriendly")) for (let i = 0;i < this.selectsOrder.length; i++) {
     let $select = this.selectsMap[this.selectsOrder[i]], directions = {
      1: i - 2,
      3: i + 2,
@@ -5664,7 +6052,7 @@ class ControllerCustomizationsManagerDialog extends BaseProfileManagerDialog {
    let $select = this.selectsMap[button], $label = $select.previousElementSibling;
    if ($label.addEventListener("animationend", () => {
     $label.classList.remove("bx-horizontal-shaking");
-   }, { once: !0 }), $label.classList.add("bx-horizontal-shaking"), getPref("ui.controllerFriendly"))
+   }, { once: !0 }), $label.classList.add("bx-horizontal-shaking"), getGlobalPref("ui.controllerFriendly"))
     this.dialogManager.focus($select);
   }
   return !0;
@@ -5761,11 +6149,12 @@ class ControllerExtraSettings extends HTMLElement {
  getCurrentControllerId;
  saveSettings;
  updateCustomizationSummary;
+ setValue;
  static renderSettings() {
   let $container = CE("label", {
    class: "bx-settings-row bx-controller-extra-settings"
   });
-  $container.updateLayout = ControllerExtraSettings.updateLayout.bind($container), $container.switchController = ControllerExtraSettings.switchController.bind($container), $container.getCurrentControllerId = ControllerExtraSettings.getCurrentControllerId.bind($container), $container.saveSettings = ControllerExtraSettings.saveSettings.bind($container);
+  $container.prefKey = "controller.settings", $container.addEventListener("contextmenu", this.boundOnContextMenu), this.settingsManager.setElement("controller.settings", $container), $container.updateLayout = ControllerExtraSettings.updateLayout.bind($container), $container.switchController = ControllerExtraSettings.switchController.bind($container), $container.getCurrentControllerId = ControllerExtraSettings.getCurrentControllerId.bind($container), $container.saveSettings = ControllerExtraSettings.saveSettings.bind($container), $container.setValue = ControllerExtraSettings.setValue.bind($container);
   let $selectControllers = BxSelectElement.create(CE("select", {
    class: "bx-full-width",
    autocomplete: "off",
@@ -5794,9 +6183,7 @@ class ControllerExtraSettings extends HTMLElement {
    onClick: () => ControllerCustomizationsManagerDialog.getInstance().show({
     id: $container.$selectCustomization.value ? parseInt($container.$selectCustomization.value) : null
    })
-  })), {
-   multiLines: !0
-  });
+  })), { multiLines: !0 });
   return $rowCustomization.appendChild($container.$summaryCustomization = CE("div")), $container.append(CE("span", !1, t("no-controllers-connected")), CE("div", { class: "bx-controller-extra-wrapper" }, $selectControllers, CE("div", { class: "bx-sub-content-box" }, createSettingRow(t("in-game-controller-shortcuts"), CE("div", {
    class: "bx-preset-row",
    _nearby: { orientation: "horizontal" }
@@ -5820,7 +6207,7 @@ class ControllerExtraSettings extends HTMLElement {
   let $fragment = document.createDocumentFragment();
   removeChildElements(this.$selectControllers);
   for (let name of this.controllerIds) {
-   let $option = CE("option", { value: name }, name);
+   let $option = CE("option", { value: name }, simplifyGamepadName(name));
    $fragment.appendChild($option);
   }
   this.$selectControllers.appendChild($fragment);
@@ -5836,8 +6223,8 @@ class ControllerExtraSettings extends HTMLElement {
  }
  static async switchController(id) {
   if (this.currentControllerId = id, !this.getCurrentControllerId()) return;
-  let controllerSettings = await ControllerSettingsTable.getInstance().getControllerData(this.currentControllerId);
-  this.$selectShortcuts.value = controllerSettings.shortcutPresetId.toString(), this.$selectCustomization.value = controllerSettings.customizationPresetId.toString(), ControllerExtraSettings.updateCustomizationSummary.call(this);
+  let controllerSetting = STORAGE.Stream.getControllerSetting(this.currentControllerId);
+  ControllerExtraSettings.updateElements.call(this, controllerSetting);
  }
  static getCurrentControllerId() {
   if (this.currentControllerId) {
@@ -5850,14 +6237,18 @@ class ControllerExtraSettings extends HTMLElement {
  }
  static async saveSettings() {
   if (!this.getCurrentControllerId()) return;
-  let data = {
-   id: this.currentControllerId,
-   data: {
-    shortcutPresetId: parseInt(this.$selectShortcuts.value),
-    customizationPresetId: parseInt(this.$selectCustomization.value)
-   }
-  };
-  await ControllerSettingsTable.getInstance().put(data), StreamSettings.refreshControllerSettings();
+  let controllerSettings = getStreamPref("controller.settings");
+  controllerSettings[this.currentControllerId] = {
+   shortcutPresetId: parseInt(this.$selectShortcuts.value),
+   customizationPresetId: parseInt(this.$selectCustomization.value)
+  }, setStreamPref("controller.settings", controllerSettings, "ui"), StreamSettings.refreshControllerSettings();
+ }
+ static setValue(value) {
+  ControllerExtraSettings.updateElements.call(this, value[this.currentControllerId]);
+ }
+ static updateElements(controllerSetting) {
+  if (!controllerSetting) return;
+  this.$selectShortcuts.value = controllerSetting.shortcutPresetId.toString(), this.$selectCustomization.value = controllerSetting.customizationPresetId.toString(), ControllerExtraSettings.updateCustomizationSummary.call(this);
  }
 }
 class SuggestionsSetting {
@@ -5879,7 +6270,7 @@ class SuggestionsSetting {
      let prefKey;
      if (typeof setting === "string") prefKey = setting;
      else if (typeof setting === "object") prefKey = setting.pref;
-     if (prefKey) this.suggestedSettingLabels[prefKey] = settingTabContent.label;
+     if (prefKey) this.settingLabels[prefKey] = settingTabContent.label;
     }
    }
   }
@@ -5900,18 +6291,21 @@ class SuggestionsSetting {
    if (profile === "recommended") note = t("recommended-settings-for-device", { device: recommendedDevice });
    else if (profile === "highest") note = "⚠️ " + t("highest-quality-note");
    note && fragment.appendChild(CE("div", { class: "bx-suggest-note" }, note));
-   let settings = this.suggestedSettings[profile], prefKey;
-   for (prefKey in settings) {
-    let suggestedValue, definition = getPrefDefinition(prefKey);
+   let settings = this.suggestedSettings[profile];
+   for (let key in settings) {
+    let { storage, definition } = getPrefInfo(key), prefKey;
+    if (storage === STORAGE.Stream) prefKey = key;
+    else prefKey = key;
+    let suggestedValue;
     if (definition && definition.transformValue) suggestedValue = definition.transformValue.get.call(definition, settings[prefKey]);
     else suggestedValue = settings[prefKey];
-    let currentValue = getPref(prefKey, !1), currentValueText = STORAGE.Global.getValueText(prefKey, currentValue), isSameValue = currentValue === suggestedValue, $child, $value;
+    let currentValue = storage.getSetting(prefKey, !1), currentValueText = storage.getValueText(prefKey, currentValue), isSameValue = currentValue === suggestedValue, $child, $value;
     if (isSameValue) $value = currentValueText;
     else {
-     let suggestedValueText = STORAGE.Global.getValueText(prefKey, suggestedValue);
+     let suggestedValueText = storage.getValueText(prefKey, suggestedValue);
      $value = currentValueText + " ➔ " + suggestedValueText;
     }
-    let $checkbox, breadcrumb = this.suggestedSettingLabels[prefKey] + " ❯ " + STORAGE.Global.getLabel(prefKey), id = escapeCssSelector(`bx_suggest_${prefKey}`);
+    let $checkbox, breadcrumb = this.settingLabels[prefKey] + " ❯ " + storage.getLabel(prefKey), id = escapeCssSelector(`bx_suggest_${prefKey}`);
     if ($child = CE("div", {
      class: `bx-suggest-row ${isSameValue ? "bx-suggest-ok" : "bx-suggest-change"}`
     }, $checkbox = CE("input", {
@@ -5932,17 +6326,17 @@ class SuggestionsSetting {
    $suggestedSettings.appendChild(fragment);
   }), BxEvent.dispatch($select, "input");
   let onClickApply = () => {
-   let profile = $select.value, settings = this.suggestedSettings[profile], prefKey;
+   let profile = $select.value, settings = this.suggestedSettings[profile], prefKey, settingsManager = SettingsManager.getInstance();
    for (prefKey in settings) {
     let suggestedValue = settings[prefKey], $checkBox = $content.querySelector(`#bx_suggest_${escapeCssSelector(prefKey)}`);
     if (!$checkBox.checked || $checkBox.disabled) continue;
-    let $control = this.settingElements[prefKey];
+    let $control = settingsManager.getElement(prefKey);
     if (!$control) {
-     setPref(prefKey, suggestedValue);
+     setPref(prefKey, suggestedValue, "direct");
      continue;
     }
-    let settingDefinition = getPrefDefinition(prefKey);
-    if (settingDefinition.transformValue) suggestedValue = settingDefinition.transformValue.get.call(settingDefinition, suggestedValue);
+    let { definition: settingDefinition } = getPrefInfo(prefKey);
+    if (settingDefinition?.transformValue) suggestedValue = settingDefinition.transformValue.get.call(settingDefinition, suggestedValue);
     if ("setValue" in $control) $control.setValue(suggestedValue);
     else $control.value = suggestedValue;
     BxEvent.dispatch($control, "input", {
@@ -6006,7 +6400,7 @@ class SuggestionsSetting {
    if (key === "default") continue;
    let prefKey;
    for (prefKey in this.suggestedSettings[key])
-    if (!(prefKey in this.suggestedSettings.default)) this.suggestedSettings.default[prefKey] = getPrefDefinition(prefKey).default;
+    if (!(prefKey in this.suggestedSettings.default)) this.suggestedSettings.default[prefKey] = getPrefInfo(prefKey).definition.default;
   }
  }
 }
@@ -6345,7 +6739,7 @@ class MkbExtraSettings extends HTMLElement {
     input: $container.saveShortcutsSettings
    }
   }));
-  return $container.append(...getPref("mkb.enabled") ? [
+  return $container.append(...getGlobalPref("mkb.enabled") ? [
    createSettingRow(t("virtual-controller"), CE("div", {
     class: "bx-preset-row",
     _nearby: {
@@ -6358,10 +6752,15 @@ class MkbExtraSettings extends HTMLElement {
     onClick: () => MkbMappingManagerDialog.getInstance().show({
      id: parseInt($container.$mappingPresets.value)
     })
-   })), { multiLines: !0 }),
-   createSettingRow(t("virtual-controller-slot"), SettingElement.fromPref("mkb.p1.slot", STORAGE.Global, () => {
-    EmulatedMkbHandler.getInstance()?.resetXcloudGamepads();
-   }))
+   })), {
+    multiLines: !0,
+    onContextMenu: this.boundOnContextMenu,
+    pref: "mkb.p1.preset.mappingId"
+   }),
+   createSettingRow(t("virtual-controller-slot"), this.settingsManager.getElement("mkb.p1.slot"), {
+    onContextMenu: this.boundOnContextMenu,
+    pref: "mkb.p1.slot"
+   })
   ] : [], createSettingRow(t("in-game-keyboard-shortcuts"), CE("div", {
    class: "bx-preset-row",
    _nearby: {
@@ -6374,23 +6773,27 @@ class MkbExtraSettings extends HTMLElement {
    onClick: () => KeyboardShortcutsManagerDialog.getInstance().show({
     id: parseInt($container.$shortcutsPresets.value)
    })
-  })), { multiLines: !0 })), $container.$mappingPresets = $mappingPresets, $container.$shortcutsPresets = $shortcutsPresets, $container.updateLayout(), this.onMountedCallbacks.push(() => {
+  })), {
+   multiLines: !0,
+   onContextMenu: this.boundOnContextMenu,
+   pref: "keyboardShortcuts.preset.inGameId"
+  })), $container.$mappingPresets = $mappingPresets, $container.$shortcutsPresets = $shortcutsPresets, this.settingsManager.setElement("keyboardShortcuts.preset.inGameId", $shortcutsPresets), this.settingsManager.setElement("mkb.p1.preset.mappingId", $mappingPresets), $container.updateLayout(), this.onMountedCallbacks.push(() => {
    $container.updateLayout();
   }), $container;
  }
  static async updateLayout() {
   let mappingPresets = await MkbMappingPresetsTable.getInstance().getPresets();
-  renderPresetsList(this.$mappingPresets, mappingPresets, getPref("mkb.p1.preset.mappingId"));
+  renderPresetsList(this.$mappingPresets, mappingPresets, getStreamPref("mkb.p1.preset.mappingId"));
   let shortcutsPresets = await KeyboardShortcutsTable.getInstance().getPresets();
-  renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getPref("keyboardShortcuts.preset.inGameId"), { addOffValue: !0 });
+  renderPresetsList(this.$shortcutsPresets, shortcutsPresets, getStreamPref("keyboardShortcuts.preset.inGameId"), { addOffValue: !0 });
  }
  static async saveMkbSettings() {
   let presetId = parseInt(this.$mappingPresets.value);
-  setPref("mkb.p1.preset.mappingId", presetId), StreamSettings.refreshMkbSettings();
+  setStreamPref("mkb.p1.preset.mappingId", presetId, "ui");
  }
  static async saveShortcutsSettings() {
   let presetId = parseInt(this.$shortcutsPresets.value);
-  setPref("keyboardShortcuts.preset.inGameId", presetId), StreamSettings.refreshKeyboardShortcuts();
+  setStreamPref("keyboardShortcuts.preset.inGameId", presetId, "ui");
  }
 }
 class SettingsDialog extends NavigationDialog {
@@ -6404,22 +6807,24 @@ class SettingsDialog extends NavigationDialog {
  $btnGlobalReload;
  $noteGlobalReload;
  $btnSuggestion;
+ $streamSettingsSelection;
  renderFullSettings;
+ boundOnContextMenu;
  suggestedSettings = {
   recommended: {},
   default: {},
   lowest: {},
   highest: {}
  };
- suggestedSettingLabels = {};
- settingElements = {};
+ settingLabels = {};
+ settingsManager;
  TAB_GLOBAL_ITEMS = [{
   group: "general",
   label: t("better-xcloud"),
   helpUrl: "https://better-xcloud.github.io/features/",
   items: [
    ($parent) => {
-    let PREF_LATEST_VERSION = getPref("version.latest"), topButtons = [];
+    let PREF_LATEST_VERSION = getGlobalPref("version.latest"), topButtons = [];
     if (!SCRIPT_VERSION.includes("beta") && PREF_LATEST_VERSION && PREF_LATEST_VERSION != SCRIPT_VERSION) {
      let opts = {
       label: "🌟 " + t("new-version-available", { version: PREF_LATEST_VERSION }),
@@ -6666,17 +7071,14 @@ class SettingsDialog extends NavigationDialog {
   helpUrl: "https://better-xcloud.github.io/ingame-features/#audio",
   items: [{
    pref: "audio.volume",
-   onChange: (e, value) => {
-    SoundShortcut.setGainNodeVolume(value);
-   },
    params: {
-    disabled: !getPref("audio.volume.booster.enabled")
+    disabled: !getGlobalPref("audio.volume.booster.enabled")
    },
    onCreated: (setting, $elm) => {
     let $range = $elm.querySelector("input[type=range");
-    BxEventBus.Script.on("setting.changed", (payload) => {
-     let { storageKey, settingKey, settingValue } = payload;
-     if (storageKey === "BetterXcloud" && settingKey === "audio.volume") $range.value = settingValue, BxEvent.dispatch($range, "input", { ignoreOnChange: !0 });
+    BxEventBus.Stream.on("setting.changed", (payload) => {
+     let { settingKey } = payload;
+     if (settingKey === "audio.volume") $range.value = getStreamPref(settingKey).toString(), BxEvent.dispatch($range, "input", { ignoreOnChange: !0 });
     });
    }
   }]
@@ -6684,43 +7086,18 @@ class SettingsDialog extends NavigationDialog {
   group: "video",
   label: t("video"),
   helpUrl: "https://better-xcloud.github.io/ingame-features/#video",
-  items: [{
-   pref: "video.player.type",
-   onChange: onChangeVideoPlayerType
-  }, {
-   pref: "video.maxFps",
-   onChange: (e) => {
-    limitVideoPlayerFps(parseInt(e.target.value));
-   }
-  }, {
-   pref: "video.player.powerPreference",
-   onChange: () => {
-    let streamPlayer = STATES.currentStream.streamPlayer;
-    if (!streamPlayer) return;
-    streamPlayer.reloadPlayer(), updateVideoPlayer();
-   }
-  }, {
-   pref: "video.processing",
-   onChange: updateVideoPlayer
-  }, {
-   pref: "video.ratio",
-   onChange: updateVideoPlayer
-  }, {
-   pref: "video.position",
-   onChange: updateVideoPlayer
-  }, {
-   pref: "video.processing.sharpness",
-   onChange: updateVideoPlayer
-  }, {
-   pref: "video.saturation",
-   onChange: updateVideoPlayer
-  }, {
-   pref: "video.contrast",
-   onChange: updateVideoPlayer
-  }, {
-   pref: "video.brightness",
-   onChange: updateVideoPlayer
-  }]
+  items: [
+   "video.player.type",
+   "video.maxFps",
+   "video.player.powerPreference",
+   "video.processing",
+   "video.ratio",
+   "video.position",
+   "video.processing.sharpness",
+   "video.saturation",
+   "video.contrast",
+   "video.brightness"
+  ]
  }];
  TAB_CONTROLLER_ITEMS = [
   {
@@ -6728,16 +7105,8 @@ class SettingsDialog extends NavigationDialog {
    label: t("controller"),
    helpUrl: "https://better-xcloud.github.io/ingame-features/#controller",
    items: [
-    {
-     pref: "localCoOp.enabled",
-     onChange: () => {
-      BxExposed.toggleLocalCoOp(getPref("localCoOp.enabled"));
-     }
-    },
-    {
-     pref: "controller.pollingRate",
-     onChange: () => StreamSettings.refreshControllerSettings()
-    },
+    "localCoOp.enabled",
+    "controller.pollingRate",
     ($parent) => {
      $parent.appendChild(ControllerExtraSettings.renderSettings.apply(this));
     }
@@ -6781,16 +7150,14 @@ class SettingsDialog extends NavigationDialog {
    items: [{
     pref: "deviceVibration.mode",
     multiLines: !0,
-    unsupported: !STATES.browser.capabilities.deviceVibration,
-    onChange: () => StreamSettings.refreshControllerSettings()
+    unsupported: !STATES.browser.capabilities.deviceVibration
    }, {
     pref: "deviceVibration.intensity",
-    unsupported: !STATES.browser.capabilities.deviceVibration,
-    onChange: () => StreamSettings.refreshControllerSettings()
+    unsupported: !STATES.browser.capabilities.deviceVibration
    }]
   }
  ];
- TAB_MKB_ITEMS = () => [
+ TAB_MKB_ITEMS = [
   {
    requiredVariants: "full",
    group: "mkb",
@@ -6806,17 +7173,10 @@ class SettingsDialog extends NavigationDialog {
    requiredVariants: "full",
    group: "native-mkb",
    label: t("native-mkb"),
-   items: [{
-    pref: "nativeMkb.scroll.sensitivityY",
-    onChange: (e, value) => {
-     NativeMkbHandler.getInstance()?.setVerticalScrollMultiplier(value / 100);
-    }
-   }, {
-    pref: "nativeMkb.scroll.sensitivityX",
-    onChange: (e, value) => {
-     NativeMkbHandler.getInstance()?.setHorizontalScrollMultiplier(value / 100);
-    }
-   }]
+   items: [
+    "nativeMkb.scroll.sensitivityY",
+    "nativeMkb.scroll.sensitivityX"
+   ]
   }
  ];
  TAB_STATS_ITEMS = [{
@@ -6824,40 +7184,14 @@ class SettingsDialog extends NavigationDialog {
   label: t("stream-stats"),
   helpUrl: "https://better-xcloud.github.io/stream-stats/",
   items: [
-   {
-    pref: "stats.showWhenPlaying"
-   },
-   {
-    pref: "stats.quickGlance.enabled",
-    onChange: (e) => {
-     let streamStats = StreamStats.getInstance();
-     e.target.checked ? streamStats.quickGlanceSetup() : streamStats.quickGlanceStop();
-    }
-   },
-   {
-    pref: "stats.items",
-    onChange: StreamStats.refreshStyles
-   },
-   {
-    pref: "stats.position",
-    onChange: StreamStats.refreshStyles
-   },
-   {
-    pref: "stats.textSize",
-    onChange: StreamStats.refreshStyles
-   },
-   {
-    pref: "stats.opacity.all",
-    onChange: StreamStats.refreshStyles
-   },
-   {
-    pref: "stats.opacity.background",
-    onChange: StreamStats.refreshStyles
-   },
-   {
-    pref: "stats.colors",
-    onChange: StreamStats.refreshStyles
-   }
+   "stats.showWhenPlaying",
+   "stats.quickGlance.enabled",
+   "stats.items",
+   "stats.position",
+   "stats.textSize",
+   "stats.opacity.all",
+   "stats.opacity.background",
+   "stats.colors"
   ]
  }];
  SETTINGS_UI = {
@@ -6881,7 +7215,6 @@ class SettingsDialog extends NavigationDialog {
    group: "mkb",
    icon: BxIcon.NATIVE_MKB,
    items: this.TAB_MKB_ITEMS,
-   lazyContent: !0,
    requiredVariants: "full"
   },
   stats: {
@@ -6892,10 +7225,12 @@ class SettingsDialog extends NavigationDialog {
  };
  constructor() {
   super();
-  BxLogger.info(this.LOG_TAG, "constructor()"), this.renderFullSettings = STATES.supportedRegion && STATES.isSignedIn, this.setupDialog(), this.onMountedCallbacks.push(() => {
+  BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnContextMenu = this.onContextMenu.bind(this), this.settingsManager = SettingsManager.getInstance(), this.renderFullSettings = STATES.supportedRegion && STATES.isSignedIn, this.setupDialog(), this.onMountedCallbacks.push(() => {
    if (onChangeVideoPlayerType(), STATES.userAgent.capabilities.touch) BxEvent.dispatch(window, BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED);
    let $selectUserAgent = document.querySelector(`#bx_setting_${escapeCssSelector("userAgent.profile")}`);
    if ($selectUserAgent) $selectUserAgent.disabled = !0, BxEvent.dispatch($selectUserAgent, "input", {}), $selectUserAgent.disabled = !1;
+  }), BxEventBus.Stream.on("gameSettings.switched", ({ id }) => {
+   this.$tabContents.dataset.gameId = id.toString();
   });
  }
  getDialog() {
@@ -6918,31 +7253,29 @@ class SettingsDialog extends NavigationDialog {
   return requiredVariants = typeof requiredVariants === "string" ? [requiredVariants] : requiredVariants, requiredVariants.includes(SCRIPT_VARIANT);
  }
  onTabClicked = (e) => {
-  let $svg = e.target.closest("svg");
-  if ($svg.dataset.lazy) {
-   delete $svg.dataset.lazy;
-   let settingTab = this.SETTINGS_UI[$svg.dataset.group];
-   if (!settingTab) return;
-   let items = settingTab.items(), $tabContent = this.renderSettingsSection.call(this, settingTab, items);
-   this.$tabContents.appendChild($tabContent);
-  }
-  let $child, children = Array.from(this.$tabContents.children);
+  let $svg = e.target.closest("svg"), $child, children = Array.from(this.$tabContents.children);
   for ($child of children)
    if ($child.dataset.tabGroup === $svg.dataset.group) $child.classList.remove("bx-gone"), calculateSelectBoxes($child);
-   else $child.classList.add("bx-gone");
+   else if ($child.dataset.tabGroup) $child.classList.add("bx-gone");
+  this.$streamSettingsSelection.classList.toggle("bx-gone", $svg.dataset.group === "global");
   for (let $child2 of Array.from(this.$tabs.children))
    $child2.classList.remove("bx-active");
   $svg.classList.add("bx-active");
  };
  renderTab(settingTab) {
   let $svg = createSvgIcon(settingTab.icon);
-  return $svg.dataset.group = settingTab.group, $svg.tabIndex = 0, settingTab.lazyContent && ($svg.dataset.lazy = settingTab.lazyContent.toString()), $svg.addEventListener("click", this.onTabClicked), $svg;
+  return $svg.dataset.group = settingTab.group, $svg.tabIndex = 0, $svg.addEventListener("click", this.onTabClicked), $svg;
  }
  onGlobalSettingChanged = (e) => {
   PatcherCache.getInstance().clear(), this.$btnReload.classList.add("bx-danger"), this.$noteGlobalReload.classList.add("bx-gone"), this.$btnGlobalReload.classList.remove("bx-gone"), this.$btnGlobalReload.classList.add("bx-danger");
  };
+ onContextMenu(e) {
+  e.preventDefault();
+  let $elm = e.target;
+  $elm instanceof HTMLElement && this.resetHighlightedSetting($elm);
+ }
  renderServerSetting(setting) {
-  let selectedValue = getPref("server.region"), continents = {
+  let selectedValue = getGlobalPref("server.region"), continents = {
    "america-north": {
     label: t("continent-north-america")
    },
@@ -6966,7 +7299,7 @@ class SettingsDialog extends NavigationDialog {
    tabindex: 0
   });
   $control.name = $control.id, $control.addEventListener("input", (e) => {
-   setPref(setting.pref, e.target.value), this.onGlobalSettingChanged(e);
+   setGlobalPref(setting.pref, e.target.value, "ui"), this.onGlobalSettingChanged(e);
   }), setting.options = {};
   for (let regionName in STATES.serverRegions) {
    let region = STATES.serverRegions[regionName], value = regionName, label = `${region.shortName} - ${regionName}`;
@@ -6997,9 +7330,9 @@ class SettingsDialog extends NavigationDialog {
    else $control = setting.content;
   else if (!setting.unsupported) {
    if (pref === "server.region") $control = this.renderServerSetting(setting);
-   else if (pref === "bx.locale") $control = SettingElement.fromPref(pref, STORAGE.Global, async (e) => {
+   else if (pref === "bx.locale") $control = SettingElement.fromPref(pref, async (e) => {
      let newLocale = e.target.value;
-     if (getPref("ui.controllerFriendly")) {
+     if (getGlobalPref("ui.controllerFriendly")) {
       let timeoutId = e.target.timeoutId;
       timeoutId && window.clearTimeout(timeoutId), e.target.timeoutId = window.setTimeout(() => {
        Translations.refreshLocale(newLocale), Translations.updateTranslations();
@@ -7007,22 +7340,17 @@ class SettingsDialog extends NavigationDialog {
      } else Translations.refreshLocale(newLocale), Translations.updateTranslations();
      this.onGlobalSettingChanged(e);
     });
-   else if (pref === "userAgent.profile") $control = SettingElement.fromPref("userAgent.profile", STORAGE.Global, (e) => {
+   else if (pref === "userAgent.profile") $control = SettingElement.fromPref("userAgent.profile", (e) => {
      let value = e.target.value, isCustom = value === "custom", userAgent2 = UserAgent.get(value);
      UserAgent.updateStorage(value);
      let $inp = $control.nextElementSibling;
      $inp.value = userAgent2, $inp.readOnly = !isCustom, $inp.disabled = !isCustom, !e.target.disabled && this.onGlobalSettingChanged(e);
     });
-   else {
-    let onChange = setting.onChange;
-    if (!onChange && settingTab.group === "global") onChange = this.onGlobalSettingChanged;
-    $control = SettingElement.fromPref(pref, STORAGE.Global, onChange, setting.params);
-   }
+   else if ($control = this.settingsManager.getElement(pref), settingTab.group === "global") $control.addEventListener("input", this.onGlobalSettingChanged);
    if ($control instanceof HTMLSelectElement) $control = BxSelectElement.create($control);
-   pref && (this.settingElements[pref] = $control);
   }
   let prefDefinition = null;
-  if (pref) prefDefinition = getPrefDefinition(pref);
+  if (pref) prefDefinition = getPrefInfo(pref).definition;
   if (prefDefinition && !this.isSupportedVariant(prefDefinition.requiredVariants)) return;
   let label = prefDefinition?.label || setting.label || "", note = prefDefinition?.note || setting.note, unsupportedNote = prefDefinition?.unsupportedNote || setting.unsupportedNote, experimental = prefDefinition?.experimental || setting.experimental;
   if (typeof note === "function") note = note();
@@ -7038,7 +7366,9 @@ class SettingsDialog extends NavigationDialog {
   let $row = createSettingRow(label, !prefDefinition?.unsupported && $control, {
    $note,
    multiLines: setting.multiLines,
-   icon: prefDefinition?.labelIcon
+   icon: prefDefinition?.labelIcon,
+   onContextMenu: this.boundOnContextMenu,
+   pref
   });
   if (pref) $row.htmlFor = `bx_setting_${escapeCssSelector(pref)}`;
   $row.dataset.type = settingTabContent.group, $tabContent.appendChild($row), !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
@@ -7046,7 +7376,9 @@ class SettingsDialog extends NavigationDialog {
  renderSettingsSection(settingTab, sections) {
   let $tabContent = CE("div", {
    class: "bx-gone",
-   "data-tab-group": settingTab.group
+   _dataset: {
+    tabGroup: settingTab.group
+   }
   });
   for (let section of sections) {
    if (!section) continue;
@@ -7134,17 +7466,22 @@ class SettingsDialog extends NavigationDialog {
    onClick: (e) => {
     this.dialogManager.hide();
    }
-  }))), $tabContents = CE("div", {
+  }))), CE("div", {
    class: "bx-settings-tab-contents",
    _nearby: {
     orientation: "vertical",
-    focus: () => this.jumpToSettingGroup("next"),
     loop: (direction) => {
      if (direction === 1 || direction === 3) return this.focusVisibleSetting(direction === 1 ? "last" : "first"), !0;
      return !1;
     }
    }
-  }));
+  }, this.$streamSettingsSelection = SettingsManager.getInstance().getStreamSettingsSelection(), $tabContents = CE("div", {
+   class: "bx-settings-tab-content",
+   _nearby: {
+    orientation: "vertical",
+    focus: () => this.jumpToSettingGroup("next")
+   }
+  })));
   this.$container = $container, this.$tabs = $tabs, this.$tabContents = $tabContents, $container.addEventListener("click", (e) => {
    if (e.target === $container) e.preventDefault(), e.stopPropagation(), this.hide();
   });
@@ -7155,7 +7492,7 @@ class SettingsDialog extends NavigationDialog {
    if (!this.isSupportedVariant(settingTab.requiredVariants)) continue;
    if (settingTab.group !== "global" && !this.renderFullSettings) continue;
    let $svg = this.renderTab(settingTab);
-   if ($tabs.appendChild($svg), typeof settingTab.items === "function") continue;
+   $tabs.appendChild($svg);
    let $tabContent = this.renderSettingsSection.call(this, settingTab, settingTab.items);
    $tabContents.appendChild($tabContent);
   }
@@ -7215,6 +7552,22 @@ class SettingsDialog extends NavigationDialog {
   if ($target) return this.dialogManager.focus($target);
   return !1;
  }
+ resetHighlightedSetting($elm) {
+  let targetGameId = SettingsManager.getInstance().getTargetGameId();
+  if (targetGameId < 0) return;
+  if (!$elm) $elm = document.activeElement instanceof HTMLElement ? document.activeElement : void 0;
+  let $row = $elm?.closest("div[data-tab-group] > .bx-settings-row");
+  if (!$row) return;
+  let pref = $row.prefKey;
+  if (!pref) alert("Pref not found: " + $row.id);
+  if (!isStreamPref(pref)) return;
+  let deleted = STORAGE.Stream.getGameSettings(targetGameId)?.deleteSetting(pref);
+  if (deleted) BxEventBus.Stream.emit("setting.changed", {
+    storageKey: `${"BetterXcloud.Stream"}.${targetGameId}`,
+    settingKey: pref
+   });
+  return deleted;
+ }
  handleKeyPress(key) {
   let handled = !0;
   switch (key) {
@@ -7232,6 +7585,9 @@ class SettingsDialog extends NavigationDialog {
     break;
    case "PageDown":
     this.jumpToSettingGroup("next");
+    break;
+   case "KeyQ":
+    this.resetHighlightedSetting();
     break;
    default:
     handled = !1;
@@ -7256,6 +7612,9 @@ class SettingsDialog extends NavigationDialog {
     break;
    case 7:
     this.jumpToSettingGroup("next");
+    break;
+   case 2:
+    this.resetHighlightedSetting();
     break;
    default:
     handled = !1;
@@ -7290,7 +7649,7 @@ class ScreenshotManager {
   let currentStream = STATES.currentStream, streamPlayer = currentStream.streamPlayer, $canvas = this.$canvas;
   if (!streamPlayer || !$canvas) return;
   let $player;
-  if (getPref("screenshot.applyFilters")) $player = streamPlayer.getPlayerElement();
+  if (getGlobalPref("screenshot.applyFilters")) $player = streamPlayer.getPlayerElement();
   else $player = streamPlayer.getPlayerElement("default");
   if (!$player || !$player.isConnected) return;
   let $gameStream = $player.closest("#game-stream");
@@ -7318,7 +7677,7 @@ class RendererShortcut {
   }
   $mediaContainer.classList.toggle("bx-gone");
   let isVisible = !$mediaContainer.classList.contains("bx-gone");
-  limitVideoPlayerFps(isVisible ? getPref("video.maxFps") : 0), BxEventBus.Stream.emit("video.visibility.changed", { isVisible });
+  limitVideoPlayerFps(isVisible ? getStreamPref("video.maxFps") : 0), BxEventBus.Stream.emit("video.visibility.changed", { isVisible });
  }
 }
 class TrueAchievements {
@@ -7493,9 +7852,9 @@ var FeatureGates = {
  EnableUpdateRequiredPage: !1,
  ShowForcedUpdateScreen: !1,
  EnableTakControlResizing: !0
-}, nativeMkbMode = getPref("nativeMkb.mode");
+}, nativeMkbMode = getGlobalPref("nativeMkb.mode");
 if (nativeMkbMode !== "default") FeatureGates.EnableMouseAndKeyboard = nativeMkbMode === "on";
-var blockFeatures = getPref("block.features");
+var blockFeatures = getGlobalPref("block.features");
 if (blockFeatures.includes("chat")) FeatureGates.EnableGuideChatTab = !1;
 if (blockFeatures.includes("friends")) FeatureGates.EnableFriendsAndFollowers = !1;
 if (blockFeatures.includes("byog")) FeatureGates.EnableBYOG = !1, FeatureGates.EnableBYOGPurchase = !1;
@@ -7558,10 +7917,10 @@ var BxExposed = {
   titleInfo = deepClone(titleInfo);
   let supportedInputTypes = titleInfo.details.supportedInputTypes;
   if (BX_FLAGS.ForceNativeMkbTitles?.includes(titleInfo.details.productId)) supportedInputTypes.push("MKB");
-  if (getPref("nativeMkb.mode") === "off") supportedInputTypes = supportedInputTypes.filter((i) => i !== "MKB");
+  if (getGlobalPref("nativeMkb.mode") === "off") supportedInputTypes = supportedInputTypes.filter((i) => i !== "MKB");
   if (titleInfo.details.hasMkbSupport = supportedInputTypes.includes("MKB"), STATES.userAgent.capabilities.touch) {
-   let touchControllerAvailability = getPref("touchController.mode");
-   if (touchControllerAvailability !== "off" && getPref("touchController.autoOff")) {
+   let touchControllerAvailability = getGlobalPref("touchController.mode");
+   if (touchControllerAvailability !== "off" && getGlobalPref("touchController.autoOff")) {
     let gamepads = window.navigator.getGamepads(), gamepadFound = !1;
     for (let gamepad of gamepads)
      if (gamepad && gamepad.connected) {
@@ -7641,7 +8000,7 @@ function localRedirect(path) {
 }
 window.localRedirect = localRedirect;
 function getPreferredServerRegion(shortName = !1) {
- let preferredRegion = getPref("server.region"), serverRegions = STATES.serverRegions;
+ let preferredRegion = getGlobalPref("server.region"), serverRegions = STATES.serverRegions;
  if (preferredRegion in serverRegions) if (shortName && serverRegions[preferredRegion].shortName) return serverRegions[preferredRegion].shortName;
   else return preferredRegion;
  for (let regionName in serverRegions) {
@@ -7673,11 +8032,11 @@ class HeaderSection {
    label: "???",
    style: 16 | 32 | 64 | 256,
    onClick: (e) => SettingsDialog.getInstance().show()
-  }), this.$buttonsWrapper = CE("div", !1, getPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
+  }), this.$buttonsWrapper = CE("div", !1, getGlobalPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
  }
  injectSettingsButton($parent) {
   if (!$parent) return;
-  let PREF_LATEST_VERSION = getPref("version.latest"), $btnSettings = this.$btnSettings;
+  let PREF_LATEST_VERSION = getGlobalPref("version.latest"), $btnSettings = this.$btnSettings;
   if (isElementVisible(this.$buttonsWrapper)) return;
   if ($btnSettings.querySelector("span").textContent = getPreferredServerRegion(!0) || t("better-xcloud"), !SCRIPT_VERSION.includes("beta") && PREF_LATEST_VERSION && PREF_LATEST_VERSION !== SCRIPT_VERSION) $btnSettings.setAttribute("data-update-available", "true");
   $parent.appendChild(this.$buttonsWrapper);
@@ -7717,10 +8076,10 @@ class RemotePlayDialog extends NavigationDialog {
   BxLogger.info(this.LOG_TAG, "constructor()"), this.setupDialog();
  }
  setupDialog() {
-  let $fragment = CE("div", { class: "bx-centered-dialog" }, CE("div", { class: "bx-dialog-title" }, CE("p", !1, t("remote-play")))), $settingNote = CE("p", {}), currentResolution = getPref("xhome.video.resolution"), $resolutions = CE("select", !1, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
+  let $fragment = CE("div", { class: "bx-centered-dialog" }, CE("div", { class: "bx-dialog-title" }, CE("p", !1, t("remote-play")))), $settingNote = CE("p", {}), currentResolution = getGlobalPref("xhome.video.resolution"), $resolutions = CE("select", !1, CE("option", { value: "720p" }, "720p"), CE("option", { value: "1080p" }, "1080p"));
   $resolutions = BxSelectElement.create($resolutions), $resolutions.addEventListener("input", (e) => {
    let value = e.target.value;
-   $settingNote.textContent = value === "1080p" ? "✅ " + t("can-stream-xbox-360-games") : "❌ " + t("cant-stream-xbox-360-games"), setPref("xhome.video.resolution", value);
+   $settingNote.textContent = value === "1080p" ? "✅ " + t("can-stream-xbox-360-games") : "❌ " + t("cant-stream-xbox-360-games"), setGlobalPref("xhome.video.resolution", value, "ui");
   }), $resolutions.value = currentResolution, BxEvent.dispatch($resolutions, "input", {
    manualTrigger: !0
   });
@@ -7768,7 +8127,7 @@ class RemotePlayDialog extends NavigationDialog {
 class RemotePlayManager {
  static instance;
  static getInstance() {
-  if (typeof RemotePlayManager.instance === "undefined") if (getPref("xhome.enabled")) RemotePlayManager.instance = new RemotePlayManager;
+  if (typeof RemotePlayManager.instance === "undefined") if (getGlobalPref("xhome.enabled")) RemotePlayManager.instance = new RemotePlayManager;
    else RemotePlayManager.instance = null;
   return RemotePlayManager.instance;
  }
@@ -7858,7 +8217,7 @@ class RemotePlayManager {
   callback();
  }
  play(serverId, resolution) {
-  if (resolution) setPref("xhome.video.resolution", resolution);
+  if (resolution) setGlobalPref("xhome.video.resolution", resolution, "ui");
   STATES.remotePlay.config = {
    serverId
   }, window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config, localRedirect("/launch/fortnite/BT5P2X999VH2#remote-play");
@@ -7875,7 +8234,7 @@ class RemotePlayManager {
   RemotePlayDialog.getInstance().show();
  }
  static detect() {
-  if (!getPref("xhome.enabled")) return;
+  if (!getGlobalPref("xhome.enabled")) return;
   if (STATES.remotePlay.isPlaying = window.location.pathname.includes("/launch/") && window.location.hash.startsWith("#remote-play"), STATES.remotePlay?.isPlaying) window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config, window.history.replaceState({ origin: "better-xcloud" }, "", "https://www.xbox.com/" + location.pathname.substring(1, 6) + "/play");
   else window.BX_REMOTE_PLAY_CONFIG = null;
  }
@@ -7919,7 +8278,7 @@ class XhomeInterceptor {
  }
  static async handleInputConfigs(request, opts) {
   let response = await NATIVE_FETCH(request);
-  if (getPref("touchController.mode") !== "all") return response;
+  if (getGlobalPref("touchController.mode") !== "all") return response;
   let obj = await response.clone().json(), xboxTitleId = JSON.parse(opts.body).titleIds[0];
   TouchController.setXboxTitleId(xboxTitleId);
   let inputConfigs = obj[0], hasTouchSupport = inputConfigs.supportedTabs.length > 0;
@@ -7958,7 +8317,7 @@ class XhomeInterceptor {
   for (let pair of clone.headers.entries())
    headers[pair[0]] = pair[1];
   headers.authorization = `Bearer ${RemotePlayManager.getInstance().getXhomeToken()}`;
-  let osName = getOsNameFromResolution(getPref("xhome.video.resolution"));
+  let osName = getOsNameFromResolution(getGlobalPref("xhome.video.resolution"));
   headers["x-ms-device-info"] = JSON.stringify(generateMsDeviceInfo(osName));
   let opts = {
    method: clone.method,
@@ -7995,7 +8354,7 @@ class LoadingScreen {
    let $bgStyle = CE("style");
    document.documentElement.appendChild($bgStyle), LoadingScreen.$bgStyle = $bgStyle;
   }
-  if (LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl), getPref("loadingScreen.rocket") === "hide") LoadingScreen.hideRocket();
+  if (LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl), getGlobalPref("loadingScreen.rocket") === "hide") LoadingScreen.hideRocket();
  }
  static hideRocket() {
   let $bgStyle = LoadingScreen.$bgStyle;
@@ -8004,7 +8363,7 @@ class LoadingScreen {
  static setBackground(imageUrl) {
   let $bgStyle = LoadingScreen.$bgStyle;
   imageUrl = imageUrl + "?w=1920";
-  let imageQuality = getPref("ui.imageQuality");
+  let imageQuality = getGlobalPref("ui.imageQuality");
   if (imageQuality !== 90) imageUrl += "&q=" + imageQuality;
   $bgStyle.textContent += '#game-stream{background-color:transparent !important;background-position:center center !important;background-repeat:no-repeat !important;background-size:cover !important}#game-stream rect[width="800"]{transition:opacity .3s ease-in-out !important}' + `#game-stream {background-image: linear-gradient(#00000033, #000000e6), url(${imageUrl}) !important;}`;
   let bg = new Image;
@@ -8013,7 +8372,7 @@ class LoadingScreen {
   }, bg.src = imageUrl;
  }
  static setupWaitTime(waitTime) {
-  if (getPref("loadingScreen.rocket") === "hide-queue") LoadingScreen.hideRocket();
+  if (getGlobalPref("loadingScreen.rocket") === "hide-queue") LoadingScreen.hideRocket();
   let secondsLeft = waitTime, $countDown, $estimated;
   LoadingScreen.orgWebTitle = document.title;
   let endDate = new Date, timeZoneOffsetSeconds = endDate.getTimezoneOffset() * 60;
@@ -8028,7 +8387,7 @@ class LoadingScreen {
   }, 1000);
  }
  static hide() {
-  if (LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle), LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add("bx-gone"), getPref("loadingScreen.gameArt.show") && LoadingScreen.$bgStyle) {
+  if (LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle), LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add("bx-gone"), getGlobalPref("loadingScreen.gameArt.show") && LoadingScreen.$bgStyle) {
    let $rocketBg = document.querySelector('#game-stream rect[width="800"]');
    $rocketBg && $rocketBg.addEventListener("transitionend", (e) => {
     LoadingScreen.$bgStyle.textContent += "#game-stream{background:#000 !important}";
@@ -8109,7 +8468,7 @@ class GuideMenu {
   ], $div = CE("div", {
    class: "bx-guide-home-buttons"
   });
-  if (STATES.userAgent.isTv || getPref("ui.layout") === "tv") document.body.dataset.bxMediaType = "tv";
+  if (STATES.userAgent.isTv || getGlobalPref("ui.layout") === "tv") document.body.dataset.bxMediaType = "tv";
   for (let $button of buttonsLayout) {
    if (!$button) continue;
    if ($button instanceof HTMLElement) $div.appendChild($button);
@@ -8355,7 +8714,7 @@ class XcloudInterceptor {
   WestEurope: ["🇪🇺", "europe"]
  };
  static async handleLogin(request, init) {
-  let bypassServer = getPref("server.bypassRestriction");
+  let bypassServer = getGlobalPref("server.bypassRestriction");
   if (bypassServer !== "off") {
    let ip = BypassServerIps[bypassServer];
    ip && request.headers.set("X-Forwarded-For", ip);
@@ -8383,7 +8742,7 @@ class XcloudInterceptor {
  }
  static async handlePlay(request, init) {
   BxEventBus.Stream.emit("state.loading", {});
-  let PREF_STREAM_TARGET_RESOLUTION = getPref("stream.video.resolution"), PREF_STREAM_PREFERRED_LOCALE = getPref("stream.locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
+  let PREF_STREAM_TARGET_RESOLUTION = getGlobalPref("stream.video.resolution"), PREF_STREAM_PREFERRED_LOCALE = getGlobalPref("stream.locale"), url = typeof request === "string" ? request : request.url, parsedUrl = new URL(url), badgeRegion = parsedUrl.host.split(".", 1)[0];
   for (let regionName in STATES.serverRegions) {
    let region = STATES.serverRegions[regionName];
    if (region && parsedUrl.origin === region.baseUri) {
@@ -8408,7 +8767,7 @@ class XcloudInterceptor {
  }
  static async handleWaitTime(request, init) {
   let response = await NATIVE_FETCH(request, init);
-  if (getPref("loadingScreen.waitTime.show")) {
+  if (getGlobalPref("loadingScreen.waitTime.show")) {
    let json = await response.clone().json();
    if (json.estimatedAllocationTimeInSeconds > 0) LoadingScreen.setupWaitTime(json.estimatedTotalWaitTimeInSeconds);
   }
@@ -8416,7 +8775,7 @@ class XcloudInterceptor {
  }
  static async handleConfiguration(request, init) {
   if (request.method !== "GET") return NATIVE_FETCH(request, init);
-  if (getPref("touchController.mode") === "all") if (STATES.currentStream.titleInfo?.details.hasTouchSupport) TouchController.disable();
+  if (getGlobalPref("touchController.mode") === "all") if (STATES.currentStream.titleInfo?.details.hasTouchSupport) TouchController.disable();
    else TouchController.enable();
   let response = await NATIVE_FETCH(request, init), text = await response.clone().text();
   if (!text.length) return response;
@@ -8424,14 +8783,14 @@ class XcloudInterceptor {
   let obj = JSON.parse(text), overrides = JSON.parse(obj.clientStreamingConfigOverrides || "{}") || {};
   overrides.inputConfiguration = overrides.inputConfiguration || {}, overrides.inputConfiguration.enableVibration = !0;
   let overrideMkb = null;
-  if (getPref("nativeMkb.mode") === "on" || STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId)) overrideMkb = !0;
-  if (getPref("nativeMkb.mode") === "off") overrideMkb = !1;
+  if (getGlobalPref("nativeMkb.mode") === "on" || STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId)) overrideMkb = !0;
+  if (getGlobalPref("nativeMkb.mode") === "off") overrideMkb = !1;
   if (overrideMkb !== null) overrides.inputConfiguration = Object.assign(overrides.inputConfiguration, {
     enableMouseInput: overrideMkb,
     enableKeyboardInput: overrideMkb
    });
   if (TouchController.isEnabled()) overrides.inputConfiguration.enableTouchInput = !0, overrides.inputConfiguration.maxTouchPoints = 10;
-  if (getPref("audio.mic.onPlaying")) overrides.audioConfiguration = overrides.audioConfiguration || {}, overrides.audioConfiguration.enableMicrophone = !0;
+  if (getGlobalPref("audio.mic.onPlaying")) overrides.audioConfiguration = overrides.audioConfiguration || {}, overrides.audioConfiguration.enableMicrophone = !0;
   return obj.clientStreamingConfigOverrides = JSON.stringify(overrides), response.json = () => Promise.resolve(obj), response.text = () => Promise.resolve(JSON.stringify(obj)), response;
  }
  static async handle(request, init) {
@@ -8491,15 +8850,15 @@ async function patchIceCandidates(request, consoleAddrs) {
  let response = await NATIVE_FETCH(request), text = await response.clone().text();
  if (!text.length) return response;
  let options = {
-  preferIpv6Server: getPref("server.ipv6.prefer"),
+  preferIpv6Server: getGlobalPref("server.ipv6.prefer"),
   consoleAddrs
  }, obj = JSON.parse(text), exchangeResponse = JSON.parse(obj.exchangeResponse);
  return exchangeResponse = updateIceCandidates(exchangeResponse, options), obj.exchangeResponse = JSON.stringify(exchangeResponse), response.json = () => Promise.resolve(obj), response.text = () => Promise.resolve(JSON.stringify(obj)), response;
 }
 function interceptHttpRequests() {
  let BLOCKED_URLS = [];
- if (getPref("block.tracking")) clearAllLogs(), BLOCKED_URLS.push("https://arc.msn.com", "https://browser.events.data.microsoft.com", "https://dc.services.visualstudio.com", "https://2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io", "https://mscom.demdex.net");
- let blockFeatures2 = getPref("block.features");
+ if (getGlobalPref("block.tracking")) clearAllLogs(), BLOCKED_URLS.push("https://arc.msn.com", "https://browser.events.data.microsoft.com", "https://dc.services.visualstudio.com", "https://2c06dea3f26c40c69b8456d319791fd0@o427368.ingest.sentry.io", "https://mscom.demdex.net");
+ let blockFeatures2 = getGlobalPref("block.features");
  if (blockFeatures2.includes("chat")) BLOCKED_URLS.push("https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox");
  if (blockFeatures2.includes("friends")) BLOCKED_URLS.push("https://peoplehub.xboxlive.com/users/me/people/social", "https://peoplehub.xboxlive.com/users/me/people/recommendations");
  if (blockAllNotifications()) BLOCKED_URLS.push("https://notificationinbox.xboxlive.com/");
@@ -8620,19 +8979,19 @@ function getOsNameFromResolution(resolution) {
  return osName;
 }
 function addCss() {
- let css = ':root{--bx-title-font:Bahnschrift,Arial,Helvetica,sans-serif;--bx-title-font-semibold:Bahnschrift Semibold,Arial,Helvetica,sans-serif;--bx-normal-font:"Segoe UI",Arial,Helvetica,sans-serif;--bx-monospaced-font:Consolas,"Courier New",Courier,monospace;--bx-promptfont-font:promptfont;--bx-button-height:40px;--bx-default-button-color:#2d3036;--bx-default-button-rgb:45,48,54;--bx-default-button-hover-color:#515863;--bx-default-button-hover-rgb:81,88,99;--bx-default-button-active-color:#222428;--bx-default-button-active-rgb:34,36,40;--bx-default-button-disabled-color:#8e8e8e;--bx-default-button-disabled-rgb:142,142,142;--bx-primary-button-color:#008746;--bx-primary-button-rgb:0,135,70;--bx-primary-button-hover-color:#04b358;--bx-primary-button-hover-rgb:4,179,88;--bx-primary-button-active-color:#044e2a;--bx-primary-button-active-rgb:4,78,42;--bx-primary-button-disabled-color:#448262;--bx-primary-button-disabled-rgb:68,130,98;--bx-warning-button-color:#c16e04;--bx-warning-button-rgb:193,110,4;--bx-warning-button-hover-color:#fa9005;--bx-warning-button-hover-rgb:250,144,5;--bx-warning-button-active-color:#965603;--bx-warning-button-active-rgb:150,86,3;--bx-warning-button-disabled-color:#a2816c;--bx-warning-button-disabled-rgb:162,129,108;--bx-danger-button-color:#c10404;--bx-danger-button-rgb:193,4,4;--bx-danger-button-hover-color:#e61d1d;--bx-danger-button-hover-rgb:230,29,29;--bx-danger-button-active-color:#a26c6c;--bx-danger-button-active-rgb:162,108,108;--bx-danger-button-disabled-color:#df5656;--bx-danger-button-disabled-rgb:223,86,86;--bx-fullscreen-text-z-index:9999;--bx-toast-z-index:6000;--bx-key-binding-dialog-z-index:5010;--bx-key-binding-dialog-overlay-z-index:5000;--bx-stats-bar-z-index:4010;--bx-navigation-dialog-z-index:3010;--bx-navigation-dialog-overlay-z-index:3000;--bx-mkb-pointer-lock-msg-z-index:2000;--bx-game-bar-z-index:1000;--bx-screenshot-animation-z-index:200;--bx-wait-time-box-z-index:100}@font-face{font-family:\'promptfont\';src:url("https://redphx.github.io/better-xcloud/fonts/promptfont.otf");unicode-range:U+2196-E011}div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]){opacity:0;pointer-events:none !important;position:absolute;top:-9999px;left:-9999px}@media screen and (max-width:640px){header a[href="/play"]{display:none}}.bx-full-width{width:100% !important}.bx-full-height{height:100% !important}.bx-auto-height{height:auto !important}.bx-no-scroll{overflow:hidden !important}.bx-hide-scroll-bar{scrollbar-width:none}.bx-hide-scroll-bar::-webkit-scrollbar{display:none}.bx-gone{display:none !important}.bx-offscreen{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}.bx-hidden{visibility:hidden !important}.bx-invisible{opacity:0}.bx-unclickable{pointer-events:none}.bx-pixel{width:1px !important;height:1px !important}.bx-no-margin{margin:0 !important}.bx-no-padding{padding:0 !important}.bx-prompt{font-family:var(--bx-promptfont-font) !important}.bx-monospaced{font-family:var(--bx-monospaced-font) !important}.bx-line-through{text-decoration:line-through !important}.bx-normal-case{text-transform:none !important}.bx-normal-link{text-transform:none !important;text-align:left !important;font-weight:400 !important;font-family:var(--bx-normal-font) !important}.bx-frosted{backdrop-filter:blur(4px) brightness(1.5)}select[multiple],select[multiple]:focus{overflow:auto;border:none}select[multiple] option,select[multiple]:focus option{padding:4px 6px}select[multiple] option:checked,select[multiple]:focus option:checked{background:#1a7bc0 linear-gradient(0deg,#1a7bc0 0%,#1a7bc0 100%)}select[multiple] option:checked::before,select[multiple]:focus option:checked::before{content:\'☑️\';font-size:12px;display:inline-block;margin-right:6px;height:100%;line-height:100%;vertical-align:middle}#headerArea,#uhfSkipToMain,.uhf-footer{display:none}div[class*=NotFocusedDialog]{position:absolute !important;top:-9999px !important;left:-9999px !important;width:0 !important;height:0 !important}#game-stream video:not([src]){visibility:hidden}.bx-game-tile-wait-time{position:absolute;top:0;left:0;z-index:1;background:rgba(0,0,0,0.5);display:flex;border-radius:4px 0 4px 0;align-items:center;padding:4px 8px}.bx-game-tile-wait-time svg{width:14px;height:16px;margin-right:2px}.bx-game-tile-wait-time span{display:inline-block;height:16px;line-height:16px;font-size:12px;font-weight:bold;margin-left:2px}.bx-game-tile-wait-time[data-duration=short]{background-color:rgba(0,133,133,0.75)}.bx-game-tile-wait-time[data-duration=medium]{background-color:rgba(213,133,0,0.75)}.bx-game-tile-wait-time[data-duration=long]{background-color:rgba(150,0,0,0.75)}.bx-fullscreen-text{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);z-index:var(--bx-fullscreen-text-z-index);line-height:100vh;color:#fff;text-align:center;font-weight:400;font-family:var(--bx-normal-font);font-size:1.3rem;user-select:none;-webkit-user-select:none}#root section[class*=DeviceCodePage-module__page]{margin-left:20px !important;margin-right:20px !important;margin-top:20px !important;max-width:800px !important}#root div[class*=DeviceCodePage-module__back]{display:none}.bx-blink-me{animation:bx-blinker 1s linear infinite}.bx-horizontal-shaking{animation:bx-horizontal-shaking .4s ease-in-out 2}@-moz-keyframes bx-blinker{100%{opacity:0}}@-webkit-keyframes bx-blinker{100%{opacity:0}}@-o-keyframes bx-blinker{100%{opacity:0}}@keyframes bx-blinker{100%{opacity:0}}@-moz-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@-webkit-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@-o-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}.bx-button{--button-rgb:var(--bx-default-button-rgb);--button-hover-rgb:var(--bx-default-button-hover-rgb);--button-active-rgb:var(--bx-default-button-active-rgb);--button-disabled-rgb:var(--bx-default-button-disabled-rgb);background-color:rgb(var(--button-rgb));user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;border:none;font-weight:400;height:var(--bx-button-height);border-radius:4px;padding:0 8px;text-transform:uppercase;cursor:pointer;overflow:hidden}.bx-button:not([disabled]):active{background-color:rgb(var(--button-active-rgb))}.bx-button:focus{outline:none !important}.bx-button:not([disabled]):not(:active):hover,.bx-button:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button:disabled{cursor:default;background-color:rgb(var(--button-disabled-rgb))}.bx-button.bx-ghost{background-color:transparent}.bx-button.bx-ghost:not([disabled]):not(:active):hover,.bx-button.bx-ghost:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button.bx-primary{--button-rgb:var(--bx-primary-button-rgb)}.bx-button.bx-primary:not([disabled]):active{--button-active-rgb:var(--bx-primary-button-active-rgb)}.bx-button.bx-primary:not([disabled]):not(:active):hover,.bx-button.bx-primary:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-primary-button-hover-rgb)}.bx-button.bx-primary:disabled{--button-disabled-rgb:var(--bx-primary-button-disabled-rgb)}.bx-button.bx-warning{--button-rgb:var(--bx-warning-button-rgb)}.bx-button.bx-warning:not([disabled]):active{--button-active-rgb:var(--bx-warning-button-active-rgb)}.bx-button.bx-warning:not([disabled]):not(:active):hover,.bx-button.bx-warning:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-warning-button-hover-rgb)}.bx-button.bx-warning:disabled{--button-disabled-rgb:var(--bx-warning-button-disabled-rgb)}.bx-button.bx-danger{--button-rgb:var(--bx-danger-button-rgb)}.bx-button.bx-danger:not([disabled]):active{--button-active-rgb:var(--bx-danger-button-active-rgb)}.bx-button.bx-danger:not([disabled]):not(:active):hover,.bx-button.bx-danger:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-danger-button-hover-rgb)}.bx-button.bx-danger:disabled{--button-disabled-rgb:var(--bx-danger-button-disabled-rgb)}.bx-button.bx-frosted{--button-alpha:.2;background-color:rgba(var(--button-rgb), var(--button-alpha))}.bx-button.bx-frosted:not([disabled]):not(:active):hover,.bx-button.bx-frosted:not([disabled]):not(:active).bx-focusable:focus{background-color:rgba(var(--button-hover-rgb), var(--button-alpha))}.bx-button.bx-drop-shadow{box-shadow:0 0 4px rgba(0,0,0,0.502)}.bx-button.bx-tall{height:calc(var(--bx-button-height) * 1.5) !important}.bx-button.bx-circular{border-radius:var(--bx-button-height);width:var(--bx-button-height);height:var(--bx-button-height)}.bx-button svg{display:inline-block;width:16px;height:var(--bx-button-height)}.bx-button span{display:inline-block;line-height:var(--bx-button-height);vertical-align:middle;color:#fff;overflow:hidden;white-space:nowrap}.bx-button span:not(:only-child){margin-inline-start:8px}.bx-button.bx-button-multi-lines{height:auto;text-align:left;padding:10px}.bx-button.bx-button-multi-lines span{line-height:unset;display:block}.bx-button.bx-button-multi-lines span:last-of-type{text-transform:none;font-weight:normal;font-family:"Segoe Sans Variable Text";font-size:12px;margin-top:4px}.bx-focusable{position:relative;overflow:visible}.bx-focusable::after{border:2px solid transparent;border-radius:10px}.bx-focusable:focus::after{content:\'\';border-color:#fff;position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px}html[data-active-input=touch] .bx-focusable:focus::after,html[data-active-input=mouse] .bx-focusable:focus::after{border-color:transparent !important}.bx-focusable.bx-circular::after{border-radius:var(--bx-button-height)}a.bx-button{display:inline-block}a.bx-button.bx-full-width{text-align:center}button.bx-inactive{pointer-events:none;opacity:.2;background:transparent !important}.bx-header-remote-play-button{height:auto;margin-right:8px !important}.bx-header-remote-play-button svg{width:24px;height:24px}.bx-header-settings-button{line-height:30px;font-size:14px;text-transform:uppercase;position:relative}.bx-header-settings-button[data-update-available]::before{content:\'🌟\' !important;line-height:var(--bx-button-height);display:inline-block;margin-left:4px}.bx-key-binding-dialog-overlay{position:fixed;inset:0;z-index:var(--bx-key-binding-dialog-overlay-z-index);background:#000;opacity:50%}.bx-key-binding-dialog{display:flex;flex-flow:column;max-height:90vh;position:fixed;top:50%;left:50%;margin-right:-50%;transform:translate(-50%,-50%);min-width:420px;padding:16px;border-radius:8px;z-index:var(--bx-key-binding-dialog-z-index);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-normal-font);box-shadow:0 0 6px #000;user-select:none;-webkit-user-select:none}.bx-key-binding-dialog *:focus{outline:none !important}.bx-key-binding-dialog h2{margin-bottom:12px;color:#fff;display:block;font-family:var(--bx-title-font);font-size:32px;font-weight:400;line-height:var(--bx-button-height)}.bx-key-binding-dialog > div{overflow:auto;padding:2px 0}.bx-key-binding-dialog > button{padding:8px 32px;margin:10px auto 0;border:none;border-radius:4px;display:block;background-color:#2d3036;text-align:center;color:#fff;text-transform:uppercase;font-family:var(--bx-title-font);font-weight:400;line-height:18px;font-size:14px}@media (hover:hover){.bx-key-binding-dialog > button:hover{background-color:#515863}}.bx-key-binding-dialog > button:focus{background-color:#515863}.bx-key-binding-dialog ul{margin-bottom:1rem}.bx-key-binding-dialog ul li{display:none}.bx-key-binding-dialog ul[data-flags*="[1]"] > li[data-flag="1"],.bx-key-binding-dialog ul[data-flags*="[2]"] > li[data-flag="2"],.bx-key-binding-dialog ul[data-flags*="[4]"] > li[data-flag="4"],.bx-key-binding-dialog ul[data-flags*="[8]"] > li[data-flag="8"]{display:list-item}@media screen and (max-width:450px){.bx-key-binding-dialog{min-width:100%}}.bx-navigation-dialog{position:absolute;z-index:var(--bx-navigation-dialog-z-index);font-family:var(--bx-title-font)}.bx-navigation-dialog *:focus{outline:none !important}.bx-navigation-dialog select:disabled{-webkit-appearance:none;text-align-last:right;text-align:right;color:#fff;background:#131416;border:none;border-radius:4px;padding:0 5px}.bx-navigation-dialog .bx-focusable::after{border-radius:4px}.bx-navigation-dialog .bx-focusable:focus::after{top:0;left:0;right:0;bottom:0}.bx-navigation-dialog-overlay{position:fixed;background:rgba(11,11,11,0.89);top:0;left:0;right:0;bottom:0;z-index:var(--bx-navigation-dialog-overlay-z-index)}.bx-navigation-dialog-overlay[data-is-playing="true"]{background:transparent}.bx-centered-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;min-width:min(calc(100vw - 20px), 500px);max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:16px;max-height:95vh;flex-direction:column;overflow:hidden;display:flex;flex-direction:column}.bx-centered-dialog .bx-dialog-title{display:flex;flex-direction:row;align-items:center;margin-bottom:10px}.bx-centered-dialog .bx-dialog-title p{padding:0;margin:0;flex:1;font-size:1.3rem;font-weight:bold}.bx-centered-dialog .bx-dialog-title button{flex-shrink:0}.bx-centered-dialog .bx-dialog-content{flex:1;padding:6px;overflow:auto;overflow-x:hidden}.bx-centered-dialog .bx-dialog-preset-tools{display:flex;margin-bottom:12px;gap:6px}.bx-centered-dialog .bx-dialog-preset-tools button{align-self:center;min-height:50px}.bx-centered-dialog .bx-default-preset-note{font-size:12px;font-style:italic;text-align:center;margin-bottom:10px}.bx-centered-dialog input,.bx-settings-dialog input{accent-color:var(--bx-primary-button-color)}.bx-centered-dialog input:focus,.bx-settings-dialog input:focus{accent-color:var(--bx-danger-button-color)}.bx-centered-dialog select:disabled,.bx-settings-dialog select:disabled{-webkit-appearance:none;background:transparent;text-align-last:right;border:none;color:#fff}.bx-centered-dialog select option:disabled,.bx-settings-dialog select option:disabled{display:none}.bx-centered-dialog input[type=checkbox]:focus,.bx-settings-dialog input[type=checkbox]:focus,.bx-centered-dialog select:focus,.bx-settings-dialog select:focus{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}.bx-centered-dialog a,.bx-settings-dialog a{color:#1c9d1c;text-decoration:none}.bx-centered-dialog a:hover,.bx-settings-dialog a:hover,.bx-centered-dialog a:focus,.bx-settings-dialog a:focus{color:#5dc21e}.bx-centered-dialog label,.bx-settings-dialog label{margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-note{margin-top:10px;font-size:14px;text-align:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt{flex-shrink:0;font-size:32px;margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt::first-letter{letter-spacing:6px}.bx-controller-shortcuts-manager-container select:disabled{text-align:left;text-align-last:left}.bx-keyboard-shortcuts-manager-container{display:flex;flex-direction:column;gap:16px}.bx-keyboard-shortcuts-manager-container fieldset{background:#2a2a2a;border:1px solid #2a2a2a;border-radius:4px;padding:4px}.bx-keyboard-shortcuts-manager-container legend{width:auto;padding:4px 8px;margin:0 4px 4px;background:#004f87;box-shadow:0 2px 0 #071e3d;border-radius:4px;font-size:14px;font-weight:bold;text-transform:uppercase}.bx-keyboard-shortcuts-manager-container .bx-settings-row{background:none;padding:10px}.bx-settings-dialog{display:flex;position:fixed;top:0;right:0;bottom:0;opacity:.98;user-select:none;-webkit-user-select:none}.bx-settings-dialog .bx-settings-reload-note{font-size:.8rem;display:block;padding:8px;font-style:italic;font-weight:normal;height:var(--bx-button-height)}.bx-settings-tabs-container{position:fixed;width:48px;max-height:100vh;display:flex;flex-direction:column}.bx-settings-tabs-container > div:last-of-type{display:flex;flex-direction:column;align-items:end}.bx-settings-tabs-container > div:last-of-type button{flex-shrink:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-top:8px;height:unset;padding:8px 10px}.bx-settings-tabs-container > div:last-of-type button svg{width:16px;height:16px}.bx-settings-tabs{display:flex;flex-direction:column;border-radius:0 0 0 8px;box-shadow:0 0 6px #000;overflow:overlay;flex:1}.bx-settings-tabs svg{width:24px;height:24px;padding:10px;flex-shrink:0;box-sizing:content-box;background:#131313;cursor:pointer;border-left:4px solid #1e1e1e}.bx-settings-tabs svg.bx-active{background:#222;border-color:#008746}.bx-settings-tabs svg:not(.bx-active):hover{background:#2f2f2f;border-color:#484848}.bx-settings-tabs svg:focus{border-color:#fff}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]{background:var(--bx-danger-button-color) !important}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]:hover{background:var(--bx-danger-button-hover-color) !important}.bx-settings-tab-contents{flex-direction:column;padding:10px;margin-left:48px;width:450px;max-width:calc(100vw - tabsWidth);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-title-font);text-align:center;box-shadow:0 0 6px #000;overflow:overlay;z-index:1}.bx-settings-tab-contents > div[data-tab-group=mkb]{display:flex;flex-direction:column;height:100%;overflow:hidden}.bx-settings-tab-contents .bx-top-buttons{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}.bx-settings-tab-contents .bx-top-buttons .bx-button{display:block}.bx-settings-tab-contents h2{margin:16px 0 8px 0;display:flex;align-items:center}.bx-settings-tab-contents h2:first-of-type{margin-top:0}.bx-settings-tab-contents h2 span{display:inline-block;font-size:20px;font-weight:bold;text-align:left;flex:1;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-height:var(--bx-button-height);align-content:center}@media (max-width:500px){.bx-settings-tab-contents{width:calc(100vw - 48px)}}.bx-settings-row{display:flex;gap:10px;padding:16px 10px;margin:0;background:#2a2a2a;border-bottom:1px solid #343434}.bx-settings-row:hover,.bx-settings-row:focus-within{background-color:#242424}.bx-settings-row:not(:has(> input[type=checkbox])){flex-wrap:wrap}.bx-settings-row > span.bx-settings-label{font-size:14px;display:block;text-align:left;align-self:center;margin-bottom:0 !important;flex:1}.bx-settings-row > span.bx-settings-label svg{width:20px;height:20px;margin-inline-end:8px}.bx-settings-row > span.bx-settings-label + *{margin:0 0 0 auto}.bx-settings-row[data-multi-lines="true"]{flex-direction:column}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label{align-self:start}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label + *{margin:unset}.bx-settings-dialog-note{display:block;color:#afafb0;font-size:12px;font-weight:lighter;font-style:italic}.bx-settings-dialog-note:not(:has(a)){margin-top:4px}.bx-settings-dialog-note a{display:inline-block;padding:4px}.bx-settings-custom-user-agent{display:block;width:100%;padding:6px}.bx-donation-link{display:block;text-align:center;text-decoration:none;height:20px;line-height:20px;font-size:14px;margin-top:10px;margin-bottom:10px}.bx-debug-info button{margin-top:10px}.bx-debug-info pre{margin-top:10px;cursor:copy;color:#fff;padding:8px;border:1px solid #2d2d2d;background:#212121;white-space:break-spaces;text-align:left}.bx-debug-info pre:hover{background:#272727}.bx-settings-app-version{margin-top:10px;text-align:center;color:#747474;font-size:12px}.bx-note-unsupported{display:block;font-size:12px;font-style:italic;font-weight:normal;color:#828282}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row){border-top-left-radius:6px;border-top-right-radius:6px}.bx-settings-tab-contents > div .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}.bx-settings-tab-contents > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-radius:6px}.bx-suggest-toggler{text-align:left;display:flex;border-radius:4px;overflow:hidden;background:#003861;height:45px;align-items:center}.bx-suggest-toggler label{flex:1;align-content:center;padding:0 10px;background:#004f87;height:100%}.bx-suggest-toggler span{display:inline-block;align-self:center;padding:10px;width:45px;text-align:center}.bx-suggest-toggler:hover,.bx-suggest-toggler:focus{cursor:pointer;background:#005da1}.bx-suggest-toggler:hover label,.bx-suggest-toggler:focus label{background:#006fbe}.bx-suggest-toggler[bx-open] span{transform:rotate(90deg)}.bx-suggest-toggler[bx-open]+ .bx-suggest-box{display:block}.bx-suggest-box{display:none}.bx-suggest-wrapper{display:flex;flex-direction:column;gap:10px;margin:10px}.bx-suggest-note{font-size:11px;color:#8c8c8c;font-style:italic;font-weight:100}.bx-suggest-link{font-size:14px;display:inline-block;margin-top:4px;padding:4px}.bx-suggest-row{display:flex;flex-direction:row;gap:10px}.bx-suggest-row label{flex:1;overflow:overlay;border-radius:4px}.bx-suggest-row label .bx-suggest-label{background:#323232;padding:4px 10px;font-size:12px;text-align:left}.bx-suggest-row label .bx-suggest-value{padding:6px;font-size:14px}.bx-suggest-row label .bx-suggest-value.bx-suggest-change{background-color:var(--bx-warning-color)}.bx-suggest-row.bx-suggest-ok input{visibility:hidden}.bx-suggest-row.bx-suggest-ok .bx-suggest-label{background-color:#008114}.bx-suggest-row.bx-suggest-ok .bx-suggest-value{background-color:#13a72a}.bx-suggest-row.bx-suggest-change .bx-suggest-label{background-color:#a65e08}.bx-suggest-row.bx-suggest-change .bx-suggest-value{background-color:#d57f18}.bx-suggest-row.bx-suggest-change:hover label{cursor:pointer}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-label{background-color:#995707}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-value{background-color:#bd7115}.bx-suggest-row.bx-suggest-change input:not(:checked) + label{opacity:.5}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-label{background-color:#2a2a2a}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-value{background-color:#393939}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label{opacity:1}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-label{background-color:#202020}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-value{background-color:#303030}.bx-sub-content-box{background:#161616;padding:10px;box-shadow:0 0 12px #0f0f0f inset;border-radius:10px}.bx-settings-row .bx-sub-content-box{background:#202020;padding:12px;box-shadow:0 0 4px #000 inset;border-radius:6px}.bx-controller-extra-settings[data-has-gamepad=true] > :first-child{display:none}.bx-controller-extra-settings[data-has-gamepad=true] > :last-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :first-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :last-child{display:none}.bx-controller-extra-settings .bx-controller-extra-wrapper{flex:1;min-width:1px}.bx-controller-extra-settings .bx-sub-content-box{flex:1;text-align:left;display:flex;flex-direction:column;margin-top:10px}.bx-controller-extra-settings .bx-sub-content-box > label{font-size:14px}.bx-preset-row{display:flex;gap:8px}.bx-preset-row .bx-select{flex:1}.bx-toast{user-select:none;-webkit-user-select:none;position:fixed;left:50%;top:24px;transform:translate(-50%,0);background:#000;border-radius:16px;color:#fff;z-index:var(--bx-toast-z-index);font-family:var(--bx-normal-font);border:2px solid #fff;display:flex;align-items:center;opacity:0;overflow:clip;transition:opacity .2s ease-in}.bx-toast.bx-show{opacity:.85}.bx-toast.bx-hide{opacity:0;pointer-events:none}.bx-toast-msg{font-size:14px;display:inline-block;padding:12px 16px;white-space:pre}.bx-toast-status{font-weight:bold;font-size:14px;text-transform:uppercase;display:inline-block;background:#515863;padding:12px 16px;color:#fff;white-space:pre}.bx-wait-time-box{position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);color:#fff;z-index:var(--bx-wait-time-box-z-index);padding:12px;border-radius:0 0 0 8px}.bx-wait-time-box label{display:block;text-transform:uppercase;text-align:right;font-size:12px;font-weight:bold;margin:0}.bx-wait-time-box span{display:block;font-family:var(--bx-monospaced-font);text-align:right;font-size:16px;margin-bottom:10px}.bx-wait-time-box span:last-of-type{margin-bottom:0}.bx-remote-play-settings{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2d2d2d}.bx-remote-play-settings > div{display:flex}.bx-remote-play-settings label{flex:1;font-size:14px}.bx-remote-play-settings label p{margin:4px 0 0;padding:0;color:#888;font-size:12px}.bx-remote-play-resolution{display:block}.bx-remote-play-resolution input[type="radio"]{accent-color:var(--bx-primary-button-color);margin-right:6px}.bx-remote-play-resolution input[type="radio"]:focus{accent-color:var(--bx-primary-button-hover-color)}.bx-remote-play-device-wrapper{display:flex;margin-bottom:12px}.bx-remote-play-device-wrapper:last-child{margin-bottom:2px}.bx-remote-play-device-info{flex:1;align-self:center;padding:4px 0}.bx-remote-play-device-name{font-size:14px;font-weight:bold;display:inline-block;vertical-align:middle}.bx-remote-play-console-type{font-size:8px;background:#004c87;color:#fff;display:inline-block;border-radius:8px;padding:2px 6px;margin-left:8px;vertical-align:middle}.bx-remote-play-power-state{color:#888;font-size:12px}.bx-remote-play-connect-button{min-height:100%;margin:4px 0}.bx-remote-play-buttons{display:flex;justify-content:space-between}select.bx-select{min-height:30px}div.bx-select{display:flex;align-items:stretch;flex:0 1 auto;gap:8px}div.bx-select select:disabled ~ button{display:none}div.bx-select select:disabled ~ div{background:#131416;color:#fff;pointer-events:none}div.bx-select select:disabled ~ div .bx-select-indicators{visibility:hidden}div.bx-select > div,div.bx-select button.bx-select-value{min-width:120px;text-align:left;line-height:24px;vertical-align:middle;background:#fff;color:#000;border-radius:4px;padding:2px 8px;display:flex;flex:1;flex-direction:column}div.bx-select > div{min-height:24px}div.bx-select > div input{display:inline-block;margin-right:8px}div.bx-select > div label{margin-bottom:0;font-size:14px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:15px}div.bx-select > div label span{display:block;font-size:10px;font-weight:bold;text-align:left;line-height:20px;white-space:pre;min-height:15px;align-content:center}div.bx-select button.bx-select-value{border:none;cursor:pointer;min-height:30px;font-size:.9rem;align-items:center}div.bx-select button.bx-select-value > div{display:flex;width:100%}div.bx-select button.bx-select-value span{flex:1;text-align:left;display:inline-block}div.bx-select button.bx-select-value input{margin:0 4px;accent-color:var(--bx-primary-button-color);pointer-events:none}div.bx-select button.bx-select-value:hover input,div.bx-select button.bx-select-value:focus input{accent-color:var(--bx-danger-button-color)}div.bx-select button.bx-select-value:hover::after,div.bx-select button.bx-select-value:focus::after{border-color:#4d4d4d !important}div.bx-select button.bx-button{border:none;width:24px;height:auto;padding:0;color:#fff;border-radius:4px;font-weight:bold;font-size:12px;font-family:var(--bx-monospaced-font);flex-shrink:0}div.bx-select button.bx-button span{line-height:unset}div.bx-select[data-controller-friendly=true] > div{box-sizing:content-box}div.bx-select[data-controller-friendly=true] select{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}div.bx-select[data-controller-friendly=false]{position:relative}div.bx-select[data-controller-friendly=false] > div{box-sizing:border-box}div.bx-select[data-controller-friendly=false] > div label{margin-right:24px}div.bx-select[data-controller-friendly=false] select:disabled{display:none}div.bx-select[data-controller-friendly=false] select:not(:disabled){cursor:pointer;position:absolute;top:0;right:0;bottom:0;display:block;opacity:0;z-index:calc(var(--bx-settings-z-index) + 1)}div.bx-select[data-controller-friendly=false] select:not(:disabled):hover + div{background:#f0f0f0}div.bx-select[data-controller-friendly=false] select:not(:disabled) + div label::after{content:\'▾\';font-size:14px;position:absolute;right:8px;pointer-events:none}.bx-select-indicators{display:flex;height:4px;gap:2px;margin-bottom:2px}.bx-select-indicators span{content:\' \';display:inline-block;flex:1;background:#cfcfcf;border-radius:4px;min-width:1px}.bx-select-indicators span[data-highlighted]{background:#9c9c9c;min-width:6px}.bx-select-indicators span[data-selected]{background:#aacfe7}.bx-select-indicators span[data-highlighted][data-selected]{background:#5fa3d0}.bx-guide-home-achievements-progress{display:flex;gap:10px;flex-direction:row}.bx-guide-home-achievements-progress .bx-button{margin-bottom:0 !important}body[data-bx-media-type=tv] .bx-guide-home-achievements-progress{flex-direction:column}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress{flex-direction:row}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:first-of-type{flex:1}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type{width:40px}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type span{display:none}.bx-guide-home-buttons > div{display:flex;flex-direction:row;gap:12px}body[data-bx-media-type=tv] .bx-guide-home-buttons > div{flex-direction:column}body[data-bx-media-type=tv] .bx-guide-home-buttons > div button{margin-bottom:0 !important}body:not([data-bx-media-type=tv]) .bx-guide-home-buttons > div button span{display:none}.bx-guide-home-buttons[data-is-playing="true"] button[data-state=\'normal\']{display:none}.bx-guide-home-buttons[data-is-playing="false"] button[data-state=\'playing\']{display:none}div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]{overflow:visible}.bx-stream-menu-button-on{fill:#000 !important;background-color:#2d2d2d !important;color:#000 !important}.bx-stream-refresh-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px) !important}body[data-media-type=default] .bx-stream-refresh-button{left:calc(env(safe-area-inset-left, 0px) + 11px) !important}body[data-media-type=tv] .bx-stream-refresh-button{top:calc(var(--gds-focus-borderSize) + 80px) !important}.bx-stream-home-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px * 2) !important}body[data-media-type=default] .bx-stream-home-button{left:calc(env(safe-area-inset-left, 0px) + 12px) !important}body[data-media-type=tv] .bx-stream-home-button{top:calc(var(--gds-focus-borderSize) + 80px * 2) !important}div[data-testid=media-container][data-position=center]{display:flex}div[data-testid=media-container][data-position=top] video,div[data-testid=media-container][data-position=top] canvas{top:0}div[data-testid=media-container][data-position=bottom] video,div[data-testid=media-container][data-position=bottom] canvas{bottom:0}#game-stream video{margin:auto;align-self:center;background:#000;position:absolute;left:0;right:0}#game-stream canvas{align-self:center;margin:auto;position:absolute;left:0;right:0}#game-stream.bx-taking-screenshot:before{animation:bx-anim-taking-screenshot .5s ease;content:\' \';position:absolute;width:100%;height:100%;z-index:var(--bx-screenshot-animation-z-index)}#gamepass-dialog-root div[class^=Guide-module__guide] .bx-button{overflow:visible;margin-bottom:12px}@-moz-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-webkit-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-o-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}.bx-number-stepper{text-align:center}.bx-number-stepper > div{display:flex;align-items:center}.bx-number-stepper > div span{flex:1;display:inline-block;min-width:40px;font-family:var(--bx-monospaced-font);white-space:pre;font-size:13px;margin:0 4px}.bx-number-stepper > div button{flex-shrink:0;border:none;width:24px;height:24px;margin:0;line-height:24px;background-color:var(--bx-default-button-color);color:#fff;border-radius:4px;font-weight:bold;font-size:14px;font-family:var(--bx-monospaced-font)}@media (hover:hover){.bx-number-stepper > div button:hover{background-color:var(--bx-default-button-hover-color)}}.bx-number-stepper > div button:active{background-color:var(--bx-default-button-hover-color)}.bx-number-stepper > div button:disabled + span{font-family:var(--bx-title-font)}.bx-number-stepper input[type=range]{display:block;margin:8px 0 2px auto;min-width:180px;width:100%;color:#959595 !important}.bx-number-stepper input[type=range]:disabled,.bx-number-stepper button:disabled{display:none}.bx-number-stepper[data-disabled=true] input[type=range],.bx-number-stepper[disabled=true] input[type=range],.bx-number-stepper[data-disabled=true] button,.bx-number-stepper[disabled=true] button{display:none}.bx-dual-number-stepper > span{display:block;font-family:var(--bx-monospaced-font);font-size:13px;white-space:pre;margin:0 4px;text-align:center}.bx-dual-number-stepper > div input[type=range]{display:block;width:100%;min-width:180px;background:transparent;color:#959595 !important;appearance:none;padding:8px 0}.bx-dual-number-stepper > div input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff var(--from),var(--bx-primary-button-color) var(--from) var(--to),#fff var(--to) 100%);height:8px;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-moz-range-track{background:linear-gradient(90deg,#fff var(--from),var(--bx-primary-button-color) var(--from) var(--to),#fff var(--to) 100%);height:8px;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-webkit-slider-thumb{margin-top:-4px;appearance:none;width:4px;height:16px;background:#00b85f;border:none;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-moz-range-thumb{margin-top:-4px;appearance:none;width:4px;height:16px;background:#00b85f;border:none;border-radius:2px}.bx-dual-number-stepper > div input[type=range]:hover::-webkit-slider-runnable-track,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-webkit-slider-runnable-track,.bx-dual-number-stepper > div input[type=range]:focus::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff var(--from),#006635 var(--from) var(--to),#fff var(--to) 100%)}.bx-dual-number-stepper > div input[type=range]:hover::-moz-range-track,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-moz-range-track,.bx-dual-number-stepper > div input[type=range]:focus::-moz-range-track{background:linear-gradient(90deg,#fff var(--from),#006635 var(--from) var(--to),#fff var(--to) 100%)}.bx-dual-number-stepper > div input[type=range]:hover::-webkit-slider-thumb,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-webkit-slider-thumb,.bx-dual-number-stepper > div input[type=range]:focus::-webkit-slider-thumb{background:#fb3232}.bx-dual-number-stepper > div input[type=range]:hover::-moz-range-thumb,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-moz-range-thumb,.bx-dual-number-stepper > div input[type=range]:focus::-moz-range-thumb{background:#fb3232}.bx-dual-number-stepper[data-disabled=true] input[type=range],.bx-dual-number-stepper[disabled=true] input[type=range]{display:none}#bx-game-bar{z-index:var(--bx-game-bar-z-index);position:fixed;bottom:0;width:40px;height:90px;overflow:visible;cursor:pointer}#bx-game-bar > svg{display:none;pointer-events:none;position:absolute;height:28px;margin-top:16px}@media (hover:hover){#bx-game-bar:hover > svg{display:block}}#bx-game-bar .bx-game-bar-container{opacity:0;position:absolute;display:flex;overflow:hidden;background:rgba(26,27,30,0.91);box-shadow:0 0 6px #1c1c1c;transition:opacity .1s ease-in}#bx-game-bar .bx-game-bar-container.bx-show{opacity:.9}#bx-game-bar .bx-game-bar-container.bx-show + svg{display:none !important}#bx-game-bar .bx-game-bar-container.bx-hide{opacity:0;pointer-events:none}#bx-game-bar .bx-game-bar-container button{width:60px;height:60px;border-radius:0}#bx-game-bar .bx-game-bar-container button svg{width:28px;height:28px;transition:transform .08s ease 0s}#bx-game-bar .bx-game-bar-container button:hover{border-radius:0}#bx-game-bar .bx-game-bar-container button:active svg{transform:scale(.75)}#bx-game-bar .bx-game-bar-container button.bx-activated{background-color:#fff}#bx-game-bar .bx-game-bar-container button.bx-activated svg{filter:invert(1)}#bx-game-bar .bx-game-bar-container div[data-activated] button{display:none}#bx-game-bar .bx-game-bar-container div[data-activated=\'false\'] button:first-of-type{display:block}#bx-game-bar .bx-game-bar-container div[data-activated=\'true\'] button:last-of-type{display:block}#bx-game-bar[data-position="bottom-left"]{left:0;direction:ltr}#bx-game-bar[data-position="bottom-left"] .bx-game-bar-container{border-radius:0 10px 10px 0}#bx-game-bar[data-position="bottom-right"]{right:0;direction:rtl}#bx-game-bar[data-position="bottom-right"] .bx-game-bar-container{direction:ltr;border-radius:10px 0 0 10px}.bx-badges{margin-left:0;user-select:none;-webkit-user-select:none}.bx-badge{border:none;display:inline-block;line-height:24px;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;font-weight:400;margin:0 8px 8px 0;box-shadow:0 0 6px #000;border-radius:4px}.bx-badge-name{background-color:#2d3036;border-radius:4px 0 0 4px}.bx-badge-name svg{width:16px;height:16px}.bx-badge-value{background-color:#808080;border-radius:0 4px 4px 0}.bx-badge-name,.bx-badge-value{display:inline-block;padding:0 8px;line-height:30px;vertical-align:bottom}.bx-badge-battery[data-charging=true] span:first-of-type::after{content:\' ⚡️\'}div[class^=StreamMenu-module__container] .bx-badges{position:absolute;max-width:500px}#gamepass-dialog-root .bx-badges{position:fixed;top:60px;left:460px;max-width:500px}@media (min-width:568px) and (max-height:480px){#gamepass-dialog-root .bx-badges{position:unset;top:unset;left:unset;margin:8px 0}}.bx-stats-bar{display:flex;flex-direction:row;gap:8px;user-select:none;-webkit-user-select:none;position:fixed;top:0;background-color:#000;color:#fff;font-family:var(--bx-monospaced-font);font-size:.9rem;padding-left:8px;z-index:var(--bx-stats-bar-z-index);text-wrap:nowrap}.bx-stats-bar[data-stats*="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats*="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats*="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats*="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats*="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats*="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats*="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats*="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats*="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats*="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats*="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats*="[ul]"] > .bx-stat-ul{display:inline-flex;align-items:baseline}.bx-stats-bar[data-stats$="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats$="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats$="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats$="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats$="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats$="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats$="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats$="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats$="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats$="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats$="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats$="[ul]"] > .bx-stat-ul{border-right:none}.bx-stats-bar::before{display:none;content:\'👀\';vertical-align:middle;margin-right:8px}.bx-stats-bar[data-display=glancing]::before{display:inline-block}.bx-stats-bar[data-position=top-left]{left:0;border-radius:0 0 4px 0}.bx-stats-bar[data-position=top-right]{right:0;border-radius:0 0 0 4px}.bx-stats-bar[data-position=top-center]{transform:translate(-50%,0);left:50%;border-radius:0 0 4px 4px}.bx-stats-bar[data-shadow=true]{background:none;filter:drop-shadow(1px 0 0 rgba(0,0,0,0.941)) drop-shadow(-1px 0 0 rgba(0,0,0,0.941)) drop-shadow(0 1px 0 rgba(0,0,0,0.941)) drop-shadow(0 -1px 0 rgba(0,0,0,0.941))}.bx-stats-bar > div{display:none;border-right:1px solid #fff;padding-right:8px}.bx-stats-bar label{margin:0 8px 0 0;font-family:var(--bx-title-font);font-size:70%;font-weight:bold;vertical-align:middle;cursor:help}.bx-stats-bar span{display:inline-block;text-align:right;vertical-align:middle;white-space:pre}.bx-stats-bar span[data-grade=good]{color:#6bffff}.bx-stats-bar span[data-grade=ok]{color:#fff16b}.bx-stats-bar span[data-grade=bad]{color:#ff5f5f}.bx-mkb-settings{display:flex;flex-direction:column;flex:1;padding-bottom:10px;overflow:hidden}.bx-mkb-pointer-lock-msg{user-select:none;-webkit-user-select:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);margin:auto;background:#151515;z-index:var(--bx-mkb-pointer-lock-msg-z-index);color:#fff;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem;padding:12px;border-radius:8px;align-items:center;box-shadow:0 0 6px #000;min-width:300px;opacity:.9;display:flex;flex-direction:column;gap:10px}.bx-mkb-pointer-lock-msg:hover{opacity:1}.bx-mkb-pointer-lock-msg > p{margin:0;width:100%;font-size:22px;margin-bottom:4px;font-weight:bold;text-align:left}.bx-mkb-pointer-lock-msg > div{width:100%;display:flex;flex-direction:row;gap:10px}.bx-mkb-pointer-lock-msg > div button:first-of-type{flex-shrink:1}.bx-mkb-pointer-lock-msg > div button:last-of-type{flex-grow:1}.bx-mkb-key-row{display:flex;margin-bottom:10px;align-items:center;gap:20px}.bx-mkb-key-row label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center}.bx-mkb-settings.bx-editing .bx-mkb-key-row button{background:#393939;border-radius:4px;border:none}.bx-mkb-settings.bx-editing .bx-mkb-key-row button:hover{background:#333;cursor:pointer}.bx-mkb-action-buttons > div{text-align:right;display:none}.bx-mkb-action-buttons button{margin-left:8px}.bx-mkb-settings:not(.bx-editing) .bx-mkb-action-buttons > div:first-child{display:block}.bx-mkb-settings.bx-editing .bx-mkb-action-buttons > div:last-child{display:block}.bx-mkb-note{display:block;margin:0 0 10px;font-size:12px;text-align:center}button.bx-binding-button{flex:1;min-height:38px;border:none;border-radius:4px;font-size:14px;color:#fff;display:flex;align-items:center;align-self:center;padding:0 6px}button.bx-binding-button:disabled{background:#131416;padding:0 8px}button.bx-binding-button:not(:disabled){border:2px solid transparent;border-top:none;border-bottom:4px solid #252525;background:#3b3b3b;cursor:pointer}button.bx-binding-button:not(:disabled):hover,button.bx-binding-button:not(:disabled).bx-focusable:focus{background:#20b217;border-bottom-color:#186c13}button.bx-binding-button:not(:disabled):active{background:#16900f;border-bottom:3px solid #0c4e08;border-left-width:2px;border-right-width:2px}button.bx-binding-button:not(:disabled).bx-focusable:focus::after{top:-6px;left:-8px;right:-8px;bottom:-10px}.bx-settings-row .bx-binding-button-wrapper button.bx-binding-button{min-width:60px}.bx-controller-customizations-container .bx-btn-detect{display:block;margin-bottom:20px}.bx-controller-customizations-container .bx-btn-detect.bx-monospaced{background:none;font-weight:bold;font-size:12px}.bx-controller-customizations-container .bx-buttons-grid{display:grid;grid-template-columns:auto auto;column-gap:20px;row-gap:10px;margin-bottom:20px}.bx-controller-key-row{display:flex;align-items:stretch}.bx-controller-key-row > label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center;min-width:50px;flex-shrink:0;display:flex;align-self:center}.bx-controller-key-row > label::after{content:\'❯\';margin:0 12px;font-size:16px;align-self:center}.bx-controller-key-row .bx-select{width:100% !important}.bx-controller-key-row .bx-select > div{min-width:50px}.bx-controller-key-row .bx-select label{font-family:var(--bx-promptfont-font),var(--bx-normal-font);font-size:32px;text-align:center;margin-bottom:6px;height:40px;line-height:40px}.bx-controller-key-row:hover > label{color:#ffe64b}.bx-controller-key-row:hover > label::after{color:#fff}.bx-controller-customization-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.bx-controller-customization-summary span{font-family:var(--bx-promptfont);font-size:24px;border-radius:6px;background:#131313;color:#fff;display:inline-block;padding:2px;text-align:center}.bx-product-details-icons{padding:8px;border-radius:4px}.bx-product-details-icons svg{margin-right:8px}.bx-product-details-buttons{display:flex;gap:10px;flex-direction:row}.bx-product-details-buttons button{max-width:max-content;margin:10px 0 0 0;display:flex}@media (min-width:568px) and (max-height:480px){.bx-product-details-buttons{flex-direction:column}.bx-product-details-buttons button{margin:8px 0 0 10px}}', PREF_HIDE_SECTIONS = getPref("ui.hideSections"), selectorToHide = [];
+ let css = ':root{--bx-title-font:Bahnschrift,Arial,Helvetica,sans-serif;--bx-title-font-semibold:Bahnschrift Semibold,Arial,Helvetica,sans-serif;--bx-normal-font:"Segoe UI",Arial,Helvetica,sans-serif;--bx-monospaced-font:Consolas,"Courier New",Courier,monospace;--bx-promptfont-font:promptfont;--bx-button-height:40px;--bx-default-button-color:#2d3036;--bx-default-button-rgb:45,48,54;--bx-default-button-hover-color:#515863;--bx-default-button-hover-rgb:81,88,99;--bx-default-button-active-color:#222428;--bx-default-button-active-rgb:34,36,40;--bx-default-button-disabled-color:#8e8e8e;--bx-default-button-disabled-rgb:142,142,142;--bx-primary-button-color:#008746;--bx-primary-button-rgb:0,135,70;--bx-primary-button-hover-color:#04b358;--bx-primary-button-hover-rgb:4,179,88;--bx-primary-button-active-color:#044e2a;--bx-primary-button-active-rgb:4,78,42;--bx-primary-button-disabled-color:#448262;--bx-primary-button-disabled-rgb:68,130,98;--bx-warning-button-color:#c16e04;--bx-warning-button-rgb:193,110,4;--bx-warning-button-hover-color:#fa9005;--bx-warning-button-hover-rgb:250,144,5;--bx-warning-button-active-color:#965603;--bx-warning-button-active-rgb:150,86,3;--bx-warning-button-disabled-color:#a2816c;--bx-warning-button-disabled-rgb:162,129,108;--bx-danger-button-color:#c10404;--bx-danger-button-rgb:193,4,4;--bx-danger-button-hover-color:#e61d1d;--bx-danger-button-hover-rgb:230,29,29;--bx-danger-button-active-color:#a26c6c;--bx-danger-button-active-rgb:162,108,108;--bx-danger-button-disabled-color:#bd8282;--bx-danger-button-disabled-rgb:189,130,130;--bx-fullscreen-text-z-index:9999;--bx-toast-z-index:6000;--bx-key-binding-dialog-z-index:5010;--bx-key-binding-dialog-overlay-z-index:5000;--bx-stats-bar-z-index:4010;--bx-navigation-dialog-z-index:3010;--bx-navigation-dialog-overlay-z-index:3000;--bx-mkb-pointer-lock-msg-z-index:2000;--bx-game-bar-z-index:1000;--bx-screenshot-animation-z-index:200;--bx-wait-time-box-z-index:100}@font-face{font-family:\'promptfont\';src:url("https://redphx.github.io/better-xcloud/fonts/promptfont.otf");unicode-range:U+2196-E011,U+27F6,U+FF31}div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]){opacity:0;pointer-events:none !important;position:absolute;top:-9999px;left:-9999px}@media screen and (max-width:640px){header a[href="/play"]{display:none}}.bx-full-width{width:100% !important}.bx-full-height{height:100% !important}.bx-auto-height{height:auto !important}.bx-no-scroll{overflow:hidden !important}.bx-hide-scroll-bar{scrollbar-width:none}.bx-hide-scroll-bar::-webkit-scrollbar{display:none}.bx-gone{display:none !important}.bx-offscreen{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}.bx-hidden{visibility:hidden !important}.bx-invisible{opacity:0}.bx-unclickable{pointer-events:none}.bx-pixel{width:1px !important;height:1px !important}.bx-no-margin{margin:0 !important}.bx-no-padding{padding:0 !important}.bx-prompt{font-family:var(--bx-promptfont-font) !important}.bx-monospaced{font-family:var(--bx-monospaced-font) !important}.bx-line-through{text-decoration:line-through !important}.bx-normal-case{text-transform:none !important}.bx-normal-link{text-transform:none !important;text-align:left !important;font-weight:400 !important;font-family:var(--bx-normal-font) !important}.bx-frosted{backdrop-filter:blur(4px) brightness(1.5)}select[multiple],select[multiple]:focus{overflow:auto;border:none}select[multiple] option,select[multiple]:focus option{padding:4px 6px}select[multiple] option:checked,select[multiple]:focus option:checked{background:#1a7bc0 linear-gradient(0deg,#1a7bc0 0%,#1a7bc0 100%)}select[multiple] option:checked::before,select[multiple]:focus option:checked::before{content:\'☑️\';font-size:12px;display:inline-block;margin-right:6px;height:100%;line-height:100%;vertical-align:middle}#headerArea,#uhfSkipToMain,.uhf-footer{display:none}div[class*=NotFocusedDialog]{position:absolute !important;top:-9999px !important;left:-9999px !important;width:0 !important;height:0 !important}#game-stream video:not([src]){visibility:hidden}.bx-game-tile-wait-time{position:absolute;top:0;left:0;z-index:1;background:rgba(0,0,0,0.5);display:flex;border-radius:4px 0 4px 0;align-items:center;padding:4px 8px}.bx-game-tile-wait-time svg{width:14px;height:16px;margin-right:2px}.bx-game-tile-wait-time span{display:inline-block;height:16px;line-height:16px;font-size:12px;font-weight:bold;margin-left:2px}.bx-game-tile-wait-time[data-duration=short]{background-color:rgba(0,133,133,0.75)}.bx-game-tile-wait-time[data-duration=medium]{background-color:rgba(213,133,0,0.75)}.bx-game-tile-wait-time[data-duration=long]{background-color:rgba(150,0,0,0.75)}.bx-fullscreen-text{position:fixed;top:0;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);z-index:var(--bx-fullscreen-text-z-index);line-height:100vh;color:#fff;text-align:center;font-weight:400;font-family:var(--bx-normal-font);font-size:1.3rem;user-select:none;-webkit-user-select:none}#root section[class*=DeviceCodePage-module__page]{margin-left:20px !important;margin-right:20px !important;margin-top:20px !important;max-width:800px !important}#root div[class*=DeviceCodePage-module__back]{display:none}.bx-blink-me{animation:bx-blinker 1s linear infinite}.bx-horizontal-shaking{animation:bx-horizontal-shaking .4s ease-in-out 2}@-moz-keyframes bx-blinker{100%{opacity:0}}@-webkit-keyframes bx-blinker{100%{opacity:0}}@-o-keyframes bx-blinker{100%{opacity:0}}@keyframes bx-blinker{100%{opacity:0}}@-moz-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@-webkit-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@-o-keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}@keyframes bx-horizontal-shaking{0%{transform:translateX(0)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}.bx-button{--button-rgb:var(--bx-default-button-rgb);--button-hover-rgb:var(--bx-default-button-hover-rgb);--button-active-rgb:var(--bx-default-button-active-rgb);--button-disabled-rgb:var(--bx-default-button-disabled-rgb);background-color:rgb(var(--button-rgb));user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;border:none;font-weight:400;height:var(--bx-button-height);border-radius:4px;padding:0 8px;text-transform:uppercase;cursor:pointer;overflow:hidden}.bx-button:not([disabled]):active{background-color:rgb(var(--button-active-rgb))}.bx-button:focus{outline:none !important}.bx-button:not([disabled]):not(:active):hover,.bx-button:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button:disabled{cursor:default;background-color:rgb(var(--button-disabled-rgb));opacity:.5}.bx-button.bx-ghost{background-color:transparent}.bx-button.bx-ghost:not([disabled]):not(:active):hover,.bx-button.bx-ghost:not([disabled]):not(:active).bx-focusable:focus{background-color:rgb(var(--button-hover-rgb))}.bx-button.bx-primary{--button-rgb:var(--bx-primary-button-rgb)}.bx-button.bx-primary:not([disabled]):active{--button-active-rgb:var(--bx-primary-button-active-rgb)}.bx-button.bx-primary:not([disabled]):not(:active):hover,.bx-button.bx-primary:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-primary-button-hover-rgb)}.bx-button.bx-primary:disabled{--button-disabled-rgb:var(--bx-primary-button-disabled-rgb)}.bx-button.bx-warning{--button-rgb:var(--bx-warning-button-rgb)}.bx-button.bx-warning:not([disabled]):active{--button-active-rgb:var(--bx-warning-button-active-rgb)}.bx-button.bx-warning:not([disabled]):not(:active):hover,.bx-button.bx-warning:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-warning-button-hover-rgb)}.bx-button.bx-warning:disabled{--button-disabled-rgb:var(--bx-warning-button-disabled-rgb)}.bx-button.bx-danger{--button-rgb:var(--bx-danger-button-rgb)}.bx-button.bx-danger:not([disabled]):active{--button-active-rgb:var(--bx-danger-button-active-rgb)}.bx-button.bx-danger:not([disabled]):not(:active):hover,.bx-button.bx-danger:not([disabled]):not(:active).bx-focusable:focus{--button-hover-rgb:var(--bx-danger-button-hover-rgb)}.bx-button.bx-danger:disabled{--button-disabled-rgb:var(--bx-danger-button-disabled-rgb)}.bx-button.bx-frosted{--button-alpha:.2;background-color:rgba(var(--button-rgb), var(--button-alpha))}.bx-button.bx-frosted:not([disabled]):not(:active):hover,.bx-button.bx-frosted:not([disabled]):not(:active).bx-focusable:focus{background-color:rgba(var(--button-hover-rgb), var(--button-alpha))}.bx-button.bx-drop-shadow{box-shadow:0 0 4px rgba(0,0,0,0.502)}.bx-button.bx-tall{height:calc(var(--bx-button-height) * 1.5) !important}.bx-button.bx-circular{border-radius:var(--bx-button-height);width:var(--bx-button-height);height:var(--bx-button-height)}.bx-button svg{display:inline-block;width:16px;height:var(--bx-button-height)}.bx-button span{display:inline-block;line-height:var(--bx-button-height);vertical-align:middle;color:#fff;overflow:hidden;white-space:nowrap}.bx-button span:not(:only-child){margin-inline-start:8px}.bx-button.bx-button-multi-lines{height:auto;text-align:left;padding:10px}.bx-button.bx-button-multi-lines span{line-height:unset;display:block}.bx-button.bx-button-multi-lines span:last-of-type{text-transform:none;font-weight:normal;font-family:"Segoe Sans Variable Text";font-size:12px;margin-top:4px}.bx-focusable{position:relative;overflow:visible}.bx-focusable::after{border:2px solid transparent;border-radius:10px}.bx-focusable:focus::after{content:\'\';border-color:#fff;position:absolute;top:-6px;left:-6px;right:-6px;bottom:-6px}html[data-active-input=touch] .bx-focusable:focus::after,html[data-active-input=mouse] .bx-focusable:focus::after{border-color:transparent !important}.bx-focusable.bx-circular::after{border-radius:var(--bx-button-height)}a.bx-button{display:inline-block}a.bx-button.bx-full-width{text-align:center}button.bx-inactive{pointer-events:none;opacity:.2;background:transparent !important}.bx-header-remote-play-button{height:auto;margin-right:8px !important}.bx-header-remote-play-button svg{width:24px;height:24px}.bx-header-settings-button{line-height:30px;font-size:14px;text-transform:uppercase;position:relative}.bx-header-settings-button[data-update-available]::before{content:\'🌟\' !important;line-height:var(--bx-button-height);display:inline-block;margin-left:4px}.bx-key-binding-dialog-overlay{position:fixed;inset:0;z-index:var(--bx-key-binding-dialog-overlay-z-index);background:#000;opacity:50%}.bx-key-binding-dialog{display:flex;flex-flow:column;max-height:90vh;position:fixed;top:50%;left:50%;margin-right:-50%;transform:translate(-50%,-50%);min-width:420px;padding:16px;border-radius:8px;z-index:var(--bx-key-binding-dialog-z-index);background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-normal-font);box-shadow:0 0 6px #000;user-select:none;-webkit-user-select:none}.bx-key-binding-dialog *:focus{outline:none !important}.bx-key-binding-dialog h2{margin-bottom:12px;color:#fff;display:block;font-family:var(--bx-title-font);font-size:32px;font-weight:400;line-height:var(--bx-button-height)}.bx-key-binding-dialog > div{overflow:auto;padding:2px 0}.bx-key-binding-dialog > button{padding:8px 32px;margin:10px auto 0;border:none;border-radius:4px;display:block;background-color:#2d3036;text-align:center;color:#fff;text-transform:uppercase;font-family:var(--bx-title-font);font-weight:400;line-height:18px;font-size:14px}@media (hover:hover){.bx-key-binding-dialog > button:hover{background-color:#515863}}.bx-key-binding-dialog > button:focus{background-color:#515863}.bx-key-binding-dialog ul{margin-bottom:1rem}.bx-key-binding-dialog ul li{display:none}.bx-key-binding-dialog ul[data-flags*="[1]"] > li[data-flag="1"],.bx-key-binding-dialog ul[data-flags*="[2]"] > li[data-flag="2"],.bx-key-binding-dialog ul[data-flags*="[4]"] > li[data-flag="4"],.bx-key-binding-dialog ul[data-flags*="[8]"] > li[data-flag="8"]{display:list-item}@media screen and (max-width:450px){.bx-key-binding-dialog{min-width:100%}}.bx-navigation-dialog{position:absolute;z-index:var(--bx-navigation-dialog-z-index);font-family:var(--bx-title-font)}.bx-navigation-dialog *:focus{outline:none !important}.bx-navigation-dialog select:disabled{-webkit-appearance:none;text-align-last:right;text-align:right;color:#fff;background:#131416;border:none;border-radius:4px;padding:0 5px}.bx-navigation-dialog .bx-focusable::after{border-radius:4px}.bx-navigation-dialog .bx-focusable:focus::after{top:0;left:0;right:0;bottom:0}.bx-navigation-dialog-overlay{position:fixed;background:rgba(11,11,11,0.89);top:0;left:0;right:0;bottom:0;z-index:var(--bx-navigation-dialog-overlay-z-index)}.bx-navigation-dialog-overlay[data-is-playing="true"]{background:transparent}.bx-centered-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:#1a1b1e;border-radius:10px;min-width:min(calc(100vw - 20px), 500px);max-width:calc(100vw - 20px);margin:0 0 0 auto;padding:16px;max-height:95vh;flex-direction:column;overflow:hidden;display:flex;flex-direction:column}.bx-centered-dialog .bx-dialog-title{display:flex;flex-direction:row;align-items:center;margin-bottom:10px}.bx-centered-dialog .bx-dialog-title p{padding:0;margin:0;flex:1;font-size:1.3rem;font-weight:bold}.bx-centered-dialog .bx-dialog-title button{flex-shrink:0}.bx-centered-dialog .bx-dialog-content{flex:1;padding:6px;overflow:auto;overflow-x:hidden}.bx-centered-dialog .bx-dialog-preset-tools{display:flex;margin-bottom:12px;gap:6px}.bx-centered-dialog .bx-dialog-preset-tools button{align-self:center;min-height:50px}.bx-centered-dialog .bx-default-preset-note{font-size:12px;font-style:italic;text-align:center;margin-bottom:10px}.bx-centered-dialog input,.bx-settings-dialog input{accent-color:var(--bx-primary-button-color)}.bx-centered-dialog input:focus,.bx-settings-dialog input:focus{accent-color:var(--bx-danger-button-color)}.bx-centered-dialog select:disabled,.bx-settings-dialog select:disabled{-webkit-appearance:none;background:transparent;text-align-last:right;border:none;color:#fff}.bx-centered-dialog select option:disabled,.bx-settings-dialog select option:disabled{display:none}.bx-centered-dialog input[type=checkbox]:focus,.bx-settings-dialog input[type=checkbox]:focus,.bx-centered-dialog select:focus,.bx-settings-dialog select:focus{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}.bx-centered-dialog a,.bx-settings-dialog a{color:#1c9d1c;text-decoration:none}.bx-centered-dialog a:hover,.bx-settings-dialog a:hover,.bx-centered-dialog a:focus,.bx-settings-dialog a:focus{color:#5dc21e}.bx-centered-dialog label,.bx-settings-dialog label{margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-note{margin-top:10px;font-size:14px;text-align:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt{flex-shrink:0;font-size:32px;margin:0}.bx-controller-shortcuts-manager-container .bx-shortcut-row label.bx-prompt::first-letter{letter-spacing:6px}.bx-controller-shortcuts-manager-container select:disabled{text-align:left;text-align-last:left}.bx-keyboard-shortcuts-manager-container{display:flex;flex-direction:column;gap:16px}.bx-keyboard-shortcuts-manager-container fieldset{background:#2a2a2a;border:1px solid #2a2a2a;border-radius:4px;padding:4px}.bx-keyboard-shortcuts-manager-container legend{width:auto;padding:4px 8px;margin:0 4px 4px;background:#004f87;box-shadow:0 2px 0 #071e3d;border-radius:4px;font-size:14px;font-weight:bold;text-transform:uppercase}.bx-keyboard-shortcuts-manager-container .bx-settings-row{background:none;padding:10px}.bx-settings-dialog{display:flex;position:fixed;top:0;right:0;bottom:0;opacity:.98;user-select:none;-webkit-user-select:none}.bx-settings-dialog .bx-settings-reload-note{font-size:.8rem;display:block;padding:8px;font-style:italic;font-weight:normal;height:var(--bx-button-height)}.bx-settings-tabs-container{position:fixed;width:48px;max-height:100vh;display:flex;flex-direction:column}.bx-settings-tabs-container > div:last-of-type{display:flex;flex-direction:column;align-items:end}.bx-settings-tabs-container > div:last-of-type button{flex-shrink:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-top:8px;height:unset;padding:8px 10px}.bx-settings-tabs-container > div:last-of-type button svg{width:16px;height:16px}.bx-settings-tabs{display:flex;flex-direction:column;border-radius:0 0 0 8px;box-shadow:0 0 6px #000;overflow:overlay;flex:1}.bx-settings-tabs svg{width:24px;height:24px;padding:10px;flex-shrink:0;box-sizing:content-box;background:#131313;cursor:pointer;border-left:4px solid #1e1e1e}.bx-settings-tabs svg.bx-active{background:#222;border-color:#008746}.bx-settings-tabs svg:not(.bx-active):hover{background:#2f2f2f;border-color:#484848}.bx-settings-tabs svg:focus{border-color:#fff}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]{background:var(--bx-danger-button-color) !important}.bx-settings-tabs svg[data-group=global][data-need-refresh=true]:hover{background:var(--bx-danger-button-hover-color) !important}.bx-settings-tab-contents{flex-direction:column;margin-left:48px;width:450px;background:#1a1b1e;color:#fff;font-weight:400;font-size:16px;font-family:var(--bx-title-font);text-align:center;box-shadow:0 0 6px #000;overflow:overlay;z-index:1}.bx-settings-tab-contents .bx-top-buttons{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}.bx-settings-tab-contents .bx-top-buttons .bx-button{display:block}.bx-settings-tab-contents h2{margin:16px 0 8px 0;display:flex;align-items:center}.bx-settings-tab-contents h2:first-of-type{margin-top:0}.bx-settings-tab-contents h2 span{display:inline-block;font-size:20px;font-weight:bold;text-align:left;flex:1;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-height:var(--bx-button-height);align-content:center}@media (max-width:500px){.bx-settings-tab-contents{width:calc(100vw - 48px)}}.bx-settings-row{display:flex;gap:10px;padding:16px 10px;margin:0;background:#2a2a2a;border-bottom:1px solid #343434}.bx-settings-row:hover,.bx-settings-row:focus-within{background-color:#242424}.bx-settings-row:not(:has(> input[type=checkbox])){flex-wrap:wrap}.bx-settings-row > span.bx-settings-label{font-size:14px;display:block;text-align:left;align-self:center;margin-bottom:0 !important;flex:1}.bx-settings-row > span.bx-settings-label svg{width:20px;height:20px;margin-inline-end:8px}.bx-settings-row > span.bx-settings-label + *{margin:0 0 0 auto}.bx-settings-row[data-multi-lines="true"]{flex-direction:column}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label{align-self:start}.bx-settings-row[data-multi-lines="true"] > span.bx-settings-label + *{margin:unset}.bx-settings-dialog-note{display:block;color:#afafb0;font-size:12px;font-weight:lighter;font-style:italic}.bx-settings-dialog-note:not(:has(a)){margin-top:4px}.bx-settings-dialog-note a{display:inline-block;padding:4px}.bx-settings-custom-user-agent{display:block;width:100%;padding:6px}.bx-donation-link{display:block;text-align:center;text-decoration:none;height:20px;line-height:20px;font-size:14px;margin-top:10px;margin-bottom:10px}.bx-debug-info button{margin-top:10px}.bx-debug-info pre{margin-top:10px;cursor:copy;color:#fff;padding:8px;border:1px solid #2d2d2d;background:#212121;white-space:break-spaces;text-align:left}.bx-debug-info pre:hover{background:#272727}.bx-settings-app-version{margin-top:10px;text-align:center;color:#747474;font-size:12px}.bx-note-unsupported{display:block;font-size:12px;font-style:italic;font-weight:normal;color:#828282}.bx-settings-tab-content{padding:10px}.bx-settings-tab-content > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:has(+ .bx-settings-row){border-top-left-radius:6px;border-top-right-radius:6px}.bx-settings-tab-content > div .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}.bx-settings-tab-content > div *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)){border:none;border-radius:6px}.bx-settings-tab-content:not([data-game-id="-1"]) .bx-settings-row[data-override=true],.bx-settings-tab-content:not([data-game-id="-1"]) .bx-settings-row:has(*[data-override=true]){border-left:4px solid #ffa500 !important;border-top-left-radius:0 !important;border-bottom-left-radius:0 !important}.bx-suggest-toggler{text-align:left;display:flex;border-radius:4px;overflow:hidden;background:#003861;height:45px;align-items:center}.bx-suggest-toggler label{flex:1;align-content:center;padding:0 10px;background:#004f87;height:100%}.bx-suggest-toggler span{display:inline-block;align-self:center;padding:10px;width:45px;text-align:center}.bx-suggest-toggler:hover,.bx-suggest-toggler:focus{cursor:pointer;background:#005da1}.bx-suggest-toggler:hover label,.bx-suggest-toggler:focus label{background:#006fbe}.bx-suggest-toggler[bx-open] span{transform:rotate(90deg)}.bx-suggest-toggler[bx-open]+ .bx-suggest-box{display:block}.bx-suggest-box{display:none}.bx-suggest-wrapper{display:flex;flex-direction:column;gap:10px;margin:10px}.bx-suggest-note{font-size:11px;color:#8c8c8c;font-style:italic;font-weight:100}.bx-suggest-link{font-size:14px;display:inline-block;margin-top:4px;padding:4px}.bx-suggest-row{display:flex;flex-direction:row;gap:10px}.bx-suggest-row label{flex:1;overflow:overlay;border-radius:4px}.bx-suggest-row label .bx-suggest-label{background:#323232;padding:4px 10px;font-size:12px;text-align:left}.bx-suggest-row label .bx-suggest-value{padding:6px;font-size:14px}.bx-suggest-row label .bx-suggest-value.bx-suggest-change{background-color:var(--bx-warning-color)}.bx-suggest-row.bx-suggest-ok input{visibility:hidden}.bx-suggest-row.bx-suggest-ok .bx-suggest-label{background-color:#008114}.bx-suggest-row.bx-suggest-ok .bx-suggest-value{background-color:#13a72a}.bx-suggest-row.bx-suggest-change .bx-suggest-label{background-color:#a65e08}.bx-suggest-row.bx-suggest-change .bx-suggest-value{background-color:#d57f18}.bx-suggest-row.bx-suggest-change:hover label{cursor:pointer}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-label{background-color:#995707}.bx-suggest-row.bx-suggest-change:hover .bx-suggest-value{background-color:#bd7115}.bx-suggest-row.bx-suggest-change input:not(:checked) + label{opacity:.5}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-label{background-color:#2a2a2a}.bx-suggest-row.bx-suggest-change input:not(:checked) + label .bx-suggest-value{background-color:#393939}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label{opacity:1}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-label{background-color:#202020}.bx-suggest-row.bx-suggest-change:hover input:not(:checked) + label .bx-suggest-value{background-color:#303030}.bx-sub-content-box{background:#161616;padding:10px;box-shadow:0 0 12px #0f0f0f inset;border-radius:10px}.bx-settings-row .bx-sub-content-box{background:#202020;padding:12px;box-shadow:0 0 4px #000 inset;border-radius:6px}.bx-controller-extra-settings[data-has-gamepad=true] > :first-child{display:none}.bx-controller-extra-settings[data-has-gamepad=true] > :last-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :first-child{display:block}.bx-controller-extra-settings[data-has-gamepad=false] > :last-child{display:none}.bx-controller-extra-settings .bx-controller-extra-wrapper{flex:1;min-width:1px}.bx-controller-extra-settings .bx-sub-content-box{flex:1;text-align:left;display:flex;flex-direction:column;margin-top:10px}.bx-controller-extra-settings .bx-sub-content-box > label{font-size:14px}.bx-preset-row{display:flex;gap:8px}.bx-preset-row .bx-select{flex:1}.bx-stream-settings-selection{margin-bottom:8px;position:sticky;z-index:1000;top:0}.bx-stream-settings-selection > div{display:flex;gap:8px;background:#222;padding:10px;border-bottom:4px solid #353638;box-shadow:0 0 6px #000;position:relative;z-index:1}.bx-stream-settings-selection > div .bx-select{flex:1}.bx-stream-settings-selection > div .bx-select label{font-weight:bold;font-size:1.1rem;line-height:initial}.bx-stream-settings-selection > div .bx-select label span{line-height:initial}.bx-stream-settings-selection > div .bx-select .bx-select-indicators{display:none}.bx-stream-settings-selection p{font-family:var(--bx-promptfont-font),var(--bx-normal-font);margin:0;font-size:13px;background:rgba(80,80,80,0.949);height:25px;line-height:23px;position:absolute;bottom:-25px;left:0;right:0;text-shadow:0 1px #000}.bx-toast{user-select:none;-webkit-user-select:none;position:fixed;left:50%;top:24px;transform:translate(-50%,0);background:#000;border-radius:16px;color:#fff;z-index:var(--bx-toast-z-index);font-family:var(--bx-normal-font);border:2px solid #fff;display:flex;align-items:center;opacity:0;overflow:clip;transition:opacity .2s ease-in}.bx-toast.bx-show{opacity:.85}.bx-toast.bx-hide{opacity:0;pointer-events:none}.bx-toast-msg{font-size:14px;display:inline-block;padding:12px 16px;white-space:pre}.bx-toast-status{font-weight:bold;font-size:14px;text-transform:uppercase;display:inline-block;background:#515863;padding:12px 16px;color:#fff;white-space:pre}.bx-wait-time-box{position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);color:#fff;z-index:var(--bx-wait-time-box-z-index);padding:12px;border-radius:0 0 0 8px}.bx-wait-time-box label{display:block;text-transform:uppercase;text-align:right;font-size:12px;font-weight:bold;margin:0}.bx-wait-time-box span{display:block;font-family:var(--bx-monospaced-font);text-align:right;font-size:16px;margin-bottom:10px}.bx-wait-time-box span:last-of-type{margin-bottom:0}.bx-remote-play-settings{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2d2d2d}.bx-remote-play-settings > div{display:flex}.bx-remote-play-settings label{flex:1;font-size:14px}.bx-remote-play-settings label p{margin:4px 0 0;padding:0;color:#888;font-size:12px}.bx-remote-play-resolution{display:block}.bx-remote-play-resolution input[type="radio"]{accent-color:var(--bx-primary-button-color);margin-right:6px}.bx-remote-play-resolution input[type="radio"]:focus{accent-color:var(--bx-primary-button-hover-color)}.bx-remote-play-device-wrapper{display:flex;margin-bottom:12px}.bx-remote-play-device-wrapper:last-child{margin-bottom:2px}.bx-remote-play-device-info{flex:1;align-self:center;padding:4px 0}.bx-remote-play-device-name{font-size:14px;font-weight:bold;display:inline-block;vertical-align:middle}.bx-remote-play-console-type{font-size:8px;background:#004c87;color:#fff;display:inline-block;border-radius:8px;padding:2px 6px;margin-left:8px;vertical-align:middle}.bx-remote-play-power-state{color:#888;font-size:12px}.bx-remote-play-connect-button{min-height:100%;margin:4px 0}.bx-remote-play-buttons{display:flex;justify-content:space-between}select.bx-select{min-height:30px}div.bx-select{display:flex;align-items:stretch;flex:0 1 auto;gap:8px}div.bx-select select:disabled ~ button{display:none}div.bx-select select:disabled ~ div{background:#131416;color:#fff;pointer-events:none}div.bx-select select:disabled ~ div .bx-select-indicators{visibility:hidden}div.bx-select > div,div.bx-select button.bx-select-value{min-width:120px;text-align:left;line-height:24px;vertical-align:middle;background:#fff;color:#000;border-radius:4px;padding:2px 8px;display:flex;flex:1;flex-direction:column}div.bx-select > div{min-height:24px}div.bx-select > div input{display:inline-block;margin-right:8px}div.bx-select > div label{margin-bottom:0;font-size:14px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:15px}div.bx-select > div label span{display:block;font-size:10px;font-weight:bold;text-align:left;line-height:20px;white-space:pre;min-height:15px;align-content:center}div.bx-select button.bx-select-value{border:none;cursor:pointer;min-height:30px;font-size:.9rem;align-items:center}div.bx-select button.bx-select-value > div{display:flex;width:100%}div.bx-select button.bx-select-value span{flex:1;text-align:left;display:inline-block}div.bx-select button.bx-select-value input{margin:0 4px;accent-color:var(--bx-primary-button-color);pointer-events:none}div.bx-select button.bx-select-value:hover input,div.bx-select button.bx-select-value:focus input{accent-color:var(--bx-danger-button-color)}div.bx-select button.bx-select-value:hover::after,div.bx-select button.bx-select-value:focus::after{border-color:#4d4d4d !important}div.bx-select button.bx-button{border:none;width:24px;height:auto;padding:0;color:#fff;border-radius:4px;font-weight:bold;font-size:12px;font-family:var(--bx-monospaced-font);flex-shrink:0}div.bx-select button.bx-button span{line-height:unset}div.bx-select[data-controller-friendly=true] > div{box-sizing:content-box}div.bx-select[data-controller-friendly=true] select{position:absolute !important;top:-9999px !important;left:-9999px !important;visibility:hidden !important}div.bx-select[data-controller-friendly=false]{position:relative}div.bx-select[data-controller-friendly=false] > div{box-sizing:border-box}div.bx-select[data-controller-friendly=false] > div label{margin-right:24px}div.bx-select[data-controller-friendly=false] select:disabled{display:none}div.bx-select[data-controller-friendly=false] select:not(:disabled){cursor:pointer;position:absolute;top:0;right:0;bottom:0;display:block;opacity:0;z-index:calc(var(--bx-settings-z-index) + 1)}div.bx-select[data-controller-friendly=false] select:not(:disabled):hover + div{background:#f0f0f0}div.bx-select[data-controller-friendly=false] select:not(:disabled) + div label::after{content:\'▾\';font-size:14px;position:absolute;right:8px;pointer-events:none}.bx-select-indicators{display:flex;height:4px;gap:2px;margin-bottom:2px}.bx-select-indicators span{content:\' \';display:inline-block;flex:1;background:#cfcfcf;border-radius:4px;min-width:1px}.bx-select-indicators span[data-highlighted]{background:#9c9c9c;min-width:6px}.bx-select-indicators span[data-selected]{background:#aacfe7}.bx-select-indicators span[data-highlighted][data-selected]{background:#5fa3d0}.bx-guide-home-achievements-progress{display:flex;gap:10px;flex-direction:row}.bx-guide-home-achievements-progress .bx-button{margin-bottom:0 !important}body[data-bx-media-type=tv] .bx-guide-home-achievements-progress{flex-direction:column}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress{flex-direction:row}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:first-of-type{flex:1}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type{width:40px}body:not([data-bx-media-type=tv]) .bx-guide-home-achievements-progress > button:last-of-type span{display:none}.bx-guide-home-buttons > div{display:flex;flex-direction:row;gap:12px}body[data-bx-media-type=tv] .bx-guide-home-buttons > div{flex-direction:column}body[data-bx-media-type=tv] .bx-guide-home-buttons > div button{margin-bottom:0 !important}body:not([data-bx-media-type=tv]) .bx-guide-home-buttons > div button span{display:none}.bx-guide-home-buttons[data-is-playing="true"] button[data-state=\'normal\']{display:none}.bx-guide-home-buttons[data-is-playing="false"] button[data-state=\'playing\']{display:none}div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]{overflow:visible}.bx-stream-menu-button-on{fill:#000 !important;background-color:#2d2d2d !important;color:#000 !important}.bx-stream-refresh-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px) !important}body[data-media-type=default] .bx-stream-refresh-button{left:calc(env(safe-area-inset-left, 0px) + 11px) !important}body[data-media-type=tv] .bx-stream-refresh-button{top:calc(var(--gds-focus-borderSize) + 80px) !important}.bx-stream-home-button{top:calc(env(safe-area-inset-top, 0px) + 10px + 50px * 2) !important}body[data-media-type=default] .bx-stream-home-button{left:calc(env(safe-area-inset-left, 0px) + 12px) !important}body[data-media-type=tv] .bx-stream-home-button{top:calc(var(--gds-focus-borderSize) + 80px * 2) !important}div[data-testid=media-container][data-position=center]{display:flex}div[data-testid=media-container][data-position=top] video,div[data-testid=media-container][data-position=top] canvas{top:0}div[data-testid=media-container][data-position=bottom] video,div[data-testid=media-container][data-position=bottom] canvas{bottom:0}#game-stream video{margin:auto;align-self:center;background:#000;position:absolute;left:0;right:0}#game-stream canvas{align-self:center;margin:auto;position:absolute;left:0;right:0}#game-stream.bx-taking-screenshot:before{animation:bx-anim-taking-screenshot .5s ease;content:\' \';position:absolute;width:100%;height:100%;z-index:var(--bx-screenshot-animation-z-index)}#gamepass-dialog-root div[class^=Guide-module__guide] .bx-button{overflow:visible;margin-bottom:12px}@-moz-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-webkit-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@-o-keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}@keyframes bx-anim-taking-screenshot{0%{border:0 solid rgba(255,255,255,0.502)}50%{border:8px solid rgba(255,255,255,0.502)}100%{border:0 solid rgba(255,255,255,0.502)}}.bx-number-stepper{text-align:center}.bx-number-stepper > div{display:flex;align-items:center}.bx-number-stepper > div span{flex:1;display:inline-block;min-width:40px;font-family:var(--bx-monospaced-font);white-space:pre;font-size:13px;margin:0 4px}.bx-number-stepper > div button{flex-shrink:0;border:none;width:24px;height:24px;margin:0;line-height:24px;background-color:var(--bx-default-button-color);color:#fff;border-radius:4px;font-weight:bold;font-size:14px;font-family:var(--bx-monospaced-font)}@media (hover:hover){.bx-number-stepper > div button:hover{background-color:var(--bx-default-button-hover-color)}}.bx-number-stepper > div button:active{background-color:var(--bx-default-button-hover-color)}.bx-number-stepper > div button:disabled + span{font-family:var(--bx-title-font)}.bx-number-stepper input[type=range]{display:block;margin:8px 0 2px auto;min-width:180px;width:100%;color:#959595 !important}.bx-number-stepper input[type=range]:disabled,.bx-number-stepper button:disabled{display:none}.bx-number-stepper[data-disabled=true] input[type=range],.bx-number-stepper[disabled=true] input[type=range],.bx-number-stepper[data-disabled=true] button,.bx-number-stepper[disabled=true] button{display:none}.bx-dual-number-stepper > span{display:block;font-family:var(--bx-monospaced-font);font-size:13px;white-space:pre;margin:0 4px;text-align:center}.bx-dual-number-stepper > div input[type=range]{display:block;width:100%;min-width:180px;background:transparent;color:#959595 !important;appearance:none;padding:8px 0}.bx-dual-number-stepper > div input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff var(--from),var(--bx-primary-button-color) var(--from) var(--to),#fff var(--to) 100%);height:8px;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-moz-range-track{background:linear-gradient(90deg,#fff var(--from),var(--bx-primary-button-color) var(--from) var(--to),#fff var(--to) 100%);height:8px;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-webkit-slider-thumb{margin-top:-4px;appearance:none;width:4px;height:16px;background:#00b85f;border:none;border-radius:2px}.bx-dual-number-stepper > div input[type=range]::-moz-range-thumb{margin-top:-4px;appearance:none;width:4px;height:16px;background:#00b85f;border:none;border-radius:2px}.bx-dual-number-stepper > div input[type=range]:hover::-webkit-slider-runnable-track,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-webkit-slider-runnable-track,.bx-dual-number-stepper > div input[type=range]:focus::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff var(--from),#006635 var(--from) var(--to),#fff var(--to) 100%)}.bx-dual-number-stepper > div input[type=range]:hover::-moz-range-track,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-moz-range-track,.bx-dual-number-stepper > div input[type=range]:focus::-moz-range-track{background:linear-gradient(90deg,#fff var(--from),#006635 var(--from) var(--to),#fff var(--to) 100%)}.bx-dual-number-stepper > div input[type=range]:hover::-webkit-slider-thumb,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-webkit-slider-thumb,.bx-dual-number-stepper > div input[type=range]:focus::-webkit-slider-thumb{background:#fb3232}.bx-dual-number-stepper > div input[type=range]:hover::-moz-range-thumb,.bx-dual-number-stepper > div input[type=range].bx-dual-number-stepper > div input[type=range]:active::-moz-range-thumb,.bx-dual-number-stepper > div input[type=range]:focus::-moz-range-thumb{background:#fb3232}.bx-dual-number-stepper[data-disabled=true] input[type=range],.bx-dual-number-stepper[disabled=true] input[type=range]{display:none}#bx-game-bar{z-index:var(--bx-game-bar-z-index);position:fixed;bottom:0;width:40px;height:90px;overflow:visible;cursor:pointer}#bx-game-bar > svg{display:none;pointer-events:none;position:absolute;height:28px;margin-top:16px}@media (hover:hover){#bx-game-bar:hover > svg{display:block}}#bx-game-bar .bx-game-bar-container{opacity:0;position:absolute;display:flex;overflow:hidden;background:rgba(26,27,30,0.91);box-shadow:0 0 6px #1c1c1c;transition:opacity .1s ease-in}#bx-game-bar .bx-game-bar-container.bx-show{opacity:.9}#bx-game-bar .bx-game-bar-container.bx-show + svg{display:none !important}#bx-game-bar .bx-game-bar-container.bx-hide{opacity:0;pointer-events:none}#bx-game-bar .bx-game-bar-container button{width:60px;height:60px;border-radius:0}#bx-game-bar .bx-game-bar-container button svg{width:28px;height:28px;transition:transform .08s ease 0s}#bx-game-bar .bx-game-bar-container button:hover{border-radius:0}#bx-game-bar .bx-game-bar-container button:active svg{transform:scale(.75)}#bx-game-bar .bx-game-bar-container button.bx-activated{background-color:#fff}#bx-game-bar .bx-game-bar-container button.bx-activated svg{filter:invert(1)}#bx-game-bar .bx-game-bar-container div[data-activated] button{display:none}#bx-game-bar .bx-game-bar-container div[data-activated=\'false\'] button:first-of-type{display:block}#bx-game-bar .bx-game-bar-container div[data-activated=\'true\'] button:last-of-type{display:block}#bx-game-bar[data-position="bottom-left"]{left:0;direction:ltr}#bx-game-bar[data-position="bottom-left"] .bx-game-bar-container{border-radius:0 10px 10px 0}#bx-game-bar[data-position="bottom-right"]{right:0;direction:rtl}#bx-game-bar[data-position="bottom-right"] .bx-game-bar-container{direction:ltr;border-radius:10px 0 0 10px}.bx-badges{margin-left:0;user-select:none;-webkit-user-select:none}.bx-badge{border:none;display:inline-block;line-height:24px;color:#fff;font-family:var(--bx-title-font-semibold);font-size:14px;font-weight:400;margin:0 8px 8px 0;box-shadow:0 0 6px #000;border-radius:4px}.bx-badge-name{background-color:#2d3036;border-radius:4px 0 0 4px}.bx-badge-name svg{width:16px;height:16px}.bx-badge-value{background-color:#808080;border-radius:0 4px 4px 0}.bx-badge-name,.bx-badge-value{display:inline-block;padding:0 8px;line-height:30px;vertical-align:bottom}.bx-badge-battery[data-charging=true] span:first-of-type::after{content:\' ⚡️\'}div[class^=StreamMenu-module__container] .bx-badges{position:absolute;max-width:500px}#gamepass-dialog-root .bx-badges{position:fixed;top:60px;left:460px;max-width:500px}@media (min-width:568px) and (max-height:480px){#gamepass-dialog-root .bx-badges{position:unset;top:unset;left:unset;margin:8px 0}}.bx-stats-bar{display:flex;flex-direction:row;gap:8px;user-select:none;-webkit-user-select:none;position:fixed;top:0;background-color:#000;color:#fff;font-family:var(--bx-monospaced-font);font-size:.9rem;padding-left:8px;z-index:var(--bx-stats-bar-z-index);text-wrap:nowrap}.bx-stats-bar[data-stats*="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats*="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats*="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats*="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats*="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats*="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats*="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats*="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats*="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats*="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats*="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats*="[ul]"] > .bx-stat-ul{display:inline-flex;align-items:baseline}.bx-stats-bar[data-stats$="[time]"] > .bx-stat-time,.bx-stats-bar[data-stats$="[play]"] > .bx-stat-play,.bx-stats-bar[data-stats$="[batt]"] > .bx-stat-batt,.bx-stats-bar[data-stats$="[fps]"] > .bx-stat-fps,.bx-stats-bar[data-stats$="[ping]"] > .bx-stat-ping,.bx-stats-bar[data-stats$="[jit]"] > .bx-stat-jit,.bx-stats-bar[data-stats$="[btr]"] > .bx-stat-btr,.bx-stats-bar[data-stats$="[dt]"] > .bx-stat-dt,.bx-stats-bar[data-stats$="[pl]"] > .bx-stat-pl,.bx-stats-bar[data-stats$="[fl]"] > .bx-stat-fl,.bx-stats-bar[data-stats$="[dl]"] > .bx-stat-dl,.bx-stats-bar[data-stats$="[ul]"] > .bx-stat-ul{border-right:none}.bx-stats-bar::before{display:none;content:\'👀\';vertical-align:middle;margin-right:8px}.bx-stats-bar[data-display=glancing]::before{display:inline-block}.bx-stats-bar[data-position=top-left]{left:0;border-radius:0 0 4px 0}.bx-stats-bar[data-position=top-right]{right:0;border-radius:0 0 0 4px}.bx-stats-bar[data-position=top-center]{transform:translate(-50%,0);left:50%;border-radius:0 0 4px 4px}.bx-stats-bar[data-shadow=true]{background:none;filter:drop-shadow(1px 0 0 rgba(0,0,0,0.941)) drop-shadow(-1px 0 0 rgba(0,0,0,0.941)) drop-shadow(0 1px 0 rgba(0,0,0,0.941)) drop-shadow(0 -1px 0 rgba(0,0,0,0.941))}.bx-stats-bar > div{display:none;border-right:1px solid #fff;padding-right:8px}.bx-stats-bar label{margin:0 8px 0 0;font-family:var(--bx-title-font);font-size:70%;font-weight:bold;vertical-align:middle;cursor:help}.bx-stats-bar span{display:inline-block;text-align:right;vertical-align:middle;white-space:pre}.bx-stats-bar span[data-grade=good]{color:#6bffff}.bx-stats-bar span[data-grade=ok]{color:#fff16b}.bx-stats-bar span[data-grade=bad]{color:#ff5f5f}.bx-mkb-settings{display:flex;flex-direction:column;flex:1;padding-bottom:10px;overflow:hidden}.bx-mkb-pointer-lock-msg{user-select:none;-webkit-user-select:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);margin:auto;background:#151515;z-index:var(--bx-mkb-pointer-lock-msg-z-index);color:#fff;font-weight:400;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:1.3rem;padding:12px;border-radius:8px;align-items:center;box-shadow:0 0 6px #000;min-width:300px;opacity:.9;display:flex;flex-direction:column;gap:10px}.bx-mkb-pointer-lock-msg:hover{opacity:1}.bx-mkb-pointer-lock-msg > p{margin:0;width:100%;font-size:22px;margin-bottom:4px;font-weight:bold;text-align:left}.bx-mkb-pointer-lock-msg > div{width:100%;display:flex;flex-direction:row;gap:10px}.bx-mkb-pointer-lock-msg > div button:first-of-type{flex-shrink:1}.bx-mkb-pointer-lock-msg > div button:last-of-type{flex-grow:1}.bx-mkb-key-row{display:flex;margin-bottom:10px;align-items:center;gap:20px}.bx-mkb-key-row label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center}.bx-mkb-settings.bx-editing .bx-mkb-key-row button{background:#393939;border-radius:4px;border:none}.bx-mkb-settings.bx-editing .bx-mkb-key-row button:hover{background:#333;cursor:pointer}.bx-mkb-action-buttons > div{text-align:right;display:none}.bx-mkb-action-buttons button{margin-left:8px}.bx-mkb-settings:not(.bx-editing) .bx-mkb-action-buttons > div:first-child{display:block}.bx-mkb-settings.bx-editing .bx-mkb-action-buttons > div:last-child{display:block}.bx-mkb-note{display:block;margin:0 0 10px;font-size:12px;text-align:center}button.bx-binding-button{flex:1;min-height:38px;border:none;border-radius:4px;font-size:14px;color:#fff;display:flex;align-items:center;align-self:center;padding:0 6px}button.bx-binding-button:disabled{background:#131416;padding:0 8px}button.bx-binding-button:not(:disabled){border:2px solid transparent;border-top:none;border-bottom:4px solid #252525;background:#3b3b3b;cursor:pointer}button.bx-binding-button:not(:disabled):hover,button.bx-binding-button:not(:disabled).bx-focusable:focus{background:#20b217;border-bottom-color:#186c13}button.bx-binding-button:not(:disabled):active{background:#16900f;border-bottom:3px solid #0c4e08;border-left-width:2px;border-right-width:2px}button.bx-binding-button:not(:disabled).bx-focusable:focus::after{top:-6px;left:-8px;right:-8px;bottom:-10px}.bx-settings-row .bx-binding-button-wrapper button.bx-binding-button{min-width:60px}.bx-controller-customizations-container .bx-btn-detect{display:block;margin-bottom:20px}.bx-controller-customizations-container .bx-btn-detect.bx-monospaced{background:none;font-weight:bold;font-size:12px}.bx-controller-customizations-container .bx-buttons-grid{display:grid;grid-template-columns:auto auto;column-gap:20px;row-gap:10px;margin-bottom:20px}.bx-controller-key-row{display:flex;align-items:stretch}.bx-controller-key-row > label{margin-bottom:0;font-family:var(--bx-promptfont-font);font-size:32px;text-align:center;min-width:50px;flex-shrink:0;display:flex;align-self:center}.bx-controller-key-row > label::after{content:\'❯\';margin:0 12px;font-size:16px;align-self:center}.bx-controller-key-row .bx-select{width:100% !important}.bx-controller-key-row .bx-select > div{min-width:50px}.bx-controller-key-row .bx-select label{font-family:var(--bx-promptfont-font),var(--bx-normal-font);font-size:32px;text-align:center;margin-bottom:6px;height:40px;line-height:40px}.bx-controller-key-row:hover > label{color:#ffe64b}.bx-controller-key-row:hover > label::after{color:#fff}.bx-controller-customization-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.bx-controller-customization-summary span{font-family:var(--bx-promptfont);font-size:24px;border-radius:6px;background:#131313;color:#fff;display:inline-block;padding:2px;text-align:center}.bx-product-details-icons{padding:8px;border-radius:4px}.bx-product-details-icons svg{margin-right:8px}.bx-product-details-buttons{display:flex;gap:10px;flex-direction:row}.bx-product-details-buttons button{max-width:max-content;margin:10px 0 0 0;display:flex}@media (min-width:568px) and (max-height:480px){.bx-product-details-buttons{flex-direction:column}.bx-product-details-buttons button{margin:8px 0 0 10px}}', PREF_HIDE_SECTIONS = getGlobalPref("ui.hideSections"), selectorToHide = [];
  if (PREF_HIDE_SECTIONS.includes("news")) selectorToHide.push("#BodyContent > div[class*=CarouselRow-module]");
- if (getPref("block.features").includes("byog")) selectorToHide.push("#BodyContent > div[class*=ByogRow-module__container___]");
+ if (getGlobalPref("block.features").includes("byog")) selectorToHide.push("#BodyContent > div[class*=ByogRow-module__container___]");
  if (PREF_HIDE_SECTIONS.includes("all-games")) selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__gridContainer]"), selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__rowHeader]");
  if (PREF_HIDE_SECTIONS.includes("most-popular")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/popular"])');
  if (PREF_HIDE_SECTIONS.includes("touch")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/touch"])');
- if (getPref("block.features").includes("friends")) selectorToHide.push("#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]");
+ if (getGlobalPref("block.features").includes("friends")) selectorToHide.push("#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]");
  if (selectorToHide) css += selectorToHide.join(",") + "{ display: none; }";
- if (getPref("ui.reduceAnimations")) css += "div[class*=GameCard-module__gameTitleInnerWrapper],div[class*=GameCard-module__card],div[class*=ScrollArrows-module]{transition:none !important}";
- if (getPref("ui.systemMenu.hideHandle")) css += "div[class*=Grip-module__container]{visibility:hidden}@media (hover:hover){button[class*=GripHandle-module__container]:hover div[class*=Grip-module__container]{visibility:visible}}button[class*=GripHandle-module__container][aria-expanded=true] div[class*=Grip-module__container]{visibility:visible}button[class*=GripHandle-module__container][aria-expanded=false]{background-color:transparent !important}div[class*=StreamHUD-module__buttonsContainer]{padding:0 !important}";
- if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getPref("ui.streamMenu.simplify")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";
+ if (getGlobalPref("ui.reduceAnimations")) css += "div[class*=GameCard-module__gameTitleInnerWrapper],div[class*=GameCard-module__card],div[class*=ScrollArrows-module]{transition:none !important}";
+ if (getGlobalPref("ui.systemMenu.hideHandle")) css += "div[class*=Grip-module__container]{visibility:hidden}@media (hover:hover){button[class*=GripHandle-module__container]:hover div[class*=Grip-module__container]{visibility:visible}}button[class*=GripHandle-module__container][aria-expanded=true] div[class*=Grip-module__container]{visibility:visible}button[class*=GripHandle-module__container][aria-expanded=false]{background-color:transparent !important}div[class*=StreamHUD-module__buttonsContainer]{padding:0 !important}";
+ if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getGlobalPref("ui.streamMenu.simplify")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";
  else css += "body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) + 30px)}body:not([data-media-type=tv]) .bx-badges{top:calc(var(--streamMenuItemSize) + 20px)}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]{min-width:auto !important;width:100px !important}body:not([data-media-type=tv]) button[class*=MenuItem-module__container]:nth-child(n+2){margin-left:10px !important}body:not([data-media-type=tv]) div[class*=MenuItem-module__label]{margin-left:8px !important;margin-right:8px !important}";
- if (getPref("ui.hideScrollbar")) css += "html{scrollbar-width:none}body::-webkit-scrollbar{display:none}";
+ if (getGlobalPref("ui.hideScrollbar")) css += "html{scrollbar-width:none}body::-webkit-scrollbar{display:none}";
  let $style = CE("style", !1, css);
  document.documentElement.appendChild($style);
 }
@@ -8649,7 +9008,7 @@ function preloadFonts() {
 class MouseCursorHider {
  static instance;
  static getInstance() {
-  if (typeof MouseCursorHider.instance === "undefined") if (!getPref("mkb.enabled") && getPref("mkb.cursor.hideIdle")) MouseCursorHider.instance = new MouseCursorHider;
+  if (typeof MouseCursorHider.instance === "undefined") if (!getGlobalPref("mkb.enabled") && getGlobalPref("mkb.cursor.hideIdle")) MouseCursorHider.instance = new MouseCursorHider;
    else MouseCursorHider.instance = null;
   return MouseCursorHider.instance;
  }
@@ -8867,12 +9226,12 @@ class WebGL2Player {
   this.animFrameId = frameCallback(animate);
  }
  setupShaders() {
-  BxLogger.info(this.LOG_TAG, "Setting up", getPref("video.player.powerPreference"));
+  BxLogger.info(this.LOG_TAG, "Setting up", getStreamPref("video.player.powerPreference"));
   let gl = this.$canvas.getContext("webgl2", {
    isBx: !0,
    antialias: !0,
    alpha: !1,
-   powerPreference: getPref("video.player.powerPreference")
+   powerPreference: getStreamPref("video.player.powerPreference")
   });
   this.gl = gl, gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferWidth);
   let vShader = gl.createShader(gl.VERTEX_SHADER);
@@ -8956,7 +9315,7 @@ class StreamPlayer {
   return filters.join(" ");
  }
  resizePlayer() {
-  let PREF_RATIO = getPref("video.ratio"), $video = this.$video, isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport, $webGL2Canvas;
+  let PREF_RATIO = getStreamPref("video.ratio"), $video = this.$video, isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport, $webGL2Canvas;
   if (this.playerType == "webgl2") $webGL2Canvas = this.webGL2Player?.getCanvas();
   let targetWidth, targetHeight, targetObjectFit;
   if (PREF_RATIO.includes(":")) {
@@ -8964,7 +9323,7 @@ class StreamPlayer {
    if (parentRect.width / parentRect.height > videoRatio) height = parentRect.height, width = height * videoRatio;
    else width = parentRect.width, height = width / videoRatio;
    width = Math.ceil(Math.min(parentRect.width, width)), height = Math.ceil(Math.min(parentRect.height, height)), $video.dataset.width = width.toString(), $video.dataset.height = height.toString();
-   let $parent = $video.parentElement, position = getPref("video.position");
+   let $parent = $video.parentElement, position = getStreamPref("video.position");
    if ($parent.style.removeProperty("padding-top"), $parent.dataset.position = position, position === "top-half" || position === "bottom-half") {
     let padding = Math.floor((window.innerHeight - height) / 4);
     if (padding > 0) {
@@ -9011,7 +9370,7 @@ class StreamPlayer {
   } else {
    let filters = this.getVideoPlayerFilterStyle(), videoCss = "";
    if (filters) videoCss += `filter: ${filters} !important;`;
-   if (getPref("screenshot.applyFilters")) ScreenshotManager.getInstance().updateCanvasFilters(filters);
+   if (getGlobalPref("screenshot.applyFilters")) ScreenshotManager.getInstance().updateCanvasFilters(filters);
    let css = "";
    if (videoCss) css = `#game-stream video { ${videoCss} }`;
    this.$videoCss.textContent = css;
@@ -9029,16 +9388,16 @@ class StreamPlayer {
  }
 }
 function patchVideoApi() {
- let PREF_SKIP_SPLASH_VIDEO = getPref("ui.splashVideo.skip"), showFunc = function() {
+ let PREF_SKIP_SPLASH_VIDEO = getGlobalPref("ui.splashVideo.skip"), showFunc = function() {
   if (this.style.visibility = "visible", !this.videoWidth) return;
   let playerOptions = {
-   processing: getPref("video.processing"),
-   sharpness: getPref("video.processing.sharpness"),
-   saturation: getPref("video.saturation"),
-   contrast: getPref("video.contrast"),
-   brightness: getPref("video.brightness")
+   processing: getStreamPref("video.processing"),
+   sharpness: getStreamPref("video.processing.sharpness"),
+   saturation: getStreamPref("video.saturation"),
+   contrast: getStreamPref("video.contrast"),
+   brightness: getStreamPref("video.brightness")
   };
-  STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref("video.player.type"), playerOptions), BxEventBus.Stream.emit("state.playing", {
+  STATES.currentStream.streamPlayer = new StreamPlayer(this, getStreamPref("video.player.type"), playerOptions), BxEventBus.Stream.emit("state.playing", {
    $video: this
   });
  }, nativePlay = HTMLMediaElement.prototype.play;
@@ -9053,7 +9412,7 @@ function patchVideoApi() {
  };
 }
 function patchRtcCodecs() {
- if (getPref("stream.video.codecProfile") === "default") return;
+ if (getGlobalPref("stream.video.codecProfile") === "default") return;
  if (typeof RTCRtpTransceiver === "undefined" || !("setCodecPreferences" in RTCRtpTransceiver.prototype)) return !1;
 }
 function patchRtcPeerConnection() {
@@ -9062,7 +9421,7 @@ function patchRtcPeerConnection() {
   let dataChannel = nativeCreateDataChannel.apply(this, arguments);
   return BxEventBus.Stream.emit("dataChannelCreated", { dataChannel }), dataChannel;
  };
- let maxVideoBitrateDef = getPrefDefinition("stream.video.maxBitrate"), maxVideoBitrate = getPref("stream.video.maxBitrate"), codec = getPref("stream.video.codecProfile");
+ let maxVideoBitrateDef = getGlobalPrefDefinition("stream.video.maxBitrate"), maxVideoBitrate = getGlobalPref("stream.video.maxBitrate"), codec = getGlobalPref("stream.video.codecProfile");
  if (codec !== "default" || maxVideoBitrate < maxVideoBitrateDef.max) {
   let nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
@@ -9090,7 +9449,7 @@ function patchAudioContext() {
   let ctx = new OrgAudioContext(options);
   return BxLogger.info("patchAudioContext", ctx, options), ctx.createGain = function() {
    let gainNode = nativeCreateGain.apply(this);
-   return gainNode.gain.value = getPref("audio.volume") / 100, STATES.currentStream.audioGainNode = gainNode, gainNode;
+   return gainNode.gain.value = getStreamPref("audio.volume") / 100, STATES.currentStream.audioGainNode = gainNode, gainNode;
   }, STATES.currentStream.audioContext = ctx, ctx;
  };
 }
@@ -9315,7 +9674,7 @@ class RendererAction extends BaseGameBarAction {
 class GameBar {
  static instance;
  static getInstance() {
-  if (typeof GameBar.instance === "undefined") if (getPref("gameBar.position") !== "off") GameBar.instance = new GameBar;
+  if (typeof GameBar.instance === "undefined") if (getGlobalPref("gameBar.position") !== "off") GameBar.instance = new GameBar;
    else GameBar.instance = null;
   return GameBar.instance;
  }
@@ -9327,10 +9686,10 @@ class GameBar {
  actions = [];
  constructor() {
   BxLogger.info(this.LOG_TAG, "constructor()");
-  let $container, position = getPref("gameBar.position"), $gameBar = CE("div", { id: "bx-game-bar", class: "bx-gone", "data-position": position }, $container = CE("div", { class: "bx-game-bar-container bx-offscreen" }), createSvgIcon(position === "bottom-left" ? BxIcon.CARET_RIGHT : BxIcon.CARET_LEFT));
+  let $container, position = getGlobalPref("gameBar.position"), $gameBar = CE("div", { id: "bx-game-bar", class: "bx-gone", "data-position": position }, $container = CE("div", { class: "bx-game-bar-container bx-offscreen" }), createSvgIcon(position === "bottom-left" ? BxIcon.CARET_RIGHT : BxIcon.CARET_LEFT));
   if (this.actions = [
    new ScreenshotAction,
-   ...STATES.userAgent.capabilities.touch && getPref("touchController.mode") !== "off" ? [new TouchControlAction] : [],
+   ...STATES.userAgent.capabilities.touch && getGlobalPref("touchController.mode") !== "off" ? [new TouchControlAction] : [],
    new SpeakerAction,
    new RendererAction,
    new MicrophoneAction,
@@ -9621,17 +9980,6 @@ class StreamUiHandler {
   observer.observe($screen, { subtree: !0, childList: !0 }), StreamUiHandler.observer = observer;
  }
 }
-class XboxApi {
- static CACHED_TITLES = {};
- static async getProductTitle(xboxTitleId) {
-  if (xboxTitleId = xboxTitleId.toString(), XboxApi.CACHED_TITLES[xboxTitleId]) return XboxApi.CACHED_TITLES[xboxTitleId];
-  try {
-   let url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en&value=${xboxTitleId}&alternateId=XboxTitleId&fieldsTemplate=browse`, productTitle = (await (await NATIVE_FETCH(url)).json()).Products[0].LocalizedProperties[0].ProductTitle;
-   return XboxApi.CACHED_TITLES[xboxTitleId] = productTitle, productTitle;
-  } catch (e) {}
-  return;
- }
-}
 class RootDialogObserver {
  static $btnShortcut = AppInterface && createButton({
   icon: BxIcon.CREATE_SHORTCUT,
@@ -9733,7 +10081,7 @@ class DeviceVibrationManager {
   this.boundOnMessage = this.onMessage.bind(this), BxEventBus.Stream.on("dataChannelCreated", (payload) => {
    let { dataChannel } = payload;
    if (dataChannel?.label === "input") this.reset(), this.dataChannel = dataChannel, this.setupDataChannel();
-  }), BxEventBus.Script.on("deviceVibration.updated", () => this.setupDataChannel());
+  }), BxEventBus.Stream.on("deviceVibration.updated", () => this.setupDataChannel());
  }
  setupDataChannel() {
   if (!this.dataChannel) return;
@@ -9776,6 +10124,7 @@ class DeviceVibrationManager {
   this.removeEventListeners(), this.dataChannel = null;
  }
 }
+SettingsManager.getInstance();
 if (window.location.pathname.includes("/auth/msa")) {
  let nativePushState = window.history.pushState;
  throw window.history.pushState = function(...args) {
@@ -9812,7 +10161,7 @@ document.addEventListener("readystatechange", (e) => {
  if (document.readyState !== "interactive") return;
  if (STATES.isSignedIn = !!window.xbcUser?.isSignedIn, STATES.isSignedIn) RemotePlayManager.getInstance()?.initialize();
  else window.setTimeout(HeaderSection.watchHeader, 2000);
- if (getPref("ui.hideSections").includes("friends") || getPref("block.features").includes("friends")) {
+ if (getGlobalPref("ui.hideSections").includes("friends") || getGlobalPref("block.features").includes("friends")) {
   let $parent = document.querySelector("div[class*=PlayWithFriendsSkeleton]")?.closest("div[class*=HomePage-module]");
   $parent && ($parent.style.display = "none");
  }
@@ -9833,7 +10182,7 @@ BxEventBus.Stream.on("state.loading", () => {
  if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
  else STATES.currentStream.titleSlug = "remote-play";
 });
-getPref("loadingScreen.gameArt.show") && BxEventBus.Script.on("titleInfo.ready", LoadingScreen.setup);
+getGlobalPref("loadingScreen.gameArt.show") && BxEventBus.Script.on("titleInfo.ready", LoadingScreen.setup);
 BxEventBus.Stream.on("state.starting", () => {
  LoadingScreen.hide();
  {
@@ -9848,7 +10197,7 @@ BxEventBus.Stream.on("state.playing", (payload) => {
   if (gameBar) gameBar.reset(), gameBar.enable(), gameBar.showBar();
   KeyboardShortcutHandler.getInstance().start();
   let $video = payload.$video;
-  ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), getPref("localCoOp.enabled") && BxExposed.toggleLocalCoOp(getPref("localCoOp.enabled"));
+  if (ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight), getStreamPref("localCoOp.enabled")) BxExposed.toggleLocalCoOp(!0), Toast.show(t("local-co-op"), t("enabled"));
  }
  updateVideoPlayer();
 });
@@ -9864,18 +10213,20 @@ BxEventBus.Stream.on("dataChannelCreated", (payload) => {
  dataChannel.addEventListener("message", async (msg) => {
   if (msg.origin === "better-xcloud" || typeof msg.data !== "string") return;
   if (!msg.data.includes("/titleinfo")) return;
-  let json = JSON.parse(JSON.parse(msg.data).content), xboxTitleId = parseInt(json.titleid, 16);
-  if (STATES.currentStream.xboxTitleId = xboxTitleId, STATES.remotePlay.isPlaying) {
-   if (STATES.currentStream.titleSlug = "remote-play", json.focused) {
-    let productTitle = await XboxApi.getProductTitle(xboxTitleId);
-    if (productTitle) STATES.currentStream.titleSlug = productTitleToSlug(productTitle);
-   }
-  }
+  let currentStream = STATES.currentStream, json = JSON.parse(JSON.parse(msg.data).content), currentId = currentStream.xboxTitleId ?? null, newId = parseInt(json.titleid, 16);
+  if (STATES.remotePlay.isPlaying) if (currentStream.titleSlug = "remote-play", json.focused) {
+    let productTitle = await XboxApi.getProductTitle(newId);
+    if (productTitle) currentStream.titleSlug = productTitleToSlug(productTitle);
+    else newId = -1;
+   } else newId = 0;
+  if (currentId !== newId) currentStream.xboxTitleId = newId, BxEventBus.Stream.emit("xboxTitleId.changed", {
+    id: newId
+   });
  });
 });
 function unload() {
  if (!STATES.isPlaying) return;
- KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayer?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable();
+ KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayer?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable(), BxEventBus.Stream.emit("xboxTitleId.changed", { id: -1 });
 }
 BxEventBus.Stream.on("state.stopped", unload);
 window.addEventListener("pagehide", (e) => {
@@ -9885,14 +10236,14 @@ window.addEventListener(BxEvent.CAPTURE_SCREENSHOT, (e) => {
  ScreenshotManager.getInstance().takeScreenshot();
 });
 function main() {
- if (GhPagesUtils.fetchLatestCommit(), getPref("nativeMkb.mode") !== "off") {
-  let customList = getPref("nativeMkb.forcedGames");
+ if (GhPagesUtils.fetchLatestCommit(), getGlobalPref("nativeMkb.mode") !== "off") {
+  let customList = getGlobalPref("nativeMkb.forcedGames");
   BX_FLAGS.ForceNativeMkbTitles.push(...customList);
  }
- if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), AppInterface && patchPointerLockApi(), getPref("audio.volume.booster.enabled") && patchAudioContext(), getPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
- if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getPref("xhome.enabled")) RemotePlayManager.detect();
- if (getPref("touchController.mode") === "all") TouchController.setup();
- if (AppInterface && (getPref("mkb.enabled") || getPref("nativeMkb.mode") === "on")) STATES.pointerServerPort = AppInterface.startPointerServer() || 9269, BxLogger.info("startPointerServer", "Port", STATES.pointerServerPort.toString());
- if (getPref("ui.gameCard.waitTime.show") && GameTile.setup(), EmulatedMkbHandler.setupEvents(), getPref("ui.controllerStatus.show")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));
+ if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), AppInterface && patchPointerLockApi(), getGlobalPref("audio.volume.booster.enabled") && patchAudioContext(), getGlobalPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
+ if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getGlobalPref("xhome.enabled")) RemotePlayManager.detect();
+ if (getGlobalPref("touchController.mode") === "all") TouchController.setup();
+ if (AppInterface && (getGlobalPref("mkb.enabled") || getGlobalPref("nativeMkb.mode") === "on")) STATES.pointerServerPort = AppInterface.startPointerServer() || 9269, BxLogger.info("startPointerServer", "Port", STATES.pointerServerPort.toString());
+ if (getGlobalPref("ui.gameCard.waitTime.show") && GameTile.setup(), EmulatedMkbHandler.setupEvents(), getGlobalPref("ui.controllerStatus.show")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));
 }
 main();
