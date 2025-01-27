@@ -5440,7 +5440,7 @@ class SettingsManager {
  getElement(pref, params) {
   if (!this.SETTINGS[pref]) this.SETTINGS[pref] = {};
   let $elm = this.SETTINGS[pref].$element;
-  if (!$elm) $elm = SettingElement.fromPref(pref, () => {}, params), this.SETTINGS[pref].$element = $elm;
+  if (!$elm) $elm = SettingElement.fromPref(pref, null, params), this.SETTINGS[pref].$element = $elm;
   return this.updateDataset($elm, pref), $elm;
  }
  updateDataset($elm, pref) {
