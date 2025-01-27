@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.3.0-beta
+// @version      6.3.0-beta-1
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -190,7 +190,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.3.0-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.3.0-beta-1", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -5437,10 +5437,10 @@ class SettingsManager {
   if (!this.SETTINGS[pref]) this.SETTINGS[pref] = {};
   this.updateDataset($elm, pref), this.SETTINGS[pref].$element = $elm;
  }
- getElement(pref) {
+ getElement(pref, params) {
   if (!this.SETTINGS[pref]) this.SETTINGS[pref] = {};
   let $elm = this.SETTINGS[pref].$element;
-  if (!$elm) $elm = SettingElement.fromPref(pref, () => {}), this.SETTINGS[pref].$element = $elm;
+  if (!$elm) $elm = SettingElement.fromPref(pref, () => {}, params), this.SETTINGS[pref].$element = $elm;
   return this.updateDataset($elm, pref), $elm;
  }
  updateDataset($elm, pref) {
@@ -7346,7 +7346,7 @@ class SettingsDialog extends NavigationDialog {
      let $inp = $control.nextElementSibling;
      $inp.value = userAgent2, $inp.readOnly = !isCustom, $inp.disabled = !isCustom, !e.target.disabled && this.onGlobalSettingChanged(e);
     });
-   else if ($control = this.settingsManager.getElement(pref), settingTab.group === "global") $control.addEventListener("input", this.onGlobalSettingChanged);
+   else if ($control = this.settingsManager.getElement(pref, setting.params), settingTab.group === "global") $control.addEventListener("input", this.onGlobalSettingChanged);
    if ($control instanceof HTMLSelectElement) $control = BxSelectElement.create($control);
   }
   let prefDefinition = null;
