@@ -5,8 +5,8 @@
     left: 50%;
     top: 24px;
     transform: translate(-50%, 0);
-    background: #000000;
-    border-radius: 16px;
+    background: #212121;
+    border-radius: 10px;
     color: white;
     z-index: var(--bx-toast-z-index);
     font-family: var(--bx-normal-font);
@@ -16,9 +16,10 @@
     opacity: 0;
     overflow: clip;
     transition: opacity 0.2s ease-in;
+    box-shadow: 0 0 6px #000;
 
     &.bx-show {
-        opacity: 0.85;
+        opacity: 0.95;
     }
 
     &.bx-hide {
@@ -39,8 +40,8 @@
     font-size: 14px;
     text-transform: uppercase;
     display: inline-block;
-    background: #515863;
+    background: #fff;
     padding: 12px 16px;
-    color: #fff;
+    color: #212121;
     white-space: pre;
 }
