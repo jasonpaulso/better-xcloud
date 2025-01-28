@@ -98,10 +98,8 @@
     tabsWidth = 48px;
 
     flex-direction: column;
-    padding: 10px;
     margin-left: tabsWidth;
     width: 450px;
-    max-width: calc(100vw - tabsWidth);
     background: #1a1b1e;
     color: #fff;
     font-weight: 400;
@@ -111,13 +109,6 @@
     box-shadow: 0px 0px 6px #000;
     overflow: overlay;
     z-index: 1;
-
-    > div[data-tab-group=mkb] {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
 
     .bx-top-buttons {
         display: flex;
@@ -284,7 +275,8 @@
     color: #828282;
 }
 
-.bx-settings-tab-contents {
+.bx-settings-tab-content {
+    padding: 10px;
     border-radius-size = 6px;
 
     > div {
@@ -305,6 +297,14 @@
         *:not(.bx-settings-row):has(+ .bx-settings-row) + .bx-settings-row:not(:has(+ .bx-settings-row)) {
             border: none;
             border-radius: border-radius-size;
+        }
+    }
+
+    &:not([data-game-id="-1"]) {
+        .bx-settings-row[data-override=true], .bx-settings-row:has(*[data-override=true]) {
+            border-left: 4px solid orange !important;
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
         }
     }
 }
@@ -531,5 +531,55 @@
 
     .bx-select {
         flex: 1;
+    }
+}
+
+.bx-stream-settings-selection {
+    margin-bottom: 8px;
+    position: sticky;
+    z-index: 1000;
+    top: 0;
+
+    > div {
+        display: flex;
+        gap: 8px;
+        background: #222222;
+        padding: 10px;
+        border-bottom: 4px solid #353638;
+        box-shadow: 0 0 6px #000;
+        position: relative;
+        z-index: 1;
+
+        .bx-select {
+            flex: 1;
+
+            label {
+                font-weight: bold;
+                font-size: 1.1rem;
+                line-height: initial;
+
+                span {
+                    line-height: initial;
+                }
+            }
+
+            .bx-select-indicators {
+                display: none;
+            }
+        }
+    }
+
+    p {
+        font-family: var(--bx-promptfont-font), var(--bx-normal-font);
+        margin: 0;
+        font-size: 13px;
+        background: #505050f2;
+        height: 25px;
+        line-height: 23px;
+        position: absolute;
+        bottom: -25px;
+        left: 0;
+        right: 0;
+        text-shadow: 0 1px #000;
     }
 }

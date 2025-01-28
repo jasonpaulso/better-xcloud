@@ -8,9 +8,9 @@ import { SettingsDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
 import { BxEventBus } from "@/utils/bx-event-bus";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { UiLayout } from "@/enums/pref-values";
-import { PrefKey } from "@/enums/pref-keys";
+import { GlobalPref } from "@/enums/pref-keys";
 
 export enum GuideMenuTab {
     HOME = 'home',
@@ -116,7 +116,7 @@ export class GuideMenu {
         });
 
         // Set TV tag
-        if (STATES.userAgent.isTv || getPref(PrefKey.UI_LAYOUT) === UiLayout.TV) {
+        if (STATES.userAgent.isTv || getGlobalPref(GlobalPref.UI_LAYOUT) === UiLayout.TV) {
             document.body.dataset.bxMediaType = 'tv';
         }
 

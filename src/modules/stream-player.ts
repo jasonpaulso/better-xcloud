@@ -4,18 +4,12 @@ import { CE } from "@/utils/html";
 import { WebGL2Player } from "./player/webgl2-player";
 import { ScreenshotManager } from "@/utils/screenshot-manager";
 import { STATES } from "@/utils/global";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref, StreamPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { BX_FLAGS } from "@/utils/bx-flags";
 import { StreamPlayerType, StreamVideoProcessing, VideoPosition } from "@/enums/pref-values";
+import { getStreamPref } from "@/utils/pref-utils";
 
-export type StreamPlayerOptions = Partial<{
-    processing: string,
-    sharpness: number,
-    saturation: number,
-    contrast: number,
-    brightness: number,
-}>;
 
 export class StreamPlayer {
     private $video: HTMLVideoElement;
@@ -98,7 +92,7 @@ export class StreamPlayer {
     }
 
     private resizePlayer() {
-        const PREF_RATIO = getPref(PrefKey.VIDEO_RATIO);
+        const PREF_RATIO = getStreamPref(StreamPref.VIDEO_RATIO);
         const $video = this.$video;
         const isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport;
 
@@ -142,7 +136,7 @@ export class StreamPlayer {
 
             // Set position
             const $parent = $video.parentElement!;
-            const position = getPref(PrefKey.VIDEO_POSITION);
+            const position = getStreamPref(StreamPref.VIDEO_POSITION);
             $parent.style.removeProperty('padding-top');
 
             $parent.dataset.position = position;
@@ -269,7 +263,7 @@ export class StreamPlayer {
             }
 
             // Apply video filters to screenshots
-            if (isFullVersion() && getPref(PrefKey.SCREENSHOT_APPLY_FILTERS)) {
+            if (isFullVersion() && getGlobalPref(GlobalPref.SCREENSHOT_APPLY_FILTERS)) {
                 ScreenshotManager.getInstance().updateCanvasFilters(filters);
             }
 

@@ -1,8 +1,8 @@
 import { ButtonStyle, CE, createButton } from "@/utils/html";
 import { NavigationDialog, type NavigationElement } from "./navigation-dialog";
-import { PrefKey } from "@/enums/pref-keys";
+import { GlobalPref } from "@/enums/pref-keys";
 import { BxIcon } from "@/utils/bx-icon";
-import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
+import { getGlobalPref, setGlobalPref } from "@/utils/pref-utils";
 import { t } from "@/utils/translation";
 import { RemotePlayConsoleState, RemotePlayManager } from "@/modules/remote-play-manager";
 import { BxSelectElement } from "@/web-components/bx-select";
@@ -40,7 +40,7 @@ export class RemotePlayDialog extends NavigationDialog {
 
         const $settingNote = CE('p', {});
 
-        const currentResolution = getPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION);
+        const currentResolution = getGlobalPref(GlobalPref.REMOTE_PLAY_STREAM_RESOLUTION);
         let $resolutions : HTMLSelectElement | NavigationElement = CE('select', false,
             CE('option', { value: StreamResolution.DIM_720P }, '720p'),
             CE('option', { value: StreamResolution.DIM_1080P }, '1080p'),
@@ -52,7 +52,7 @@ export class RemotePlayDialog extends NavigationDialog {
             const value = (e.target as HTMLSelectElement).value;
 
             $settingNote.textContent = value === '1080p' ? '✅ ' + t('can-stream-xbox-360-games') : '❌ ' + t('cant-stream-xbox-360-games');
-            setPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION, value);
+            setGlobalPref(GlobalPref.REMOTE_PLAY_STREAM_RESOLUTION, value, 'ui');
         });
 
         ($resolutions as any).value = currentResolution;

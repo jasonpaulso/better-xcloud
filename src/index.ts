@@ -32,8 +32,7 @@ import { HeaderSection } from "./modules/ui/header";
 import { GameTile } from "./modules/ui/game-tile";
 import { ProductDetailsPage } from "./modules/ui/product-details";
 import { NavigationDialogManager } from "./modules/ui/dialog/navigation-dialog";
-import { PrefKey } from "./enums/pref-keys";
-import { getPref } from "./utils/settings-storages/global-settings-storage";
+import { GlobalPref, StreamPref } from "./enums/pref-keys";
 import { SettingsDialog } from "./modules/ui/dialog/settings-dialog";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
@@ -45,6 +44,11 @@ import { KeyboardShortcutHandler } from "./modules/mkb/keyboard-shortcut-handler
 import { GhPagesUtils } from "./utils/gh-pages";
 import { DeviceVibrationManager } from "./modules/device-vibration-manager";
 import { BxEventBus } from "./utils/bx-event-bus";
+import { getGlobalPref, getStreamPref } from "./utils/pref-utils";
+import { SettingsManager } from "./modules/settings-manager";
+import { Toast } from "./utils/toast";
+
+SettingsManager.getInstance();
 
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
@@ -173,7 +177,7 @@ document.addEventListener('readystatechange', e => {
     }
 
     // Hide "Play with Friends" skeleton section
-    if (getPref(PrefKey.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) || getPref(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
+    if (getGlobalPref(GlobalPref.UI_HIDE_SECTIONS).includes(UiSection.FRIENDS) || getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
         const $parent = document.querySelector('div[class*=PlayWithFriendsSkeleton]')?.closest<HTMLElement>('div[class*=HomePage-module]');
         $parent && ($parent.style.display = 'none');
     }
@@ -219,7 +223,7 @@ BxEventBus.Stream.on('state.loading', () => {
 });
 
 // Setup loading screen
-getPref(PrefKey.LOADING_SCREEN_GAME_ART) && BxEventBus.Script.on('titleInfo.ready', LoadingScreen.setup);
+getGlobalPref(GlobalPref.LOADING_SCREEN_GAME_ART) && BxEventBus.Script.on('titleInfo.ready', LoadingScreen.setup);
 
 BxEventBus.Stream.on('state.starting', () => {
     // Hide loading screen
@@ -260,7 +264,10 @@ BxEventBus.Stream.on('state.playing', payload => {
         ScreenshotManager.getInstance().updateCanvasSize($video.videoWidth, $video.videoHeight);
 
         // Setup local co-op
-        getPref(PrefKey.LOCAL_CO_OP_ENABLED) && BxExposed.toggleLocalCoOp(getPref(PrefKey.LOCAL_CO_OP_ENABLED));
+        if (getStreamPref(StreamPref.LOCAL_CO_OP_ENABLED)) {
+            BxExposed.toggleLocalCoOp(true);
+            Toast.show(t('local-co-op'), t('enabled'));
+        }
     }
 
 
@@ -295,19 +302,31 @@ BxEventBus.Stream.on('dataChannelCreated', payload => {
         }
 
         // Get xboxTitleId from message
+        const currentStream = STATES.currentStream;
         const json = JSON.parse(JSON.parse(msg.data).content);
-        const xboxTitleId = parseInt(json.titleid, 16);
-        STATES.currentStream.xboxTitleId = xboxTitleId;
+        const currentId = currentStream.xboxTitleId ?? null;
+        let newId: number = parseInt(json.titleid, 16);
 
         // Get titleSlug for Remote Play
         if (STATES.remotePlay.isPlaying) {
-            STATES.currentStream.titleSlug = 'remote-play';
+            currentStream.titleSlug = 'remote-play';
             if (json.focused) {
-                const productTitle = await XboxApi.getProductTitle(xboxTitleId);
+                const productTitle = await XboxApi.getProductTitle(newId);
                 if (productTitle) {
-                    STATES.currentStream.titleSlug = productTitleToSlug(productTitle);
+                    currentStream.titleSlug = productTitleToSlug(productTitle);
+                } else {
+                    newId = -1;
                 }
+            } else {
+                newId = 0;
             }
+        }
+
+        if (currentId !== newId) {
+            currentStream.xboxTitleId = newId;
+            BxEventBus.Stream.emit('xboxTitleId.changed', {
+                id: newId,
+            });
         }
     });
 });
@@ -345,6 +364,8 @@ function unload() {
         TouchController.reset();
 
         GameBar.getInstance()?.disable();
+
+        BxEventBus.Stream.emit('xboxTitleId.changed', { id: -1 });
     }
 }
 
@@ -362,8 +383,8 @@ function main() {
     GhPagesUtils.fetchLatestCommit();
 
     if (isFullVersion()) {
-        if (getPref(PrefKey.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
-            const customList = getPref(PrefKey.NATIVE_MKB_FORCED_GAMES);
+        if (getGlobalPref(GlobalPref.NATIVE_MKB_MODE) !== NativeMkbMode.OFF) {
+            const customList = getGlobalPref(GlobalPref.NATIVE_MKB_FORCED_GAMES);
             BX_FLAGS.ForceNativeMkbTitles.push(...customList);
         }
     }
@@ -378,9 +399,9 @@ function main() {
     patchCanvasContext();
     isFullVersion() && AppInterface && patchPointerLockApi();
 
-    getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && patchAudioContext();
+    getGlobalPref(GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED) && patchAudioContext();
 
-    if (getPref(PrefKey.BLOCK_TRACKING)) {
+    if (getGlobalPref(GlobalPref.BLOCK_TRACKING)) {
         patchMeControl();
         disableAdobeAudienceManager();
     }
@@ -407,28 +428,28 @@ function main() {
         disablePwa();
 
         // Preload Remote Play
-        if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
+        if (getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED)) {
             RemotePlayManager.detect();
         }
 
-        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
+        if (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
             TouchController.setup();
         }
 
         // Start PointerProviderServer
-        if (AppInterface && (getPref(PrefKey.MKB_ENABLED) || getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) {
+        if (AppInterface && (getGlobalPref(GlobalPref.MKB_ENABLED) || getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON)) {
             STATES.pointerServerPort = AppInterface.startPointerServer() || 9269;
             BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString());
         }
 
         // Show wait time in game card
-        getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup();
+        getGlobalPref(GlobalPref.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup();
 
         EmulatedMkbHandler.setupEvents();
     }
 
     // Show a toast when connecting/disconecting controller
-    if (getPref(PrefKey.UI_CONTROLLER_SHOW_STATUS)) {
+    if (getGlobalPref(GlobalPref.UI_CONTROLLER_SHOW_STATUS)) {
         window.addEventListener('gamepadconnected', e => showGamepadToast(e.gamepad));
         window.addEventListener('gamepaddisconnected', e => showGamepadToast(e.gamepad));
     }

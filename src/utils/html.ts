@@ -4,6 +4,7 @@ import type { NavigationNearbyElements } from "@/modules/ui/dialog/navigation-di
 import type { PresetRecord, AllPresets } from "@/types/presets";
 import { t } from "./translation";
 import type { BxSelectElement } from "@/web-components/bx-select";
+import type { AnyPref } from "@/enums/pref-keys";
 
 export enum ButtonStyle {
     PRIMARY = 1,
@@ -57,6 +58,8 @@ export type SettingsRowOptions = Partial<{
     icon: BxIconRaw,
     multiLines: boolean;
     $note: HTMLElement;
+    onContextMenu: (e?: Event) => {};
+    pref: AnyPref,
 }>;
 
 // Quickly create a tree of elements without having to use innerHTML
@@ -206,10 +209,12 @@ export function createButton<T=HTMLButtonElement>(options: BxButtonOptions): T {
     return $btn as T;
 }
 
-export function createSettingRow(label: string, $control: HTMLElement | false | undefined, options: SettingsRowOptions={}) {
+export function createSettingRow(label: string, $control: HTMLElement | false | null | undefined, options: SettingsRowOptions={}) {
     let $label: HTMLElement;
 
-    const $row = CE('label', { class: 'bx-settings-row' },
+    const $row = CE('label', {
+            class: 'bx-settings-row',
+        },
         $label = CE('span', { class: 'bx-settings-label' },
             options.icon && createSvgIcon(options.icon),
             label,
@@ -217,6 +222,14 @@ export function createSettingRow(label: string, $control: HTMLElement | false | 
         ),
         $control,
     );
+
+    if (options.pref) {
+        ($row as any).prefKey = options.pref;
+    }
+
+    if (options.onContextMenu) {
+        $row.addEventListener('contextmenu', options.onContextMenu);
+    }
 
     // Make link inside <label> focusable
     const $link = $label.querySelector('a');

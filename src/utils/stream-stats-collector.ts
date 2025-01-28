@@ -1,12 +1,11 @@
-import { PrefKey } from "@/enums/pref-keys";
+import { StreamPref } from "@/enums/pref-keys";
 import { STATES } from "./global";
 import { humanFileSize, secondsToHm } from "./html";
-import { getPref } from "./settings-storages/global-settings-storage";
 import { BxLogger } from "./bx-logger";
 import { StreamStat } from "@/enums/pref-values";
 import { BxEventBus } from "./bx-event-bus";
+import { getStreamPref } from "@/utils/pref-utils";
 
-export type StreamStatGrade = '' | 'bad' | 'ok' | 'good';
 
 type CurrentStats = {
     [StreamStat.PING]: {
@@ -111,7 +110,7 @@ export class StreamStatsCollector {
         [StreamStat.FPS]: {
             current: 0,
             toString() {
-                const maxFps = getPref(PrefKey.VIDEO_MAX_FPS);
+                const maxFps = getStreamPref(StreamPref.VIDEO_MAX_FPS);
                 return maxFps < 60 ? `${maxFps}/${this.current}`.padStart(5) : this.current.toString();
             },
         },

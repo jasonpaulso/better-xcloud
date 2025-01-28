@@ -1,1 +1,0 @@
-type StreamPreferredLocale = 'default' | string;

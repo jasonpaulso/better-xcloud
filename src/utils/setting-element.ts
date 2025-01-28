@@ -1,10 +1,10 @@
-import type { PreferenceSetting } from "@/types/preferences";
 import { CE, escapeCssSelector } from "@utils/html";
-import type { PrefKey } from "@/enums/pref-keys";
-import type { BaseSettingsStore } from "./settings-storages/base-settings-storage";
+import type { AnyPref } from "@/enums/pref-keys";
 import { type BaseSettingDefinition, type MultipleOptionsParams, type NumberStepperParams } from "@/types/setting-definition";
 import { BxEvent } from "./bx-event";
 import { BxNumberStepper } from "@/web-components/bx-number-stepper";
+import { getPrefInfo, isGlobalPref, setGlobalPref, setGamePref } from "./pref-utils";
+import { SettingsManager } from "@/modules/settings-manager";
 
 export enum SettingElementType {
     OPTIONS = 'options',
@@ -107,6 +107,20 @@ export class SettingElement {
             !(e as any).ignoreOnChange && onChange(e, values);
         });
 
+        Object.defineProperty($control, 'value', {
+            get() {
+                return Array.from($control.options)
+                    .filter(option => option.selected)
+                    .map(option => option.value);
+            },
+            set(value) {
+                const values = value.split(',');
+                Array.from($control.options).forEach(option => {
+                    option.selected = values.includes(option.value);
+                });
+            },
+        });
+
         return $control;
     }
 
@@ -154,10 +168,14 @@ export class SettingElement {
         return $control;
     }
 
-    static fromPref(key: PrefKey, storage: BaseSettingsStore, onChange: any, overrideParams={}) {
-        const definition = storage.getDefinition(key);
+    static fromPref(key: AnyPref, onChange?: ((e: Event, value: any) => void) | null | undefined, overrideParams={}) {
+        const { definition, storage } = getPrefInfo(key);
+        if (!definition) {
+            return null;
+        }
+
         // @ts-ignore
-        let currentValue = storage.getSetting(key);
+        let currentValue = storage.getSetting(key) as any;
 
         let type;
         if ('options' in definition) {
@@ -179,8 +197,14 @@ export class SettingElement {
             currentValue = definition.default;
         }
 
-        const $control = SettingElement.render(type!, key as string, definition, currentValue, (e: any, value: any) => {
-            storage.setSetting(key, value);
+        const $control = SettingElement.render(type!, key as string, definition, currentValue, (e: Event, value: any) => {
+            if (isGlobalPref(key)) {
+                setGlobalPref(key, value, 'ui');
+            } else {
+                const id = SettingsManager.getInstance().getTargetGameId();
+                setGamePref(id, key, value, 'ui');
+            }
+
             onChange && onChange(e, value);
         }, params);
 

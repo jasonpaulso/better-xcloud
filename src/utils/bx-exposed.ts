@@ -5,14 +5,14 @@ import { deepClone, STATES } from "@utils/global";
 import { BxLogger } from "./bx-logger";
 import { BX_FLAGS } from "./bx-flags";
 import { NavigationDialogManager } from "@/modules/ui/dialog/navigation-dialog";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { TouchController } from "@/modules/touch-controller";
 import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
 import { Patcher, type PatchPage } from "@/modules/patcher/patcher";
 import { BxEventBus } from "./bx-event-bus";
 import { FeatureGates } from "./feature-gates";
+import { getGlobalPref } from "./pref-utils";
 import { LocalCoOpManager } from "./local-co-op-manager";
 
 export enum SupportedInputType {
@@ -107,17 +107,17 @@ export const BxExposed = {
         }
 
         // Remove native MKB support on mobile browsers or by user's choice
-        if (getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
+        if (getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
             supportedInputTypes = supportedInputTypes.filter(i => i !== SupportedInputType.MKB);
         }
 
         titleInfo.details.hasMkbSupport = supportedInputTypes.includes(SupportedInputType.MKB);
 
         if (STATES.userAgent.capabilities.touch) {
-            let touchControllerAvailability = getPref(PrefKey.TOUCH_CONTROLLER_MODE);
+            let touchControllerAvailability = getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE);
 
             // Disable touch control when gamepad found
-            if (touchControllerAvailability !== TouchControllerMode.OFF && getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) {
+            if (touchControllerAvailability !== TouchControllerMode.OFF && getGlobalPref(GlobalPref.TOUCH_CONTROLLER_AUTO_OFF)) {
                 const gamepads = window.navigator.getGamepads();
                 let gamepadFound = false;
 

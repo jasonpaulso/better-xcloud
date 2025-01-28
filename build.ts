@@ -21,6 +21,7 @@ enum BuildTarget {
 type BuildVariant = 'full' | 'lite';
 
 const MINIFY_SYNTAX = true;
+const INDENT_SPACES = false;
 
 function minifySvgImports(str: string): string {
     // Minify SVG imports
@@ -128,8 +129,12 @@ function postProcess(str: string): string {
         str = minifyIfElse(str);
 
         str = str.replaceAll(/\n(\s+)/g, (match, p1) => {
-            const len = p1.length / 2;
-            return '\n' + ' '.repeat(len);
+            if (INDENT_SPACES) {
+                const len = p1.length / 2;
+                return '\n' + ' '.repeat(len);
+            } else {
+                return '\n';
+            }
         });
     }
 

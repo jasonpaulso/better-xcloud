@@ -1,16 +1,16 @@
-import { PrefKey } from "@/enums/pref-keys";
+import { GlobalPref, StreamPref, type AnyPref } from "@/enums/pref-keys";
 import { BxEvent } from "@/utils/bx-event";
-import { BX_FLAGS, NATIVE_FETCH, type BxFlags } from "@/utils/bx-flags";
-import { STORAGE } from "@/utils/global";
+import { BX_FLAGS, NATIVE_FETCH } from "@/utils/bx-flags";
 import { CE, removeChildElements, createButton, ButtonStyle, escapeCssSelector } from "@/utils/html";
 import type { BxHtmlSettingElement } from "@/utils/setting-element";
-import { getPref, setPref, getPrefDefinition } from "@/utils/settings-storages/global-settings-storage";
 import { t } from "@/utils/translation";
 import { BxSelectElement } from "@/web-components/bx-select";
 import type { SettingsDialog } from "../settings-dialog";
 import type { RecommendedSettings, SuggestedSettingProfile } from "@/types/setting-definition";
 import { DeviceVibrationMode, TouchControllerMode } from "@/enums/pref-values";
 import { GhPagesUtils } from "@/utils/gh-pages";
+import { STORAGE, getPrefInfo, setPref } from "@/utils/pref-utils";
+import { SettingsManager } from "@/modules/settings-manager";
 
 export class SuggestionsSetting {
     static async renderSuggestions(this: SettingsDialog, e: Event) {
@@ -38,16 +38,16 @@ export class SuggestionsSetting {
                 }
 
                 for (const setting of settingTabContent.items) {
-                    let prefKey: PrefKey | undefined;
+                    let prefKey: AnyPref | undefined;
 
                     if (typeof setting === 'string') {
                         prefKey = setting;
                     } else if (typeof setting === 'object') {
-                        prefKey = setting.pref as PrefKey;
+                        prefKey = setting.pref as GlobalPref;
                     }
 
                     if (prefKey) {
-                        this.suggestedSettingLabels[prefKey] = settingTabContent.label;
+                        this.settingLabels[prefKey] = settingTabContent.label;
                     }
                 }
             }
@@ -76,15 +76,15 @@ export class SuggestionsSetting {
         const deviceType = BX_FLAGS.DeviceInfo.deviceType;
         if (deviceType === 'android-handheld') {
             // Disable touch
-            SuggestionsSetting.addDefaultSuggestedSetting.call(this, PrefKey.TOUCH_CONTROLLER_MODE, TouchControllerMode.OFF);
+            SuggestionsSetting.addDefaultSuggestedSetting.call(this, GlobalPref.TOUCH_CONTROLLER_MODE, TouchControllerMode.OFF);
             // Enable device vibration
-            SuggestionsSetting.addDefaultSuggestedSetting.call(this, PrefKey.DEVICE_VIBRATION_MODE, DeviceVibrationMode.ON);
+            SuggestionsSetting.addDefaultSuggestedSetting.call(this, StreamPref.DEVICE_VIBRATION_MODE, DeviceVibrationMode.ON);
         } else if (deviceType === 'android') {
             // Enable device vibration
-            SuggestionsSetting.addDefaultSuggestedSetting.call(this, PrefKey.DEVICE_VIBRATION_MODE, DeviceVibrationMode.AUTO);
+            SuggestionsSetting.addDefaultSuggestedSetting.call(this, StreamPref.DEVICE_VIBRATION_MODE, DeviceVibrationMode.AUTO);
         } else if (deviceType === 'android-tv') {
             // Disable touch
-            SuggestionsSetting.addDefaultSuggestedSetting.call(this, PrefKey.TOUCH_CONTROLLER_MODE, TouchControllerMode.OFF);
+            SuggestionsSetting.addDefaultSuggestedSetting.call(this, GlobalPref.TOUCH_CONTROLLER_MODE, TouchControllerMode.OFF);
         }
 
         // Set value for Default profile
@@ -116,10 +116,17 @@ export class SuggestionsSetting {
             note && fragment.appendChild(CE('div', { class: 'bx-suggest-note' }, note));
 
             const settings = this.suggestedSettings[profile];
-            let prefKey: PrefKey;
-            for (prefKey in settings) {
+            for (const key in settings) {
+                const { storage, definition } = getPrefInfo(key as AnyPref);
+
+                let prefKey;
+                if (storage === STORAGE.Stream) {
+                    prefKey = key as StreamPref;
+                } else {
+                    prefKey = key as GlobalPref;
+                }
+
                 let suggestedValue;
-                const definition = getPrefDefinition(prefKey);
                 if (definition && definition.transformValue) {
                     suggestedValue = definition.transformValue.get.call(definition, settings[prefKey]);
                 } else {
@@ -127,8 +134,9 @@ export class SuggestionsSetting {
                 }
 
                 // @ts-ignore
-                const currentValue = getPref(prefKey, false);
-                const currentValueText = STORAGE.Global.getValueText(prefKey, currentValue);
+                const currentValue = storage.getSetting(prefKey, false);
+                // @ts-ignore
+                const currentValueText = storage.getValueText(prefKey, currentValue);
                 const isSameValue = currentValue === suggestedValue;
 
                 let $child: HTMLElement;
@@ -137,12 +145,14 @@ export class SuggestionsSetting {
                     // No changes
                     $value = currentValueText;
                 } else {
-                    const suggestedValueText = STORAGE.Global.getValueText(prefKey, suggestedValue);
+                    // @ts-ignore
+                    const suggestedValueText = storage.getValueText(prefKey, suggestedValue);
                     $value = currentValueText + ' ➔ ' + suggestedValueText;
                 }
 
                 let $checkbox: HTMLInputElement;
-                const breadcrumb = this.suggestedSettingLabels[prefKey] + ' ❯ ' + STORAGE.Global.getLabel(prefKey);
+                // @ts-ignore
+                const breadcrumb = this.settingLabels[prefKey] + ' ❯ ' + storage.getLabel(prefKey);
                 const id = escapeCssSelector(`bx_suggest_${prefKey}`);
 
                 $child = CE('div', {
@@ -183,7 +193,8 @@ export class SuggestionsSetting {
             const profile = $select.value as SuggestedSettingProfile;
             const settings = this.suggestedSettings[profile];
 
-            let prefKey: PrefKey;
+            let prefKey: AnyPref;
+            const settingsManager = SettingsManager.getInstance();
             for (prefKey in settings) {
                 let suggestedValue = settings[prefKey];
 
@@ -192,17 +203,17 @@ export class SuggestionsSetting {
                     continue;
                 }
 
-                const $control = this.settingElements[prefKey] as HTMLElement;
+                const $control = settingsManager.getElement(prefKey);
 
                 // Set value directly if the control element is not available
                 if (!$control) {
-                    setPref(prefKey, suggestedValue);
+                    setPref(prefKey, suggestedValue, 'direct');
                     continue;
                 }
 
                 // Transform value
-                const settingDefinition = getPrefDefinition(prefKey);
-                if (settingDefinition.transformValue) {
+                const { definition: settingDefinition } = getPrefInfo(prefKey);
+                if (settingDefinition?.transformValue) {
                     suggestedValue = settingDefinition.transformValue.get.call(settingDefinition, suggestedValue);
                 }
 
@@ -274,7 +285,7 @@ export class SuggestionsSetting {
             const url = GhPagesUtils.getUrl(`devices/${brand}/${board}-${model}.json`);
             const response = await NATIVE_FETCH(url);
             const json = (await response.json()) as RecommendedSettings;
-            const recommended: PartialRecord<PrefKey, any> = {};
+            const recommended: PartialRecord<GlobalPref, any> = {};
 
             // Only supports schema version 2
             if (json.schema_version !== 2) {
@@ -311,7 +322,7 @@ export class SuggestionsSetting {
         return null;
     }
 
-    private static addDefaultSuggestedSetting(this: SettingsDialog, prefKey: PrefKey, value: any) {
+    private static addDefaultSuggestedSetting(this: SettingsDialog, prefKey: AnyPref, value: any) {
         let key: keyof typeof this.suggestedSettings;
         for (key in this.suggestedSettings) {
             if (key !== 'default' && !(prefKey in this.suggestedSettings)) {
@@ -327,10 +338,10 @@ export class SuggestionsSetting {
                 continue;
             }
 
-            let prefKey: PrefKey;
+            let prefKey: AnyPref;
             for (prefKey in this.suggestedSettings[key]) {
                 if (!(prefKey in this.suggestedSettings.default)) {
-                    this.suggestedSettings.default[prefKey] = getPrefDefinition(prefKey).default;
+                    this.suggestedSettings.default[prefKey] = getPrefInfo(prefKey).definition.default;
                 }
             }
         }

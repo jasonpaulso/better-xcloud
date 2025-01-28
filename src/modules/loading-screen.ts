@@ -2,8 +2,8 @@ import { CE } from "@utils/html";
 import { getPreferredServerRegion } from "@utils/region";
 import { t } from "@utils/translation";
 import { STATES } from "@utils/global";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { compressCss } from "@macros/build" with { type: "macro" };
 import { LoadingScreenRocket } from "@/enums/pref-values";
 
@@ -37,7 +37,7 @@ export class LoadingScreen {
 
         LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl);
 
-        if (getPref(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE) {
+        if (getGlobalPref(GlobalPref.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE) {
             LoadingScreen.hideRocket();
         }
     }
@@ -63,7 +63,7 @@ export class LoadingScreen {
         // Limit max width to reduce image size
         imageUrl = imageUrl + '?w=1920';
 
-        const imageQuality = getPref(PrefKey.UI_IMAGE_QUALITY);
+        const imageQuality = getGlobalPref(GlobalPref.UI_IMAGE_QUALITY);
         if (imageQuality !== 90) {
             imageUrl += '&q=' + imageQuality;
         }
@@ -94,7 +94,7 @@ export class LoadingScreen {
 
     static setupWaitTime(waitTime: number) {
         // Hide rocket when queing
-        if (getPref(PrefKey.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE_QUEUE) {
+        if (getGlobalPref(GlobalPref.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE_QUEUE) {
             LoadingScreen.hideRocket();
         }
 
@@ -151,7 +151,7 @@ export class LoadingScreen {
         LoadingScreen.orgWebTitle && (document.title = LoadingScreen.orgWebTitle);
         LoadingScreen.$waitTimeBox && LoadingScreen.$waitTimeBox.classList.add('bx-gone');
 
-        if (getPref(PrefKey.LOADING_SCREEN_GAME_ART) && LoadingScreen.$bgStyle) {
+        if (getGlobalPref(GlobalPref.LOADING_SCREEN_GAME_ART) && LoadingScreen.$bgStyle) {
             const $rocketBg = document.querySelector('#game-stream rect[width="800"]');
             $rocketBg && $rocketBg.addEventListener('transitionend', e => {
                 LoadingScreen.$bgStyle.textContent += compressCss(`

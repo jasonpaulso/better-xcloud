@@ -9,6 +9,7 @@ import iconCursorText from "@assets/svg/cursor-text.svg" with { type: "text" };
 import iconDisplay from "@assets/svg/display.svg" with { type: "text" };
 import iconEye from "@assets/svg/eye.svg" with { type: "text" };
 import iconEyeSlash from "@assets/svg/eye-slash.svg" with { type: "text" };
+// import iconGlobalRestore from "@assets/svg/global-restore.svg" with { type: "text" };
 import iconHome from "@assets/svg/home.svg" with { type: "text" };
 import iconLocalCoOp from "@assets/svg/local-co-op.svg" with { type: "text" };
 import iconNativeMkb from "@assets/svg/native-mkb.svg" with { type: "text" };
@@ -52,6 +53,7 @@ export const BxIcon = {
     DISPLAY: iconDisplay,
     EYE: iconEye,
     EYE_SLASH: iconEyeSlash,
+    // GLOBAL_RESTORE: iconGlobalRestore,
     HOME: iconHome,
     LOCAL_CO_OP: iconLocalCoOp,
     NATIVE_MKB: iconNativeMkb,

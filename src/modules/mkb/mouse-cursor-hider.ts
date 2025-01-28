@@ -1,11 +1,11 @@
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 
 export class MouseCursorHider {
     private static instance: MouseCursorHider | null | undefined;
     public static getInstance(): typeof MouseCursorHider['instance'] {
         if (typeof MouseCursorHider.instance === 'undefined') {
-            if (!getPref(PrefKey.MKB_ENABLED) && getPref(PrefKey.MKB_HIDE_IDLE_CURSOR)) {
+            if (!getGlobalPref(GlobalPref.MKB_ENABLED) && getGlobalPref(GlobalPref.MKB_HIDE_IDLE_CURSOR)) {
                 MouseCursorHider.instance = new MouseCursorHider();
             } else {
                 MouseCursorHider.instance = null;

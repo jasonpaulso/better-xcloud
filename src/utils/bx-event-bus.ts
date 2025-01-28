@@ -1,4 +1,4 @@
-import type { PrefKey, StorageKey } from "@/enums/pref-keys";
+import type { GlobalPref, StorageKey, StreamPref } from "@/enums/pref-keys";
 import { BX_FLAGS } from "./bx-flags";
 import { BxLogger } from "./bx-logger";
 import { AppInterface } from "./global";
@@ -11,19 +11,16 @@ type ScriptEvents = {
     'xcloud.server.ready': {};
     'xcloud.server.unavailable': {};
 
-    'dialog.shown': {},
-    'dialog.dismissed': {},
+    'dialog.shown': {};
+    'dialog.dismissed': {};
 
     'titleInfo.ready': {};
-    'setting.changed': {
-        storageKey: StorageKey;
-        settingKey: PrefKey;
-        settingValue: any;
-    };
 
-    'mkb.setting.updated': {};
-    'keyboardShortcuts.updated': {};
-    'deviceVibration.updated': {};
+    'setting.changed': {
+        storageKey: Omit<StorageKey, StorageKey.STREAM>;
+        settingKey: GlobalPref;
+        // settingValue: any;
+    };
 
     // GH pages
     'list.forcedNativeMkb.updated': {
@@ -33,7 +30,7 @@ type ScriptEvents = {
     };
 
     'list.localCoOp.updated': {
-        ids: Set<string>,
+        ids: Set<string>;
     };
 };
 
@@ -44,11 +41,27 @@ type StreamEvents = {
     'state.stopped': {};
     'state.error': {};
 
-    'gameBar.activated': {},
-    'speaker.state.changed': { state: SpeakerState },
-    'video.visibility.changed': { isVisible: boolean },
+    'xboxTitleId.changed': {
+        id: number;
+    };
+    'gameSettings.switched': {
+        id: number;
+    };
+    'setting.changed': {
+        storageKey: StorageKey.STREAM | `${StorageKey.STREAM}.${number}`;
+        settingKey: StreamPref;
+        // settingValue: any;
+    };
+
+    'mkb.setting.updated': {};
+    'keyboardShortcuts.updated': {};
+    'deviceVibration.updated': {};
+
+    'gameBar.activated': {};
+    'speaker.state.changed': { state: SpeakerState };
+    'video.visibility.changed': { isVisible: boolean };
     // Inside patch
-    'microphone.state.changed': { state: MicrophoneState },
+    'microphone.state.changed': { state: MicrophoneState };
 
     dataChannelCreated: { dataChannel: RTCDataChannel };
 };
@@ -136,7 +149,7 @@ export class BxEventBus<TEvents extends Record<string, any>> {
             }
         }
 
-        BX_FLAGS.Debug && BxLogger.warning('EventBus', 'emit', event, payload);
+        BX_FLAGS.Debug && BxLogger.warning('EventBus', 'emit', `${this.group}.${event as string}`, payload);
     }
 }
 

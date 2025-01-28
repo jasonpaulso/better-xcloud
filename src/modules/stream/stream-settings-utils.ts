@@ -1,23 +1,23 @@
 import { STATES } from "@utils/global";
 import { UserAgent } from "@utils/user-agent";
-import type { StreamPlayerOptions } from "../stream-player";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
+import { StreamPref } from "@/enums/pref-keys";
 import { StreamVideoProcessing, StreamPlayerType } from "@/enums/pref-values";
-import { escapeCssSelector } from "@/utils/html";
+import { getStreamPref, setStreamPref } from "@/utils/pref-utils";
+import { SettingsManager } from "../settings-manager";
 
 export function onChangeVideoPlayerType() {
-    const playerType = getPref(PrefKey.VIDEO_PLAYER_TYPE);
-    const $videoProcessing = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_PROCESSING)}`) as HTMLSelectElement;
-    const $videoSharpness = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_SHARPNESS)}`) as HTMLElement;
-    const $videoPowerPreference = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_POWER_PREFERENCE)}`) as HTMLElement;
-    const $videoMaxFps = document.getElementById(`bx_setting_${escapeCssSelector(PrefKey.VIDEO_MAX_FPS)}`) as HTMLElement;
-
-    if (!$videoProcessing) {
+    const playerType = getStreamPref(StreamPref.VIDEO_PLAYER_TYPE);
+    const settingsManager = SettingsManager.getInstance();
+    if (!settingsManager.hasElement(StreamPref.VIDEO_PROCESSING)) {
         return;
     }
 
     let isDisabled = false;
+
+    const $videoProcessing = settingsManager.getElement(StreamPref.VIDEO_PROCESSING) as HTMLSelectElement;
+    const $videoSharpness = settingsManager.getElement(StreamPref.VIDEO_SHARPNESS);
+    const $videoPowerPreference = settingsManager.getElement(StreamPref.VIDEO_POWER_PREFERENCE);
+    const $videoMaxFps = settingsManager.getElement(StreamPref.VIDEO_MAX_FPS);
 
     const $optCas = $videoProcessing.querySelector<HTMLOptionElement>(`option[value=${StreamVideoProcessing.CAS}]`);
 
@@ -26,7 +26,7 @@ export function onChangeVideoPlayerType() {
     } else {
         // Only allow USM when player type is Video
         $videoProcessing.value = StreamVideoProcessing.USM;
-        setPref(PrefKey.VIDEO_PROCESSING, StreamVideoProcessing.USM);
+        setStreamPref(StreamPref.VIDEO_PROCESSING, StreamVideoProcessing.USM, 'direct');
 
         $optCas && ($optCas.disabled = true);
 
@@ -41,8 +41,6 @@ export function onChangeVideoPlayerType() {
     // Hide Power Preference setting if renderer isn't WebGL2
     $videoPowerPreference.closest('.bx-settings-row')!.classList.toggle('bx-gone', playerType !== StreamPlayerType.WEBGL2);
     $videoMaxFps.closest('.bx-settings-row')!.classList.toggle('bx-gone', playerType !== StreamPlayerType.WEBGL2);
-
-    updateVideoPlayer();
 }
 
 
@@ -58,17 +56,17 @@ export function updateVideoPlayer() {
         return;
     }
 
-    limitVideoPlayerFps(getPref(PrefKey.VIDEO_MAX_FPS));
+    limitVideoPlayerFps(getStreamPref(StreamPref.VIDEO_MAX_FPS));
 
     const options = {
-        processing: getPref(PrefKey.VIDEO_PROCESSING),
-        sharpness: getPref(PrefKey.VIDEO_SHARPNESS),
-        saturation: getPref(PrefKey.VIDEO_SATURATION),
-        contrast: getPref(PrefKey.VIDEO_CONTRAST),
-        brightness: getPref(PrefKey.VIDEO_BRIGHTNESS),
+        processing: getStreamPref(StreamPref.VIDEO_PROCESSING),
+        sharpness: getStreamPref(StreamPref.VIDEO_SHARPNESS),
+        saturation: getStreamPref(StreamPref.VIDEO_SATURATION),
+        contrast: getStreamPref(StreamPref.VIDEO_CONTRAST),
+        brightness: getStreamPref(StreamPref.VIDEO_BRIGHTNESS),
     } satisfies StreamPlayerOptions;
 
-    streamPlayer.setPlayerType(getPref(PrefKey.VIDEO_PLAYER_TYPE));
+    streamPlayer.setPlayerType(getStreamPref(StreamPref.VIDEO_PLAYER_TYPE));
     streamPlayer.updateOptions(options);
     streamPlayer.refreshPlayer();
 }

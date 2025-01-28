@@ -1,11 +1,11 @@
-import { AppInterface, SCRIPT_VERSION } from "@utils/global";
+import { AppInterface, SCRIPT_VERSION, } from "@utils/global";
 import { UserAgent } from "@utils/user-agent";
 import { t, Translations } from "./translation";
 import { Toast } from "./toast";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref, setPref } from "./settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
 import { LocalDb } from "./local-db/local-db";
 import { BlockFeature } from "@/enums/pref-values";
+import { getGlobalPref, setGlobalPref } from "@/utils/pref-utils";
 
 /**
  * Check for update
@@ -18,8 +18,8 @@ export function checkForUpdate() {
 
     const CHECK_INTERVAL_SECONDS = 2 * 3600; // check every 2 hours
 
-    const currentVersion = getPref(PrefKey.VERSION_CURRENT);
-    const lastCheck = getPref(PrefKey.VERSION_LAST_CHECK);
+    const currentVersion = getGlobalPref(GlobalPref.VERSION_CURRENT);
+    const lastCheck = getGlobalPref(GlobalPref.VERSION_LAST_CHECK);
     const now = Math.round((+new Date) / 1000);
 
     if (currentVersion === SCRIPT_VERSION && now - lastCheck < CHECK_INTERVAL_SECONDS) {
@@ -27,13 +27,13 @@ export function checkForUpdate() {
     }
 
     // Start checking
-    setPref(PrefKey.VERSION_LAST_CHECK, now);
+    setGlobalPref(GlobalPref.VERSION_LAST_CHECK, now, 'direct');
     fetch('https://api.github.com/repos/redphx/better-xcloud/releases/latest')
         .then(response => response.json())
         .then(json => {
             // Store the latest version
-            setPref(PrefKey.VERSION_LATEST, json.tag_name.substring(1));
-            setPref(PrefKey.VERSION_CURRENT, SCRIPT_VERSION);
+            setGlobalPref(GlobalPref.VERSION_LATEST, json.tag_name.substring(1), 'direct');
+            setGlobalPref(GlobalPref.VERSION_CURRENT, SCRIPT_VERSION, 'direct');
         });
 
     // Update translations
@@ -155,17 +155,25 @@ export function clearAllData() {
 }
 
 export function blockAllNotifications() {
-    const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
+    const blockFeatures = getGlobalPref(GlobalPref.BLOCK_FEATURES);
     const blockAll = [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES].every(value => blockFeatures.includes(value));
     return blockAll;
 }
 
 export function blockSomeNotifications() {
-    const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
+    const blockFeatures = getGlobalPref(GlobalPref.BLOCK_FEATURES);
     if (blockAllNotifications()) {
         return false;
     }
 
     const blockSome = [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES].some(value => blockFeatures.includes(value));
     return blockSome;
+}
+
+export function isPlainObject(input: any) {
+    return (
+        typeof input === 'object' &&
+        input !== null &&
+        input.constructor === Object
+    );
 }

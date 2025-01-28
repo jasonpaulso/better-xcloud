@@ -47,7 +47,7 @@ export class DeviceVibrationManager {
             }
         });
 
-        BxEventBus.Script.on('deviceVibration.updated', () => this.setupDataChannel());
+        BxEventBus.Stream.on('deviceVibration.updated', () => this.setupDataChannel());
     }
 
     private setupDataChannel() {

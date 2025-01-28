@@ -1,4 +1,4 @@
-export type PreferenceSetting = {
+type PreferenceSetting = {
     default: any;
     optionsGroup?: string;
     options?: { [index: string]: string };
@@ -17,4 +17,13 @@ export type PreferenceSetting = {
     label?: string;
 };
 
-export type PreferenceSettings = { [index in PrefKey]: PreferenceSetting };
+type PreferenceSettings = { [index in PrefKey]: PreferenceSetting };
+
+type StreamPreferredLocale = 'default' | string;
+
+type ControllerSetting = {
+    shortcutPresetId: number;
+    customizationPresetId: number;
+}
+
+type ControllerSettings = Record<string, ControllerSetting>;

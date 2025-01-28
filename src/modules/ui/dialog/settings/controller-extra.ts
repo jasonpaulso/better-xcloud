@@ -1,16 +1,17 @@
 import { BxEvent } from "@/utils/bx-event";
-import { getUniqueGamepadNames } from "@/utils/gamepad";
+import { getUniqueGamepadNames, simplifyGamepadName } from "@/utils/gamepad";
 import { CE, removeChildElements, createButton, ButtonStyle, createSettingRow, renderPresetsList, calculateSelectBoxes } from "@/utils/html";
 import { t } from "@/utils/translation";
 import { BxSelectElement } from "@/web-components/bx-select";
 import { ControllerShortcutsManagerDialog } from "../profile-manger/controller-shortcuts-manager-dialog";
 import type { SettingsDialog } from "../settings-dialog";
 import { ControllerShortcutsTable } from "@/utils/local-db/controller-shortcuts-table";
-import { ControllerSettingsTable } from "@/utils/local-db/controller-settings-table";
 import { StreamSettings } from "@/utils/stream-settings";
 import { ControllerCustomizationsTable } from "@/utils/local-db/controller-customizations-table";
 import { ControllerCustomizationsManagerDialog } from "../profile-manger/controller-customizations-manager-dialog";
 import { BxIcon } from "@/utils/bx-icon";
+import { getStreamPref, setStreamPref, STORAGE } from "@/utils/pref-utils";
+import { StreamPref } from "@/enums/pref-keys";
 
 export class ControllerExtraSettings extends HTMLElement {
     currentControllerId!: string;
@@ -26,16 +27,23 @@ export class ControllerExtraSettings extends HTMLElement {
     getCurrentControllerId!: typeof ControllerExtraSettings['getCurrentControllerId'];
     saveSettings!: typeof ControllerExtraSettings['saveSettings'];
     updateCustomizationSummary!: typeof ControllerExtraSettings['updateCustomizationSummary'];
+    setValue!: typeof ControllerExtraSettings['setValue'];
 
     static renderSettings(this: SettingsDialog): HTMLElement {
         const $container = CE('label', {
             class: 'bx-settings-row bx-controller-extra-settings',
         }) as unknown as ControllerExtraSettings;
 
+        // Setting up for Settings Manager
+        ($container as any).prefKey = StreamPref.CONTROLLER_SETTINGS;
+        $container.addEventListener('contextmenu', this.boundOnContextMenu);
+        this.settingsManager.setElement(StreamPref.CONTROLLER_SETTINGS, $container);
+
         $container.updateLayout = ControllerExtraSettings.updateLayout.bind($container);
         $container.switchController = ControllerExtraSettings.switchController.bind($container);
         $container.getCurrentControllerId = ControllerExtraSettings.getCurrentControllerId.bind($container);
         $container.saveSettings = ControllerExtraSettings.saveSettings.bind($container);
+        $container.setValue = ControllerExtraSettings.setValue.bind($container);
 
         const $selectControllers = BxSelectElement.create(CE('select', {
             class: 'bx-full-width',
@@ -80,9 +88,7 @@ export class ControllerExtraSettings extends HTMLElement {
                     }),
                 }),
             ),
-            {
-                multiLines: true,
-            },
+            { multiLines: true },
         );
         $rowCustomization.appendChild(
             $container.$summaryCustomization = CE('div'),
@@ -162,7 +168,7 @@ export class ControllerExtraSettings extends HTMLElement {
 
         // Render controller list
         for (const name of this.controllerIds) {
-            const $option = CE('option', { value: name }, name);
+            const $option = CE('option', { value: name }, simplifyGamepadName(name));
             $fragment.appendChild($option);
         }
 
@@ -191,14 +197,8 @@ export class ControllerExtraSettings extends HTMLElement {
             return;
         }
 
-        const controllerSettings = await ControllerSettingsTable.getInstance().getControllerData(this.currentControllerId);
-
-        // Update UI
-        this.$selectShortcuts.value = controllerSettings.shortcutPresetId.toString();
-        this.$selectCustomization.value = controllerSettings.customizationPresetId.toString();
-
-        // Update summary
-        ControllerExtraSettings.updateCustomizationSummary.call(this);
+        const controllerSetting = STORAGE.Stream.getControllerSetting(this.currentControllerId);
+        ControllerExtraSettings.updateElements.call(this, controllerSetting);
     }
 
     private static getCurrentControllerId(this: ControllerExtraSettings) {
@@ -228,16 +228,30 @@ export class ControllerExtraSettings extends HTMLElement {
             return;
         }
 
-        const data: ControllerSettingsRecord = {
-            id: this.currentControllerId,
-            data: {
-                shortcutPresetId: parseInt(this.$selectShortcuts.value),
-                customizationPresetId: parseInt(this.$selectCustomization.value),
-            },
+        const controllerSettings = getStreamPref(StreamPref.CONTROLLER_SETTINGS);
+        controllerSettings[this.currentControllerId] = {
+            shortcutPresetId: parseInt(this.$selectShortcuts.value),
+            customizationPresetId: parseInt(this.$selectCustomization.value),
         };
 
-        await ControllerSettingsTable.getInstance().put(data);
-
+        setStreamPref(StreamPref.CONTROLLER_SETTINGS, controllerSettings, 'ui');
         StreamSettings.refreshControllerSettings();
+    }
+
+    private static setValue(this: ControllerExtraSettings, value: ControllerSettings) {
+        ControllerExtraSettings.updateElements.call(this, value[this.currentControllerId]);
+    }
+
+    private static updateElements(this: ControllerExtraSettings, controllerSetting: ControllerSetting) {
+        if (!controllerSetting) {
+            return;
+        }
+
+        // Update UI
+        this.$selectShortcuts.value = controllerSetting.shortcutPresetId.toString();
+        this.$selectCustomization.value = controllerSetting.customizationPresetId.toString();
+
+        // Update summary
+        ControllerExtraSettings.updateCustomizationSummary.call(this);
     }
 }

@@ -1,16 +1,14 @@
 import { BypassServers } from "@/enums/bypass-servers";
-import { PrefKey, StorageKey } from "@/enums/pref-keys";
+import { GlobalPref, StorageKey, type GlobalPrefTypeMap } from "@/enums/pref-keys";
 import { UserAgentProfile } from "@/enums/user-agent";
-import { type SettingDefinition, type SettingDefinitions } from "@/types/setting-definition";
+import { type SettingDefinition } from "@/types/setting-definition";
 import { BX_FLAGS } from "../bx-flags";
-import { STATES, AppInterface, STORAGE } from "../global";
+import { STATES, AppInterface } from "../global";
 import { CE } from "../html";
 import { t, SUPPORTED_LANGUAGES } from "../translation";
 import { UserAgent } from "../user-agent";
-import { BaseSettingsStore as BaseSettingsStorage } from "./base-settings-storage";
-import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, DeviceVibrationMode, NativeMkbMode, UiLayout, UiSection, StreamPlayerType, StreamVideoProcessing, VideoRatio, StreamStat, VideoPosition, BlockFeature, StreamStatPosition, VideoPowerPreference } from "@/enums/pref-values";
-import { MkbMappingDefaultPresetId } from "../local-db/mkb-mapping-presets-table";
-import { KeyboardShortcutDefaultId } from "../local-db/keyboard-shortcuts-table";
+import { BaseSettingsStorage } from "./base-settings-storage";
+import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, NativeMkbMode, UiLayout, UiSection, BlockFeature } from "@/enums/pref-values";
 import { GhPagesUtils } from "../gh-pages";
 import { BxEventBus } from "../bx-event-bus";
 import { BxIcon } from "../bx-icon";
@@ -72,28 +70,28 @@ function getSupportedCodecProfiles() {
     return options;
 }
 
-export class GlobalSettingsStorage extends BaseSettingsStorage {
-    private static readonly DEFINITIONS = {
-        [PrefKey.VERSION_LAST_CHECK]: {
+export class GlobalSettingsStorage extends BaseSettingsStorage<GlobalPref> {
+    private static readonly DEFINITIONS: Record<keyof GlobalPrefTypeMap, SettingDefinition> = {
+        [GlobalPref.VERSION_LAST_CHECK]: {
             default: 0,
         },
-        [PrefKey.VERSION_LATEST]: {
+        [GlobalPref.VERSION_LATEST]: {
             default: '',
         },
-        [PrefKey.VERSION_CURRENT]: {
+        [GlobalPref.VERSION_CURRENT]: {
             default: '',
         },
-        [PrefKey.SCRIPT_LOCALE]: {
+        [GlobalPref.SCRIPT_LOCALE]: {
             label: t('language'),
             default: localStorage.getItem(StorageKey.LOCALE) || 'en-US',
             options: SUPPORTED_LANGUAGES,
         },
-        [PrefKey.SERVER_REGION]: {
+        [GlobalPref.SERVER_REGION]: {
             label: t('region'),
             note: CE('a', { target: '_blank', href: 'https://umap.openstreetmap.fr/en/map/xbox-cloud-gaming-servers_1135022' }, t('server-locations')),
             default: 'default',
         },
-        [PrefKey.SERVER_BYPASS_RESTRICTION]: {
+        [GlobalPref.SERVER_BYPASS_RESTRICTION]: {
             label: t('bypass-region-restriction'),
             note: '⚠️ ' + t('use-this-at-your-own-risk'),
             default: 'off',
@@ -103,7 +101,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             }, BypassServers),
         },
 
-        [PrefKey.STREAM_PREFERRED_LOCALE]: {
+        [GlobalPref.STREAM_PREFERRED_LOCALE]: {
             label: t('preferred-game-language'),
             default: 'default',
             options: {
@@ -140,7 +138,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 'zh-TW': '中文 (繁體)',
             },
         },
-        [PrefKey.STREAM_RESOLUTION]: {
+        [GlobalPref.STREAM_RESOLUTION]: {
             label: t('target-resolution'),
             default: 'auto',
             options: {
@@ -155,7 +153,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.STREAM_CODEC_PROFILE]: {
+        [GlobalPref.STREAM_CODEC_PROFILE]: {
             label: t('visual-quality'),
             default: CodecProfile.DEFAULT,
             options: getSupportedCodecProfiles(),
@@ -174,26 +172,26 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 };
             },
         },
-        [PrefKey.SERVER_PREFER_IPV6]: {
+        [GlobalPref.SERVER_PREFER_IPV6]: {
             label: t('prefer-ipv6-server'),
             default: false,
         },
 
-        [PrefKey.SCREENSHOT_APPLY_FILTERS]: {
+        [GlobalPref.SCREENSHOT_APPLY_FILTERS]: {
             requiredVariants: 'full',
             label: t('screenshot-apply-filters'),
             default: false,
         },
 
-        [PrefKey.UI_SKIP_SPLASH_VIDEO]: {
+        [GlobalPref.UI_SKIP_SPLASH_VIDEO]: {
             label: t('skip-splash-video'),
             default: false,
         },
-        [PrefKey.UI_HIDE_SYSTEM_MENU_ICON]: {
-            label: t('hide-system-menu-icon'),
+        [GlobalPref.UI_HIDE_SYSTEM_MENU_ICON]: {
+            label: '⣿ ' + t('hide-system-menu-icon'),
             default: false,
         },
-        [PrefKey.UI_IMAGE_QUALITY]: {
+        [GlobalPref.UI_IMAGE_QUALITY]: {
             requiredVariants: 'full',
             label: t('image-quality'),
             default: 90,
@@ -213,7 +211,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.STREAM_COMBINE_SOURCES]: {
+        [GlobalPref.STREAM_COMBINE_SOURCES]: {
             requiredVariants: 'full',
 
             label: t('combine-audio-video-streams'),
@@ -222,28 +220,28 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             note: t('combine-audio-video-streams-summary'),
         },
 
-        [PrefKey.TOUCH_CONTROLLER_MODE]: {
+        [GlobalPref.TOUCH_CONTROLLER_MODE]: {
             requiredVariants: 'full',
-            label: t('tc-availability'),
+            label: t('availability'),
             default: TouchControllerMode.ALL,
             options: {
                 [TouchControllerMode.DEFAULT]: t('default'),
                 [TouchControllerMode.OFF]: t('off'),
-                [TouchControllerMode.ALL]: t('tc-all-games'),
+                [TouchControllerMode.ALL]: t('all-games'),
             },
 
             unsupported: !STATES.userAgent.capabilities.touch,
             unsupportedValue: TouchControllerMode.DEFAULT,
         },
-        [PrefKey.TOUCH_CONTROLLER_AUTO_OFF]: {
+        [GlobalPref.TOUCH_CONTROLLER_AUTO_OFF]: {
             requiredVariants: 'full',
             label: t('tc-auto-off'),
             default: false,
             unsupported: !STATES.userAgent.capabilities.touch,
         },
-        [PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY]: {
+        [GlobalPref.TOUCH_CONTROLLER_DEFAULT_OPACITY]: {
             requiredVariants: 'full',
-            label: t('tc-default-opacity'),
+            label: t('default-opacity'),
             default: 100,
             min: 10,
             max: 100,
@@ -255,7 +253,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
             unsupported: !STATES.userAgent.capabilities.touch,
         },
-        [PrefKey.TOUCH_CONTROLLER_STYLE_STANDARD]: {
+        [GlobalPref.TOUCH_CONTROLLER_STYLE_STANDARD]: {
             requiredVariants: 'full',
             label: t('tc-standard-layout-style'),
             default: TouchControllerStyleStandard.DEFAULT,
@@ -266,7 +264,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
             unsupported: !STATES.userAgent.capabilities.touch,
         },
-        [PrefKey.TOUCH_CONTROLLER_STYLE_CUSTOM]: {
+        [GlobalPref.TOUCH_CONTROLLER_STYLE_CUSTOM]: {
             requiredVariants: 'full',
             label: t('tc-custom-layout-style'),
             default: TouchControllerStyleCustom.DEFAULT,
@@ -277,22 +275,22 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             unsupported: !STATES.userAgent.capabilities.touch,
         },
 
-        [PrefKey.UI_SIMPLIFY_STREAM_MENU]: {
+        [GlobalPref.UI_SIMPLIFY_STREAM_MENU]: {
             label: t('simplify-stream-menu'),
             default: false,
         },
-        [PrefKey.MKB_HIDE_IDLE_CURSOR]: {
+        [GlobalPref.MKB_HIDE_IDLE_CURSOR]: {
             requiredVariants: 'full',
             label: t('hide-idle-cursor'),
             default: false,
         },
-        [PrefKey.UI_DISABLE_FEEDBACK_DIALOG]: {
+        [GlobalPref.UI_DISABLE_FEEDBACK_DIALOG]: {
             requiredVariants: 'full',
             label: t('disable-post-stream-feedback-dialog'),
             default: false,
         },
 
-        [PrefKey.STREAM_MAX_VIDEO_BITRATE]: {
+        [GlobalPref.STREAM_MAX_VIDEO_BITRATE]: {
             requiredVariants: 'full',
             label: t('bitrate-video-maximum'),
             note: '⚠️ ' + t('unexpected-behavior'),
@@ -326,7 +324,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.GAME_BAR_POSITION]: {
+        [GlobalPref.GAME_BAR_POSITION]: {
             requiredVariants: 'full',
             label: t('position'),
             default: GameBarPosition.BOTTOM_LEFT,
@@ -337,74 +335,12 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.LOCAL_CO_OP_ENABLED]: {
-            requiredVariants: 'full',
-            label: t('enable-local-co-op-support'),
-            labelIcon: BxIcon.LOCAL_CO_OP,
-            default: false,
-            note: () => CE('div', false,
-                CE('a', {
-                    href: 'https://github.com/redphx/better-xcloud/discussions/275',
-                    target: '_blank',
-                }, t('enable-local-co-op-support-note')),
-                CE('br'),
-                '⚠️ ' + t('unexpected-behavior'),
-            ),
-        },
-
-        [PrefKey.UI_CONTROLLER_SHOW_STATUS]: {
+        [GlobalPref.UI_CONTROLLER_SHOW_STATUS]: {
             label: t('show-controller-connection-status'),
             default: true,
         },
 
-        [PrefKey.DEVICE_VIBRATION_MODE]: {
-            requiredVariants: 'full',
-            label: t('device-vibration'),
-            default: DeviceVibrationMode.OFF,
-            options: {
-                [DeviceVibrationMode.OFF]: t('off'),
-                [DeviceVibrationMode.ON]: t('on'),
-                [DeviceVibrationMode.AUTO]: t('device-vibration-not-using-gamepad'),
-            },
-        },
-
-        [PrefKey.DEVICE_VIBRATION_INTENSITY]: {
-            requiredVariants: 'full',
-            label: t('vibration-intensity'),
-            default: 50,
-            min: 10,
-            max: 100,
-            params: {
-                steps: 10,
-                suffix: '%',
-                exactTicks: 20,
-            },
-        },
-
-        [PrefKey.CONTROLLER_POLLING_RATE]: {
-            requiredVariants: 'full',
-            label: t('polling-rate'),
-            default: 4,
-            min: 4,
-            max: 60,
-            params: {
-                steps: 4,
-                exactTicks: 20,
-                reverse: true,
-                customTextValue(value: any) {
-                    value = parseInt(value);
-
-                    let text = +(1000 / value).toFixed(2) + ' Hz';
-                    if (value === 4) {
-                        text = `${text} (${t('default')})`;
-                    }
-
-                    return text;
-                },
-            },
-        },
-
-        [PrefKey.MKB_ENABLED]: {
+        [GlobalPref.MKB_ENABLED]: {
             requiredVariants: 'full',
             label: t('enable-mkb'),
             default: false,
@@ -427,7 +363,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.NATIVE_MKB_MODE]: {
+        [GlobalPref.NATIVE_MKB_MODE]: {
             requiredVariants: 'full',
             label: t('native-mkb'),
             default: NativeMkbMode.DEFAULT,
@@ -449,7 +385,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.NATIVE_MKB_FORCED_GAMES]: {
+        [GlobalPref.NATIVE_MKB_FORCED_GAMES]: {
             label: t('force-native-mkb-games'),
             default: [],
             unsupported: !AppInterface && UserAgent.isMobile(),
@@ -467,98 +403,21 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.NATIVE_MKB_SCROLL_HORIZONTAL_SENSITIVITY]: {
-            requiredVariants: 'full',
-            label: t('horizontal-scroll-sensitivity'),
-            default: 0,
-            min: 0,
-            max: 100 * 100,
-            params: {
-                steps: 10,
-                exactTicks: 20 * 100,
-                customTextValue: (value: any) => {
-                    if (!value) {
-                        return t('default');
-                    }
-
-                    return (value / 100).toFixed(1) + 'x';
-                },
-            },
-        },
-
-        [PrefKey.NATIVE_MKB_SCROLL_VERTICAL_SENSITIVITY]: {
-            requiredVariants: 'full',
-            label: t('vertical-scroll-sensitivity'),
-            default: 0,
-            min: 0,
-            max: 100 * 100,
-            params: {
-                steps: 10,
-                exactTicks: 20 * 100,
-                customTextValue: (value: any) => {
-                    if (!value) {
-                        return t('default');
-                    }
-
-                    return (value / 100).toFixed(1) + 'x';
-                },
-            },
-        },
-
-        [PrefKey.MKB_P1_MAPPING_PRESET_ID]: {
-            requiredVariants: 'full',
-            default: MkbMappingDefaultPresetId.DEFAULT,
-        },
-
-        [PrefKey.MKB_P1_SLOT]: {
-            requiredVariants: 'full',
-            default: 1,
-            min: 1,
-            max: 4,
-            params: {
-                hideSlider: true,
-            },
-        },
-
-        [PrefKey.MKB_P2_MAPPING_PRESET_ID]: {
-            requiredVariants: 'full',
-            default: MkbMappingDefaultPresetId.OFF,
-        },
-
-        [PrefKey.MKB_P2_SLOT]: {
-            requiredVariants: 'full',
-            default: 0,
-            min: 0,
-            max: 4,
-            params: {
-                hideSlider: true,
-                customTextValue(value) {
-                    value = parseInt(value);
-                    return (value === 0) ? t('off') : value.toString();
-                },
-            },
-        },
-
-        [PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID]: {
-            requiredVariants: 'full',
-            default: KeyboardShortcutDefaultId.DEFAULT,
-        },
-
-        [PrefKey.UI_REDUCE_ANIMATIONS]: {
+        [GlobalPref.UI_REDUCE_ANIMATIONS]: {
             label: t('reduce-animations'),
             default: false,
         },
 
-        [PrefKey.LOADING_SCREEN_GAME_ART]: {
+        [GlobalPref.LOADING_SCREEN_GAME_ART]: {
             requiredVariants: 'full',
             label: t('show-game-art'),
             default: true,
         },
-        [PrefKey.LOADING_SCREEN_SHOW_WAIT_TIME]: {
+        [GlobalPref.LOADING_SCREEN_SHOW_WAIT_TIME]: {
             label: t('show-wait-time'),
             default: true,
         },
-        [PrefKey.LOADING_SCREEN_ROCKET]: {
+        [GlobalPref.LOADING_SCREEN_ROCKET]: {
             label: t('rocket-animation'),
             default: 'show',
             options: {
@@ -568,12 +427,12 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.UI_CONTROLLER_FRIENDLY]: {
+        [GlobalPref.UI_CONTROLLER_FRIENDLY]: {
             label: t('controller-friendly-ui'),
             default: BX_FLAGS.DeviceInfo.deviceType !== 'unknown',
         },
 
-        [PrefKey.UI_LAYOUT]: {
+        [GlobalPref.UI_LAYOUT]: {
             requiredVariants: 'full',
             label: t('layout'),
             default: UiLayout.DEFAULT,
@@ -584,12 +443,12 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.UI_SCROLLBAR_HIDE]: {
+        [GlobalPref.UI_SCROLLBAR_HIDE]: {
             label: t('hide-scrollbar'),
             default: false,
         },
 
-        [PrefKey.UI_HIDE_SECTIONS]: {
+        [GlobalPref.UI_HIDE_SECTIONS]: {
             requiredVariants: 'full',
             label: t('hide-sections'),
             default: [],
@@ -607,17 +466,17 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME]: {
+        [GlobalPref.UI_GAME_CARD_SHOW_WAIT_TIME]: {
             requiredVariants: 'full',
             label: t('show-wait-time-in-game-card'),
             default: true,
         },
 
-        [PrefKey.BLOCK_TRACKING]: {
+        [GlobalPref.BLOCK_TRACKING]: {
             label: t('disable-xcloud-analytics'),
             default: false,
         },
-        [PrefKey.BLOCK_FEATURES]: {
+        [GlobalPref.BLOCK_FEATURES]: {
             requiredVariants: 'full',
             label: t('disable-features'),
             default: [],
@@ -631,7 +490,7 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
         },
 
 
-        [PrefKey.USER_AGENT_PROFILE]: {
+        [GlobalPref.USER_AGENT_PROFILE]: {
             label: t('user-agent-profile'),
             note: '⚠️ ' + t('unexpected-behavior'),
             default: (BX_FLAGS.DeviceInfo.deviceType === 'android-tv' || BX_FLAGS.DeviceInfo.deviceType === 'webos') ? UserAgentProfile.VR_OCULUS : 'default',
@@ -645,246 +504,24 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
                 [UserAgentProfile.CUSTOM]: t('custom'),
             },
         },
-        [PrefKey.VIDEO_PLAYER_TYPE]: {
-            label: t('renderer'),
-            default: StreamPlayerType.VIDEO,
-            options: {
-                [StreamPlayerType.VIDEO]: t('default'),
-                [StreamPlayerType.WEBGL2]: t('webgl2'),
-            },
-            suggest: {
-                lowest: StreamPlayerType.VIDEO,
-                highest: StreamPlayerType.WEBGL2,
-            },
-        },
-        [PrefKey.VIDEO_PROCESSING]: {
-            label: t('clarity-boost'),
-            default: StreamVideoProcessing.USM,
-            options: {
-                [StreamVideoProcessing.USM]: t('unsharp-masking'),
-                [StreamVideoProcessing.CAS]: t('amd-fidelity-cas'),
-            },
-            suggest: {
-                lowest: StreamVideoProcessing.USM,
-                highest: StreamVideoProcessing.CAS,
-            },
-        },
-        [PrefKey.VIDEO_POWER_PREFERENCE]: {
-            label: t('renderer-configuration'),
-            default: VideoPowerPreference.DEFAULT,
-            options: {
-                [VideoPowerPreference.DEFAULT]: t('default'),
-                [VideoPowerPreference.LOW_POWER]: t('battery-saving'),
-                [VideoPowerPreference.HIGH_PERFORMANCE]: t('high-performance'),
-            },
-            suggest: {
-                highest: 'low-power',
-            },
-        },
-        [PrefKey.VIDEO_MAX_FPS]: {
-            label: t('limit-fps'),
-            default: 60,
-            min: 10,
-            max: 60,
-            params: {
-                steps: 10,
-                exactTicks: 10,
-                customTextValue: (value: any) => {
-                    value = parseInt(value);
-                    return value === 60 ? t('unlimited') : value + 'fps';
-                },
-            },
-        },
-        [PrefKey.VIDEO_SHARPNESS]: {
-            label: t('sharpness'),
-            default: 0,
-            min: 0,
-            max: 10,
-            params: {
-                exactTicks: 2,
-                customTextValue: (value: any) => {
-                    value = parseInt(value);
-                    return value === 0 ? t('off') : value.toString();
-                },
-            },
-            suggest: {
-                lowest: 0,
-                highest: 2,
-            },
-        },
-        [PrefKey.VIDEO_RATIO]: {
-            label: t('aspect-ratio'),
-            note: STATES.browser.capabilities.touch ? t('aspect-ratio-note') : undefined,
-            default: VideoRatio['16:9'],
-            options: {
-                [VideoRatio['16:9']]: `16:9 (${t('default')})`,
-                [VideoRatio['18:9']]: '18:9',
-                [VideoRatio['21:9']]: '21:9',
-                [VideoRatio['16:10']]: '16:10',
-                [VideoRatio['4:3']]: '4:3',
-
-                [VideoRatio.FILL]: t('stretch'),
-                //'cover': 'Cover',
-            },
-        },
-        [PrefKey.VIDEO_POSITION]: {
-            label: t('position'),
-            note: STATES.browser.capabilities.touch ? t('aspect-ratio-note') : undefined,
-            default: VideoPosition.CENTER,
-            options: {
-                [VideoPosition.TOP]: t('top'),
-                [VideoPosition.TOP_HALF]: t('top-half'),
-                [VideoPosition.CENTER]: `${t('center')} (${t('default')})`,
-                [VideoPosition.BOTTOM_HALF]: t('bottom-half'),
-                [VideoPosition.BOTTOM]: t('bottom'),
-            },
-        },
-
-        [PrefKey.VIDEO_SATURATION]: {
-            label: t('saturation'),
-            default: 100,
-            min: 50,
-            max: 150,
-            params: {
-                suffix: '%',
-                ticks: 25,
-            },
-        },
-        [PrefKey.VIDEO_CONTRAST]: {
-            label: t('contrast'),
-            default: 100,
-            min: 50,
-            max: 150,
-            params: {
-                suffix: '%',
-                ticks: 25,
-            },
-        },
-        [PrefKey.VIDEO_BRIGHTNESS]: {
-            label: t('brightness'),
-            default: 100,
-            min: 50,
-            max: 150,
-            params: {
-                suffix: '%',
-                ticks: 25,
-            },
-        },
-
-        [PrefKey.AUDIO_MIC_ON_PLAYING]: {
+        [GlobalPref.AUDIO_MIC_ON_PLAYING]: {
             label: t('enable-mic-on-startup'),
             default: false,
         },
-        [PrefKey.AUDIO_VOLUME_CONTROL_ENABLED]: {
+        [GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED]: {
             requiredVariants: 'full',
             label: t('enable-volume-control'),
             default: false,
         },
-        [PrefKey.AUDIO_VOLUME]: {
-            label: t('volume'),
-            default: 100,
-            min: 0,
-            max: 600,
-            params: {
-                steps: 10,
-                suffix: '%',
-                ticks: 100,
-            },
-        },
 
-        [PrefKey.STATS_ITEMS]: {
-            label: t('stats'),
-            default: [StreamStat.PING, StreamStat.FPS, StreamStat.BITRATE, StreamStat.DECODE_TIME, StreamStat.PACKETS_LOST, StreamStat.FRAMES_LOST],
-            multipleOptions: {
-                [StreamStat.CLOCK]: t('clock'),
-                [StreamStat.PLAYTIME]: t('playtime'),
-                [StreamStat.BATTERY]: t('battery'),
-                [StreamStat.PING]: t('stat-ping'),
-                [StreamStat.JITTER]: t('jitter'),
-                [StreamStat.FPS]: t('stat-fps'),
-                [StreamStat.BITRATE]: t('stat-bitrate'),
-                [StreamStat.DECODE_TIME]: t('stat-decode-time'),
-                [StreamStat.PACKETS_LOST]: t('stat-packets-lost'),
-                [StreamStat.FRAMES_LOST]: t('stat-frames-lost'),
-                [StreamStat.DOWNLOAD]: t('downloaded'),
-                [StreamStat.UPLOAD]: t('uploaded'),
-            },
-            params: {
-                size: 0,
-            },
-            ready: setting => {
-                // Remove Battery option in unsupported browser
-                const multipleOptions = (setting as any).multipleOptions;
-                if (!STATES.browser.capabilities.batteryApi) {
-                    delete multipleOptions[StreamStat.BATTERY];
-                }
-
-                // Update texts
-                for (const key in multipleOptions) {
-                    multipleOptions[key] = (key as string).toUpperCase() + ': ' + multipleOptions[key];
-                }
-            },
-        },
-        [PrefKey.STATS_SHOW_WHEN_PLAYING]: {
-            label: t('show-stats-on-startup'),
-            default: false,
-        },
-        [PrefKey.STATS_QUICK_GLANCE_ENABLED]: {
-            label: '👀 ' + t('enable-quick-glance-mode'),
-            default: true,
-        },
-        [PrefKey.STATS_POSITION]: {
-            label: t('position'),
-            default: StreamStatPosition.TOP_RIGHT,
-            options: {
-                [StreamStatPosition.TOP_LEFT]: t('top-left'),
-                [StreamStatPosition.TOP_CENTER]: t('top-center'),
-                [StreamStatPosition.TOP_RIGHT]: t('top-right'),
-            },
-        },
-        [PrefKey.STATS_TEXT_SIZE]: {
-            label: t('text-size'),
-            default: '0.9rem',
-            options: {
-                '0.9rem': t('small'),
-                '1.0rem': t('normal'),
-                '1.1rem': t('large'),
-            },
-        },
-        [PrefKey.STATS_OPACITY_ALL]: {
-            label: t('opacity'),
-            default: 80,
-            min: 50,
-            max: 100,
-            params: {
-                steps: 10,
-                suffix: '%',
-                ticks: 10,
-            },
-        },
-        [PrefKey.STATS_OPACITY_BACKGROUND]: {
-            label: t('background-opacity'),
-            default: 100,
-            min: 0,
-            max: 100,
-            params: {
-                steps: 10,
-                suffix: '%',
-                ticks: 10,
-            },
-        },
-        [PrefKey.STATS_CONDITIONAL_FORMATTING]: {
-            label: t('conditional-formatting'),
-            default: false,
-        },
-
-        [PrefKey.REMOTE_PLAY_ENABLED]: {
+        [GlobalPref.REMOTE_PLAY_ENABLED]: {
             requiredVariants: 'full',
             label: t('enable-remote-play-feature'),
+            labelIcon: BxIcon.REMOTE_PLAY,
             default: false,
         },
 
-        [PrefKey.REMOTE_PLAY_STREAM_RESOLUTION]: {
+        [GlobalPref.REMOTE_PLAY_STREAM_RESOLUTION]: {
             requiredVariants: 'full',
             default: StreamResolution.DIM_1080P,
             options: {
@@ -894,22 +531,15 @@ export class GlobalSettingsStorage extends BaseSettingsStorage {
             },
         },
 
-        [PrefKey.GAME_FORTNITE_FORCE_CONSOLE]: {
+        [GlobalPref.GAME_FORTNITE_FORCE_CONSOLE]: {
             requiredVariants: 'full',
             label: '🎮 ' + t('fortnite-force-console-version'),
             default: false,
             note: t('fortnite-allow-stw-mode'),
         },
-    } satisfies SettingDefinitions;
+    };
 
     constructor() {
         super(StorageKey.GLOBAL, GlobalSettingsStorage.DEFINITIONS);
     }
 }
-
-
-const globalSettings = new GlobalSettingsStorage();
-export const getPrefDefinition = globalSettings.getDefinition.bind(globalSettings);
-export const getPref = globalSettings.getSetting.bind(globalSettings);
-export const setPref = globalSettings.setSetting.bind(globalSettings);
-STORAGE.Global = globalSettings;

@@ -1,8 +1,8 @@
-import type { PrefKey } from "@/enums/pref-keys";
+import type { AnyPref, AnySettingsStorage, GlobalPref, StreamPref } from "@/enums/pref-keys";
 import type { SettingElementType } from "@/utils/setting-element";
 
-export type SuggestedSettingProfile = 'recommended' | 'lowest' | 'highest' | 'default';
-export type RecommendedSettings = {
+type SuggestedSettingProfile = 'recommended' | 'lowest' | 'highest' | 'default';
+type RecommendedSettings = {
     schema_version: 2,
     device_name: string,
     device_type: 'android' | 'android-tv' | 'android-handheld' | 'webos',
@@ -10,11 +10,12 @@ export type RecommendedSettings = {
         app: any,
         script: {
             _base?: 'lowest' | 'highest',
-        } & PartialRecord<PrefKey, any>,
+        } & PartialRecord<GlobalPref, any>,
     },
 };
 
-export type SettingAction = 'get' | 'set';
+type SettingAction = 'get' | 'set';
+type SettingActionOrigin = 'direct' | 'ui';
 
 interface BaseSettingDefinition {
     default: any;
@@ -56,15 +57,22 @@ interface NumberStepperSettingDefinition extends BaseSettingDefinition {
     };
 }
 
-export type SettingDefinition = BaseSettingDefinition | OptionsSettingDefinition | MultipleOptionsSettingDefinition | NumberStepperSettingDefinition;
+type SettingDefinition = BaseSettingDefinition | OptionsSettingDefinition | MultipleOptionsSettingDefinition | NumberStepperSettingDefinition;
+type PrefInfo = {
+    storage: AnySettingsStorage,
+    definition: SettingDefinition,
+    // value: unknown,
+};
 
-export type SettingDefinitions = { [index in PrefKey]: SettingDefinition };
+type SettingDefinitions<T extends AnyPref> = {
+    [key in T]: SettingDefinition;
+};
 
-export type MultipleOptionsParams = Partial<{
+type MultipleOptionsParams = Partial<{
     size?: number;
 }>
 
-export type NumberStepperParams = Partial<{
+type NumberStepperParams = Partial<{
     steps: number;
 
     suffix: string;
@@ -78,7 +86,7 @@ export type NumberStepperParams = Partial<{
     reverse: boolean;
 }>
 
-export type DualNumberStepperParams = {
+type DualNumberStepperParams = {
     min: number;
     minDiff: number;
     max: number;

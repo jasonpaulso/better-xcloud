@@ -53,6 +53,9 @@ $this$.toggleLocalCoOp = (enable: boolean) => {
             continue;
         }
 
+        // Don't show toast
+        (gamepad as any)._noToast = true;
+
         window.dispatchEvent(new GamepadEvent('gamepaddisconnected', { gamepad }));
         window.dispatchEvent(new GamepadEvent('gamepadconnected', { gamepad }));
     }

@@ -156,6 +156,15 @@ export class BxNumberStepper extends HTMLInputElement implements BxHtmlSettingEl
             set(value) { BxNumberStepper.setValue.call(self, value); },
         });
 
+        Object.defineProperty(self, 'disabled', {
+            get() { return $range.disabled; },
+            set(value) {
+                $btnDec.disabled = value;
+                $btnInc.disabled = value;
+                $range.disabled = value;
+            },
+        });
+
         return self;
     }
 

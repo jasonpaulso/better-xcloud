@@ -8,11 +8,10 @@ import { FeatureGates } from "./feature-gates";
 import { BxLogger } from "./bx-logger";
 import { XhomeInterceptor } from "./xhome-interceptor";
 import { XcloudInterceptor } from "./xcloud-interceptor";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
-import type { RemotePlayConsoleAddresses } from "@/types/network";
+import { GlobalPref } from "@/enums/pref-keys";
 import { BlockFeature, StreamResolution } from "@/enums/pref-values";
 import { blockAllNotifications } from "./utils";
+import { getGlobalPref } from "./pref-utils";
 
 type RequestType = 'xcloud' | 'xhome';
 
@@ -107,7 +106,7 @@ export async function patchIceCandidates(request: Request, consoleAddrs?: Remote
     }
 
     const options = {
-        preferIpv6Server: getPref(PrefKey.SERVER_PREFER_IPV6),
+        preferIpv6Server: getGlobalPref(GlobalPref.SERVER_PREFER_IPV6),
         consoleAddrs: consoleAddrs,
     };
 
@@ -125,7 +124,7 @@ export async function patchIceCandidates(request: Request, consoleAddrs?: Remote
 
 export function interceptHttpRequests() {
     let BLOCKED_URLS: string[] = [];
-    if (getPref(PrefKey.BLOCK_TRACKING)) {
+    if (getGlobalPref(GlobalPref.BLOCK_TRACKING)) {
         // Clear Applications Insight buffers
         clearAllLogs();
 
@@ -141,7 +140,7 @@ export function interceptHttpRequests() {
 
     // 'https://notificationinbox.xboxlive.com',
     // 'https://accounts.xboxlive.com/family/memberXuid',
-    const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
+    const blockFeatures = getGlobalPref(GlobalPref.BLOCK_FEATURES);
     if (blockFeatures.includes(BlockFeature.CHAT)) {
         BLOCKED_URLS.push(
             'https://xblmessaging.xboxlive.com/network/xbox/users/me/inbox',

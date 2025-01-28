@@ -1,12 +1,12 @@
 import { CE } from "@utils/html"
 import { t } from "@utils/translation"
 import { STATES } from "@utils/global"
-import { PrefKey } from "@/enums/pref-keys"
-import { getPref } from "@/utils/settings-storages/global-settings-storage"
-import { StreamStatsCollector, type StreamStatGrade } from "@/utils/stream-stats-collector"
+import { StreamPref } from "@/enums/pref-keys"
+import { StreamStatsCollector } from "@/utils/stream-stats-collector"
 import { BxLogger } from "@/utils/bx-logger"
 import { StreamStat } from "@/enums/pref-values"
 import { BxEventBus } from "@/utils/bx-event-bus"
+import { getStreamPref } from "@/utils/pref-utils";
 
 
 export class StreamStats {
@@ -164,7 +164,7 @@ export class StreamStats {
             return;
         }
 
-        const PREF_STATS_CONDITIONAL_FORMATTING = getPref(PrefKey.STATS_CONDITIONAL_FORMATTING);
+        const PREF_STATS_CONDITIONAL_FORMATTING = getStreamPref(StreamPref.STATS_CONDITIONAL_FORMATTING);
         let grade: StreamStatGrade = '';
 
         // Collect stats
@@ -192,12 +192,12 @@ export class StreamStats {
     }
 
     refreshStyles() {
-        const PREF_ITEMS = getPref(PrefKey.STATS_ITEMS);
-        const PREF_OPACITY_BG = getPref(PrefKey.STATS_OPACITY_BACKGROUND);
+        const PREF_ITEMS = getStreamPref(StreamPref.STATS_ITEMS);
+        const PREF_OPACITY_BG = getStreamPref(StreamPref.STATS_OPACITY_BACKGROUND);
 
         const $container = this.$container;
         $container.dataset.stats = '[' + PREF_ITEMS.join('][') + ']';
-        $container.dataset.position = getPref(PrefKey.STATS_POSITION);
+        $container.dataset.position = getStreamPref(StreamPref.STATS_POSITION);
 
         if (PREF_OPACITY_BG === 0) {
             $container.style.removeProperty('background-color');
@@ -207,12 +207,12 @@ export class StreamStats {
             $container.style.backgroundColor = `rgba(0, 0, 0, ${PREF_OPACITY_BG}%)`;
         }
 
-        $container.style.opacity = getPref(PrefKey.STATS_OPACITY_ALL) + '%';
-        $container.style.fontSize = getPref(PrefKey.STATS_TEXT_SIZE);
+        $container.style.opacity = getStreamPref(StreamPref.STATS_OPACITY_ALL) + '%';
+        $container.style.fontSize = getStreamPref(StreamPref.STATS_TEXT_SIZE);
     }
 
     hideSettingsUi() {
-        if (this.isGlancing() && !getPref(PrefKey.STATS_QUICK_GLANCE_ENABLED)) {
+        if (this.isGlancing() && !getStreamPref(StreamPref.STATS_QUICK_GLANCE_ENABLED)) {
             this.stop();
         }
     }
@@ -240,8 +240,8 @@ export class StreamStats {
 
     static setupEvents() {
         BxEventBus.Stream.on('state.playing', () => {
-            const PREF_STATS_QUICK_GLANCE = getPref(PrefKey.STATS_QUICK_GLANCE_ENABLED);
-            const PREF_STATS_SHOW_WHEN_PLAYING = getPref(PrefKey.STATS_SHOW_WHEN_PLAYING);
+            const PREF_STATS_QUICK_GLANCE = getStreamPref(StreamPref.STATS_QUICK_GLANCE_ENABLED);
+            const PREF_STATS_SHOW_WHEN_PLAYING = getStreamPref(StreamPref.STATS_SHOW_WHEN_PLAYING);
 
             const streamStats = StreamStats.getInstance();
 

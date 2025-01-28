@@ -1,7 +1,7 @@
-import { PrefKey } from "@/enums/pref-keys";
+import { GlobalPref } from "@/enums/pref-keys";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { AppInterface, STATES } from "@/utils/global";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { t } from "@/utils/translation";
 
 type ShortcutActions = {
@@ -46,7 +46,7 @@ export const SHORTCUT_ACTIONS: ShortcutActions = {
 
         [ShortcutAction.STREAM_SOUND_TOGGLE]: [t('sound'), t('toggle')],
 
-        ...(getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) ? {
+        ...(getGlobalPref(GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED) ? {
             [ShortcutAction.STREAM_VOLUME_INC]: [t('volume'), t('increase')],
             [ShortcutAction.STREAM_VOLUME_DEC]: [t('volume'), t('decrease')],
         } : {}),

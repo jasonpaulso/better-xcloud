@@ -11,8 +11,8 @@ import codeGameCardIcons from "./patches/game-card-icons.js" with { type: "text"
 import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
-import { PrefKey, StorageKey } from "@/enums/pref-keys.js";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref, StorageKey } from "@/enums/pref-keys.js";
+import { getGlobalPref } from "@/utils/pref-utils.js";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
 import { t } from "@/utils/translation";
 import { BlockFeature, NativeMkbMode, TouchControllerMode, UiLayout, UiSection } from "@/enums/pref-values";
@@ -89,7 +89,7 @@ const PATCHES = {
             return false;
         }
 
-        const layout = getPref(PrefKey.UI_LAYOUT) === UiLayout.TV ? UiLayout.TV : UiLayout.DEFAULT;
+        const layout = getGlobalPref(GlobalPref.UI_LAYOUT) === UiLayout.TV ? UiLayout.TV : UiLayout.DEFAULT;
         return str.replace(text, `?"${layout}":"${layout}"`);
     },
 
@@ -189,7 +189,7 @@ remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFI
         str = PatcherUtils.replaceWith(str, setTimeoutIndex, tmp, tmpPatched);
 
         // Block gamepad stats collecting
-        if (getPref(PrefKey.BLOCK_TRACKING)) {
+        if (getGlobalPref(GlobalPref.BLOCK_TRACKING)) {
             codeBlock = codeBlock.replace('this.inputPollingIntervalStats.addValue', '');
             codeBlock = codeBlock.replace('this.inputPollingDurationStats.addValue', '');
         }
@@ -377,9 +377,9 @@ if (window.BX_EXPOSED.stopTakRendering) {
         }
 
         let autoOffCode = '';
-        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
+        if (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
             autoOffCode = 'return;';
-        } else if (getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) {
+        } else if (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_AUTO_OFF)) {
             autoOffCode = `
 const gamepads = window.navigator.getGamepads();
 let gamepadFound = false;
@@ -434,7 +434,7 @@ e.guideUI = null;
 `;
 
         // Remove the TAK Edit button when the touch controller is disabled
-        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
+        if (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
             newCode += 'e.canShowTakHUD = false;';
         }
 
@@ -554,7 +554,7 @@ BxLogger.info('patchRemotePlayMkb', ${configsVar});
             return false;
         }
 
-        const opacity = (getPref(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) / 100).toFixed(1);
+        const opacity = (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_DEFAULT_OPACITY) / 100).toFixed(1);
         const newCode = `opacityMultiplier: ${opacity}`;
         str = str.replace(text, newCode);
         return str;
@@ -790,7 +790,7 @@ true` + text;
             return false;
         }
 
-        const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS);
+        const PREF_HIDE_SECTIONS = getGlobalPref(GlobalPref.UI_HIDE_SECTIONS);
         const siglIds: GamePassCloudGallery[] = [];
 
         const sections: PartialRecord<UiSection, GamePassCloudGallery> = {
@@ -981,7 +981,7 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
 
         // Find index after {
         index = str.indexOf('{', index) + 1;
-        const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
+        const blockFeatures = getGlobalPref(GlobalPref.BLOCK_FEATURES);
         const filters = [];
         if (blockFeatures.includes(BlockFeature.NOTIFICATIONS_INVITES)) {
             filters.push('GameInvite', 'PartyInvite');
@@ -1097,7 +1097,7 @@ ${subsVar} = subs;
         // Find "return" keyword
         index = PatcherUtils.indexOf(str, 'return', index, 200);
 
-        const newCode = `${paramVar}.set('q', ${getPref(PrefKey.UI_IMAGE_QUALITY)});`;
+        const newCode = `${paramVar}.set('q', ${getGlobalPref(GlobalPref.UI_IMAGE_QUALITY)});`;
         str = PatcherUtils.insertAt(str, index, newCode);
 
         return str;
@@ -1111,13 +1111,13 @@ ${subsVar} = subs;
             return false;
         }
 
-        str = PatcherUtils.insertAt(str, index, `&q=${getPref(PrefKey.UI_IMAGE_QUALITY)}`);
+        str = PatcherUtils.insertAt(str, index, `&q=${getGlobalPref(GlobalPref.UI_IMAGE_QUALITY)}`);
         return str;
     }
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
-    ...(AppInterface && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+    ...(AppInterface && getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
         'disableAbsoluteMouse',
     ] : []),
@@ -1126,7 +1126,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     'gameCardCustomIcons',
     // 'gameCardPassTitle',
 
-    ...(getPref(PrefKey.UI_IMAGE_QUALITY) < 90 ? [
+    ...(getGlobalPref(GlobalPref.UI_IMAGE_QUALITY) < 90 ? [
         'setImageQuality',
     ] : []),
 
@@ -1154,16 +1154,16 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     'supportLocalCoOp',
     'overrideStorageGetSettings',
-    getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentFocus',
+    getGlobalPref(GlobalPref.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentFocus',
 
-    getPref(PrefKey.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
-    getPref(PrefKey.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',
+    getGlobalPref(GlobalPref.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
+    getGlobalPref(GlobalPref.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',
 
     ...(STATES.userAgent.capabilities.touch ? [
         'disableTouchContextMenu',
     ] : []),
 
-    ...(getPref(PrefKey.BLOCK_TRACKING) ? [
+    ...(getGlobalPref(GlobalPref.BLOCK_TRACKING) ? [
         'disableAiTrack',
         'disableTelemetry',
 
@@ -1173,7 +1173,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
         'disableTelemetryProvider',
     ] : []),
 
-    ...(getPref(PrefKey.REMOTE_PLAY_ENABLED) ? [
+    ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
         'remotePlayKeepAlive',
         'remotePlayDirectConnectUrl',
         'remotePlayDisableAchievementToast',
@@ -1188,7 +1188,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []),
 ]);
 
-const hideSections = getPref(PrefKey.UI_HIDE_SECTIONS);
+const hideSections = getGlobalPref(GlobalPref.UI_HIDE_SECTIONS);
 let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
     hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
@@ -1196,7 +1196,7 @@ let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
     hideSections.some(value => [UiSection.NATIVE_MKB, UiSection.MOST_POPULAR].includes(value)) && 'ignoreSiglSections',
 
-    ...(getPref(PrefKey.UI_IMAGE_QUALITY) < 90 ? [
+    ...(getGlobalPref(GlobalPref.UI_IMAGE_QUALITY) < 90 ? [
         'setBackgroundImageQuality',
     ] : []),
 
@@ -1206,8 +1206,6 @@ let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
 ]);
 
 // Only when playing
-// TODO: check this
-// @ts-ignore
 let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     'exposeInputChannel',
 
@@ -1221,34 +1219,34 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     // 'exposeEventTarget',
 
     // Patch volume control for normal stream
-    getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && !getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'patchAudioMediaStream',
+    getGlobalPref(GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED) && !getGlobalPref(GlobalPref.STREAM_COMBINE_SOURCES) && 'patchAudioMediaStream',
     // Patch volume control for combined audio+video stream
-    getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'patchCombinedAudioVideoMediaStream',
+    getGlobalPref(GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED) && getGlobalPref(GlobalPref.STREAM_COMBINE_SOURCES) && 'patchCombinedAudioVideoMediaStream',
 
     // Skip feedback dialog
-    getPref(PrefKey.UI_DISABLE_FEEDBACK_DIALOG) && 'skipFeedbackDialog',
+    getGlobalPref(GlobalPref.UI_DISABLE_FEEDBACK_DIALOG) && 'skipFeedbackDialog',
 
     ...(STATES.userAgent.capabilities.touch ? [
-        getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'patchShowSensorControls',
-        getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
-        (getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getPref(PrefKey.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
-        getPref(PrefKey.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
-        (getPref(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF && (getPref(PrefKey.MKB_ENABLED) || getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON)) && 'patchBabylonRendererClass',
+        getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'patchShowSensorControls',
+        getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL && 'exposeTouchLayoutManager',
+        (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getGlobalPref(GlobalPref.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
+        getGlobalPref(GlobalPref.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
+        (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF && (getGlobalPref(GlobalPref.MKB_ENABLED) || getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON)) && 'patchBabylonRendererClass',
     ] : []),
 
     BX_FLAGS.EnableXcloudLogging && 'enableConsoleLogging',
 
     'patchPollGamepads',
 
-    getPref(PrefKey.STREAM_COMBINE_SOURCES) && 'streamCombineSources',
+    getGlobalPref(GlobalPref.STREAM_COMBINE_SOURCES) && 'streamCombineSources',
 
-    ...(getPref(PrefKey.REMOTE_PLAY_ENABLED) ? [
+    ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
         'patchRemotePlayMkb',
         'remotePlayConnectMode',
     ] : []),
 
     // Native MKB
-    ...(AppInterface && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
+    ...(AppInterface && getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'patchMouseAndKeyboardEnabled',
         'disableNativeRequestPointerLock',
     ] : []),

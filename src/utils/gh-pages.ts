@@ -4,11 +4,6 @@ import { BxLogger } from "./bx-logger";
 import { BxEventBus } from "./bx-event-bus";
 
 
-export type ForceNativeMkbResponse = {
-    $schemaVersion: number;
-    data: { [key: string]: string };
-}
-
 export class GhPagesUtils {
     static fetchLatestCommit() {
         const url = 'https://api.github.com/repos/redphx/better-xcloud/branches/gh-pages';

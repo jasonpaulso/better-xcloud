@@ -6,21 +6,21 @@ import { BxIcon } from "@utils/bx-icon";
 import type { BaseGameBarAction } from "./base-action";
 import { STATES } from "@utils/global";
 import { MicrophoneAction } from "./microphone-action";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
 import { TrueAchievementsAction } from "./true-achievements-action";
 import { SpeakerAction } from "./speaker-action";
 import { RendererAction } from "./renderer-action";
 import { BxLogger } from "@/utils/bx-logger";
 import { GameBarPosition, TouchControllerMode } from "@/enums/pref-values";
 import { BxEventBus } from "@/utils/bx-event-bus";
+import { getGlobalPref } from "@/utils/pref-utils";
 
 
 export class GameBar {
     private static instance: GameBar | null | undefined;
     public static getInstance(): typeof GameBar['instance'] {
         if (typeof GameBar.instance === 'undefined') {
-            if (getPref(PrefKey.GAME_BAR_POSITION) !== GameBarPosition.OFF) {
+            if (getGlobalPref(GlobalPref.GAME_BAR_POSITION) !== GameBarPosition.OFF) {
                 GameBar.instance = new GameBar();
             } else {
                 GameBar.instance = null;
@@ -46,7 +46,7 @@ export class GameBar {
 
         let $container;
 
-        const position = getPref(PrefKey.GAME_BAR_POSITION);
+        const position = getGlobalPref(GlobalPref.GAME_BAR_POSITION);
 
         const $gameBar = CE('div', { id: 'bx-game-bar', class: 'bx-gone', 'data-position': position },
             $container = CE('div', { class: 'bx-game-bar-container bx-offscreen' }),
@@ -55,7 +55,7 @@ export class GameBar {
 
         this.actions = [
             new ScreenshotAction(),
-            ...(STATES.userAgent.capabilities.touch && (getPref(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF) ? [new TouchControlAction()] : []),
+            ...(STATES.userAgent.capabilities.touch && (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF) ? [new TouchControlAction()] : []),
             new SpeakerAction(),
             new RendererAction(),
             new MicrophoneAction(),

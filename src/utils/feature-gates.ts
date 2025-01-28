@@ -1,7 +1,7 @@
-import { PrefKey } from "@/enums/pref-keys";
+import { GlobalPref } from "@/enums/pref-keys";
 import { BX_FLAGS } from "./bx-flags";
-import { getPref } from "./settings-storages/global-settings-storage";
 import { BlockFeature, NativeMkbMode } from "@/enums/pref-values";
+import { getGlobalPref } from "./pref-utils";
 
 export let FeatureGates: { [key: string]: boolean } = {
     PwaPrompt: false,
@@ -12,13 +12,13 @@ export let FeatureGates: { [key: string]: boolean } = {
 };
 
 // Enable Native Mouse & Keyboard
-const nativeMkbMode = getPref(PrefKey.NATIVE_MKB_MODE);
+const nativeMkbMode = getGlobalPref(GlobalPref.NATIVE_MKB_MODE);
 if (nativeMkbMode !== NativeMkbMode.DEFAULT) {
     FeatureGates.EnableMouseAndKeyboard = nativeMkbMode === NativeMkbMode.ON;
 }
 
 // Disable chat feature
-const blockFeatures = getPref(PrefKey.BLOCK_FEATURES);
+const blockFeatures = getGlobalPref(GlobalPref.BLOCK_FEATURES);
 if (blockFeatures.includes(BlockFeature.CHAT)) {
     FeatureGates.EnableGuideChatTab = false;
 }

@@ -4,7 +4,7 @@ import { t } from "@/utils/translation";
 import { MkbMappingPresetsTable } from "@/utils/local-db/mkb-mapping-presets-table";
 import { GamepadKey, GamepadKeyName } from "@/enums/gamepad";
 import { CE, createSettingRow } from "@/utils/html";
-import { MouseMapTo, type KeyCode } from "@/enums/mkb";
+import { MouseMapTo } from "@/enums/mkb";
 import { BxKeyBindingButton, BxKeyBindingButtonFlag } from "@/web-components/bx-key-binding-button";
 import { StreamSettings } from "@/utils/stream-settings";
 import { BxNumberStepper } from "@/web-components/bx-number-stepper";

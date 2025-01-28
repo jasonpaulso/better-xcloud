@@ -10,10 +10,10 @@
     "build": "build.ts"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.14",
-    "@types/node": "^22.10.2",
+    "@types/bun": "^1.2.0",
+    "@types/node": "^22.10.10",
     "@types/stylus": "^0.48.43",
-    "eslint": "^9.17.0",
+    "eslint": "^9.19.0",
     "eslint-plugin-compat": "^6.0.2",
     "stylus": "^0.64.0"
   },

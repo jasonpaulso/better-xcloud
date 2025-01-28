@@ -1,10 +1,10 @@
 import { STATES } from "@utils/global";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "./pref-utils";
 
 
 export function getPreferredServerRegion(shortName = false): string | null {
-    let preferredRegion = getPref(PrefKey.SERVER_REGION);
+    let preferredRegion = getGlobalPref(GlobalPref.SERVER_REGION);
     const serverRegions = STATES.serverRegions;
 
     // Return preferred region

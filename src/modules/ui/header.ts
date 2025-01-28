@@ -7,8 +7,8 @@ import { getPreferredServerRegion } from "@utils/region";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { t } from "@utils/translation";
 import { SettingsDialog } from "./dialog/settings-dialog";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { BxLogger } from "@/utils/bx-logger";
 
 export class HeaderSection {
@@ -46,7 +46,7 @@ export class HeaderSection {
         });
 
         this.$buttonsWrapper = CE('div', false,
-            getPref(PrefKey.REMOTE_PLAY_ENABLED) ? this.$btnRemotePlay : null,
+            getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? this.$btnRemotePlay : null,
             this.$btnSettings,
         );
     }
@@ -56,7 +56,7 @@ export class HeaderSection {
             return;
         }
 
-        const PREF_LATEST_VERSION = getPref(PrefKey.VERSION_LATEST);
+        const PREF_LATEST_VERSION = getGlobalPref(GlobalPref.VERSION_LATEST);
 
         // Setup Settings button
         const $btnSettings = this.$btnSettings;

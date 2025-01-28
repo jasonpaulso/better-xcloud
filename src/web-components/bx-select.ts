@@ -1,8 +1,8 @@
-import { PrefKey } from "@/enums/pref-keys";
+import { GlobalPref } from "@/enums/pref-keys";
 import type { NavigationElement } from "@/modules/ui/dialog/navigation-dialog";
 import { BxEvent } from "@/utils/bx-event";
 import { setNearby } from "@/utils/navigation-utils";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { ButtonStyle, CE, clearDataSet, createButton } from "@utils/html";
 
 export class BxSelectElement extends HTMLSelectElement {
@@ -20,7 +20,7 @@ export class BxSelectElement extends HTMLSelectElement {
     private $checkBox!: HTMLInputElement;
 
     static create($select: HTMLSelectElement, forceFriendly=false): BxSelectElement {
-        const isControllerFriendly = forceFriendly || getPref(PrefKey.UI_CONTROLLER_FRIENDLY);
+        const isControllerFriendly = forceFriendly || getGlobalPref(GlobalPref.UI_CONTROLLER_FRIENDLY);
 
         // Return normal <select> if it's non-controller friendly <select multiple>
         if ($select.multiple && !isControllerFriendly) {
@@ -281,8 +281,8 @@ export class BxSelectElement extends HTMLSelectElement {
 
         // Disable buttons when there is only one option or fewer
         const disableButtons = optionsList.length <= 1;
-        $btnPrev?.classList.toggle('bx-inactive', disableButtons);
-        $btnNext?.classList.toggle('bx-inactive', disableButtons);
+        $btnPrev?.classList.toggle('bx-gone', disableButtons);
+        $btnNext?.classList.toggle('bx-gone', disableButtons);
 
         // Update indicators
         for (let i = 0; i < optionsList.length; i++) {

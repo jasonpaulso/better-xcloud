@@ -2,9 +2,10 @@ import { t } from "@utils/translation";
 import { STATES } from "@utils/global";
 import { Toast } from "@utils/toast";
 import { ceilToNearest, floorToNearest } from "@/utils/utils";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref, StreamPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { BxEventBus } from "@/utils/bx-event-bus";
+import { getStreamPref, setStreamPref } from "@/utils/pref-utils";
 
 export enum SpeakerState {
     ENABLED,
@@ -13,11 +14,11 @@ export enum SpeakerState {
 
 export class SoundShortcut {
     static adjustGainNodeVolume(amount: number): number {
-        if (!getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED)) {
+        if (!getGlobalPref(GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED)) {
             return 0;
         }
 
-        const currentValue = getPref(PrefKey.AUDIO_VOLUME);
+        const currentValue = getStreamPref(StreamPref.AUDIO_VOLUME);
         let nearestValue: number;
 
         if (amount > 0) {  // Increase
@@ -33,7 +34,7 @@ export class SoundShortcut {
             newValue = currentValue + amount;
         }
 
-        newValue = setPref(PrefKey.AUDIO_VOLUME, newValue, true);
+        newValue = setStreamPref(StreamPref.AUDIO_VOLUME, newValue, 'direct');
         SoundShortcut.setGainNodeVolume(newValue);
 
         // Show toast
@@ -47,14 +48,14 @@ export class SoundShortcut {
     }
 
     static muteUnmute() {
-        if (getPref(PrefKey.AUDIO_VOLUME_CONTROL_ENABLED) && STATES.currentStream.audioGainNode) {
+        if (getGlobalPref(GlobalPref.AUDIO_VOLUME_CONTROL_ENABLED) && STATES.currentStream.audioGainNode) {
             const gainValue = STATES.currentStream.audioGainNode.gain.value;
-            const settingValue = getPref(PrefKey.AUDIO_VOLUME);
+            const settingValue = getStreamPref(StreamPref.AUDIO_VOLUME);
 
             let targetValue: number;
             if (settingValue === 0) {  // settingValue is 0 => set to 100
                 targetValue = 100;
-                setPref(PrefKey.AUDIO_VOLUME, targetValue, true);
+                setStreamPref(StreamPref.AUDIO_VOLUME, targetValue, 'direct');
             } else if (gainValue === 0) {  // is being muted => set to settingValue
                 targetValue = settingValue;
             } else {  // not being muted => mute

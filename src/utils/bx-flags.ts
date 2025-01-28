@@ -1,28 +1,5 @@
 import { BxLogger } from "./bx-logger";
 
-export type BxFlags = {
-    Debug: boolean;
-
-    CheckForUpdate: boolean;
-    EnableXcloudLogging: boolean;
-    SafariWorkaround: boolean;
-
-    ForceNativeMkbTitles: string[];
-    FeatureGates: { [key: string]: boolean } | null,
-
-    DeviceInfo: {
-        deviceType: 'android' | 'android-tv' | 'android-handheld' | 'webos' | 'unknown',
-        userAgent?: string,
-
-        androidInfo?: {
-            manufacturer: string,
-            brand: string,
-            board: string,
-            model: string,
-        },
-    }
-}
-
 // Setup flags
 const DEFAULT_FLAGS: BxFlags = {
     Debug: false,

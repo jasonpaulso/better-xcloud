@@ -2,15 +2,15 @@ import { BxEvent } from "@utils/bx-event";
 import { STATES } from "@utils/global";
 import { BxLogger } from "@utils/bx-logger";
 import { patchSdpBitrate, setCodecPreferences } from "./sdp";
-import { StreamPlayer, type StreamPlayerOptions } from "@/modules/stream-player";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref, getPrefDefinition } from "./settings-storages/global-settings-storage";
+import { StreamPlayer } from "@/modules/stream-player";
+import { GlobalPref, StreamPref } from "@/enums/pref-keys";
 import { CodecProfile } from "@/enums/pref-values";
 import type { SettingDefinition } from "@/types/setting-definition";
 import { BxEventBus } from "./bx-event-bus";
+import { getGlobalPref, getGlobalPrefDefinition, getStreamPref } from "@/utils/pref-utils";
 
 export function patchVideoApi() {
-    const PREF_SKIP_SPLASH_VIDEO = getPref(PrefKey.UI_SKIP_SPLASH_VIDEO);
+    const PREF_SKIP_SPLASH_VIDEO = getGlobalPref(GlobalPref.UI_SKIP_SPLASH_VIDEO);
 
     // Show video player when it's ready
     const showFunc = function(this: HTMLVideoElement) {
@@ -20,13 +20,13 @@ export function patchVideoApi() {
         }
 
         const playerOptions = {
-            processing: getPref(PrefKey.VIDEO_PROCESSING),
-            sharpness: getPref(PrefKey.VIDEO_SHARPNESS),
-            saturation: getPref(PrefKey.VIDEO_SATURATION),
-            contrast: getPref(PrefKey.VIDEO_CONTRAST),
-            brightness: getPref(PrefKey.VIDEO_BRIGHTNESS),
+            processing: getStreamPref(StreamPref.VIDEO_PROCESSING),
+            sharpness: getStreamPref(StreamPref.VIDEO_SHARPNESS),
+            saturation: getStreamPref(StreamPref.VIDEO_SATURATION),
+            contrast: getStreamPref(StreamPref.VIDEO_CONTRAST),
+            brightness: getStreamPref(StreamPref.VIDEO_BRIGHTNESS),
         } satisfies StreamPlayerOptions;
-        STATES.currentStream.streamPlayer = new StreamPlayer(this, getPref(PrefKey.VIDEO_PLAYER_TYPE), playerOptions);
+        STATES.currentStream.streamPlayer = new StreamPlayer(this, getStreamPref(StreamPref.VIDEO_PLAYER_TYPE), playerOptions);
 
         BxEventBus.Stream.emit('state.playing', {
             $video: this,
@@ -60,7 +60,7 @@ export function patchVideoApi() {
 
 
 export function patchRtcCodecs() {
-    const codecProfile = getPref(PrefKey.STREAM_CODEC_PROFILE);
+    const codecProfile = getGlobalPref(GlobalPref.STREAM_CODEC_PROFILE);
     if (codecProfile === 'default') {
         return;
     }
@@ -80,9 +80,9 @@ export function patchRtcPeerConnection() {
         return dataChannel;
     }
 
-    const maxVideoBitrateDef = getPrefDefinition(PrefKey.STREAM_MAX_VIDEO_BITRATE) as Extract<SettingDefinition, { min: number }>;
-    const maxVideoBitrate = getPref(PrefKey.STREAM_MAX_VIDEO_BITRATE);
-    const codec = getPref(PrefKey.STREAM_CODEC_PROFILE);
+    const maxVideoBitrateDef = getGlobalPrefDefinition(GlobalPref.STREAM_MAX_VIDEO_BITRATE) as Extract<SettingDefinition, { min: number }>;
+    const maxVideoBitrate = getGlobalPref(GlobalPref.STREAM_MAX_VIDEO_BITRATE);
+    const codec = getGlobalPref(GlobalPref.STREAM_CODEC_PROFILE);
 
     if (codec !== CodecProfile.DEFAULT || maxVideoBitrate < maxVideoBitrateDef.max) {
         const nativeSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
@@ -113,8 +113,8 @@ export function patchRtcPeerConnection() {
         STATES.currentStream.peerConnection = conn;
 
         conn.addEventListener('connectionstatechange', e => {
-                BxLogger.info('connectionstatechange', conn.connectionState);
-            });
+            BxLogger.info('connectionstatechange', conn.connectionState);
+        });
         return conn;
     }
 }
@@ -134,7 +134,7 @@ export function patchAudioContext() {
 
         ctx.createGain = function() {
             const gainNode = nativeCreateGain.apply(this);
-            gainNode.gain.value = getPref(PrefKey.AUDIO_VOLUME) / 100;
+            gainNode.gain.value = getStreamPref(StreamPref.AUDIO_VOLUME) / 100;
 
             STATES.currentStream.audioGainNode = gainNode;
             return gainNode;

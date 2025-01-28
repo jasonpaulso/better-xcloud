@@ -4,8 +4,7 @@ import { AppInterface, STATES } from "@/utils/global";
 import { MkbHandler } from "./base-mkb-handler";
 import { t } from "@/utils/translation";
 import { BxEvent } from "@/utils/bx-event";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref, StreamPref } from "@/enums/pref-keys";
 import { BxLogger } from "@/utils/bx-logger";
 import { MkbPopup } from "./mkb-popup";
 import { KeyHelper } from "./key-helper";
@@ -13,7 +12,7 @@ import { StreamSettings } from "@/utils/stream-settings";
 import { ShortcutAction } from "@/enums/shortcut-actions";
 import { NativeMkbMode } from "@/enums/pref-values";
 import { BxEventBus } from "@/utils/bx-event-bus";
-import type { NativeMouseData, XcloudInputChannel } from "@/utils/gamepad";
+import { getStreamPref, getGlobalPref } from "@/utils/pref-utils";
 
 export class NativeMkbHandler extends MkbHandler {
     private static instance: NativeMkbHandler | null | undefined;
@@ -31,7 +30,7 @@ export class NativeMkbHandler extends MkbHandler {
     private readonly LOG_TAG = 'NativeMkbHandler';
 
     static isAllowed = () => {
-        return STATES.browser.capabilities.emulatedNativeMkb && getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON;
+        return STATES.browser.capabilities.emulatedNativeMkb && getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON;
     }
 
     private pointerClient: PointerClient | undefined;
@@ -113,8 +112,8 @@ export class NativeMkbHandler extends MkbHandler {
             Toast.show('Cannot enable Mouse & Keyboard feature');
         }
 
-        this.mouseVerticalMultiply = getPref(PrefKey.NATIVE_MKB_SCROLL_VERTICAL_SENSITIVITY);
-        this.mouseHorizontalMultiply = getPref(PrefKey.NATIVE_MKB_SCROLL_HORIZONTAL_SENSITIVITY);
+        this.mouseVerticalMultiply = getStreamPref(StreamPref.NATIVE_MKB_SCROLL_VERTICAL_SENSITIVITY);
+        this.mouseHorizontalMultiply = getStreamPref(StreamPref.NATIVE_MKB_SCROLL_HORIZONTAL_SENSITIVITY);
 
         window.addEventListener('keyup', this);
 

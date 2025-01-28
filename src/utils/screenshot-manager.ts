@@ -1,9 +1,9 @@
 import { AppInterface, STATES } from "./global";
 import { CE } from "./html";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
 import { BxLogger } from "./bx-logger";
 import { StreamPlayerType } from "@/enums/pref-values";
+import { getGlobalPref } from "@/utils/pref-utils";
 
 
 export class ScreenshotManager {
@@ -49,7 +49,7 @@ export class ScreenshotManager {
         }
 
         let $player;
-        if (getPref(PrefKey.SCREENSHOT_APPLY_FILTERS)) {
+        if (getGlobalPref(GlobalPref.SCREENSHOT_APPLY_FILTERS)) {
             $player = streamPlayer.getPlayerElement();
         } else {
             $player = streamPlayer.getPlayerElement(StreamPlayerType.VIDEO);

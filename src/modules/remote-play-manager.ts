@@ -5,8 +5,8 @@ import { t } from "@utils/translation";
 import { localRedirect } from "@modules/ui/ui";
 import { BxLogger } from "@utils/bx-logger";
 import { HeaderSection } from "./ui/header";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref, setPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref, setGlobalPref } from "@/utils/pref-utils";
 import { RemotePlayDialog } from "./ui/dialog/remote-play-dialog";
 
 export const enum RemotePlayConsoleState {
@@ -37,7 +37,7 @@ export class RemotePlayManager {
     private static instance: RemotePlayManager | null | undefined;
     public static getInstance(): typeof RemotePlayManager['instance'] {
         if (typeof RemotePlayManager.instance === 'undefined') {
-            if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
+            if (getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED)) {
                 RemotePlayManager.instance = new RemotePlayManager();
             } else {
                 RemotePlayManager.instance = null;
@@ -186,7 +186,7 @@ export class RemotePlayManager {
 
     play(serverId: string, resolution?: string) {
         if (resolution) {
-            setPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION, resolution);
+            setGlobalPref(GlobalPref.REMOTE_PLAY_STREAM_RESOLUTION, resolution, 'ui');
         }
 
         STATES.remotePlay.config = {
@@ -221,7 +221,7 @@ export class RemotePlayManager {
     }
 
     static detect() {
-        if (!getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
+        if (!getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED)) {
             return;
         }
 

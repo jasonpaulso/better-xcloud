@@ -5,8 +5,8 @@ import { t } from "@/utils/translation";
 import { GamepadKey, GamepadKeyName } from "@/enums/gamepad";
 import { ButtonStyle, CE, createButton, createSettingRow } from "@/utils/html";
 import { BxSelectElement } from "@/web-components/bx-select";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { BxEvent } from "@/utils/bx-event";
 import { deepClone } from "@/utils/global";
 import { StreamSettings } from "@/utils/stream-settings";
@@ -58,7 +58,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
     }
 
     private render() {
-        const isControllerFriendly = getPref(PrefKey.UI_CONTROLLER_FRIENDLY);
+        const isControllerFriendly = getGlobalPref(GlobalPref.UI_CONTROLLER_FRIENDLY);
         const $rows = CE('div', { class: 'bx-buttons-grid' });
 
         const $baseSelect = CE('select', { class: 'bx-full-width' },
@@ -117,7 +117,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
         }
 
         // Map nearby elenemts for controller-friendly UI
-        if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
+        if (getGlobalPref(GlobalPref.UI_CONTROLLER_FRIENDLY)) {
             for (let i = 0; i < this.selectsOrder.length; i++) {
                 const $select = this.selectsMap[this.selectsOrder[i] as unknown as GamepadKey] as NavigationElement;
                 const directions = {
@@ -257,7 +257,7 @@ export class ControllerCustomizationsManagerDialog extends BaseProfileManagerDia
             $label.classList.add('bx-horizontal-shaking');
 
             // Focus select
-            if (getPref(PrefKey.UI_CONTROLLER_FRIENDLY)) {
+            if (getGlobalPref(GlobalPref.UI_CONTROLLER_FRIENDLY)) {
                 this.dialogManager.focus($select);
             }
         }

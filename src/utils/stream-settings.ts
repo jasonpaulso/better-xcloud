@@ -1,7 +1,5 @@
-import { PrefKey, type PrefTypeMap } from "@/enums/pref-keys";
-import { ControllerSettingsTable } from "./local-db/controller-settings-table";
+import { GlobalPref, StreamPref } from "@/enums/pref-keys";
 import { ControllerShortcutsTable } from "./local-db/controller-shortcuts-table";
-import { getPref, setPref } from "./settings-storages/global-settings-storage";
 import type { ControllerCustomizationConvertedPresetData, ControllerCustomizationPresetData, ControllerShortcutPresetRecord, KeyboardShortcutConvertedPresetData, MkbConvertedPresetData } from "@/types/presets";
 import { STATES } from "./global";
 import { DeviceVibrationMode } from "@/enums/pref-values";
@@ -15,10 +13,11 @@ import { ShortcutAction } from "@/enums/shortcut-actions";
 import { KeyHelper } from "@/modules/mkb/key-helper";
 import { BxEventBus } from "./bx-event-bus";
 import { ControllerCustomizationsTable } from "./local-db/controller-customizations-table";
+import { getStreamPref, setStreamPref, STORAGE } from "@/utils/pref-utils";
 
 
 export type StreamSettingsData = {
-    settings: PartialRecord<PrefKey, any>;
+    settings: PartialRecord<GlobalPref, any>;
     xCloudPollingMode: 'none' | 'callbacks' | 'navigation' | 'all';
 
     deviceVibrationIntensity: number;
@@ -51,15 +50,10 @@ export class StreamSettings {
         keyboardShortcuts: {},
     };
 
-    static getPref<T extends keyof PrefTypeMap>(key: T) {
-        return getPref<T>(key);
-    }
-
     static async refreshControllerSettings() {
         const settings = StreamSettings.settings;
         const controllers: StreamSettingsData['controllers'] = {};
 
-        const settingsTable = ControllerSettingsTable.getInstance();
         const shortcutsTable = ControllerShortcutsTable.getInstance();
         const mappingTable = ControllerCustomizationsTable.getInstance();
 
@@ -74,14 +68,14 @@ export class StreamSettings {
                 continue;
             }
 
-            const settingsData = await settingsTable.getControllerData(gamepad.id);
+            const controllerSetting = STORAGE.Stream.getControllerSetting(gamepad.id);
 
             // Shortcuts
-            const shortcutsPreset = await shortcutsTable.getPreset(settingsData.shortcutPresetId);
+            const shortcutsPreset = await shortcutsTable.getPreset(controllerSetting.shortcutPresetId);
             const shortcutsMapping = !shortcutsPreset ? null : shortcutsPreset.data.mapping;
 
             // Mapping
-            const customizationPreset = await mappingTable.getPreset(settingsData.customizationPresetId);
+            const customizationPreset = await mappingTable.getPreset(controllerSetting.customizationPresetId);
             const customizationData = StreamSettings.convertControllerCustomization(customizationPreset?.data);
 
             controllers[gamepad.id] = {
@@ -92,7 +86,7 @@ export class StreamSettings {
         settings.controllers = controllers;
 
         // Controller polling rate
-        settings.controllerPollingRate = StreamSettings.getPref(PrefKey.CONTROLLER_POLLING_RATE);
+        settings.controllerPollingRate = getStreamPref(StreamPref.CONTROLLER_POLLING_RATE);
         // Device vibration
         await StreamSettings.refreshDeviceVibration();
     }
@@ -150,23 +144,23 @@ export class StreamSettings {
             return;
         }
 
-        const mode = StreamSettings.getPref(PrefKey.DEVICE_VIBRATION_MODE);
+        const mode = getStreamPref(StreamPref.DEVICE_VIBRATION_MODE);
         let intensity = 0;  // Disable
 
         // Enable when no controllers are detected in Auto mode
         if (mode === DeviceVibrationMode.ON || (mode === DeviceVibrationMode.AUTO && !hasGamepad())) {
             // Set intensity
-            intensity = StreamSettings.getPref(PrefKey.DEVICE_VIBRATION_INTENSITY) / 100;
+            intensity = getStreamPref(StreamPref.DEVICE_VIBRATION_INTENSITY) / 100;
         }
 
         StreamSettings.settings.deviceVibrationIntensity = intensity;
-        BxEventBus.Script.emit('deviceVibration.updated', {});
+        BxEventBus.Stream.emit('deviceVibration.updated', {});
     }
 
     static async refreshMkbSettings() {
         const settings = StreamSettings.settings;
 
-        let presetId = StreamSettings.getPref(PrefKey.MKB_P1_MAPPING_PRESET_ID);
+        let presetId = getStreamPref(StreamPref.MKB_P1_MAPPING_PRESET_ID);
         const orgPreset = (await MkbMappingPresetsTable.getInstance().getPreset(presetId))!;
         const orgPresetData = orgPreset.data;
 
@@ -197,19 +191,19 @@ export class StreamSettings {
 
         settings.mkbPreset = converted;
 
-        setPref(PrefKey.MKB_P1_MAPPING_PRESET_ID, orgPreset.id);
-        BxEventBus.Script.emit('mkb.setting.updated', {});
+        setStreamPref(StreamPref.MKB_P1_MAPPING_PRESET_ID, orgPreset.id, 'direct');
+        BxEventBus.Stream.emit('mkb.setting.updated', {});
     }
 
     static async refreshKeyboardShortcuts() {
         const settings = StreamSettings.settings;
 
-        let presetId = StreamSettings.getPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID);
+        let presetId = getStreamPref(StreamPref.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID);
         if (presetId === KeyboardShortcutDefaultId.OFF) {
             settings.keyboardShortcuts = null;
 
-            setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId);
-            BxEventBus.Script.emit('keyboardShortcuts.updated', {});
+            setStreamPref(StreamPref.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId, 'direct');
+            BxEventBus.Stream.emit('keyboardShortcuts.updated', {});
             return;
         }
 
@@ -228,8 +222,8 @@ export class StreamSettings {
 
         settings.keyboardShortcuts = converted;
 
-        setPref(PrefKey.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, orgPreset.id);
-        BxEventBus.Script.emit('keyboardShortcuts.updated', {});
+        setStreamPref(StreamPref.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, orgPreset.id, 'direct');
+        BxEventBus.Stream.emit('keyboardShortcuts.updated', {});
     }
 
     static async refreshAllSettings() {

@@ -1,4 +1,4 @@
-import { MouseButtonCode, WheelCode, type KeyCode } from "@/enums/mkb";
+import { MouseButtonCode, WheelCode } from "@/enums/mkb";
 
 export const enum KeyModifier {
     CTRL = 1,

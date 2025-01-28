@@ -4,12 +4,11 @@ import { SupportedInputType } from "./bx-exposed";
 import { NATIVE_FETCH } from "./bx-flags";
 import { STATES } from "./global";
 import { generateMsDeviceInfo, getOsNameFromResolution, patchIceCandidates } from "./network";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
-import type { RemotePlayConsoleAddresses } from "@/types/network";
+import { GlobalPref } from "@/enums/pref-keys";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
 import { TouchControllerMode } from "@/enums/pref-values";
 import { BxEventBus } from "./bx-event-bus";
+import { getGlobalPref } from "./pref-utils";
 
 export class XhomeInterceptor {
     private static consoleAddrs: RemotePlayConsoleAddresses = {};
@@ -71,7 +70,7 @@ export class XhomeInterceptor {
     private static async handleInputConfigs(request: Request | URL, opts: { [index: string]: any }) {
         const response = await NATIVE_FETCH(request);
 
-        if (getPref(PrefKey.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.ALL) {
+        if (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.ALL) {
             return response;
         }
 
@@ -152,7 +151,7 @@ export class XhomeInterceptor {
         headers.authorization = `Bearer ${RemotePlayManager.getInstance()!.getXhomeToken()}`;
 
         // Patch resolution
-        const osName = getOsNameFromResolution(getPref(PrefKey.REMOTE_PLAY_STREAM_RESOLUTION));
+        const osName = getOsNameFromResolution(getGlobalPref(GlobalPref.REMOTE_PLAY_STREAM_RESOLUTION));
         headers['x-ms-device-info'] = JSON.stringify(generateMsDeviceInfo(osName));
 
         const opts: Record<string, any> = {

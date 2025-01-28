@@ -2,35 +2,27 @@ import { VIRTUAL_GAMEPAD_ID } from "@modules/mkb/mkb-handler";
 import { t } from "@utils/translation";
 import { Toast } from "@utils/toast";
 import { BxLogger } from "@utils/bx-logger";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
 import { GamepadKey, GamepadKeyName } from "@/enums/gamepad";
+import { getStreamPref } from "@/utils/pref-utils";
+import { StreamPref } from "@/enums/pref-keys";
 
-export type NativeMouseData = {
-    X: number,
-    Y: number,
-    Buttons: number,
-    WheelX: number,
-    WheelY: number,
-    Type?: 0,  // 0: Relative, 1: Absolute
-}
-
-export type XcloudInputChannel = {
-    sendGamepadInput: (timestamp: number, gamepads: XcloudGamepad[]) => void;
-    queueMouseInput: (data: NativeMouseData) => void;
-}
 
 // Show a toast when connecting/disconecting controller
 export function showGamepadToast(gamepad: Gamepad) {
-    // Don't show Toast for virtual controller
+    // Don't show toast for virtual controller
     if (gamepad.id === VIRTUAL_GAMEPAD_ID) {
+        return;
+    }
+
+    // Don't show toast when toggling local co-op feature
+    if ((gamepad as any)._noToast) {
         return;
     }
 
     BxLogger.info('Gamepad', gamepad);
     let text = '🎮';
 
-    if (getPref(PrefKey.LOCAL_CO_OP_ENABLED)) {
+    if (getStreamPref(StreamPref.LOCAL_CO_OP_ENABLED)) {
         text += ` #${gamepad.index + 1}`;
     }
 
@@ -47,6 +39,10 @@ export function showGamepadToast(gamepad: Gamepad) {
     }
 
     Toast.show(text, status, { instant: false });
+}
+
+export function simplifyGamepadName(name: string) {
+    return name.replace(/\s+\(.*Vendor: ([0-9a-f]{4}) Product: ([0-9a-f]{4})\)$/, ' ($1-$2)');
 }
 
 export function getUniqueGamepadNames() {

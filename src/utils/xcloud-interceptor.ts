@@ -9,10 +9,10 @@ import { STATES } from "./global";
 import { generateMsDeviceInfo, getOsNameFromResolution, patchIceCandidates } from "./network";
 import { getPreferredServerRegion } from "./region";
 import { BypassServerIps } from "@/enums/bypass-servers";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
 import { NativeMkbMode, TouchControllerMode } from "@/enums/pref-values";
 import { BxEventBus } from "./bx-event-bus";
+import { getGlobalPref } from "./pref-utils";
 
 export class XcloudInterceptor {
     private static readonly SERVER_EXTRA_INFO: Record<string, [string, ServerContinent]> = {
@@ -43,7 +43,7 @@ export class XcloudInterceptor {
     };
 
     private static async handleLogin(request: RequestInfo | URL, init?: RequestInit) {
-        const bypassServer = getPref(PrefKey.SERVER_BYPASS_RESTRICTION);
+        const bypassServer = getGlobalPref(GlobalPref.SERVER_BYPASS_RESTRICTION);
         if (bypassServer !== 'off') {
             const ip = BypassServerIps[bypassServer as keyof typeof BypassServerIps];
             ip && (request as Request).headers.set('X-Forwarded-For', ip);
@@ -112,8 +112,8 @@ export class XcloudInterceptor {
     private static async handlePlay(request: RequestInfo | URL, init?: RequestInit) {
         BxEventBus.Stream.emit('state.loading', {});
 
-        const PREF_STREAM_TARGET_RESOLUTION = getPref(PrefKey.STREAM_RESOLUTION);
-        const PREF_STREAM_PREFERRED_LOCALE = getPref(PrefKey.STREAM_PREFERRED_LOCALE);
+        const PREF_STREAM_TARGET_RESOLUTION = getGlobalPref(GlobalPref.STREAM_RESOLUTION);
+        const PREF_STREAM_PREFERRED_LOCALE = getGlobalPref(GlobalPref.STREAM_PREFERRED_LOCALE);
 
         const url = (typeof request === 'string') ? request : (request as Request).url;
         const parsedUrl = new URL(url);
@@ -159,7 +159,7 @@ export class XcloudInterceptor {
     private static async handleWaitTime(request: RequestInfo | URL, init?: RequestInit) {
         const response = await NATIVE_FETCH(request, init);
 
-        if (getPref(PrefKey.LOADING_SCREEN_SHOW_WAIT_TIME)) {
+        if (getGlobalPref(GlobalPref.LOADING_SCREEN_SHOW_WAIT_TIME)) {
             const json = await response.clone().json();
             if (json.estimatedAllocationTimeInSeconds > 0) {
                 // Setup wait time overlay
@@ -176,7 +176,7 @@ export class XcloudInterceptor {
         }
 
         // Touch controller for all games
-        if (isFullVersion() && getPref(PrefKey.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
+        if (isFullVersion() && getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.ALL) {
             const titleInfo = STATES.currentStream.titleInfo;
             if (titleInfo?.details.hasTouchSupport) {
                 TouchController.disable();
@@ -202,11 +202,11 @@ export class XcloudInterceptor {
 
         let overrideMkb: boolean | null = null;
 
-        if (getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.ON || (STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId))) {
+        if (getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON || (STATES.currentStream.titleInfo && BX_FLAGS.ForceNativeMkbTitles?.includes(STATES.currentStream.titleInfo.details.productId))) {
             overrideMkb = true;
         }
 
-        if (getPref(PrefKey.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
+        if (getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.OFF) {
             overrideMkb = false;
         }
 
@@ -224,7 +224,7 @@ export class XcloudInterceptor {
         }
 
         // Enable mic
-        if (getPref(PrefKey.AUDIO_MIC_ON_PLAYING)) {
+        if (getGlobalPref(GlobalPref.AUDIO_MIC_ON_PLAYING)) {
             overrides.audioConfiguration = overrides.audioConfiguration || {};
             overrides.audioConfiguration.enableMicrophone = true;
         }

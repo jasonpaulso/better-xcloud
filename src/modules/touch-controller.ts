@@ -4,8 +4,8 @@ import { BxEvent } from "@utils/bx-event";
 import { NATIVE_FETCH } from "@utils/bx-flags";
 import { t } from "@utils/translation";
 import { BxLogger } from "@utils/bx-logger";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "@/utils/pref-utils";
 import { TouchControllerStyleCustom, TouchControllerStyleStandard } from "@/enums/pref-values";
 import { GhPagesUtils } from "@/utils/gh-pages";
 import { BxEventBus } from "@/utils/bx-event-bus";
@@ -289,8 +289,8 @@ export class TouchController {
 
         TouchController.#$style = $style;
 
-        const PREF_STYLE_STANDARD = getPref(PrefKey.TOUCH_CONTROLLER_STYLE_STANDARD);
-        const PREF_STYLE_CUSTOM = getPref(PrefKey.TOUCH_CONTROLLER_STYLE_CUSTOM);
+        const PREF_STYLE_STANDARD = getGlobalPref(GlobalPref.TOUCH_CONTROLLER_STYLE_STANDARD);
+        const PREF_STYLE_CUSTOM = getGlobalPref(GlobalPref.TOUCH_CONTROLLER_STYLE_CUSTOM);
 
         BxEventBus.Stream.on('dataChannelCreated', payload => {
             const { dataChannel } = payload;

@@ -1,23 +1,22 @@
-import type { PrefKey, PrefTypeMap, StorageKey } from "@/enums/pref-keys";
-import type { NumberStepperParams, SettingAction, SettingDefinitions } from "@/types/setting-definition";
+import type { AnyPref, PrefTypeMap, StorageKey } from "@/enums/pref-keys";
+import type { NumberStepperParams, SettingAction, SettingActionOrigin, SettingDefinition, SettingDefinitions } from "@/types/setting-definition";
 import { t } from "../translation";
-import { SCRIPT_VARIANT } from "../global";
+import { deepClone, SCRIPT_VARIANT } from "../global";
 import { BxEventBus } from "../bx-event-bus";
+import { isStreamPref } from "../pref-utils";
+import { isPlainObject } from "../utils";
 
-export class BaseSettingsStore {
+export class BaseSettingsStorage<T extends AnyPref> {
     private storage: Storage;
-    private storageKey: StorageKey;
+    private storageKey: StorageKey | StorageKey.STREAM | `${StorageKey.STREAM}.${number}`;
     private _settings: object | null;
-    private definitions: SettingDefinitions;
+    private definitions: SettingDefinitions<T>;
 
-    constructor(storageKey: StorageKey, definitions: SettingDefinitions) {
+    constructor(storageKey: typeof this.storageKey, definitions:SettingDefinitions<T>) {
         this.storage = window.localStorage;
         this.storageKey = storageKey;
 
-        let settingId: keyof typeof definitions
-        for (settingId in definitions) {
-            const setting = definitions[settingId];
-
+        for (const [_, setting] of Object.entries(definitions) as [T, SettingDefinition][]) {
             // Convert requiredVariants to array
             if (typeof setting.requiredVariants === 'string') {
                 setting.requiredVariants = [setting.requiredVariants];
@@ -45,59 +44,69 @@ export class BaseSettingsStore {
 
         // Validate setting values
         for (const key in settings) {
-            settings[key] = this.validateValue('get', key as PrefKey, settings[key]);
+            settings[key] = this.validateValue('get', key as T, settings[key]);
         }
 
         this._settings = settings;
-
         return settings;
     }
 
-    getDefinition(key: PrefKey) {
+    getDefinition(key: T) {
         if (!this.definitions[key]) {
-            const error = 'Request invalid definition: ' + key;
-            alert(error);
-            throw Error(error);
+            alert('Request invalid definition: ' + key);
+            return {} as SettingDefinition;
         }
 
         return this.definitions[key];
     }
 
-    getSetting<T extends keyof PrefTypeMap>(key: T, checkUnsupported = true): PrefTypeMap[T] {
-        const definition = this.definitions[key];
+    hasSetting<K extends keyof PrefTypeMap<K>>(key: K): boolean {
+        return key in this.settings;
+    }
+
+    getSetting<K extends keyof PrefTypeMap<K>>(key: K, checkUnsupported = true): PrefTypeMap<K>[K] {
+        const definition = this.definitions[key] as SettingDefinition;
 
         // Return default value if build variant is different
         if (definition.requiredVariants && !definition.requiredVariants.includes(SCRIPT_VARIANT)) {
-            return definition.default as PrefTypeMap[T];
+            return (isPlainObject(definition.default) ? deepClone(definition.default) : definition.default) as PrefTypeMap<K>[K];
         }
 
         // Return default value if the feature is not supported
         if (checkUnsupported && definition.unsupported) {
             if ('unsupportedValue' in definition) {
-                return definition.unsupportedValue as PrefTypeMap[T];
+                return definition.unsupportedValue as PrefTypeMap<K>[K];
             } else {
-                return definition.default as PrefTypeMap[T];
+                return (isPlainObject(definition.default) ? deepClone(definition.default) : definition.default) as PrefTypeMap<K>[K];
             }
         }
 
         if (!(key in this.settings)) {
-            this.settings[key] = this.validateValue('get', key, null);
+            this.settings[key] = this.validateValue('get', key as any, null);
         }
 
-        return this.settings[key] as PrefTypeMap[T];
+        return (isPlainObject(this.settings[key]) ? deepClone(this.settings[key]) : this.settings[key]) as PrefTypeMap<K>[K];
     }
 
-    setSetting<T=any>(key: PrefKey, value: T, emitEvent = false) {
+    setSetting<V=any>(key: T, value: V, origin: SettingActionOrigin) {
         value = this.validateValue('set', key, value);
 
         this.settings[key] = this.validateValue('get', key, value);
         this.saveSettings();
 
-        emitEvent && BxEventBus.Script.emit('setting.changed', {
-            storageKey: this.storageKey,
-            settingKey: key,
-            settingValue: value,
-        });
+        if (origin === 'ui') {
+            if (isStreamPref(key)) {
+                BxEventBus.Stream.emit('setting.changed', {
+                    storageKey: this.storageKey as any,
+                    settingKey: key,
+                });
+            } else {
+                BxEventBus.Script.emit('setting.changed', {
+                    storageKey: this.storageKey,
+                    settingKey: key,
+                });
+            }
+        }
 
         return value;
     }
@@ -106,8 +115,8 @@ export class BaseSettingsStore {
         this.storage.setItem(this.storageKey, JSON.stringify(this.settings));
     }
 
-    private validateValue(action: SettingAction, key: PrefKey, value: any) {
-        const def = this.definitions[key];
+    private validateValue(action: SettingAction, key: T, value: any) {
+        const def = this.definitions[key] as SettingDefinition;
         if (!def) {
             return value;
         }
@@ -154,12 +163,12 @@ export class BaseSettingsStore {
         return value;
     }
 
-    getLabel(key: PrefKey): string {
-        return this.definitions[key].label || key;
+    getLabel(key: T): string {
+        return (this.definitions[key] as SettingDefinition).label || key;
     }
 
-    getValueText(key: PrefKey, value: any): string {
-        const definition = this.definitions[key];
+    getValueText(key: T, value: any): string {
+        const definition = this.definitions[key] as SettingDefinition;
         if ('min' in definition) {
             const params = (definition as any).params as NumberStepperParams;
             if (params.customTextValue) {

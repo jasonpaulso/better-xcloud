@@ -18,3 +18,6 @@ type RTCBasicStat = {
     totalDecodeTime: number,
     type: string,
 }
+
+
+type StreamStatGrade = '' | 'bad' | 'ok' | 'good';

@@ -11,8 +11,8 @@ import { BxLogger } from "@utils/bx-logger";
 import { PointerClient } from "./pointer-client";
 import { NativeMkbHandler } from "./native-mkb-handler";
 import { MkbHandler, MouseDataProvider } from "./base-mkb-handler";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { GlobalPref, StreamPref } from "@/enums/pref-keys";
+import { getGlobalPref, getStreamPref } from "@/utils/pref-utils";
 import { GamepadKey, GamepadStick } from "@/enums/gamepad";
 import { MkbPopup } from "./mkb-popup";
 import type { MkbConvertedPresetData } from "@/types/presets";
@@ -134,7 +134,7 @@ export class EmulatedMkbHandler extends MkbHandler {
     private static readonly LOG_TAG = 'EmulatedMkbHandler';
 
     static isAllowed() {
-        return getPref(PrefKey.MKB_ENABLED) && (AppInterface || !UserAgent.isMobile());
+        return getGlobalPref(GlobalPref.MKB_ENABLED) && (AppInterface || !UserAgent.isMobile());
     }
 
     private PRESET!: MkbConvertedPresetData | null;
@@ -233,10 +233,10 @@ export class EmulatedMkbHandler extends MkbHandler {
     private vectorLength = (x: number, y: number): number => Math.sqrt(x ** 2 + y ** 2);
 
     resetXcloudGamepads() {
-        const index = getPref(PrefKey.MKB_P1_SLOT) - 1;
+        const index = getStreamPref(StreamPref.MKB_P1_SLOT) - 1;
 
         this.xCloudGamepad = generateVirtualControllerMapping(0, {
-            GamepadIndex: getPref(PrefKey.LOCAL_CO_OP_ENABLED) ? index : 0,
+            GamepadIndex: getStreamPref(StreamPref.LOCAL_CO_OP_ENABLED) ? index : 0,
             Dirty: true,
         });
         this.VIRTUAL_GAMEPAD.index = index;
@@ -590,7 +590,7 @@ export class EmulatedMkbHandler extends MkbHandler {
         this.isPolling = true;
         this.escKeyDownTime = -1;
 
-        window.BX_EXPOSED.toggleLocalCoOp(getPref(PrefKey.LOCAL_CO_OP_ENABLED));
+        window.BX_EXPOSED.toggleLocalCoOp(getStreamPref(StreamPref.LOCAL_CO_OP_ENABLED));
         this.resetXcloudGamepads();
         window.navigator.getGamepads = this.patchedGetGamepads;
 
@@ -650,7 +650,7 @@ export class EmulatedMkbHandler extends MkbHandler {
             });
 
             if (EmulatedMkbHandler.isAllowed()) {
-                BxEventBus.Script.on('mkb.setting.updated', () => {
+                BxEventBus.Stream.on('mkb.setting.updated', () => {
                     EmulatedMkbHandler.getInstance()?.refreshPresetData();
                 });
             }

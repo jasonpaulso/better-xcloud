@@ -1,15 +1,15 @@
 import { CE } from "@utils/html";
 import { compressCss, isLiteVersion, renderStylus } from "@macros/build" with { type: "macro" };
 import { BlockFeature, UiSection } from "@/enums/pref-values";
-import { PrefKey } from "@/enums/pref-keys";
-import { getPref } from "./settings-storages/global-settings-storage";
+import { GlobalPref } from "@/enums/pref-keys";
+import { getGlobalPref } from "./pref-utils";
 
 
 export function addCss() {
     const STYLUS_CSS = renderStylus() as unknown as string;
     let css = STYLUS_CSS;
 
-    const PREF_HIDE_SECTIONS = getPref(PrefKey.UI_HIDE_SECTIONS);
+    const PREF_HIDE_SECTIONS = getGlobalPref(GlobalPref.UI_HIDE_SECTIONS);
     const selectorToHide = [];
 
     if (isLiteVersion()) {
@@ -24,7 +24,7 @@ export function addCss() {
     }
 
     // Hide BYOG section
-    if (getPref(PrefKey.BLOCK_FEATURES).includes(BlockFeature.BYOG)) {
+    if (getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.BYOG)) {
         selectorToHide.push('#BodyContent > div[class*=ByogRow-module__container___]');
     }
 
@@ -45,7 +45,7 @@ export function addCss() {
     }
 
    // Hide "Start a party" button in the Guide menu
-    if (getPref(PrefKey.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
+    if (getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.FRIENDS)) {
         selectorToHide.push('#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]');
     }
 
@@ -54,7 +54,7 @@ export function addCss() {
     }
 
     // Reduce animations
-    if (getPref(PrefKey.UI_REDUCE_ANIMATIONS)) {
+    if (getGlobalPref(GlobalPref.UI_REDUCE_ANIMATIONS)) {
         css += compressCss(`
 div[class*=GameCard-module__gameTitleInnerWrapper],
 div[class*=GameCard-module__card],
@@ -65,7 +65,7 @@ div[class*=ScrollArrows-module] {
     }
 
     // Hide the top-left dots icon while playing
-    if (getPref(PrefKey.UI_HIDE_SYSTEM_MENU_ICON)) {
+    if (getGlobalPref(GlobalPref.UI_HIDE_SYSTEM_MENU_ICON)) {
         css += compressCss(`
 div[class*=Grip-module__container] {
     visibility: hidden;
@@ -98,7 +98,7 @@ div[class*=StreamMenu-module__menu] {
 `);
 
     // Simplify Stream's menu
-    if (getPref(PrefKey.UI_SIMPLIFY_STREAM_MENU)) {
+    if (getGlobalPref(GlobalPref.UI_SIMPLIFY_STREAM_MENU)) {
         css += compressCss(`
 div[class*=Menu-module__scrollable] {
     --bxStreamMenuItemSize: 80px;
@@ -158,7 +158,7 @@ body:not([data-media-type=tv]) div[class*=MenuItem-module__label] {
     }
 
     // Hide scrollbar
-    if (getPref(PrefKey.UI_SCROLLBAR_HIDE)) {
+    if (getGlobalPref(GlobalPref.UI_SCROLLBAR_HIDE)) {
         css += compressCss(`
 html {
     scrollbar-width: none;

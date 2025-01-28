@@ -52,7 +52,8 @@ type BxStates = {
     currentStream: Partial<{
         titleSlug: string;
         titleInfo: XcloudTitleInfo;
-        xboxTitleId: number;
+        xboxTitleId: number | null;
+        gameSpecificSettings: boolean;
 
         streamPlayer: StreamPlayer | null;
 
@@ -213,3 +214,26 @@ type XcloudGamepad = {
     RightStickAxes?: any;
     Share?: any;
 };
+
+type BxFlags = {
+    Debug: boolean;
+
+    CheckForUpdate: boolean;
+    EnableXcloudLogging: boolean;
+    SafariWorkaround: boolean;
+
+    ForceNativeMkbTitles: string[];
+    FeatureGates: { [key: string]: boolean } | null,
+
+    DeviceInfo: {
+        deviceType: 'android' | 'android-tv' | 'android-handheld' | 'webos' | 'unknown',
+        userAgent?: string,
+
+        androidInfo?: {
+            manufacturer: string,
+            brand: string,
+            board: string,
+            model: string,
+        },
+    }
+}
