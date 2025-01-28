@@ -44,6 +44,12 @@ export class BaseSettingsStorage<T extends AnyPref> {
 
         // Validate setting values
         for (const key in settings) {
+            // Don't store invalid keys
+            if (!this.definitions.hasOwnProperty(key)) {
+                delete settings[key];
+                continue;
+            }
+
             settings[key] = this.validateValue('get', key as T, settings[key]);
         }
 

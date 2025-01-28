@@ -1102,8 +1102,13 @@ this.definitions = definitions, this._settings = null;
 get settings() {
 if (this._settings) return this._settings;
 let settings = JSON.parse(this.storage.getItem(this.storageKey) || "{}");
-for (let key in settings)
+for (let key in settings) {
+if (!this.definitions.hasOwnProperty(key)) {
+delete settings[key];
+continue;
+}
 settings[key] = this.validateValue("get", key, settings[key]);
+}
 return this._settings = settings, settings;
 }
 getDefinition(key) {
