@@ -21,7 +21,6 @@ enum BuildTarget {
 type BuildVariant = 'full' | 'lite';
 
 const MINIFY_SYNTAX = true;
-const INDENT_SPACES = false;
 
 function minifySvgImports(str: string): string {
     // Minify SVG imports
@@ -73,7 +72,7 @@ function removeComments(str: string): string {
     return str;
 }
 
-function postProcess(str: string): string {
+function postProcess(str: string, pretty: boolean): string {
     // Unescape unicode charaters
     str = unescape((str.replace(/\\u/g, '%u')));
     // Replace \x00 to normal character
@@ -128,12 +127,16 @@ function postProcess(str: string): string {
     if (MINIFY_SYNTAX) {
         str = minifyIfElse(str);
 
-        str = str.replaceAll(/\n(\s+)/g, (match, p1) => {
-            if (INDENT_SPACES) {
-                const len = p1.length / 2;
-                return '\n' + ' '.repeat(len);
+        str = str.replaceAll(/\n(\s+|\})/g, (match, p1) => {
+            if (pretty) {
+                if (p1 === '}') {
+                    return '\n}';
+                } else {
+                    const len = p1.length / 2;
+                    return '\n' + ' '.repeat(len);
+                }
             } else {
-                return '\n';
+                return (p1 === '}') ? '}' : '';
             }
         });
     }
@@ -189,7 +192,9 @@ async function buildPatches() {
       });
 }
 
-async function build(target: BuildTarget, version: string, variant: BuildVariant, config: any={}) {
+async function build(target: BuildTarget, params: { version: string, variant: BuildVariant, pretty: boolean, meta: boolean }, config: any={}) {
+    const { version, variant, pretty, meta } = params;
+
     console.log('-- Target:', target);
     const startTime = performance.now();
 
@@ -203,6 +208,9 @@ async function build(target: BuildTarget, version: string, variant: BuildVariant
     }
 
     let outputMetaName = outputScriptName;
+    if (pretty) {
+        outputScriptName += '.pretty';
+    }
     outputScriptName += '.user.js';
     outputMetaName += '.meta.js';
 
@@ -231,7 +239,7 @@ async function build(target: BuildTarget, version: string, variant: BuildVariant
 
     const {path} = output.outputs[0];
     // Get generated file
-    let result = postProcess(await readFile(path, 'utf-8'));
+    let result = postProcess(await readFile(path, 'utf-8'), pretty);
 
     // Replace [[VERSION]] with real value
     let scriptHeader: string;
@@ -246,7 +254,7 @@ async function build(target: BuildTarget, version: string, variant: BuildVariant
     await Bun.write(path, scriptHeader + result);
 
     // Create meta file (don't build if it's beta version)
-    if (!version.includes('beta') && variant === 'full') {
+    if (meta && !version.includes('beta') && variant === 'full') {
         await Bun.write(outDir + '/' + outputMetaName, txtMetaHeader.replace('[[VERSION]]', version));
     }
 
@@ -279,6 +287,16 @@ const { values, positionals } = parseArgs({
             type: 'string',
             default: 'full',
         },
+
+        pretty: {
+            type: 'boolean',
+            default: false,
+        },
+
+        meta: {
+            type: 'boolean',
+            default: false,
+        },
     },
     strict: true,
     allowPositionals: true,
@@ -286,6 +304,8 @@ const { values, positionals } = parseArgs({
     values: {
         version: string,
         variant: BuildVariant,
+        pretty: boolean,
+        meta: boolean,
     },
     positionals: string[],
 };
@@ -304,7 +324,7 @@ async function main() {
     const config = {};
     console.log(`Building: VERSION=${values['version']}, VARIANT=${values['variant']}`);
     for (const target of buildTargets) {
-        await build(target, values['version']!!, values['variant'], config);
+        await build(target, values, config);
     }
 
     console.log('')
