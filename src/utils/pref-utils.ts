@@ -1,8 +1,32 @@
-import { ALL_PREFS, GlobalPref, StreamPref, type AnyPref } from "@/enums/pref-keys";
+import { ALL_PREFS, GlobalPref, StorageKey, StreamPref, type AnyPref } from "@/enums/pref-keys";
 import type { PrefInfo, SettingActionOrigin } from "@/types/setting-definition";
 import { GlobalSettingsStorage } from "./settings-storages/global-settings-storage";
 import { StreamSettingsStorage } from "./settings-storages/stream-settings-storage";
 
+// Migrate Stream settings in Global storage to Stream storage
+function migrateStreamSettings() {
+    const storage = window.localStorage;
+    const globalSettings = JSON.parse(storage.getItem(StorageKey.GLOBAL) || '{}');
+    const streamSettings = JSON.parse(storage.getItem(StorageKey.STREAM) || '{}');
+    let modified = false;
+    for (const key in globalSettings) {
+        if (isStreamPref(key as AnyPref)) {
+            // Migration
+            if (!streamSettings.hasOwnProperty(key)) {
+                streamSettings[key] = globalSettings[key];
+            }
+            delete globalSettings[key];
+            modified = true;
+        }
+    }
+
+    if (modified) {
+        storage.setItem(StorageKey.GLOBAL, JSON.stringify(globalSettings));
+        storage.setItem(StorageKey.STREAM, JSON.stringify(streamSettings));
+    }
+}
+
+migrateStreamSettings();
 export const STORAGE = {
     Global: new GlobalSettingsStorage(),
     Stream: new StreamSettingsStorage(),

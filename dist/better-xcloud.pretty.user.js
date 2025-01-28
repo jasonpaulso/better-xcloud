@@ -1174,13 +1174,8 @@ class BaseSettingsStorage {
  get settings() {
   if (this._settings) return this._settings;
   let settings = JSON.parse(this.storage.getItem(this.storageKey) || "{}");
-  for (let key in settings) {
-   if (!this.definitions.hasOwnProperty(key)) {
-    delete settings[key];
-    continue;
-   }
+  for (let key in settings)
    settings[key] = this.validateValue("get", key, settings[key]);
-  }
   return this._settings = settings, settings;
  }
  getDefinition(key) {
@@ -2408,6 +2403,16 @@ class StreamSettingsStorage extends BaseSettingsStorage {
   return controllerSetting;
  }
 }
+function migrateStreamSettings() {
+ let storage = window.localStorage, globalSettings = JSON.parse(storage.getItem("BetterXcloud") || "{}"), streamSettings = JSON.parse(storage.getItem("BetterXcloud.Stream") || "{}"), modified2 = !1;
+ for (let key in globalSettings)
+  if (isStreamPref(key)) {
+   if (!streamSettings.hasOwnProperty(key)) streamSettings[key] = globalSettings[key];
+   delete globalSettings[key], modified2 = !0;
+  }
+ if (modified2) storage.setItem("BetterXcloud", JSON.stringify(globalSettings)), storage.setItem("BetterXcloud.Stream", JSON.stringify(streamSettings));
+}
+migrateStreamSettings();
 var STORAGE = {
  Global: new GlobalSettingsStorage,
  Stream: new StreamSettingsStorage
