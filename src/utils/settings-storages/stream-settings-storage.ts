@@ -1,4 +1,4 @@
-import { StreamPref, StorageKey, type StreamPrefTypeMap, type PrefTypeMap } from "@/enums/pref-keys";
+import { StreamPref, StorageKey, type PrefTypeMap } from "@/enums/pref-keys";
 import { DeviceVibrationMode, StreamPlayerType, StreamVideoProcessing, VideoPowerPreference, VideoRatio, VideoPosition, StreamStat, StreamStatPosition } from "@/enums/pref-values";
 import { STATES } from "../global";
 import { KeyboardShortcutDefaultId } from "../local-db/keyboard-shortcuts-table";
@@ -6,7 +6,7 @@ import { MkbMappingDefaultPresetId } from "../local-db/mkb-mapping-presets-table
 import { t } from "../translation";
 import { BaseSettingsStorage } from "./base-settings-storage";
 import { CE } from "../html";
-import type { SettingActionOrigin, SettingDefinition } from "@/types/setting-definition";
+import type { SettingActionOrigin, SettingDefinitions } from "@/types/setting-definition";
 import { BxIcon } from "../bx-icon";
 import { GameSettingsStorage } from "./game-settings-storage";
 import { BxLogger } from "../bx-logger";
@@ -15,7 +15,7 @@ import { ControllerShortcutDefaultId } from "../local-db/controller-shortcuts-ta
 
 
 export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
-    static readonly DEFINITIONS: Record<keyof StreamPrefTypeMap, SettingDefinition> = {
+    static readonly DEFINITIONS: SettingDefinitions<StreamPref> = {
         [StreamPref.DEVICE_VIBRATION_MODE]: {
             requiredVariants: 'full',
             label: t('device-vibration'),
@@ -132,7 +132,7 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
             max: 4,
             params: {
                 hideSlider: true,
-                customTextValue(value) {
+                customTextValue(value: any) {
                     value = parseInt(value);
                     return (value === 0) ? t('off') : value.toString();
                 },
@@ -302,7 +302,7 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
             params: {
                 size: 0,
             },
-            ready: setting => {
+            ready: (setting: any) => {
                 // Remove Battery option in unsupported browser
                 const multipleOptions = (setting as any).multipleOptions;
                 if (!STATES.browser.capabilities.batteryApi) {

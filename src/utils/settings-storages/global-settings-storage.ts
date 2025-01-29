@@ -1,7 +1,7 @@
 import { BypassServers } from "@/enums/bypass-servers";
-import { GlobalPref, StorageKey, type GlobalPrefTypeMap } from "@/enums/pref-keys";
+import { GlobalPref, StorageKey } from "@/enums/pref-keys";
 import { UserAgentProfile } from "@/enums/user-agent";
-import { type SettingDefinition } from "@/types/setting-definition";
+import { type SettingDefinition, type SettingDefinitions } from "@/types/setting-definition";
 import { BX_FLAGS } from "../bx-flags";
 import { STATES, AppInterface } from "../global";
 import { CE } from "../html";
@@ -71,7 +71,7 @@ function getSupportedCodecProfiles() {
 }
 
 export class GlobalSettingsStorage extends BaseSettingsStorage<GlobalPref> {
-    private static readonly DEFINITIONS: Record<keyof GlobalPrefTypeMap, SettingDefinition> = {
+    private static readonly DEFINITIONS: SettingDefinitions<GlobalPref> = {
         [GlobalPref.VERSION_LAST_CHECK]: {
             default: 0,
         },

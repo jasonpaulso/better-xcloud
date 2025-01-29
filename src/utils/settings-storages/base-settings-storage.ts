@@ -28,7 +28,10 @@ export class BaseSettingsStorage<T extends AnyPref> {
             }
             */
 
-            setting.ready && setting.ready.call(this, setting);
+            if (setting.ready) {
+                setting.ready.call(this, setting);
+                delete setting.ready;
+            }
         }
         this.definitions = definitions;
 

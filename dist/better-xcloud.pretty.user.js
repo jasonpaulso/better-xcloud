@@ -1167,7 +1167,7 @@ class BaseSettingsStorage {
   this.storage = window.localStorage, this.storageKey = storageKey;
   for (let [_, setting] of Object.entries(definitions)) {
    if (typeof setting.requiredVariants === "string") setting.requiredVariants = [setting.requiredVariants];
-   setting.ready && setting.ready.call(this, setting);
+   if (setting.ready) setting.ready.call(this, setting), delete setting.ready;
   }
   this.definitions = definitions, this._settings = null;
  }
