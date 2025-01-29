@@ -3691,7 +3691,7 @@ class StreamSettings {
   StreamSettings.settings.deviceVibrationIntensity = intensity, BxEventBus.Stream.emit("deviceVibration.updated", {});
  }
  static async refreshMkbSettings() {
-  let settings = StreamSettings.settings, presetId = getStreamPref("mkb.p1.preset.mappingId"), orgPreset = await MkbMappingPresetsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data, converted = {
+  let settings = StreamSettings.settings, presetId = getStreamPref("mkb.p1.preset.mappingId"), orgPresetData = (await MkbMappingPresetsTable.getInstance().getPreset(presetId)).data, converted = {
    mapping: {},
    mouse: Object.assign({}, orgPresetData.mouse)
   }, key;
@@ -3702,20 +3702,20 @@ class StreamSettings {
     if (typeof keyName === "string") converted.mapping[keyName] = buttonIndex;
   }
   let mouse = converted.mouse;
-  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, setStreamPref("mkb.p1.preset.mappingId", orgPreset.id, "direct"), BxEventBus.Stream.emit("mkb.setting.updated", {});
+  mouse["sensitivityX"] *= 0.001, mouse["sensitivityY"] *= 0.001, mouse["deadzoneCounterweight"] *= 0.01, settings.mkbPreset = converted, BxEventBus.Stream.emit("mkb.setting.updated", {});
  }
  static async refreshKeyboardShortcuts() {
   let settings = StreamSettings.settings, presetId = getStreamPref("keyboardShortcuts.preset.inGameId");
   if (presetId === 0) {
-   settings.keyboardShortcuts = null, setStreamPref("keyboardShortcuts.preset.inGameId", presetId, "direct"), BxEventBus.Stream.emit("keyboardShortcuts.updated", {});
+   settings.keyboardShortcuts = null, BxEventBus.Stream.emit("keyboardShortcuts.updated", {});
    return;
   }
-  let orgPreset = await KeyboardShortcutsTable.getInstance().getPreset(presetId), orgPresetData = orgPreset.data.mapping, converted = {}, action;
+  let orgPresetData = (await KeyboardShortcutsTable.getInstance().getPreset(presetId)).data.mapping, converted = {}, action;
   for (action in orgPresetData) {
    let info = orgPresetData[action], key = `${info.code}:${info.modifiers || 0}`;
    converted[key] = action;
   }
-  settings.keyboardShortcuts = converted, setStreamPref("keyboardShortcuts.preset.inGameId", orgPreset.id, "direct"), BxEventBus.Stream.emit("keyboardShortcuts.updated", {});
+  settings.keyboardShortcuts = converted, BxEventBus.Stream.emit("keyboardShortcuts.updated", {});
  }
  static async refreshAllSettings() {
   window.BX_STREAM_SETTINGS = StreamSettings.settings, await StreamSettings.refreshControllerSettings(), await StreamSettings.refreshMkbSettings(), await StreamSettings.refreshKeyboardShortcuts();

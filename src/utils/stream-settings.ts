@@ -13,7 +13,7 @@ import { ShortcutAction } from "@/enums/shortcut-actions";
 import { KeyHelper } from "@/modules/mkb/key-helper";
 import { BxEventBus } from "./bx-event-bus";
 import { ControllerCustomizationsTable } from "./local-db/controller-customizations-table";
-import { getStreamPref, setStreamPref, STORAGE } from "@/utils/pref-utils";
+import { getStreamPref, STORAGE } from "@/utils/pref-utils";
 
 
 export type StreamSettingsData = {
@@ -191,7 +191,6 @@ export class StreamSettings {
 
         settings.mkbPreset = converted;
 
-        setStreamPref(StreamPref.MKB_P1_MAPPING_PRESET_ID, orgPreset.id, 'direct');
         BxEventBus.Stream.emit('mkb.setting.updated', {});
     }
 
@@ -202,7 +201,6 @@ export class StreamSettings {
         if (presetId === KeyboardShortcutDefaultId.OFF) {
             settings.keyboardShortcuts = null;
 
-            setStreamPref(StreamPref.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, presetId, 'direct');
             BxEventBus.Stream.emit('keyboardShortcuts.updated', {});
             return;
         }
@@ -222,7 +220,6 @@ export class StreamSettings {
 
         settings.keyboardShortcuts = converted;
 
-        setStreamPref(StreamPref.KEYBOARD_SHORTCUTS_IN_GAME_PRESET_ID, orgPreset.id, 'direct');
         BxEventBus.Stream.emit('keyboardShortcuts.updated', {});
     }
 
