@@ -270,7 +270,6 @@ BxEventBus.Stream.on('state.playing', payload => {
         }
     }
 
-
     updateVideoPlayer();
 });
 

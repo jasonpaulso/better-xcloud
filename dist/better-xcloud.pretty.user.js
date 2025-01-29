@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.3.0
+// @version      6.3.1-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -190,7 +190,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.3.0", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.3.1-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -1943,6 +1943,9 @@ class MkbMappingPresetsTable extends BasePresetsTable {
 class GameSettingsStorage extends BaseSettingsStorage {
  constructor(id) {
   super(`${"BetterXcloud.Stream"}.${id}`, StreamSettingsStorage.DEFINITIONS);
+ }
+ isEmpty() {
+  return Object.keys(this.settings).length === 0;
  }
  deleteSetting(pref) {
   if (this.hasSetting(pref)) return delete this.settings[pref], this.saveSettings(), !0;
@@ -4304,7 +4307,9 @@ class SettingsManager {
    class: "bx-stream-settings-selection bx-gone",
    _nearby: { orientation: "vertical" }
   }, CE("div", !1, $select), this.$tips), BxEventBus.Stream.on("xboxTitleId.changed", async ({ id }) => {
-   this.playingGameId = id, setGameIdPref(id);
+   this.playingGameId = id;
+   let gameSettings = STORAGE.Stream.getGameSettings(id), selectedId = gameSettings && !gameSettings.isEmpty() ? id : -1;
+   setGameIdPref(selectedId);
    let $optGroup = $select.querySelector("optgroup");
    while ($optGroup.childElementCount > 1)
     $optGroup.lastElementChild?.remove();
@@ -4312,9 +4317,9 @@ class SettingsManager {
     let title = id === 0 ? "Xbox" : await XboxApi.getProductTitle(id);
     $optGroup.appendChild(CE("option", {
      value: id
-    }, title)), $select.value = id.toString();
-   } else $select.value = "-1";
-   BxEventBus.Stream.emit("gameSettings.switched", { id });
+    }, title));
+   }
+   $select.value = selectedId.toString(), BxEventBus.Stream.emit("gameSettings.switched", { id: selectedId });
   });
  }
  getStreamSettingsSelection() {

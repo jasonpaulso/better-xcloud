@@ -3,7 +3,7 @@ import { limitVideoPlayerFps, onChangeVideoPlayerType, updateVideoPlayer } from 
 import { StreamStats } from "./stream/stream-stats";
 import { SoundShortcut } from "./shortcuts/sound-shortcut";
 import { STATES } from "@/utils/global";
-import { getGamePref, getStreamPref, hasGamePref, isStreamPref, setGameIdPref } from "@/utils/pref-utils";
+import { getGamePref, getStreamPref, hasGamePref, isStreamPref, setGameIdPref, STORAGE } from "@/utils/pref-utils";
 import { BxExposed } from "@/utils/bx-exposed";
 import { StreamSettings } from "@/utils/stream-settings";
 import { NativeMkbHandler } from "./mkb/native-mkb-handler";
@@ -311,10 +311,16 @@ export class SettingsManager {
 
         BxEventBus.Stream.on('xboxTitleId.changed', async ({ id }) => {
             this.playingGameId = id;
-            setGameIdPref(id);
-            const $optGroup = $select.querySelector('optgroup')!;
+
+            // Only switch to game settings if it's not empty
+            const gameSettings = STORAGE.Stream.getGameSettings(id);
+            const customSettings = gameSettings && !gameSettings.isEmpty();
+            const selectedId = customSettings ? id : -1;
+
+            setGameIdPref(selectedId);
 
             // Remove every options except the first one (All games)
+            const $optGroup = $select.querySelector('optgroup')!;
             while ($optGroup.childElementCount > 1) {
                 $optGroup.lastElementChild?.remove();
             }
@@ -325,13 +331,12 @@ export class SettingsManager {
                 $optGroup.appendChild(CE('option', {
                     value: id,
                 }, title));
-
-                $select.value = id.toString();
-            } else {
-                $select.value = '-1';
             }
 
-            BxEventBus.Stream.emit('gameSettings.switched', { id });
+            // Activate custom settings
+
+            $select.value = selectedId.toString();
+            BxEventBus.Stream.emit('gameSettings.switched', { id: selectedId });
         });
     }
 
