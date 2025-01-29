@@ -9,17 +9,18 @@ export class XboxApi {
             return XboxApi.CACHED_TITLES[xboxTitleId];
         }
 
+        let title: string;
         try {
             const url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en&value=${xboxTitleId}&alternateId=XboxTitleId&fieldsTemplate=browse`;
             const resp = await NATIVE_FETCH(url);
             const json = await resp.json();
 
-            const productTitle = json['Products'][0]['LocalizedProperties'][0]['ProductTitle'];
-            XboxApi.CACHED_TITLES[xboxTitleId] = productTitle;
+            title = json['Products'][0]['LocalizedProperties'][0]['ProductTitle'];
+        } catch (e) {
+            title = 'Unknown Game #' + xboxTitleId;
+        }
 
-            return productTitle;
-        } catch (e) {}
-
-        return;
+        XboxApi.CACHED_TITLES[xboxTitleId] = title;
+        return title;
     }
 }

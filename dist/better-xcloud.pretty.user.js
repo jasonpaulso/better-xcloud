@@ -4121,11 +4121,14 @@ class XboxApi {
  static CACHED_TITLES = {};
  static async getProductTitle(xboxTitleId) {
   if (xboxTitleId = xboxTitleId.toString(), XboxApi.CACHED_TITLES[xboxTitleId]) return XboxApi.CACHED_TITLES[xboxTitleId];
+  let title;
   try {
-   let url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en&value=${xboxTitleId}&alternateId=XboxTitleId&fieldsTemplate=browse`, productTitle = (await (await NATIVE_FETCH(url)).json()).Products[0].LocalizedProperties[0].ProductTitle;
-   return XboxApi.CACHED_TITLES[xboxTitleId] = productTitle, productTitle;
-  } catch (e) {}
-  return;
+   let url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en&value=${xboxTitleId}&alternateId=XboxTitleId&fieldsTemplate=browse`;
+   title = (await (await NATIVE_FETCH(url)).json()).Products[0].LocalizedProperties[0].ProductTitle;
+  } catch (e) {
+   title = "Unknown Game #" + xboxTitleId;
+  }
+  return XboxApi.CACHED_TITLES[xboxTitleId] = title, title;
  }
 }
 class SettingsManager {
