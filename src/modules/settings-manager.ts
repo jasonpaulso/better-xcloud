@@ -18,7 +18,7 @@ import { EmulatedMkbHandler } from "./mkb/mkb-handler";
 type SettingType = Partial<{
     hidden: true;
     onChange: () => void;
-    alwaysTriggerOnChange: boolean;  // Always trigger onChange(), not just when playing
+    onChangeUi: () => void;
     $element: HTMLElement;
 }>;
 
@@ -67,14 +67,8 @@ export class SettingsManager {
             },
         },
         [StreamPref.VIDEO_PLAYER_TYPE]: {
-            onChange: () => {
-                onChangeVideoPlayerType();
-
-                if (STATES.isPlaying) {
-                    updateVideoPlayer();
-                }
-            },
-            alwaysTriggerOnChange: true,
+            onChange: updateVideoPlayer,
+            onChangeUi: onChangeVideoPlayerType,
         },
         [StreamPref.VIDEO_POWER_PREFERENCE]: {
             onChange: () => {
@@ -177,11 +171,21 @@ export class SettingsManager {
         this.renderStreamSettingsSelection();
     }
 
-    private updateStreamElement(key: StreamPref, onChanges?: Set<SettingType['onChange']>) {
+    private updateStreamElement(key: StreamPref, onChanges?: Set<SettingType['onChange']>, onChangeUis?: Set<SettingType['onChangeUi']>) {
         const info = this.SETTINGS[key];
 
-        // Add event
-        if (info.onChange && (STATES.isPlaying || info.alwaysTriggerOnChange)) {
+        // Add events
+        if (info.onChangeUi) {
+            if (onChangeUis) {
+                // Save to a Set()
+                onChangeUis.add(info.onChangeUi);
+            } else {
+                // Trigger onChangeUi()
+                info.onChangeUi();
+            }
+        }
+
+        if (info.onChange && STATES.isPlaying) {
             if (onChanges) {
                 // Save to a Set()
                 onChanges.add(info.onChange);
@@ -217,6 +221,7 @@ export class SettingsManager {
 
         // Re-apply all stream settings
         const onChanges: Set<SettingType['onChange']> = new Set();
+        const onChangeUis: Set<SettingType['onChangeUi']> = new Set();
         const oldGameId = this.targetGameId;
         this.targetGameId = id;
 
@@ -234,13 +239,12 @@ export class SettingsManager {
             }
 
             // Only apply Stream settings
-            this.updateStreamElement(key, onChanges);
+            this.updateStreamElement(key, onChanges, onChangeUis);
         }
 
-        // BxLogger.warning('Settings Manager', onChanges);
-        onChanges.forEach(onChange => {
-            onChange && onChange();
-        });
+        // Trigger onChange callbacks
+        onChangeUis.forEach(fn => fn && fn());
+        onChanges.forEach(fn => fn && fn());
 
         // Toggle tips if not playing anything
         this.$tips.classList.toggle('bx-gone', id < 0);

@@ -4182,10 +4182,8 @@ class SettingsManager {
    }
   },
   "video.player.type": {
-   onChange: () => {
-    if (onChangeVideoPlayerType(), STATES.isPlaying) updateVideoPlayer();
-   },
-   alwaysTriggerOnChange: !0
+   onChange: updateVideoPlayer,
+   onChangeUi: onChangeVideoPlayerType
   },
   "video.player.powerPreference": {
    onChange: () => {
@@ -4270,9 +4268,11 @@ class SettingsManager {
    this.switchGameSettings(id);
   }), this.renderStreamSettingsSelection();
  }
- updateStreamElement(key, onChanges) {
+ updateStreamElement(key, onChanges, onChangeUis) {
   let info = this.SETTINGS[key];
-  if (info.onChange && (STATES.isPlaying || info.alwaysTriggerOnChange)) if (onChanges) onChanges.add(info.onChange);
+  if (info.onChangeUi) if (onChangeUis) onChangeUis.add(info.onChangeUi);
+   else info.onChangeUi();
+  if (info.onChange && STATES.isPlaying) if (onChanges) onChanges.add(info.onChange);
    else info.onChange();
   let $elm = info.$element;
   if (!$elm) return;
@@ -4283,18 +4283,16 @@ class SettingsManager {
  }
  switchGameSettings(id) {
   if (setGameIdPref(id), this.targetGameId === id) return;
-  let onChanges = new Set, oldGameId = this.targetGameId;
+  let onChanges = new Set, onChangeUis = new Set, oldGameId = this.targetGameId;
   this.targetGameId = id;
   let key;
   for (key in this.SETTINGS) {
    if (!isStreamPref(key)) continue;
    let oldValue = getGamePref(oldGameId, key, !0), newValue = getGamePref(this.targetGameId, key, !0);
    if (oldValue === newValue) continue;
-   this.updateStreamElement(key, onChanges);
+   this.updateStreamElement(key, onChanges, onChangeUis);
   }
-  onChanges.forEach((onChange) => {
-   onChange && onChange();
-  }), this.$tips.classList.toggle("bx-gone", id < 0);
+  onChangeUis.forEach((fn) => fn && fn()), onChanges.forEach((fn) => fn && fn()), this.$tips.classList.toggle("bx-gone", id < 0);
  }
  setElement(pref, $elm) {
   if (!this.SETTINGS[pref]) this.SETTINGS[pref] = {};
