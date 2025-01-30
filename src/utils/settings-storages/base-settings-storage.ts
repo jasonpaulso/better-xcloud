@@ -63,7 +63,7 @@ export class BaseSettingsStorage<T extends AnyPref> {
         return this.definitions[key];
     }
 
-    hasSetting<K extends keyof PrefTypeMap<K>>(key: K): boolean {
+    hasSetting(key: T): boolean {
         return key in this.settings;
     }
 
@@ -195,5 +195,16 @@ export class BaseSettingsStorage<T extends AnyPref> {
         }
 
         return value.toString();
+    }
+
+    deleteSetting(pref: T) {
+        if (this.hasSetting(pref)) {
+            delete this.settings[pref];
+            this.saveSettings();
+
+            return true;
+        }
+
+        return false;
     }
 }

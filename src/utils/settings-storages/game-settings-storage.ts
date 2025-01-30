@@ -10,15 +10,4 @@ export class GameSettingsStorage extends BaseSettingsStorage<StreamPref> {
     isEmpty() {
         return Object.keys(this.settings).length === 0;
     }
-
-    deleteSetting(pref: StreamPref) {
-        if (this.hasSetting(pref)) {
-            delete this.settings[pref];
-            this.saveSettings();
-
-            return true;
-        }
-
-        return false;
-    }
 }

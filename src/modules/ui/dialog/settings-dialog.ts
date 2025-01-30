@@ -1310,8 +1310,7 @@ export class SettingsDialog extends NavigationDialog {
         }
 
         // Delete settings
-        const gameSettings = STORAGE.Stream.getGameSettings(targetGameId);
-        const deleted = gameSettings?.deleteSetting(pref);
+        const deleted = STORAGE.Stream.deleteSettingByGame(targetGameId, pref);
         if (deleted) {
             BxEventBus.Stream.emit('setting.changed', {
                 storageKey: `${StorageKey.STREAM}.${targetGameId}`,

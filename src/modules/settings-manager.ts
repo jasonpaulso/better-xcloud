@@ -198,7 +198,6 @@ export class SettingsManager {
         }
 
         const value = getGamePref(this.targetGameId, key, true)!;
-
         if ('setValue' in $elm) {
             ($elm as any).setValue(value);
         } else {
@@ -227,8 +226,8 @@ export class SettingsManager {
                 continue;
             }
 
-            const oldValue = getGamePref(oldGameId, key, true, true);
-            const newValue = getGamePref(this.targetGameId, key, true, true);
+            const oldValue = getGamePref(oldGameId, key, true);
+            const newValue = getGamePref(this.targetGameId, key, true);
 
             if (oldValue === newValue) {
                 continue;
@@ -314,8 +313,7 @@ export class SettingsManager {
 
             // Only switch to game settings if it's not empty
             const gameSettings = STORAGE.Stream.getGameSettings(id);
-            const customSettings = gameSettings && !gameSettings.isEmpty();
-            const selectedId = customSettings ? id : -1;
+            const selectedId = (gameSettings && !gameSettings.isEmpty()) ? id : -1;
 
             setGameIdPref(selectedId);
 

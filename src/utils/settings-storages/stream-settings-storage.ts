@@ -398,7 +398,13 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
     getGameSettings(id: number) {
         if (id > -1) {
             if (!this.gameSettings[id]) {
-                this.gameSettings[id] = new GameSettingsStorage(id);
+                const gameStorage = new GameSettingsStorage(id);
+                this.gameSettings[id] = gameStorage;
+
+                // Remove values same as global's
+                for (const key in gameStorage.settings) {
+                    this.getSettingByGame(id, key);
+                }
             }
 
             return this.gameSettings[id];
@@ -408,20 +414,25 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
     }
 
     getSetting<K extends keyof PrefTypeMap<K>>(key: K, checkUnsupported?: boolean): PrefTypeMap<K>[K] {
-        return this.getSettingByGame(this.xboxTitleId, key, true, checkUnsupported)!;
+        return this.getSettingByGame(this.xboxTitleId, key, checkUnsupported)!;
     }
 
-    getSettingByGame<K extends keyof PrefTypeMap<K>>(id: number, key: K, returnBaseValue: boolean=true, checkUnsupported?: boolean): PrefTypeMap<K>[K] | undefined {
+    getSettingByGame<K extends keyof PrefTypeMap<K>>(id: number, key: K, checkUnsupported?: boolean): PrefTypeMap<K>[K] | undefined {
         const gameSettings = this.getGameSettings(id);
-        if (gameSettings?.hasSetting(key)) {
-            return gameSettings.getSetting(key, checkUnsupported);
+        if (gameSettings?.hasSetting(key as StreamPref)) {
+            let gameValue = gameSettings.getSetting(key, checkUnsupported);
+            const globalValue = super.getSetting(key, checkUnsupported);
+
+            // Remove value if it's the same as global's
+            if (globalValue === gameValue) {
+                this.deleteSettingByGame(id, key as StreamPref);
+                gameValue = globalValue;
+            }
+
+            return gameValue;
         }
 
-        if (returnBaseValue) {
-            return super.getSetting(key, checkUnsupported);
-        }
-
-        return undefined;
+        return super.getSetting(key, checkUnsupported);
     }
 
     setSetting<V = any>(key: StreamPref, value: V, origin: SettingActionOrigin): V {
@@ -437,6 +448,15 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
 
         BxLogger.info('setSettingByGame', id, key, value);
         return super.setSetting(key, value, origin);
+    }
+
+    deleteSettingByGame(id: number, key: StreamPref): boolean {
+        const gameSettings = this.getGameSettings(id);
+        if (gameSettings) {
+            return gameSettings.deleteSetting(key);
+        }
+
+        return false;
     }
 
     hasGameSetting(id: number, key: StreamPref): boolean {
