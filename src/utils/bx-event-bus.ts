@@ -32,6 +32,8 @@ type ScriptEvents = {
     'list.localCoOp.updated': {
         ids: Set<string>;
     };
+
+    'webgpu.ready': {},
 };
 
 type StreamEvents = {

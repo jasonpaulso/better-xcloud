@@ -2,12 +2,13 @@ import { BxEvent } from "@utils/bx-event";
 import { STATES } from "@utils/global";
 import { BxLogger } from "@utils/bx-logger";
 import { patchSdpBitrate, setCodecPreferences } from "./sdp";
-import { StreamPlayer } from "@/modules/stream-player";
+import { StreamPlayerManager } from "@/modules/stream-player-manager";
 import { GlobalPref, StreamPref } from "@/enums/pref-keys";
 import { CodecProfile } from "@/enums/pref-values";
 import type { SettingDefinition } from "@/types/setting-definition";
 import { BxEventBus } from "./bx-event-bus";
 import { getGlobalPref, getGlobalPrefDefinition, getStreamPref } from "@/utils/pref-utils";
+import type { StreamPlayerOptions } from "@/types/stream";
 
 export function patchVideoApi() {
     const PREF_SKIP_SPLASH_VIDEO = getGlobalPref(GlobalPref.UI_SKIP_SPLASH_VIDEO);
@@ -26,7 +27,13 @@ export function patchVideoApi() {
             contrast: getStreamPref(StreamPref.VIDEO_CONTRAST),
             brightness: getStreamPref(StreamPref.VIDEO_BRIGHTNESS),
         } satisfies StreamPlayerOptions;
-        STATES.currentStream.streamPlayer = new StreamPlayer(this, getStreamPref(StreamPref.VIDEO_PLAYER_TYPE), playerOptions);
+
+        const streamPlayerManager= StreamPlayerManager.getInstance();
+        streamPlayerManager.setVideoElement(this);
+        streamPlayerManager.updateOptions(playerOptions, false);
+        streamPlayerManager.switchPlayerType(getStreamPref(StreamPref.VIDEO_PLAYER_TYPE));
+
+        STATES.currentStream.streamPlayerManager = streamPlayerManager;
 
         BxEventBus.Stream.emit('state.playing', {
             $video: this,
@@ -231,6 +238,7 @@ export function patchCanvasContext() {
             }
         }
 
+        // @ts-ignore
         return nativeGetContext.apply(this, [contextType, contextAttributes]);
     }
 }

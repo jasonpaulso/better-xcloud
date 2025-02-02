@@ -72,12 +72,11 @@ export class SettingsManager {
         },
         [StreamPref.VIDEO_POWER_PREFERENCE]: {
             onChange: () => {
-                const streamPlayer = STATES.currentStream.streamPlayer;
+                const streamPlayer = STATES.currentStream.streamPlayerManager;
                 if (!streamPlayer) {
                     return;
                 }
 
-                streamPlayer.reloadPlayer();
                 updateVideoPlayer();
             },
         },

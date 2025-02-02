@@ -47,6 +47,7 @@ import { BxEventBus } from "./utils/bx-event-bus";
 import { getGlobalPref, getStreamPref } from "./utils/pref-utils";
 import { SettingsManager } from "./modules/settings-manager";
 import { Toast } from "./utils/toast";
+import { WebGPUPlayer } from "./modules/player/webgpu/webgpu-player";
 
 SettingsManager.getInstance();
 
@@ -347,7 +348,7 @@ function unload() {
     }
 
     // Destroy StreamPlayer
-    STATES.currentStream.streamPlayer?.destroy();
+    STATES.currentStream.streamPlayerManager?.destroy();
 
     STATES.isPlaying = false;
     STATES.currentStream = {};
@@ -416,6 +417,8 @@ function main() {
     StreamStats.setupEvents();
 
     if (isFullVersion()) {
+        WebGPUPlayer.prepare();
+
         STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
 
         DeviceVibrationManager.getInstance();

@@ -1,3 +1,4 @@
+import type { BxStates } from "@/types/states";
 import { UserAgent } from "./user-agent";
 
 export const SCRIPT_VERSION = Bun.env.SCRIPT_VERSION!;

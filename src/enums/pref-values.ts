@@ -116,6 +116,7 @@ export const enum VideoPowerPreference {
 export const enum StreamPlayerType {
     VIDEO = 'default',
     WEBGL2 = 'webgl2',
+    WEBGPU = 'webgpu',
 }
 
 export const enum StreamVideoProcessing {

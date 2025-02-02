@@ -22,58 +22,6 @@ type ServerRegion = {
     contintent: ServerContinent;
 };
 
-type BxStates = {
-    supportedRegion: boolean;
-    serverRegions: Record<string, ServerRegion>;
-    selectedRegion: any;
-    gsToken: string;
-    isSignedIn: boolean;
-
-    isPlaying: boolean;
-
-    browser: {
-        capabilities: {
-            touch: boolean;
-            batteryApi: boolean;
-            deviceVibration: boolean;
-            mkb: boolean;
-            emulatedNativeMkb: boolean;
-        };
-    };
-
-    userAgent: {
-        isTv: boolean;
-        capabilities: {
-            touch: boolean;
-            mkb: boolean;
-        };
-    };
-
-    currentStream: Partial<{
-        titleSlug: string;
-        titleInfo: XcloudTitleInfo;
-        xboxTitleId: number | null;
-        gameSpecificSettings: boolean;
-
-        streamPlayer: StreamPlayer | null;
-
-        peerConnection: RTCPeerConnection;
-        audioContext: AudioContext | null;
-        audioGainNode: GainNode | null;
-    }>;
-
-    remotePlay: Partial<{
-        isPlaying: boolean;
-        server: string;
-        config: {
-            serverId: string;
-        };
-        titleId?: string;
-    }>;
-
-    pointerServerPort: number;
-}
-
 type XcloudTitleInfo = {
     titleId: string,
 
@@ -106,10 +54,12 @@ declare module '*.js' {
   const content: string;
   export default content;
 }
+
 declare module '*.svg' {
   const content: string;
   export default content;
 }
+
 declare module '*.styl' {
   const content: string;
   export default content;
@@ -119,7 +69,13 @@ declare module '*.fs' {
     const content: string;
     export default content;
 }
+
 declare module '*.vert' {
+    const content: string;
+    export default content;
+}
+
+declare module '*.wgsl' {
     const content: string;
     export default content;
 }

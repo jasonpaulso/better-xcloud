@@ -27,6 +27,7 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
+    "webgpu": "WebGPU",
     "achievements": "Achievements",
     "activate": "Activate",
     "activated": "Activated",

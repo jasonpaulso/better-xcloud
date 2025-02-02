@@ -16,6 +16,9 @@
       "@modules/*": ["./modules/*"],
       "@utils/*": ["./utils/*"],
     },
+
+    "types": ["@types/bun", "@webgpu/types"],
+
     // Enable latest features
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",

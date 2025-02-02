@@ -2,8 +2,8 @@ import { AppInterface, STATES } from "./global";
 import { CE } from "./html";
 import { GlobalPref } from "@/enums/pref-keys";
 import { BxLogger } from "./bx-logger";
-import { StreamPlayerType } from "@/enums/pref-values";
 import { getGlobalPref } from "@/utils/pref-utils";
+import { StreamPlayerElement } from "@/modules/player/base-stream-player";
 
 
 export class ScreenshotManager {
@@ -42,35 +42,35 @@ export class ScreenshotManager {
 
     takeScreenshot(callback?: any) {
         const currentStream = STATES.currentStream;
-        const streamPlayer = currentStream.streamPlayer;
+        const streamPlayerManager = currentStream.streamPlayerManager;
         const $canvas = this.$canvas;
-        if (!streamPlayer || !$canvas) {
+        if (!streamPlayerManager || !$canvas) {
             return;
         }
 
         let $player;
         if (getGlobalPref(GlobalPref.SCREENSHOT_APPLY_FILTERS)) {
-            $player = streamPlayer.getPlayerElement();
+            $player = streamPlayerManager.getPlayerElement();
         } else {
-            $player = streamPlayer.getPlayerElement(StreamPlayerType.VIDEO);
+            $player = streamPlayerManager.getPlayerElement(StreamPlayerElement.VIDEO);
         }
 
         if (!$player || !$player.isConnected) {
             return;
         }
 
+        const canvasContext = this.canvasContext;
+        if ($player instanceof HTMLCanvasElement) {
+            streamPlayerManager.getCanvasPlayer()?.updateFrame();
+        }
+        canvasContext.drawImage($player, 0, 0);
+
+        // Play animation
         const $gameStream = $player.closest('#game-stream');
         if ($gameStream) {
             $gameStream.addEventListener('animationend', this.onAnimationEnd, { once: true });
             $gameStream.classList.add('bx-taking-screenshot');
         }
-
-        const canvasContext = this.canvasContext;
-
-        if ($player instanceof HTMLCanvasElement) {
-            streamPlayer.getWebGL2Player().forceDrawFrame();
-        }
-        canvasContext.drawImage($player, 0, 0, $canvas.width, $canvas.height);
 
         // Get data URL and pass to parent app
         if (AppInterface) {

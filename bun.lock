@@ -3,10 +3,11 @@
   "workspaces": {
     "": {
       "devDependencies": {
-        "@types/bun": "^1.1.14",
-        "@types/node": "^22.10.2",
+        "@types/bun": "^1.2.0",
+        "@types/node": "^22.10.10",
         "@types/stylus": "^0.48.43",
-        "eslint": "^9.17.0",
+        "@webgpu/types": "^0.1.53",
+        "eslint": "^9.19.0",
         "eslint-plugin-compat": "^6.0.2",
         "stylus": "^0.64.0",
       },
@@ -59,6 +60,8 @@
     "@types/stylus": ["@types/stylus@0.48.43", "", { "dependencies": { "@types/node": "*" } }, "sha512-72dv/zdhuyXWVHUXG2VTPEQdOG+oen95/DNFx2aMFFaY6LoITI6PwEqf5x31JF49kp2w9hvUzkNfTGBIeg61LQ=="],
 
     "@types/ws": ["@types/ws@8.5.10", "", { "dependencies": { "@types/node": "*" } }, "sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A=="],
+
+    "@webgpu/types": ["@webgpu/types@0.1.53", "", {}, "sha512-x+BLw/opaz9LiVyrMsP75nO1Rg0QfrACUYIbVSfGwY/w0DiWIPYYrpte6us//KZXinxFAOJl0+C17L1Vi2vmDw=="],
 
     "acorn": ["acorn@8.14.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA=="],
 

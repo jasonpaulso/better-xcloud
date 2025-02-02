@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.3.2-beta
+// @version      6.4.0-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -190,7 +190,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.3.2-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.4.0-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -398,6 +398,7 @@ var SUPPORTED_LANGUAGES = {
  "zh-CN": "中文(简体)",
  "zh-TW": "中文(繁體)"
 }, Texts = {
+ webgpu: "WebGPU",
  achievements: "Achievements",
  activate: "Activate",
  activated: "Activated",
@@ -2033,6 +2034,266 @@ class ControllerShortcutsTable extends BasePresetsTable {
   BxLogger.info(this.LOG_TAG, "constructor()");
  }
 }
+var clarity_boost_default = `struct Params {
+filterId: f32,
+sharpness: f32,
+brightness: f32,
+contrast: f32,
+saturation: f32,
+};
+struct VertexOutput {
+@builtin(position) position: vec4<f32>,
+@location(0) uv: vec2<f32>,
+};
+@group(0) @binding(0) var ourSampler: sampler;
+@group(0) @binding(1) var ourTexture: texture_external;
+@group(0) @binding(2) var<uniform> ourParams: Params;
+const FILTER_UNSHARP_MASKING: f32 = 1.0;
+const CAS_CONTRAST_PEAK: f32 = 0.8 * -3.0 + 8.0;
+const LUMINOSITY_FACTOR = vec3(0.299, 0.587, 0.114);
+@vertex
+fn vsMain(@location(0) pos: vec2<f32>) -> VertexOutput {
+var out: VertexOutput;
+out.position = vec4(pos, 0.0, 1.0);
+out.uv = (vec2(pos.x, 1.0 - (pos.y + 1.0)) + vec2(1.0, 1.0)) * 0.5;
+return out;
+}
+fn clarityBoost(coord: vec2<f32>, texSize: vec2<f32>, e: vec3<f32>) -> vec3<f32> {
+let texelSize = 1.0 / texSize;
+let a = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0,  1.0)).rgb;
+let b = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 0.0,  1.0)).rgb;
+let c = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0,  1.0)).rgb;
+let d = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0,  0.0)).rgb;
+let f = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0,  0.0)).rgb;
+let g = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0, -1.0)).rgb;
+let h = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 0.0, -1.0)).rgb;
+let i = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0, -1.0)).rgb;
+if ourParams.filterId == FILTER_UNSHARP_MASKING {
+let gaussianBlur = (a + c + g + i) * 1.0 + (b + d + f + h) * 2.0 + e * 4.0;
+let blurred = gaussianBlur / 16.0;
+return e + (e - blurred) * (ourParams.sharpness / 3.0);
+}
+let minRgb = min(min(min(d, e), min(f, b)), h) + min(min(a, c), min(g, i));
+let maxRgb = max(max(max(d, e), max(f, b)), h) + max(max(a, c), max(g, i));
+let reciprocalMaxRgb = 1.0 / maxRgb;
+var amplifyRgb = clamp(min(minRgb, 2.0 - maxRgb) * reciprocalMaxRgb, vec3(0.0), vec3(1.0));
+amplifyRgb = 1.0 / sqrt(amplifyRgb);
+let weightRgb = -(1.0 / (amplifyRgb * CAS_CONTRAST_PEAK));
+let reciprocalWeightRgb = 1.0 / (4.0 * weightRgb + 1.0);
+let window = b + d + f + h;
+let outColor = clamp((window * weightRgb + e) * reciprocalWeightRgb, vec3(0.0), vec3(1.0));
+return mix(e, outColor, ourParams.sharpness / 2.0);
+}
+@fragment
+fn fsMain(input: VertexOutput) -> @location(0) vec4<f32> {
+let texSize = vec2<f32>(textureDimensions(ourTexture));
+let center = textureSampleBaseClampToEdge(ourTexture, ourSampler, input.uv);
+var adjustedRgb = clarityBoost(input.uv, texSize, center.rgb);
+let gray = dot(adjustedRgb, LUMINOSITY_FACTOR);
+adjustedRgb = mix(vec3(gray), adjustedRgb, ourParams.saturation);
+adjustedRgb = (adjustedRgb - 0.5) * ourParams.contrast + 0.5;
+adjustedRgb *= ourParams.brightness;
+return vec4(adjustedRgb, 1.0);
+}`;
+class BaseStreamPlayer {
+ logTag;
+ playerType;
+ elementType;
+ $video;
+ options = {
+  processing: "usm",
+  sharpness: 0,
+  brightness: 1,
+  contrast: 1,
+  saturation: 1
+ };
+ isStopped = !1;
+ constructor(playerType, elementType, $video, logTag) {
+  this.playerType = playerType, this.elementType = elementType, this.$video = $video, this.logTag = logTag;
+ }
+ init() {
+  BxLogger.info(this.logTag, "Initialize");
+ }
+ updateOptions(newOptions, refresh = !1) {
+  this.options = Object.assign(this.options, newOptions), refresh && this.refreshPlayer();
+ }
+}
+class BaseCanvasPlayer extends BaseStreamPlayer {
+ $canvas;
+ targetFps = 60;
+ frameInterval = 0;
+ lastFrameTime = 0;
+ animFrameId = null;
+ frameCallback;
+ boundDrawFrame;
+ constructor(playerType, $video, logTag) {
+  super(playerType, "canvas", $video, logTag);
+  let $canvas = document.createElement("canvas");
+  $canvas.width = $video.videoWidth, $canvas.height = $video.videoHeight, this.$canvas = $canvas, $video.insertAdjacentElement("afterend", this.$canvas);
+  let frameCallback;
+  if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
+   let $video2 = this.$video;
+   frameCallback = $video2.requestVideoFrameCallback.bind($video2);
+  } else frameCallback = requestAnimationFrame;
+  this.frameCallback = frameCallback, this.boundDrawFrame = this.drawFrame.bind(this);
+ }
+ async init() {
+  super.init(), await this.setupShaders(), this.setupRendering();
+ }
+ setTargetFps(target) {
+  this.targetFps = target, this.lastFrameTime = 0, this.frameInterval = target ? Math.floor(1000 / target) : 0;
+ }
+ getCanvas() {
+  return this.$canvas;
+ }
+ destroy() {
+  if (BxLogger.info(this.logTag, "Destroy"), this.isStopped = !0, this.animFrameId) {
+   if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) this.$video.cancelVideoFrameCallback(this.animFrameId);
+   else cancelAnimationFrame(this.animFrameId);
+   this.animFrameId = null;
+  }
+  if (this.$canvas.isConnected) this.$canvas.remove();
+  this.$canvas.width = 1, this.$canvas.height = 1;
+ }
+ toFilterId(processing) {
+  return processing === "cas" ? 2 : 1;
+ }
+ shouldDraw() {
+  if (this.targetFps >= 60) return !0;
+  else if (this.targetFps === 0) return !1;
+  let currentTime = performance.now();
+  if (currentTime - this.lastFrameTime < this.frameInterval) return !1;
+  return this.lastFrameTime = currentTime, !0;
+ }
+ drawFrame() {
+  if (this.isStopped) return;
+  if (this.animFrameId = this.frameCallback(this.boundDrawFrame), !this.shouldDraw()) return;
+  this.updateFrame();
+ }
+ setupRendering() {
+  this.animFrameId = this.frameCallback(this.boundDrawFrame);
+ }
+}
+class WebGPUPlayer extends BaseCanvasPlayer {
+ static device;
+ context;
+ pipeline;
+ sampler;
+ bindGroup;
+ optionsUpdated = !1;
+ paramsBuffer;
+ vertexBuffer;
+ static async prepare() {
+  if (!navigator.gpu) {
+   BxEventBus.Script.emit("webgpu.ready", {});
+   return;
+  }
+  try {
+   let adapter = await navigator.gpu.requestAdapter();
+   if (adapter) WebGPUPlayer.device = await adapter.requestDevice(), WebGPUPlayer.device?.addEventListener("uncapturederror", (e) => {
+     console.error(e.error.message);
+    });
+  } catch (ex) {
+   alert(ex);
+  }
+  BxEventBus.Script.emit("webgpu.ready", {});
+ }
+ constructor($video) {
+  super("webgpu", $video, "WebGPUPlayer");
+ }
+ setupShaders() {
+  if (this.context = this.$canvas.getContext("webgpu"), !this.context) {
+   alert("Can't initiate context");
+   return;
+  }
+  let format = navigator.gpu.getPreferredCanvasFormat();
+  this.context.configure({
+   device: WebGPUPlayer.device,
+   format,
+   alphaMode: "opaque"
+  }), this.vertexBuffer = WebGPUPlayer.device.createBuffer({
+   label: "vertex buffer",
+   size: 24,
+   usage: GPUBufferUsage.VERTEX,
+   mappedAtCreation: !0
+  });
+  let mappedRange = this.vertexBuffer.getMappedRange();
+  new Float32Array(mappedRange).set([
+   -1,
+   3,
+   -1,
+   -1,
+   3,
+   -1
+  ]), this.vertexBuffer.unmap();
+  let shaderModule = WebGPUPlayer.device.createShaderModule({ code: clarity_boost_default });
+  this.pipeline = WebGPUPlayer.device.createRenderPipeline({
+   layout: "auto",
+   vertex: {
+    module: shaderModule,
+    entryPoint: "vsMain",
+    buffers: [{
+     arrayStride: 8,
+     attributes: [{
+      format: "float32x2",
+      offset: 0,
+      shaderLocation: 0
+     }]
+    }]
+   },
+   fragment: {
+    module: shaderModule,
+    entryPoint: "fsMain",
+    targets: [{ format }]
+   },
+   primitive: { topology: "triangle-list" }
+  }), this.sampler = WebGPUPlayer.device.createSampler({ magFilter: "linear", minFilter: "linear" }), this.updateCanvas();
+ }
+ prepareUniformBuffer(value, classType) {
+  let uniform = new classType(value), uniformBuffer = WebGPUPlayer.device.createBuffer({
+   size: uniform.byteLength,
+   usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+  });
+  return WebGPUPlayer.device.queue.writeBuffer(uniformBuffer, 0, uniform), uniformBuffer;
+ }
+ updateCanvas() {
+  let externalTexture = WebGPUPlayer.device.importExternalTexture({ source: this.$video });
+  if (!this.optionsUpdated) this.paramsBuffer = this.prepareUniformBuffer([
+    this.toFilterId(this.options.processing),
+    this.options.sharpness,
+    this.options.brightness / 100,
+    this.options.contrast / 100,
+    this.options.saturation / 100
+   ], Float32Array), this.optionsUpdated = !0;
+  this.bindGroup = WebGPUPlayer.device.createBindGroup({
+   layout: this.pipeline.getBindGroupLayout(0),
+   entries: [
+    { binding: 0, resource: this.sampler },
+    { binding: 1, resource: externalTexture },
+    { binding: 2, resource: { buffer: this.paramsBuffer } }
+   ]
+  });
+ }
+ updateFrame() {
+  this.updateCanvas();
+  let commandEncoder = WebGPUPlayer.device.createCommandEncoder(), passEncoder = commandEncoder.beginRenderPass({
+   colorAttachments: [{
+    view: this.context.getCurrentTexture().createView(),
+    loadOp: "clear",
+    storeOp: "store",
+    clearValue: [0, 0, 0, 1]
+   }]
+  });
+  passEncoder.setPipeline(this.pipeline), passEncoder.setBindGroup(0, this.bindGroup), passEncoder.setVertexBuffer(0, this.vertexBuffer), passEncoder.draw(3), passEncoder.end(), WebGPUPlayer.device.queue.submit([commandEncoder.finish()]);
+ }
+ refreshPlayer() {
+  this.optionsUpdated = !1, this.updateCanvas();
+ }
+ destroy() {
+  if (super.destroy(), this.isStopped = !0, this.pipeline = null, this.bindGroup = null, this.sampler = null, this.paramsBuffer?.destroy(), this.paramsBuffer = null, this.vertexBuffer?.destroy(), this.vertexBuffer = null, this.context) this.context.unconfigure(), this.context = null;
+  console.log("WebGPU context successfully freed.");
+ }
+}
 class StreamSettingsStorage extends BaseSettingsStorage {
  static DEFINITIONS = {
   "deviceVibration.mode": {
@@ -2146,11 +2407,17 @@ class StreamSettingsStorage extends BaseSettingsStorage {
    default: "default",
    options: {
     default: t("default"),
-    webgl2: t("webgl2")
+    webgl2: t("webgl2"),
+    webgpu: `${t("webgpu")} (${t("experimental")})`
    },
    suggest: {
     lowest: "default",
     highest: "webgl2"
+   },
+   ready: (setting) => {
+    BxEventBus.Script.on("webgpu.ready", () => {
+     if (!navigator.gpu || !WebGPUPlayer.device) delete setting.options["webgpu"];
+    });
    }
   },
   "video.processing": {
@@ -4187,9 +4454,8 @@ class SettingsManager {
   },
   "video.player.powerPreference": {
    onChange: () => {
-    let streamPlayer = STATES.currentStream.streamPlayer;
-    if (!streamPlayer) return;
-    streamPlayer.reloadPlayer(), updateVideoPlayer();
+    if (!STATES.currentStream.streamPlayerManager) return;
+    updateVideoPlayer();
    }
   },
   "video.processing": {
@@ -4347,17 +4613,17 @@ function onChangeVideoPlayerType() {
  let playerType = getStreamPref("video.player.type"), settingsManager = SettingsManager.getInstance();
  if (!settingsManager.hasElement("video.processing")) return;
  let isDisabled = !1, $videoProcessing = settingsManager.getElement("video.processing"), $videoSharpness = settingsManager.getElement("video.processing.sharpness"), $videoPowerPreference = settingsManager.getElement("video.player.powerPreference"), $videoMaxFps = settingsManager.getElement("video.maxFps"), $optCas = $videoProcessing.querySelector(`option[value=${"cas"}]`);
- if (playerType === "webgl2") $optCas && ($optCas.disabled = !1);
- else if ($videoProcessing.value = "usm", setStreamPref("video.processing", "usm", "direct"), $optCas && ($optCas.disabled = !0), UserAgent.isSafari()) isDisabled = !0;
- $videoProcessing.disabled = isDisabled, $videoSharpness.dataset.disabled = isDisabled.toString(), $videoPowerPreference.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), $videoMaxFps.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2");
+ if (playerType === "default") {
+  if ($videoProcessing.value = "usm", setStreamPref("video.processing", "usm", "direct"), $optCas && ($optCas.disabled = !0), UserAgent.isSafari()) isDisabled = !0;
+ } else $optCas && ($optCas.disabled = !1);
+ $videoProcessing.disabled = isDisabled, $videoSharpness.dataset.disabled = isDisabled.toString(), $videoPowerPreference.closest(".bx-settings-row").classList.toggle("bx-gone", playerType !== "webgl2"), $videoMaxFps.closest(".bx-settings-row").classList.toggle("bx-gone", playerType === "default");
 }
 function limitVideoPlayerFps(targetFps) {
- STATES.currentStream.streamPlayer?.getWebGL2Player()?.setTargetFps(targetFps);
+ STATES.currentStream.streamPlayerManager?.getCanvasPlayer()?.setTargetFps(targetFps);
 }
 function updateVideoPlayer() {
- let streamPlayer = STATES.currentStream.streamPlayer;
- if (!streamPlayer) return;
- limitVideoPlayerFps(getStreamPref("video.maxFps"));
+ let streamPlayerManager = STATES.currentStream.streamPlayerManager;
+ if (!streamPlayerManager) return;
  let options = {
   processing: getStreamPref("video.processing"),
   sharpness: getStreamPref("video.processing.sharpness"),
@@ -4365,9 +4631,12 @@ function updateVideoPlayer() {
   contrast: getStreamPref("video.contrast"),
   brightness: getStreamPref("video.brightness")
  };
- streamPlayer.setPlayerType(getStreamPref("video.player.type")), streamPlayer.updateOptions(options), streamPlayer.refreshPlayer();
+ streamPlayerManager.switchPlayerType(getStreamPref("video.player.type")), limitVideoPlayerFps(getStreamPref("video.maxFps")), streamPlayerManager.updateOptions(options), streamPlayerManager.refreshPlayer();
 }
-window.addEventListener("resize", updateVideoPlayer);
+function resizeVideoPlayer() {
+ STATES.currentStream.streamPlayerManager?.resizePlayer();
+}
+window.addEventListener("resize", resizeVideoPlayer);
 class NavigationDialog {
  dialogManager;
  onMountedCallbacks = [];
@@ -7680,17 +7949,18 @@ class ScreenshotManager {
   e.target.classList.remove("bx-taking-screenshot");
  }
  takeScreenshot(callback) {
-  let currentStream = STATES.currentStream, streamPlayer = currentStream.streamPlayer, $canvas = this.$canvas;
-  if (!streamPlayer || !$canvas) return;
+  let currentStream = STATES.currentStream, streamPlayerManager = currentStream.streamPlayerManager, $canvas = this.$canvas;
+  if (!streamPlayerManager || !$canvas) return;
   let $player;
-  if (getGlobalPref("screenshot.applyFilters")) $player = streamPlayer.getPlayerElement();
-  else $player = streamPlayer.getPlayerElement("default");
+  if (getGlobalPref("screenshot.applyFilters")) $player = streamPlayerManager.getPlayerElement();
+  else $player = streamPlayerManager.getPlayerElement("video");
   if (!$player || !$player.isConnected) return;
+  let canvasContext = this.canvasContext;
+  if ($player instanceof HTMLCanvasElement) streamPlayerManager.getCanvasPlayer()?.updateFrame();
+  canvasContext.drawImage($player, 0, 0);
   let $gameStream = $player.closest("#game-stream");
   if ($gameStream) $gameStream.addEventListener("animationend", this.onAnimationEnd, { once: !0 }), $gameStream.classList.add("bx-taking-screenshot");
-  let canvasContext = this.canvasContext;
-  if ($player instanceof HTMLCanvasElement) streamPlayer.getWebGL2Player().forceDrawFrame();
-  if (canvasContext.drawImage($player, 0, 0, $canvas.width, $canvas.height), AppInterface) {
+  if (AppInterface) {
    let data = $canvas.toDataURL("image/png").split(";base64,")[1];
    AppInterface.saveScreenshot(currentStream.titleSlug, data), canvasContext.clearRect(0, 0, $canvas.width, $canvas.height), callback && callback();
    return;
@@ -7885,7 +8155,8 @@ var FeatureGates = {
  EnableWifiWarnings: !1,
  EnableUpdateRequiredPage: !1,
  ShowForcedUpdateScreen: !1,
- EnableTakControlResizing: !0
+ EnableTakControlResizing: !0,
+ EnableLazyLoadedHome: !1
 }, nativeMkbMode = getGlobalPref("nativeMkb.mode");
 if (nativeMkbMode !== "default") FeatureGates.EnableMouseAndKeyboard = nativeMkbMode === "on";
 var blockFeatures = getGlobalPref("block.features");
@@ -9128,18 +9399,18 @@ function patchSdpBitrate(sdp, video, audio) {
  return lines.join(`\r
 `);
 }
-var clarity_boost_default = `#version 300 es
+var clarity_boost_default2 = `#version 300 es
 in vec4 position;
 void main() {
 gl_Position = position;
 }`;
-var clarity_boost_default2 = `#version 300 es
+var clarity_boost_default3 = `#version 300 es
 precision mediump float;
 uniform sampler2D data;
 uniform vec2 iResolution;
 const int FILTER_UNSHARP_MASKING = 1;
 const float CAS_CONTRAST_PEAK = 0.8 * -3.0 + 8.0;
-const vec3 LUMINOSITY_FACTOR = vec3(0.2126, 0.7152, 0.0722);
+const vec3 LUMINOSITY_FACTOR = vec3(0.299, 0.587, 0.114);
 uniform int filterId;
 uniform float sharpenFactor;
 uniform float brightness;
@@ -9183,156 +9454,105 @@ color = contrast * (color - 0.5) + 0.5;
 color = brightness * color;
 fragColor = vec4(color, 1.0);
 }`;
-class WebGL2Player {
- LOG_TAG = "WebGL2Player";
- $video;
- $canvas;
+class WebGL2Player extends BaseCanvasPlayer {
  gl = null;
  resources = [];
  program = null;
- stopped = !1;
- options = {
-  filterId: 1,
-  sharpenFactor: 0,
-  brightness: 0,
-  contrast: 0,
-  saturation: 0
- };
- targetFps = 60;
- frameInterval = 0;
- lastFrameTime = 0;
- animFrameId = null;
  constructor($video) {
-  BxLogger.info(this.LOG_TAG, "Initialize"), this.$video = $video;
-  let $canvas = document.createElement("canvas");
-  $canvas.width = $video.videoWidth, $canvas.height = $video.videoHeight, this.$canvas = $canvas, this.setupShaders(), this.setupRendering(), $video.insertAdjacentElement("afterend", $canvas);
- }
- setFilter(filterId, update = !0) {
-  this.options.filterId = filterId, update && this.updateCanvas();
- }
- setSharpness(sharpness, update = !0) {
-  this.options.sharpenFactor = sharpness, update && this.updateCanvas();
- }
- setBrightness(brightness, update = !0) {
-  this.options.brightness = 1 + (brightness - 100) / 100, update && this.updateCanvas();
- }
- setContrast(contrast, update = !0) {
-  this.options.contrast = 1 + (contrast - 100) / 100, update && this.updateCanvas();
- }
- setSaturation(saturation, update = !0) {
-  this.options.saturation = 1 + (saturation - 100) / 100, update && this.updateCanvas();
- }
- setTargetFps(target) {
-  this.targetFps = target, this.lastFrameTime = 0, this.frameInterval = target ? Math.floor(1000 / target) : 0;
- }
- getCanvas() {
-  return this.$canvas;
+  super("webgl2", $video, "WebGL2Player");
  }
  updateCanvas() {
-  let gl = this.gl, program = this.program;
-  gl.uniform2f(gl.getUniformLocation(program, "iResolution"), this.$canvas.width, this.$canvas.height), gl.uniform1i(gl.getUniformLocation(program, "filterId"), this.options.filterId), gl.uniform1f(gl.getUniformLocation(program, "sharpenFactor"), this.options.sharpenFactor), gl.uniform1f(gl.getUniformLocation(program, "brightness"), this.options.brightness), gl.uniform1f(gl.getUniformLocation(program, "contrast"), this.options.contrast), gl.uniform1f(gl.getUniformLocation(program, "saturation"), this.options.saturation);
+  console.log("updateCanvas", this.options);
+  let gl = this.gl, program = this.program, filterId = this.toFilterId(this.options.processing);
+  gl.uniform2f(gl.getUniformLocation(program, "iResolution"), this.$canvas.width, this.$canvas.height), gl.uniform1i(gl.getUniformLocation(program, "filterId"), filterId), gl.uniform1f(gl.getUniformLocation(program, "sharpenFactor"), this.options.sharpness), gl.uniform1f(gl.getUniformLocation(program, "brightness"), this.options.brightness / 100), gl.uniform1f(gl.getUniformLocation(program, "contrast"), this.options.contrast / 100), gl.uniform1f(gl.getUniformLocation(program, "saturation"), this.options.saturation / 100);
  }
- forceDrawFrame() {
+ updateFrame() {
   let gl = this.gl;
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.$video), gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.$video), gl.drawArrays(gl.TRIANGLES, 0, 3);
  }
- setupRendering() {
-  let frameCallback;
-  if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
-   let $video = this.$video;
-   frameCallback = $video.requestVideoFrameCallback.bind($video);
-  } else frameCallback = requestAnimationFrame;
-  let animate = () => {
-   if (this.stopped) return;
-   this.animFrameId = frameCallback(animate);
-   let draw = !0;
-   if (this.targetFps === 0) draw = !1;
-   else if (this.targetFps < 60) {
-    let currentTime = performance.now();
-    if (currentTime - this.lastFrameTime < this.frameInterval) draw = !1;
-    else this.lastFrameTime = currentTime;
-   }
-   if (draw) {
-    let gl = this.gl;
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.$video), gl.drawArrays(gl.TRIANGLES, 0, 6);
-   }
-  };
-  this.animFrameId = frameCallback(animate);
- }
- setupShaders() {
-  BxLogger.info(this.LOG_TAG, "Setting up", getStreamPref("video.player.powerPreference"));
+ async setupShaders() {
   let gl = this.$canvas.getContext("webgl2", {
    isBx: !0,
    antialias: !0,
    alpha: !1,
+   depth: !1,
+   preserveDrawingBuffer: !1,
+   stencil: !1,
    powerPreference: getStreamPref("video.player.powerPreference")
   });
   this.gl = gl, gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferWidth);
   let vShader = gl.createShader(gl.VERTEX_SHADER);
-  gl.shaderSource(vShader, clarity_boost_default), gl.compileShader(vShader);
+  gl.shaderSource(vShader, clarity_boost_default2), gl.compileShader(vShader);
   let fShader = gl.createShader(gl.FRAGMENT_SHADER);
-  gl.shaderSource(fShader, clarity_boost_default2), gl.compileShader(fShader);
+  gl.shaderSource(fShader, clarity_boost_default3), gl.compileShader(fShader);
   let program = gl.createProgram();
   if (this.program = program, gl.attachShader(program, vShader), gl.attachShader(program, fShader), gl.linkProgram(program), gl.useProgram(program), !gl.getProgramParameter(program, gl.LINK_STATUS)) console.error(`Link failed: ${gl.getProgramInfoLog(program)}`), console.error(`vs info-log: ${gl.getShaderInfoLog(vShader)}`), console.error(`fs info-log: ${gl.getShaderInfoLog(fShader)}`);
   this.updateCanvas();
   let buffer = gl.createBuffer();
-  this.resources.push(buffer), gl.bindBuffer(gl.ARRAY_BUFFER, buffer), gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW), gl.enableVertexAttribArray(0), gl.vertexAttribPointer(0, 2, gl.FLOAT, !1, 0, 0);
+  this.resources.push(buffer), gl.bindBuffer(gl.ARRAY_BUFFER, buffer), gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+   -1,
+   -1,
+   3,
+   -1,
+   -1,
+   3
+  ]), gl.STATIC_DRAW), gl.enableVertexAttribArray(0), gl.vertexAttribPointer(0, 2, gl.FLOAT, !1, 0, 0);
   let texture = gl.createTexture();
   this.resources.push(texture), gl.bindTexture(gl.TEXTURE_2D, texture), gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, !0), gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE), gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE), gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR), gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR), gl.uniform1i(gl.getUniformLocation(program, "data"), 0), gl.activeTexture(gl.TEXTURE0);
  }
- resume() {
-  this.stop(), this.stopped = !1, BxLogger.info(this.LOG_TAG, "Resume"), this.$canvas.classList.remove("bx-gone"), this.setupRendering();
- }
- stop() {
-  if (BxLogger.info(this.LOG_TAG, "Stop"), this.$canvas.classList.add("bx-gone"), this.stopped = !0, this.animFrameId) {
-   if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) this.$video.cancelVideoFrameCallback(this.animFrameId);
-   else cancelAnimationFrame(this.animFrameId);
-   this.animFrameId = null;
-  }
- }
  destroy() {
-  BxLogger.info(this.LOG_TAG, "Destroy"), this.stop();
+  super.destroy();
   let gl = this.gl;
-  if (gl) {
-   gl.getExtension("WEBGL_lose_context")?.loseContext(), gl.useProgram(null);
-   for (let resource of this.resources)
-    if (resource instanceof WebGLProgram) gl.deleteProgram(resource);
-    else if (resource instanceof WebGLShader) gl.deleteShader(resource);
-    else if (resource instanceof WebGLTexture) gl.deleteTexture(resource);
-    else if (resource instanceof WebGLBuffer) gl.deleteBuffer(resource);
-   this.gl = null;
-  }
-  if (this.$canvas.isConnected) this.$canvas.parentElement?.removeChild(this.$canvas);
-  this.$canvas.width = 1, this.$canvas.height = 1;
+  if (!gl) return;
+  gl.getExtension("WEBGL_lose_context")?.loseContext(), gl.useProgram(null);
+  for (let resource of this.resources)
+   if (resource instanceof WebGLProgram) gl.deleteProgram(resource);
+   else if (resource instanceof WebGLShader) gl.deleteShader(resource);
+   else if (resource instanceof WebGLTexture) gl.deleteTexture(resource);
+   else if (resource instanceof WebGLBuffer) gl.deleteBuffer(resource);
+  this.gl = null;
+ }
+ refreshPlayer() {
+  this.updateCanvas();
  }
 }
-class StreamPlayer {
- $video;
- playerType = "default";
- options = {};
- webGL2Player = null;
- $videoCss = null;
- $usmMatrix = null;
- constructor($video, type, options) {
-  this.setupVideoElements(), this.$video = $video, this.options = options || {}, this.setPlayerType(type);
+class VideoPlayer extends BaseStreamPlayer {
+ $videoCss;
+ $usmMatrix;
+ constructor($video, logTag) {
+  super("default", "video", $video, logTag);
  }
- setupVideoElements() {
-  if (this.$videoCss = document.getElementById("bx-video-css"), this.$videoCss) return;
-  let $fragment = document.createDocumentFragment();
-  this.$videoCss = CE("style", { id: "bx-video-css" }), $fragment.appendChild(this.$videoCss);
-  let $svg = CE("svg", {
+ init() {
+  super.init();
+  let xmlns = "http://www.w3.org/2000/svg", $svg = CE("svg", {
    id: "bx-video-filters",
-   xmlns: "http://www.w3.org/2000/svg",
-   class: "bx-gone"
+   class: "bx-gone",
+   xmlns
   }, CE("defs", { xmlns: "http://www.w3.org/2000/svg" }, CE("filter", {
    id: "bx-filter-usm",
-   xmlns: "http://www.w3.org/2000/svg"
+   xmlns
   }, this.$usmMatrix = CE("feConvolveMatrix", {
    id: "bx-filter-usm-matrix",
    order: "3",
-   xmlns: "http://www.w3.org/2000/svg"
+   xmlns
   }))));
-  $fragment.appendChild($svg), document.documentElement.appendChild($fragment);
+  this.$videoCss = CE("style", { id: "bx-video-css" });
+  let $fragment = document.createDocumentFragment();
+  $fragment.append(this.$videoCss, $svg), document.documentElement.appendChild($fragment);
+ }
+ setupRendering() {}
+ forceDrawFrame() {}
+ updateCanvas() {}
+ refreshPlayer() {
+  let filters = this.getVideoPlayerFilterStyle(), videoCss = "";
+  if (filters) videoCss += `filter: ${filters} !important;`;
+  if (getGlobalPref("screenshot.applyFilters")) ScreenshotManager.getInstance().updateCanvasFilters(filters);
+  let css = "";
+  if (videoCss) css = `#game-stream video { ${videoCss} }`;
+  this.$videoCss.textContent = css;
+ }
+ clearFilters() {
+  this.$videoCss.textContent = "";
  }
  getVideoPlayerFilterStyle() {
   let filters = [], sharpness = this.options.sharpness || 0;
@@ -9348,10 +9568,20 @@ class StreamPlayer {
   if (brightness != 100) filters.push(`brightness(${brightness}%)`);
   return filters.join(" ");
  }
+}
+class StreamPlayerManager {
+ static instance;
+ static getInstance = () => StreamPlayerManager.instance ?? (StreamPlayerManager.instance = new StreamPlayerManager);
+ $video;
+ videoPlayer;
+ canvasPlayer;
+ playerType = "default";
+ constructor() {}
+ setVideoElement($video) {
+  this.$video = $video, this.videoPlayer = new VideoPlayer($video, "VideoPlayer"), this.videoPlayer.init();
+ }
  resizePlayer() {
-  let PREF_RATIO = getStreamPref("video.ratio"), $video = this.$video, isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport, $webGL2Canvas;
-  if (this.playerType == "webgl2") $webGL2Canvas = this.webGL2Player?.getCanvas();
-  let targetWidth, targetHeight, targetObjectFit;
+  let PREF_RATIO = getStreamPref("video.ratio"), $video = this.$video, isNativeTouchGame = STATES.currentStream.titleInfo?.details.hasNativeTouchSupport, targetWidth, targetHeight, targetObjectFit;
   if (PREF_RATIO.includes(":")) {
    let tmp = PREF_RATIO.split(":"), videoRatio = parseFloat(tmp[0]) / parseFloat(tmp[1]), width = 0, height = 0, parentRect = $video.parentElement.getBoundingClientRect();
    if (parentRect.width / parentRect.height > videoRatio) height = parentRect.height, width = height * videoRatio;
@@ -9367,58 +9597,49 @@ class StreamPlayer {
    }
    targetWidth = `${width}px`, targetHeight = `${height}px`, targetObjectFit = PREF_RATIO === "16:9" ? "contain" : "fill";
   } else targetWidth = "100%", targetHeight = "100%", targetObjectFit = PREF_RATIO, $video.dataset.width = window.innerWidth.toString(), $video.dataset.height = window.innerHeight.toString();
-  if ($video.style.width = targetWidth, $video.style.height = targetHeight, $video.style.objectFit = targetObjectFit, $webGL2Canvas) $webGL2Canvas.style.width = targetWidth, $webGL2Canvas.style.height = targetHeight, $webGL2Canvas.style.objectFit = targetObjectFit, $video.dispatchEvent(new Event("resize"));
-  if (isNativeTouchGame && this.playerType == "webgl2") window.BX_EXPOSED.streamSession.updateDimensions();
+  if ($video.style.width = targetWidth, $video.style.height = targetHeight, $video.style.objectFit = targetObjectFit, this.canvasPlayer) {
+   let $canvas = this.canvasPlayer.getCanvas();
+   $canvas.style.width = targetWidth, $canvas.style.height = targetHeight, $canvas.style.objectFit = targetObjectFit, $video.dispatchEvent(new Event("resize"));
+  }
+  if (isNativeTouchGame && this.playerType !== "default") window.BX_EXPOSED.streamSession.updateDimensions();
  }
- setPlayerType(type, refreshPlayer = !1) {
+ switchPlayerType(type, refreshPlayer = !1) {
   if (this.playerType !== type) {
    let videoClass = BX_FLAGS.DeviceInfo.deviceType === "android-tv" ? "bx-pixel" : "bx-gone";
-   if (type === "webgl2") {
-    if (!this.webGL2Player) this.webGL2Player = new WebGL2Player(this.$video);
-    else this.webGL2Player.resume();
-    this.$videoCss.textContent = "", this.$video.classList.add(videoClass);
-   } else this.webGL2Player?.stop(), this.$video.classList.remove(videoClass);
+   if (this.cleanUpCanvasPlayer(), type === "default") this.$video.classList.remove(videoClass);
+   else {
+    if (type === "webgpu") this.canvasPlayer = new WebGPUPlayer(this.$video);
+    else this.canvasPlayer = new WebGL2Player(this.$video);
+    this.canvasPlayer.init(), this.videoPlayer.clearFilters(), this.$video.classList.add(videoClass);
+   }
+   this.playerType = type;
   }
-  this.playerType = type, refreshPlayer && this.refreshPlayer();
- }
- setOptions(options, refreshPlayer = !1) {
-  this.options = options, refreshPlayer && this.refreshPlayer();
+  refreshPlayer && this.refreshPlayer();
  }
  updateOptions(options, refreshPlayer = !1) {
-  this.options = Object.assign(this.options, options), refreshPlayer && this.refreshPlayer();
+  (this.canvasPlayer || this.videoPlayer).updateOptions(options, refreshPlayer);
  }
- getPlayerElement(playerType) {
-  if (typeof playerType === "undefined") playerType = this.playerType;
-  if (playerType === "webgl2") return this.webGL2Player?.getCanvas();
+ getPlayerElement(elementType) {
+  if (typeof elementType === "undefined") elementType = this.playerType === "default" ? "video" : "canvas";
+  if (elementType !== "video") return this.canvasPlayer?.getCanvas();
   return this.$video;
  }
- getWebGL2Player() {
-  return this.webGL2Player;
+ getCanvasPlayer() {
+  return this.canvasPlayer;
  }
  refreshPlayer() {
-  if (this.playerType === "webgl2") {
-   let options = this.options, webGL2Player = this.webGL2Player;
-   if (options.processing === "usm") webGL2Player.setFilter(1);
-   else webGL2Player.setFilter(2);
-   ScreenshotManager.getInstance().updateCanvasFilters("none"), webGL2Player.setSharpness(options.sharpness || 0), webGL2Player.setSaturation(options.saturation || 100), webGL2Player.setContrast(options.contrast || 100), webGL2Player.setBrightness(options.brightness || 100);
-  } else {
-   let filters = this.getVideoPlayerFilterStyle(), videoCss = "";
-   if (filters) videoCss += `filter: ${filters} !important;`;
-   if (getGlobalPref("screenshot.applyFilters")) ScreenshotManager.getInstance().updateCanvasFilters(filters);
-   let css = "";
-   if (videoCss) css = `#game-stream video { ${videoCss} }`;
-   this.$videoCss.textContent = css;
-  }
+  if (this.playerType === "default") this.videoPlayer.refreshPlayer();
+  else ScreenshotManager.getInstance().updateCanvasFilters("none"), this.canvasPlayer?.refreshPlayer();
   this.resizePlayer();
  }
- reloadPlayer() {
-  this.cleanUpWebGL2Player(), this.playerType = "default", this.setPlayerType("webgl2", !1);
+ getVideoPlayerFilterStyle() {
+  throw new Error("Method not implemented.");
  }
- cleanUpWebGL2Player() {
-  this.webGL2Player?.destroy(), this.webGL2Player = null;
+ cleanUpCanvasPlayer() {
+  this.canvasPlayer?.destroy(), this.canvasPlayer = null;
  }
  destroy() {
-  this.cleanUpWebGL2Player();
+  this.cleanUpCanvasPlayer();
  }
 }
 function patchVideoApi() {
@@ -9430,8 +9651,8 @@ function patchVideoApi() {
    saturation: getStreamPref("video.saturation"),
    contrast: getStreamPref("video.contrast"),
    brightness: getStreamPref("video.brightness")
-  };
-  STATES.currentStream.streamPlayer = new StreamPlayer(this, getStreamPref("video.player.type"), playerOptions), BxEventBus.Stream.emit("state.playing", {
+  }, streamPlayerManager = StreamPlayerManager.getInstance();
+  streamPlayerManager.setVideoElement(this), streamPlayerManager.updateOptions(playerOptions, !1), streamPlayerManager.switchPlayerType(getStreamPref("video.player.type")), STATES.currentStream.streamPlayerManager = streamPlayerManager, BxEventBus.Stream.emit("state.playing", {
    $video: this
   });
  }, nativePlay = HTMLMediaElement.prototype.play;
@@ -10260,7 +10481,7 @@ BxEventBus.Stream.on("dataChannelCreated", (payload) => {
 });
 function unload() {
  if (!STATES.isPlaying) return;
- KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayer?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable(), BxEventBus.Stream.emit("xboxTitleId.changed", { id: -1 });
+ KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayerManager?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable(), BxEventBus.Stream.emit("xboxTitleId.changed", { id: -1 });
 }
 BxEventBus.Stream.on("state.stopped", unload);
 window.addEventListener("pagehide", (e) => {
@@ -10275,7 +10496,7 @@ function main() {
   BX_FLAGS.ForceNativeMkbTitles.push(...customList);
  }
  if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), AppInterface && patchPointerLockApi(), getGlobalPref("audio.volume.booster.enabled") && patchAudioContext(), getGlobalPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
- if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getGlobalPref("xhome.enabled")) RemotePlayManager.detect();
+ if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), WebGPUPlayer.prepare(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getGlobalPref("xhome.enabled")) RemotePlayManager.detect();
  if (getGlobalPref("touchController.mode") === "all") TouchController.setup();
  if (AppInterface && (getGlobalPref("mkb.enabled") || getGlobalPref("nativeMkb.mode") === "on")) STATES.pointerServerPort = AppInterface.startPointerServer() || 9269, BxLogger.info("startPointerServer", "Port", STATES.pointerServerPort.toString());
  if (getGlobalPref("ui.gameCard.waitTime.show") && GameTile.setup(), EmulatedMkbHandler.setupEvents(), getGlobalPref("ui.controllerStatus.show")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));

@@ -12,6 +12,8 @@ import { GameSettingsStorage } from "./game-settings-storage";
 import { BxLogger } from "../bx-logger";
 import { ControllerCustomizationDefaultPresetId } from "../local-db/controller-customizations-table";
 import { ControllerShortcutDefaultId } from "../local-db/controller-shortcuts-table";
+import { BxEventBus } from "../bx-event-bus";
+import { WebGPUPlayer } from "@/modules/player/webgpu/webgpu-player";
 
 
 export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
@@ -150,10 +152,20 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
             options: {
                 [StreamPlayerType.VIDEO]: t('default'),
                 [StreamPlayerType.WEBGL2]: t('webgl2'),
+                [StreamPlayerType.WEBGPU]: `${t('webgpu')} (${t('experimental')})`,
             },
             suggest: {
                 lowest: StreamPlayerType.VIDEO,
                 highest: StreamPlayerType.WEBGL2,
+            },
+            ready: (setting: any) => {
+                BxEventBus.Script.on('webgpu.ready', () => {
+                    if (!navigator.gpu || !WebGPUPlayer.device) {
+                            // Remove WebGPU option on unsupported browsers
+                            delete setting.options[StreamPlayerType.WEBGPU];
+                        }
+                    }
+                );
             },
         },
         [StreamPref.VIDEO_PROCESSING]: {
