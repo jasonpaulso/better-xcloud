@@ -3,6 +3,7 @@ import { compressCss, isLiteVersion, renderStylus } from "@macros/build" with { 
 import { BlockFeature, UiSection } from "@/enums/pref-values";
 import { GlobalPref } from "@/enums/pref-keys";
 import { getGlobalPref } from "./pref-utils";
+import { containsAll } from "./utils";
 
 
 export function addCss() {
@@ -42,6 +43,21 @@ export function addCss() {
     // Hide "Play with touch" section
     if (PREF_HIDE_SECTIONS.includes(UiSection.TOUCH)) {
         selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/touch"])');
+    }
+
+    // Hide "Recently added" section
+    if (PREF_HIDE_SECTIONS.includes(UiSection.RECENTLY_ADDED)) {
+        selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/recently-added"])');
+    }
+
+    // Hide "Genres section"
+    if (PREF_HIDE_SECTIONS.includes(UiSection.GENRES)) {
+        selectorToHide.push('#BodyContent div[class*=HomePage-module__genresRow]');
+    }
+
+    // Hide "GamePassPromo"
+    if (containsAll(PREF_HIDE_SECTIONS, [UiSection.RECENTLY_ADDED, UiSection.LEAVING_SOON, UiSection.GENRES, UiSection.ALL_GAMES])) {
+        selectorToHide.push('#BodyContent div[class*=GamePassPromoSection-module__container]');
     }
 
    // Hide "Start a party" button in the Guide menu

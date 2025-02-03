@@ -28,6 +28,9 @@ export const SUPPORTED_LANGUAGES = {
 
 const Texts = {
     "webgpu": "WebGPU",
+    "section-recently-added": "Recently added",
+    "section-leaving-soon": "Leaving soon",
+    "section-genres": "Genres",
     "achievements": "Achievements",
     "activate": "Activate",
     "activated": "Activated",

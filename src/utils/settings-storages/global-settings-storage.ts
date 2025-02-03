@@ -457,8 +457,10 @@ export class GlobalSettingsStorage extends BaseSettingsStorage<GlobalPref> {
                 [UiSection.FRIENDS]: t('section-play-with-friends'),
                 [UiSection.NATIVE_MKB]: t('section-native-mkb'),
                 [UiSection.TOUCH]: t('section-touch'),
-                // [UiSection.BOYG]: t('section-byog'),
                 [UiSection.MOST_POPULAR]: t('section-most-popular'),
+                [UiSection.RECENTLY_ADDED]: t('section-recently-added'),
+                [UiSection.LEAVING_SOON]: t('section-leaving-soon'),
+                [UiSection.GENRES]: t('section-genres'),
                 [UiSection.ALL_GAMES]: t('section-all-games'),
             },
             params: {

@@ -154,9 +154,13 @@ export function clearAllData() {
     alert(t('clear-data-success'));
 }
 
+export function containsAll(arr: Array<any>, values: Array<any>) {
+    return values.every(val => arr.includes(val));
+}
+
 export function blockAllNotifications() {
     const blockFeatures = getGlobalPref(GlobalPref.BLOCK_FEATURES);
-    const blockAll = [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES].every(value => blockFeatures.includes(value));
+    const blockAll = containsAll(blockFeatures, [BlockFeature.FRIENDS, BlockFeature.NOTIFICATIONS_ACHIEVEMENTS, BlockFeature.NOTIFICATIONS_INVITES]);
     return blockAll;
 }
 

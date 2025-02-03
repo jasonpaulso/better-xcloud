@@ -796,6 +796,8 @@ true` + text;
         const sections: PartialRecord<UiSection, GamePassCloudGallery> = {
             [UiSection.NATIVE_MKB]: GamePassCloudGallery.NATIVE_MKB,
             [UiSection.MOST_POPULAR]: GamePassCloudGallery.MOST_POPULAR,
+            [UiSection.LEAVING_SOON]: GamePassCloudGallery.LEAVING_SOON,
+            [UiSection.RECENTLY_ADDED]: GamePassCloudGallery.RECENTLY_ADDED,
         };
 
         for (const section of PREF_HIDE_SECTIONS) {
@@ -814,6 +816,17 @@ if (e && e.id) {
 }
 `;
         str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
+
+    ignoreGenresSection(str: string) {
+        let index = str.indexOf('="GenresRow"');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, '{', index));
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.insertAt(str, index + 1, 'return null;');
         return str;
     },
 
@@ -1193,6 +1206,7 @@ let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
     hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
     hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
+    hideSections.includes(UiSection.GENRES) && 'ignoreGenresSection',
     STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
     hideSections.some(value => [UiSection.NATIVE_MKB, UiSection.MOST_POPULAR].includes(value)) && 'ignoreSiglSections',
 

@@ -6,6 +6,9 @@ export const enum UiSection {
     NEWS = 'news',
     TOUCH = 'touch',
     BOYG = 'byog',
+    RECENTLY_ADDED = 'recently-added',
+    LEAVING_SOON = 'leaving-soon',
+    GENRES = 'genres',
 }
 
 export const enum GameBarPosition {

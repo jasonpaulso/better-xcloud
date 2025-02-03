@@ -399,6 +399,9 @@ var SUPPORTED_LANGUAGES = {
  "zh-TW": "中文(繁體)"
 }, Texts = {
  webgpu: "WebGPU",
+ "section-recently-added": "Recently added",
+ "section-leaving-soon": "Leaving soon",
+ "section-genres": "Genres",
  achievements: "Achievements",
  activate: "Activate",
  activated: "Activated",
@@ -1647,6 +1650,9 @@ class GlobalSettingsStorage extends BaseSettingsStorage {
     "native-mkb": t("section-native-mkb"),
     touch: t("section-touch"),
     "most-popular": t("section-most-popular"),
+    "recently-added": t("section-recently-added"),
+    "leaving-soon": t("section-leaving-soon"),
+    genres: t("section-genres"),
     "all-games": t("section-all-games")
    },
    params: {
@@ -2785,9 +2791,12 @@ function clearAllData() {
  } catch (e) {}
  alert(t("clear-data-success"));
 }
+function containsAll(arr, values) {
+ return values.every((val) => arr.includes(val));
+}
 function blockAllNotifications() {
  let blockFeatures = getGlobalPref("block.features");
- return ["friends", "notifications-achievements", "notifications-invites"].every((value) => blockFeatures.includes(value));
+ return containsAll(blockFeatures, ["friends", "notifications-achievements", "notifications-invites"]);
 }
 function blockSomeNotifications() {
  let blockFeatures = getGlobalPref("block.features");
@@ -5535,7 +5544,9 @@ true` + text;
   if (index = PatcherUtils.lastIndexOf(str, "const[", index, 300), index < 0) return !1;
   let PREF_HIDE_SECTIONS = getGlobalPref("ui.hideSections"), siglIds = [], sections = {
    "native-mkb": "8fa264dd-124f-4af3-97e8-596fcdf4b486",
-   "most-popular": "e7590b22-e299-44db-ae22-25c61405454c"
+   "most-popular": "e7590b22-e299-44db-ae22-25c61405454c",
+   "leaving-soon": "393f05bf-e596-4ef6-9487-6d4fa0eab987",
+   "recently-added": "44a55037-770f-4bbf-bde5-a9fa27dba1da"
   };
   for (let section of PREF_HIDE_SECTIONS) {
    let galleryId = sections[section];
@@ -5550,6 +5561,11 @@ if (e && e.id) {
 }
 `;
   return str = PatcherUtils.insertAt(str, index, newCode), str;
+ },
+ ignoreGenresSection(str) {
+  let index = str.indexOf('="GenresRow"');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "{", index)), index < 0) return !1;
+  return str = PatcherUtils.insertAt(str, index + 1, "return null;"), str;
  },
  overrideStorageGetSettings(str) {
   let text = "}getSetting(e){";
@@ -5729,6 +5745,7 @@ ${subsVar} = subs;
  hideSections.includes("news") && "ignoreNewsSection",
  hideSections.includes("friends") && "ignorePlayWithFriendsSection",
  hideSections.includes("all-games") && "ignoreAllGamesSection",
+ hideSections.includes("genres") && "ignoreGenresSection",
  STATES.browser.capabilities.touch && hideSections.includes("touch") && "ignorePlayWithTouchSection",
  hideSections.some((value) => ["native-mkb", "most-popular"].includes(value)) && "ignoreSiglSections",
  ...getGlobalPref("ui.imageQuality") < 90 ? [
@@ -9290,6 +9307,9 @@ function addCss() {
  if (PREF_HIDE_SECTIONS.includes("all-games")) selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__gridContainer]"), selectorToHide.push("#BodyContent div[class*=AllGamesRow-module__rowHeader]");
  if (PREF_HIDE_SECTIONS.includes("most-popular")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/popular"])');
  if (PREF_HIDE_SECTIONS.includes("touch")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/touch"])');
+ if (PREF_HIDE_SECTIONS.includes("recently-added")) selectorToHide.push('#BodyContent div[class*=HomePage-module__bottomSpacing]:has(a[href="/play/gallery/recently-added"])');
+ if (PREF_HIDE_SECTIONS.includes("genres")) selectorToHide.push("#BodyContent div[class*=HomePage-module__genresRow]");
+ if (containsAll(PREF_HIDE_SECTIONS, ["recently-added", "leaving-soon", "genres", "all-games"])) selectorToHide.push("#BodyContent div[class*=GamePassPromoSection-module__container]");
  if (getGlobalPref("block.features").includes("friends")) selectorToHide.push("#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]");
  if (selectorToHide) css += selectorToHide.join(",") + "{ display: none; }";
  if (getGlobalPref("ui.reduceAnimations")) css += "div[class*=GameCard-module__gameTitleInnerWrapper],div[class*=GameCard-module__card],div[class*=ScrollArrows-module]{transition:none !important}";
