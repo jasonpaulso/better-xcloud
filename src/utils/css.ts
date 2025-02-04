@@ -76,8 +76,12 @@ body[data-theme=dark] {
     --gds-containerSolidAppBackground: #000 !important;
 }
 
-div[class*="ProductDetailPage-module__backgroundImageGradient"]:after {
+div[class*=ProductDetailPage-module__backgroundImageGradient]:after {
     background: radial-gradient(ellipse 100% 100% at 50% 0, #1515178c 0, #1a1b1ea6 32%, #000000 100%) !important;
+}
+
+a[class*=AllGamesRow-module__seeAllCloudGames] {
+    background: none !important;
 }
 `);
     }
