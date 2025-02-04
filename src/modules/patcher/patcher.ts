@@ -762,6 +762,18 @@ true` + text;
         return str;
     },
 
+    ignoreByogSection(str: string) {
+        let index = str.indexOf('"ByogRow-module__container');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 100));
+
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.insertAt(str, index, 'return null;');
+        return str;
+    },
+
     // home-page.js
     ignorePlayWithTouchSection(str: string) {
         let index = str.indexOf('("Play_With_Touch"),');
@@ -1207,6 +1219,8 @@ let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
     hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
     hideSections.includes(UiSection.GENRES) && 'ignoreGenresSection',
+    !getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.BYOG) && hideSections.includes(UiSection.BOYG) && 'ignoreByogSection',
+
     STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
     hideSections.some(value => [UiSection.NATIVE_MKB, UiSection.MOST_POPULAR].includes(value)) && 'ignoreSiglSections',
 
