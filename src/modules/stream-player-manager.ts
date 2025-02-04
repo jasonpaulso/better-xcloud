@@ -128,7 +128,7 @@ export class StreamPlayerManager {
                 this.$video.classList.remove(videoClass);
             } else {
                 // Switch from Video -> Canvas
-                if (type === StreamPlayerType.WEBGPU) {
+                if (BX_FLAGS.EnableWebGPURenderer && type === StreamPlayerType.WEBGPU) {
                     this.canvasPlayer = new WebGPUPlayer(this.$video);
                 } else {
                     this.canvasPlayer = new WebGL2Player(this.$video);

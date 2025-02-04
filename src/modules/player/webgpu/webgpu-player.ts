@@ -2,6 +2,7 @@ import wgslClarityBoost from "./shaders/clarity-boost.wgsl" with { type: "text" 
 import { BaseCanvasPlayer } from "../base-canvas-player";
 import { StreamPlayerType } from "@/enums/pref-values";
 import { BxEventBus } from "@/utils/bx-event-bus";
+import { BX_FLAGS } from "@/utils/bx-flags";
 
 export class WebGPUPlayer extends BaseCanvasPlayer {
     static device: GPUDevice;
@@ -15,7 +16,7 @@ export class WebGPUPlayer extends BaseCanvasPlayer {
     vertexBuffer!: GPUBuffer | null;
 
     static async prepare(): Promise<void> {
-        if (!navigator.gpu) {
+        if (!BX_FLAGS.EnableWebGPURenderer || !navigator.gpu) {
             BxEventBus.Script.emit('webgpu.ready', {});
             return;
         }

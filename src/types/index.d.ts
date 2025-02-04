@@ -178,6 +178,8 @@ type BxFlags = {
     EnableXcloudLogging: boolean;
     SafariWorkaround: boolean;
 
+    EnableWebGPURenderer: boolean;
+
     ForceNativeMkbTitles: string[];
     FeatureGates: { [key: string]: boolean } | null,
 

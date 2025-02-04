@@ -14,6 +14,7 @@ import { ControllerCustomizationDefaultPresetId } from "../local-db/controller-c
 import { ControllerShortcutDefaultId } from "../local-db/controller-shortcuts-table";
 import { BxEventBus } from "../bx-event-bus";
 import { WebGPUPlayer } from "@/modules/player/webgpu/webgpu-player";
+import { BX_FLAGS } from "../bx-flags";
 
 
 export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
@@ -160,12 +161,11 @@ export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {
             },
             ready: (setting: any) => {
                 BxEventBus.Script.on('webgpu.ready', () => {
-                    if (!navigator.gpu || !WebGPUPlayer.device) {
-                            // Remove WebGPU option on unsupported browsers
-                            delete setting.options[StreamPlayerType.WEBGPU];
-                        }
+                    if (!WebGPUPlayer.device) {
+                        // Remove WebGPU option on unsupported browsers
+                        delete setting.options[StreamPlayerType.WEBGPU];
                     }
-                );
+                });
             },
         },
         [StreamPref.VIDEO_PROCESSING]: {

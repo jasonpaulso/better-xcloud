@@ -8,6 +8,8 @@ const DEFAULT_FLAGS: BxFlags = {
     EnableXcloudLogging: false,
     SafariWorkaround: true,
 
+    EnableWebGPURenderer: false,
+
     ForceNativeMkbTitles: [],
     FeatureGates: null,
 

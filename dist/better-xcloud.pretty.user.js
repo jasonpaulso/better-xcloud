@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.4.0-beta
+// @version      6.4.0-beta-2
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -28,6 +28,7 @@ var DEFAULT_FLAGS = {
  CheckForUpdate: !0,
  EnableXcloudLogging: !1,
  SafariWorkaround: !0,
+ EnableWebGPURenderer: !1,
  ForceNativeMkbTitles: [],
  FeatureGates: null,
  DeviceInfo: {
@@ -190,7 +191,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.4.0-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.4.0-beta-2", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -2190,7 +2191,7 @@ class WebGPUPlayer extends BaseCanvasPlayer {
  paramsBuffer;
  vertexBuffer;
  static async prepare() {
-  if (!navigator.gpu) {
+  if (!BX_FLAGS.EnableWebGPURenderer || !navigator.gpu) {
    BxEventBus.Script.emit("webgpu.ready", {});
    return;
   }
@@ -2422,7 +2423,7 @@ class StreamSettingsStorage extends BaseSettingsStorage {
    },
    ready: (setting) => {
     BxEventBus.Script.on("webgpu.ready", () => {
-     if (!navigator.gpu || !WebGPUPlayer.device) delete setting.options["webgpu"];
+     if (!WebGPUPlayer.device) delete setting.options["webgpu"];
     });
    }
   },
@@ -9628,7 +9629,7 @@ class StreamPlayerManager {
    let videoClass = BX_FLAGS.DeviceInfo.deviceType === "android-tv" ? "bx-pixel" : "bx-gone";
    if (this.cleanUpCanvasPlayer(), type === "default") this.$video.classList.remove(videoClass);
    else {
-    if (type === "webgpu") this.canvasPlayer = new WebGPUPlayer(this.$video);
+    if (BX_FLAGS.EnableWebGPURenderer && type === "webgpu") this.canvasPlayer = new WebGPUPlayer(this.$video);
     else this.canvasPlayer = new WebGL2Player(this.$video);
     this.canvasPlayer.init(), this.videoPlayer.clearFilters(), this.$video.classList.add(videoClass);
    }
