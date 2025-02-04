@@ -87,7 +87,9 @@ div[class*="ProductDetailPage-module__backgroundImageGradient"]:after {
         css += compressCss(`
 div[class*=GameCard-module__gameTitleInnerWrapper],
 div[class*=GameCard-module__card],
-div[class*=ScrollArrows-module] {
+div[class*=ScrollArrows-module],
+div[class*=Dropdown-module__dropdownWrapper] {
+    animation: none !important;
     transition: none !important;
 }
 `);
