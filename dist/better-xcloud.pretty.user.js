@@ -5761,7 +5761,7 @@ ${subsVar} = subs;
  ] : []
 ]), hideSections = getGlobalPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
  hideSections.includes("news") && "ignoreNewsSection",
- hideSections.includes("friends") && "ignorePlayWithFriendsSection",
+ (getGlobalPref("block.features").includes("friends") || hideSections.includes("friends")) && "ignorePlayWithFriendsSection",
  hideSections.includes("all-games") && "ignoreAllGamesSection",
  hideSections.includes("genres") && "ignoreGenresSection",
  !getGlobalPref("block.features").includes("byog") && hideSections.includes("byog") && "ignoreByogSection",

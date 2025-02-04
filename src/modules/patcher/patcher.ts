@@ -1216,7 +1216,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 const hideSections = getGlobalPref(GlobalPref.UI_HIDE_SECTIONS);
 let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
-    hideSections.includes(UiSection.FRIENDS) && 'ignorePlayWithFriendsSection',
+    (getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.FRIENDS) || hideSections.includes(UiSection.FRIENDS)) && 'ignorePlayWithFriendsSection',
     hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
     hideSections.includes(UiSection.GENRES) && 'ignoreGenresSection',
     !getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.BYOG) && hideSections.includes(UiSection.BOYG) && 'ignoreByogSection',
