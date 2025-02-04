@@ -24,8 +24,12 @@ How to:
 const enabled = true;
 
 enabled && (window.BX_FLAGS = {
+    // Toggle WebGPU Renderer
+    // https://github.com/redphx/better-xcloud/discussions/657
+    EnableWebGPURenderer: false,
+    
     /*
-    Add titleId of the game(s) you want to add here.
+    Add titleId of the game(s) you want to test native M&KB support here.
     Keep in mind: this method only works with some games.
 
     Example:
