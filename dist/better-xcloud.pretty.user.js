@@ -84,6 +84,7 @@ var ALL_PREFS = {
   "ui.hideScrollbar",
   "ui.streamMenu.simplify",
   "ui.splashVideo.skip",
+  "ui.theme",
   "version.current",
   "version.lastCheck",
   "version.latest",
@@ -403,6 +404,8 @@ var SUPPORTED_LANGUAGES = {
  "section-recently-added": "Recently added",
  "section-leaving-soon": "Leaving soon",
  "section-genres": "Genres",
+ oled: "OLED",
+ theme: "Theme",
  achievements: "Achievements",
  activate: "Activate",
  activated: "Activated",
@@ -1441,6 +1444,14 @@ class GlobalSettingsStorage extends BaseSettingsStorage {
      if (value === 90) return t("default");
      return value + "%";
     }
+   }
+  },
+  "ui.theme": {
+   label: t("theme"),
+   default: "default",
+   options: {
+    default: t("default"),
+    "dark-oled": t("oled")
    }
   },
   "stream.video.combineAudio": {
@@ -7268,6 +7279,7 @@ class SettingsDialog extends NavigationDialog {
   label: t("ui"),
   items: [
    "ui.layout",
+   "ui.theme",
    "ui.imageQuality",
    "ui.gameCard.waitTime.show",
    "ui.controllerStatus.show",
@@ -9313,6 +9325,7 @@ function addCss() {
  if (containsAll(PREF_HIDE_SECTIONS, ["recently-added", "leaving-soon", "genres", "all-games"])) selectorToHide.push("#BodyContent div[class*=GamePassPromoSection-module__container]");
  if (getGlobalPref("block.features").includes("friends")) selectorToHide.push("#gamepass-dialog-root div[class^=AchievementsPreview-module__container] + button[class*=HomeLandingPage-module__button]");
  if (selectorToHide) css += selectorToHide.join(",") + "{ display: none; }";
+ if (getGlobalPref("ui.theme") === "dark-oled") css += 'body[data-theme=dark]{--gds-containerSolidAppBackground:#000 !important}div[class*="ProductDetailPage-module__backgroundImageGradient"]:after{background:radial-gradient(ellipse 100% 100% at 50% 0,rgba(21,21,23,0.549) 0,rgba(26,27,30,0.651) 32%,#000 100%) !important}';
  if (getGlobalPref("ui.reduceAnimations")) css += "div[class*=GameCard-module__gameTitleInnerWrapper],div[class*=GameCard-module__card],div[class*=ScrollArrows-module]{transition:none !important}";
  if (getGlobalPref("ui.systemMenu.hideHandle")) css += "div[class*=Grip-module__container]{visibility:hidden}@media (hover:hover){button[class*=GripHandle-module__container]:hover div[class*=Grip-module__container]{visibility:visible}}button[class*=GripHandle-module__container][aria-expanded=true] div[class*=Grip-module__container]{visibility:visible}button[class*=GripHandle-module__container][aria-expanded=false]{background-color:transparent !important}div[class*=StreamHUD-module__buttonsContainer]{padding:0 !important}";
  if (css += "div[class*=StreamMenu-module__menu]{min-width:100vw !important}", getGlobalPref("ui.streamMenu.simplify")) css += "div[class*=Menu-module__scrollable]{--bxStreamMenuItemSize:80px;--streamMenuItemSize:calc(var(--bxStreamMenuItemSize) + 40px) !important}.bx-badges{top:calc(var(--streamMenuItemSize) - 20px)}body[data-media-type=tv] .bx-badges{top:calc(var(--streamMenuItemSize) - 10px) !important}button[class*=MenuItem-module__container]{min-width:auto !important;min-height:auto !important;width:var(--bxStreamMenuItemSize) !important;height:var(--bxStreamMenuItemSize) !important}div[class*=MenuItem-module__label]{display:none !important}svg[class*=MenuItem-module__icon]{width:36px;height:100% !important;padding:0 !important;margin:0 !important}";

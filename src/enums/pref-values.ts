@@ -134,3 +134,8 @@ export const enum BlockFeature {
     NOTIFICATIONS_INVITES = 'notifications-invites',
     NOTIFICATIONS_ACHIEVEMENTS = 'notifications-achievements',
 }
+
+export const enum UiTheme {
+    DEFAULT = 'default',
+    DARK_OLED = 'dark-oled',
+}

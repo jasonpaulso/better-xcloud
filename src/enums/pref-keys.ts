@@ -1,5 +1,5 @@
 import type { BaseSettingsStorage } from "@/utils/settings-storages/base-settings-storage";
-import type { BlockFeature, CodecProfile, DeviceVibrationMode, GameBarPosition, LoadingScreenRocket, NativeMkbMode, StreamPlayerType, StreamResolution, StreamStat, StreamStatPosition, StreamVideoProcessing, TouchControllerMode, TouchControllerStyleCustom, TouchControllerStyleStandard, UiLayout, UiSection, VideoPosition, VideoPowerPreference, VideoRatio } from "./pref-values"
+import type { BlockFeature, CodecProfile, DeviceVibrationMode, GameBarPosition, LoadingScreenRocket, NativeMkbMode, StreamPlayerType, StreamResolution, StreamStat, StreamStatPosition, StreamVideoProcessing, TouchControllerMode, TouchControllerStyleCustom, TouchControllerStyleStandard, UiLayout, UiSection, UiTheme, VideoPosition, VideoPowerPreference, VideoRatio } from "./pref-values"
 
 export const enum StorageKey {
     GLOBAL = 'BetterXcloud',
@@ -74,6 +74,7 @@ export const enum GlobalPref {
     UI_HIDE_SYSTEM_MENU_ICON = 'ui.systemMenu.hideHandle',
     UI_REDUCE_ANIMATIONS = 'ui.reduceAnimations',
     UI_IMAGE_QUALITY = 'ui.imageQuality',
+    UI_THEME = 'ui.theme',
 
     AUDIO_MIC_ON_PLAYING = 'audio.mic.onPlaying',
     AUDIO_VOLUME_CONTROL_ENABLED = 'audio.volume.booster.enabled',
@@ -126,6 +127,7 @@ export type GlobalPrefTypeMap = {
     [GlobalPref.UI_SCROLLBAR_HIDE]: boolean;
     [GlobalPref.UI_SIMPLIFY_STREAM_MENU]: boolean;
     [GlobalPref.UI_SKIP_SPLASH_VIDEO]: boolean;
+    [GlobalPref.UI_THEME]: UiTheme;
     [GlobalPref.VERSION_CURRENT]: string;
     [GlobalPref.VERSION_LAST_CHECK]: number;
     [GlobalPref.VERSION_LATEST]: string;
@@ -258,6 +260,7 @@ export const ALL_PREFS: {
         GlobalPref.UI_SCROLLBAR_HIDE,
         GlobalPref.UI_SIMPLIFY_STREAM_MENU,
         GlobalPref.UI_SKIP_SPLASH_VIDEO,
+        GlobalPref.UI_THEME,
         GlobalPref.VERSION_CURRENT,
         GlobalPref.VERSION_LAST_CHECK,
         GlobalPref.VERSION_LATEST,

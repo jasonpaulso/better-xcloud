@@ -1,6 +1,6 @@
 import { CE } from "@utils/html";
 import { compressCss, isLiteVersion, renderStylus } from "@macros/build" with { type: "macro" };
-import { BlockFeature, UiSection } from "@/enums/pref-values";
+import { BlockFeature, UiSection, UiTheme } from "@/enums/pref-values";
 import { GlobalPref } from "@/enums/pref-keys";
 import { getGlobalPref } from "./pref-utils";
 import { containsAll } from "./utils";
@@ -67,6 +67,19 @@ export function addCss() {
 
     if (selectorToHide) {
         css += selectorToHide.join(',') + '{ display: none; }';
+    }
+
+    // Change site's background
+    if (getGlobalPref(GlobalPref.UI_THEME) === UiTheme.DARK_OLED) {
+        css += compressCss(`
+body[data-theme=dark] {
+    --gds-containerSolidAppBackground: #000 !important;
+}
+
+div[class*="ProductDetailPage-module__backgroundImageGradient"]:after {
+    background: radial-gradient(ellipse 100% 100% at 50% 0, #1515178c 0, #1a1b1ea6 32%, #000000 100%) !important;
+}
+`);
     }
 
     // Reduce animations

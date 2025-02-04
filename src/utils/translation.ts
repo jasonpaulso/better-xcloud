@@ -31,6 +31,8 @@ const Texts = {
     "section-recently-added": "Recently added",
     "section-leaving-soon": "Leaving soon",
     "section-genres": "Genres",
+    "oled": "OLED",
+    "theme": "Theme",
     "achievements": "Achievements",
     "activate": "Activate",
     "activated": "Activated",

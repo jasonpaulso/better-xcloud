@@ -8,7 +8,7 @@ import { CE } from "../html";
 import { t, SUPPORTED_LANGUAGES } from "../translation";
 import { UserAgent } from "../user-agent";
 import { BaseSettingsStorage } from "./base-settings-storage";
-import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, NativeMkbMode, UiLayout, UiSection, BlockFeature } from "@/enums/pref-values";
+import { CodecProfile, StreamResolution, TouchControllerMode, TouchControllerStyleStandard, TouchControllerStyleCustom, GameBarPosition, NativeMkbMode, UiLayout, UiSection, BlockFeature, UiTheme } from "@/enums/pref-values";
 import { GhPagesUtils } from "../gh-pages";
 import { BxEventBus } from "../bx-event-bus";
 import { BxIcon } from "../bx-icon";
@@ -208,6 +208,14 @@ export class GlobalSettingsStorage extends BaseSettingsStorage<GlobalPref> {
 
                     return value + '%';
                 },
+            },
+        },
+        [GlobalPref.UI_THEME]: {
+            label: t('theme'),
+            default: UiTheme.DEFAULT,
+            options: {
+                [UiTheme.DEFAULT]: t('default'),
+                [UiTheme.DARK_OLED]: t('oled'),
             },
         },
 
