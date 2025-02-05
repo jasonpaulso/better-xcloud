@@ -744,16 +744,8 @@ true` + text;
     // Don't render "All Games" sections
     ignoreAllGamesSection(str: string) {
         let index = str.indexOf('className:"AllGamesRow-module__allGamesRowContainer');
-        if (index < 0) {
-            return false;
-        }
-
-        index = PatcherUtils.indexOf(str, 'grid:!0,', index, 1500);
-        if (index < 0) {
-            return false;
-        }
-
-        index = PatcherUtils.lastIndexOf(str, '(0,', index, 70);
+        index > -1 && (index = PatcherUtils.indexOf(str, 'grid:!0,', index, 1500));
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, '(0,', index, 70));
         if (index < 0) {
             return false;
         }

@@ -51,7 +51,7 @@ button_color(name, normal, hover, active, disabled)
 }
 
 /* Fix Stream menu buttons not hiding */
-div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]) {
+#StreamHud div[class^=HUDButton-module__hiddenContainer] ~ div:not([class^=HUDButton-module__hiddenContainer]) {
     opacity: 0;
     pointer-events: none !important;
     position: absolute;
@@ -182,16 +182,18 @@ select[multiple], select[multiple]:focus {
     display: none;
 }
 
-div[class*=NotFocusedDialog] {
-    position: absolute !important;
-    top: -9999px !important;
-    left: -9999px !important;
-    width: 0px !important;
-    height: 0px !important;
-}
+#game-stream {
+    div[class^=NotFocusedDialog] {
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 0px !important;
+        height: 0px !important;
+    }
 
-#game-stream video:not([src]) {
-    visibility: hidden;
+    video:not([src]) {
+        visibility: hidden;
+    }
 }
 
 .bx-game-tile-wait-time {

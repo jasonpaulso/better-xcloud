@@ -15,8 +15,8 @@ export function addCss() {
 
     if (isLiteVersion()) {
         // Hide Controller icon in Game tiles
-        selectorToHide.push('div[class*=SupportedInputsBadge] svg:first-of-type');
-        selectorToHide.push('div[class*=SupportedInputsBadge]:not(:has(:nth-child(2)))');
+        selectorToHide.push('div[role=img][class*=SupportedInputsBadge] svg:first-of-type');
+        selectorToHide.push('div[role=img][class*=SupportedInputsBadge]:not(:has(:nth-child(2)))');
     }
 
     // Hide "News" section
@@ -76,11 +76,11 @@ body[data-theme=dark] {
     --gds-containerSolidAppBackground: #000 !important;
 }
 
-div[class*=ProductDetailPage-module__backgroundImageGradient]:after {
+div[aria-hidden=true][class^=BackgroundImageAbsoluteContainer][class*=ProductDetailPage-module__backgroundImageGradient]:after {
     background: radial-gradient(ellipse 100% 100% at 50% 0, #1515178c 0, #1a1b1ea6 32%, #000000 100%) !important;
 }
 
-a[class*=AllGamesRow-module__seeAllCloudGames] {
+a[href="/play/gallery/all-games"][class*=AllGamesRow-module__seeAllCloudGames] {
     background: none !important;
 }
 `);
@@ -89,10 +89,10 @@ a[class*=AllGamesRow-module__seeAllCloudGames] {
     // Reduce animations
     if (getGlobalPref(GlobalPref.UI_REDUCE_ANIMATIONS)) {
         css += compressCss(`
-div[class*=GameCard-module__gameTitleInnerWrapper],
-div[class*=GameCard-module__card],
-div[class*=ScrollArrows-module],
-div[class*=Dropdown-module__dropdownWrapper] {
+/*div[class*=GameCard-module__card],*/
+div[class^=GameCard-module__gameTitleInnerWrapper],
+div[class^=ScrollArrows-module],
+div[class^=ContextMenu-module__][class*=Dropdown-module__dropdownWrapper] {
     animation: none !important;
     transition: none !important;
 }
@@ -102,32 +102,32 @@ div[class*=Dropdown-module__dropdownWrapper] {
     // Hide the top-left dots icon while playing
     if (getGlobalPref(GlobalPref.UI_HIDE_SYSTEM_MENU_ICON)) {
         css += compressCss(`
-div[class*=Grip-module__container] {
+#StreamHud div[class^=Grip-module__container] {
     visibility: hidden;
 }
 
 @media (hover: hover) {
-    button[class*=GripHandle-module__container]:hover div[class*=Grip-module__container] {
+    #StreamHud button[class^=GripHandle-module__container]:hover div[class^=Grip-module__container] {
         visibility: visible;
     }
 }
 
-button[class*=GripHandle-module__container][aria-expanded=true] div[class*=Grip-module__container] {
+#StreamHud button[class^=GripHandle-module__container][aria-expanded=true] div[class^=Grip-module__container] {
     visibility: visible;
 }
 
-button[class*=GripHandle-module__container][aria-expanded=false] {
+#StreamHud button[class^=GripHandle-module__container][aria-expanded=false] {
     background-color: transparent !important;
 }
 
-div[class*=StreamHUD-module__buttonsContainer] {
+#StreamHud div[class^=StreamHUD-module__buttonsContainer] {
     padding: 0px !important;
 }
 `);
     }
 
     css += compressCss(`
-div[class*=StreamMenu-module__menu] {
+#game-stream div[class*=StreamMenu-module__menu] {
     min-width: 100vw !important;
 }
 `);
@@ -135,7 +135,7 @@ div[class*=StreamMenu-module__menu] {
     // Simplify Stream's menu
     if (getGlobalPref(GlobalPref.UI_SIMPLIFY_STREAM_MENU)) {
         css += compressCss(`
-div[class*=Menu-module__scrollable] {
+#game-stream div[class*=Menu-module__scrollable] {
     --bxStreamMenuItemSize: 80px;
     --streamMenuItemSize: calc(var(--bxStreamMenuItemSize) + 40px) !important;
 }
@@ -148,18 +148,18 @@ body[data-media-type=tv] .bx-badges {
     top: calc(var(--streamMenuItemSize) - 10px) !important;
 }
 
-button[class*=MenuItem-module__container] {
+#game-stream button[class*=MenuItem-module__container] {
     min-width: auto !important;
     min-height: auto !important;
     width: var(--bxStreamMenuItemSize) !important;
     height: var(--bxStreamMenuItemSize) !important;
 }
 
-div[class*=MenuItem-module__label] {
+#game-stream div[class*=MenuItem-module__label] {
     display: none !important;
 }
 
-svg[class*=MenuItem-module__icon] {
+#game-stream svg[class*=MenuItem-module__icon] {
     width: 36px;
     height: 100% !important;
     padding: 0 !important;
