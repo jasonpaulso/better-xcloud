@@ -81,6 +81,14 @@ export const BxExposed = {
             BxLogger.error(LOG_TAG, e);
         }
 
+        // Disable header & footer
+        try {
+            state.uhf.headerMode = 'Off';
+            state.uhf.footerMode = 'Off';
+        } catch (e) {
+            BxLogger.error(LOG_TAG, e);
+        }
+
         // Redirect to /en-US/play if visiting from an unsupported region
         try {
             const xCloud = state.xcloud.authentication.authStatusByStrategy.XCloud;
