@@ -27,12 +27,6 @@ export const SUPPORTED_LANGUAGES = {
 };
 
 const Texts = {
-    "webgpu": "WebGPU",
-    "section-recently-added": "Recently added",
-    "section-leaving-soon": "Leaving soon",
-    "section-genres": "Genres",
-    "oled": "OLED",
-    "theme": "Theme",
     "achievements": "Achievements",
     "activate": "Activate",
     "activated": "Activated",
@@ -228,6 +222,7 @@ const Texts = {
     "notifications": "Notifications",
     "off": "Off",
     "official": "Official",
+    "oled": "OLED",
     "on": "On",
     "only-supports-some-games": "Only supports some games",
     "opacity": "Opacity",
@@ -311,10 +306,13 @@ const Texts = {
     "screen": "Screen",
     "screenshot-apply-filters": "Apply video filters to screenshots",
     "section-all-games": "All games",
+    "section-genres": "Genres",
+    "section-leaving-soon": "Leaving soon",
     "section-most-popular": "Most popular",
     "section-native-mkb": "Play with mouse & keyboard",
     "section-news": "News",
     "section-play-with-friends": "Play with friends",
+    "section-recently-added": "Recently added",
     "section-touch": "Play with touch",
     "separate-touch-controller": "Separate Touch controller & Controller #1",
     "separate-touch-controller-note": "Touch controller is Player 1, Controller #1 is Player 2",
@@ -369,6 +367,7 @@ const Texts = {
     "tc-muted-colors": "Muted colors",
     "tc-standard-layout-style": "Standard layout's button style",
     "text-size": "Text size",
+    "theme": "Theme",
     "toggle": "Toggle",
     "top": "Top",
     "top-center": "Top-center",
@@ -430,6 +429,7 @@ const Texts = {
     "waiting-for-input": "Waiting for input...",
     "wallpaper": "Wallpaper",
     "webgl2": "WebGL2",
+    "webgpu": "WebGPU",
 };
 
 export class Translations {
