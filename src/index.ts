@@ -33,7 +33,6 @@ import { GameTile } from "./modules/ui/game-tile";
 import { ProductDetailsPage } from "./modules/ui/product-details";
 import { NavigationDialogManager } from "./modules/ui/dialog/navigation-dialog";
 import { GlobalPref, StreamPref } from "./enums/pref-keys";
-import { SettingsDialog } from "./modules/ui/dialog/settings-dialog";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
@@ -174,7 +173,7 @@ document.addEventListener('readystatechange', e => {
         }
     } else {
         // Show Settings button in the header when not signed in
-        window.setTimeout(HeaderSection.watchHeader, 2000);
+        // window.setTimeout(HeaderSection.watchHeader, 2000);
     }
 
     // Hide "Play with Friends" skeleton section
@@ -198,20 +197,8 @@ window.addEventListener('popstate', onHistoryChanged);
 window.history.pushState = patchHistoryMethod('pushState');
 window.history.replaceState = patchHistoryMethod('replaceState');
 
-BxEventBus.Script.once('xcloud.server.unavailable', () => {
-    STATES.supportedRegion = false;
-    window.setTimeout(HeaderSection.watchHeader, 2000);
-
-    // Open Settings dialog on Unsupported page
-    const $unsupportedPage = document.querySelector<HTMLElement>('div[class^=UnsupportedMarketPage-module__container]');
-    if ($unsupportedPage) {
-        SettingsDialog.getInstance().show();
-    }
-});
-
-BxEventBus.Script.on('xcloud.server.ready', () => {
-    STATES.isSignedIn = true;
-    window.setTimeout(HeaderSection.watchHeader, 2000);
+BxEventBus.Script.on('header.rendered', () => {
+    HeaderSection.getInstance().checkHeader();
 });
 
 BxEventBus.Stream.on('state.loading', () => {

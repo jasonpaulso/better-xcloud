@@ -242,6 +242,7 @@ export const BxExposed = {
 
     localCoOpManager: isFullVersion() ? LocalCoOpManager.getInstance() : null,
     reactCreateElement: function(...args: any[]) {},
+    reactUseEffect: function(...args: any[]) {},
 
     createReactLocalCoOpIcon: isFullVersion() ? (attrs: any): any => {
         const reactCE = window.BX_EXPOSED.reactCreateElement;

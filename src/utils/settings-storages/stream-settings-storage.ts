@@ -14,7 +14,6 @@ import { ControllerCustomizationDefaultPresetId } from "../local-db/controller-c
 import { ControllerShortcutDefaultId } from "../local-db/controller-shortcuts-table";
 import { BxEventBus } from "../bx-event-bus";
 import { WebGPUPlayer } from "@/modules/player/webgpu/webgpu-player";
-import { BX_FLAGS } from "../bx-flags";
 
 
 export class StreamSettingsStorage extends BaseSettingsStorage<StreamPref> {

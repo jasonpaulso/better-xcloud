@@ -1029,9 +1029,14 @@ ${subsVar} = subs;
             return false;
         }
 
-        const newCode = 'window.BX_EXPOSED.reactCreateElement=';
-        str = PatcherUtils.insertAt(str, index - 1, newCode);
+        str = PatcherUtils.insertAt(str, index - 1, 'window.BX_EXPOSED.reactCreateElement=');
 
+        index = PatcherUtils.indexOf(str, '.useEffect=', index);
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.insertAt(str, index - 1, 'window.BX_EXPOSED.reactUseEffect=');
         return str;
     },
 
@@ -1130,7 +1135,24 @@ ${subsVar} = subs;
 
         str = PatcherUtils.insertAt(str, index, `&q=${getGlobalPref(GlobalPref.UI_IMAGE_QUALITY)}`);
         return str;
-    }
+    },
+
+    injectHeaderUseEffect(str: string) {
+        let index = str.indexOf('"EdgewaterHeader-module__spaceBetween');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 300));
+
+        if (index < 0) {
+            return false;
+        }
+
+        const newCode = `
+window.BX_EXPOSED.reactUseEffect(() => {
+    window.BxEventBus.Script.emit('header.rendered', {});
+});
+`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1140,6 +1162,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []),
 
     'exposeReactCreateComponent',
+    'injectHeaderUseEffect',
     'gameCardCustomIcons',
     // 'gameCardPassTitle',
 

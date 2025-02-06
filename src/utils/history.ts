@@ -3,7 +3,6 @@ import { isFullVersion } from "@macros/build" with { type: "macro" };
 import { BxEvent } from "@utils/bx-event";
 import { LoadingScreen } from "@modules/loading-screen";
 import { RemotePlayManager } from "@/modules/remote-play-manager";
-import { HeaderSection } from "@/modules/ui/header";
 import { BxEventBus } from "./bx-event-bus";
 import { NavigationDialogManager } from "@/modules/ui/dialog/navigation-dialog";
 
@@ -35,7 +34,5 @@ export function onHistoryChanged(e: PopStateEvent) {
     NavigationDialogManager.getInstance().hide();
 
     LoadingScreen.reset();
-    window.setTimeout(HeaderSection.watchHeader, 2000);
-
     BxEventBus.Stream.emit('state.stopped', {});
 }

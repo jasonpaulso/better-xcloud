@@ -14,6 +14,7 @@ export namespace BxEvent {
     export const TOUCH_LAYOUT_MANAGER_READY = 'bx-touch-layout-manager-ready';
 
     // Inside app
+    // TODO: Use EventBus
     export const REMOTE_PLAY_READY = 'bx-remote-play-ready';
     export const REMOTE_PLAY_FAILED = 'bx-remote-play-failed';
 

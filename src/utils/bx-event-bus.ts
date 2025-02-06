@@ -8,8 +8,9 @@ import type { SpeakerState } from "@/modules/shortcuts/sound-shortcut";
 type EventCallback<T = any> = (payload: T) => void;
 
 type ScriptEvents = {
-    'xcloud.server.ready': {};
-    'xcloud.server.unavailable': {};
+    'xcloud.server': {
+        status: 'ready' | 'unavailable' | 'signed-out',
+    };
 
     'dialog.shown': {};
     'dialog.dismissed': {};
@@ -34,6 +35,8 @@ type ScriptEvents = {
     };
 
     'webgpu.ready': {},
+
+    'header.rendered': {},
 };
 
 type StreamEvents = {

@@ -52,7 +52,7 @@ export class XcloudInterceptor {
         const response = await NATIVE_FETCH(request, init);
         if (response.status !== 200) {
             // Unsupported region
-            BxEventBus.Script.emit('xcloud.server.unavailable', {});
+            BxEventBus.Script.emit('xcloud.server', { status: 'unavailable' });
             return response;
         }
 
@@ -92,8 +92,6 @@ export class XcloudInterceptor {
             STATES.serverRegions[region.name] = Object.assign({}, region);
         }
 
-        BxEventBus.Script.emit('xcloud.server.ready', {});
-
         const preferredRegion = getPreferredServerRegion();
         if (preferredRegion && preferredRegion in STATES.serverRegions) {
             const tmp = Object.assign({}, STATES.serverRegions[preferredRegion]);
@@ -104,6 +102,7 @@ export class XcloudInterceptor {
         }
 
         STATES.gsToken = obj.gsToken;
+        BxEventBus.Script.emit('xcloud.server', { status: 'ready' });
 
         response.json = () => Promise.resolve(obj);
         return response;

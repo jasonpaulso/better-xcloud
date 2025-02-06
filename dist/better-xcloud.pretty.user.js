@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.4.0
+// @version      6.4.1-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -192,7 +192,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.4.0", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.4.1-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -5674,8 +5674,8 @@ ${subsVar} = subs;
  exposeReactCreateComponent(str) {
   let index = str.indexOf(".prototype.isReactComponent={}");
   if (index > -1 && (index = PatcherUtils.indexOf(str, ".createElement=", index)), index < 0) return !1;
-  let newCode = "window.BX_EXPOSED.reactCreateElement=";
-  return str = PatcherUtils.insertAt(str, index - 1, newCode), str;
+  if (str = PatcherUtils.insertAt(str, index - 1, "window.BX_EXPOSED.reactCreateElement="), index = PatcherUtils.indexOf(str, ".useEffect=", index), index < 0) return !1;
+  return str = PatcherUtils.insertAt(str, index - 1, "window.BX_EXPOSED.reactUseEffect="), str;
  },
  gameCardCustomIcons(str) {
   let initialIndex = str.indexOf("const{supportedInputIcons:");
@@ -5705,6 +5705,16 @@ ${subsVar} = subs;
   let index = str.indexOf("}?w=${");
   if (index > -1 && (index = PatcherUtils.indexOf(str, "}", index + 1, 10, !0)), index < 0) return !1;
   return str = PatcherUtils.insertAt(str, index, `&q=${getGlobalPref("ui.imageQuality")}`), str;
+ },
+ injectHeaderUseEffect(str) {
+  let index = str.indexOf('"EdgewaterHeader-module__spaceBetween');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 300)), index < 0) return !1;
+  let newCode = `
+window.BX_EXPOSED.reactUseEffect(() => {
+  window.BxEventBus.Script.emit('header.rendered', {});
+});
+`;
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...AppInterface && getGlobalPref("nativeMkb.mode") === "on" ? [
@@ -5712,6 +5722,7 @@ ${subsVar} = subs;
   "disableAbsoluteMouse"
  ] : [],
  "exposeReactCreateComponent",
+ "injectHeaderUseEffect",
  "gameCardCustomIcons",
  ...getGlobalPref("ui.imageQuality") < 90 ? [
   "setImageQuality"
@@ -8325,6 +8336,7 @@ var BxExposed = {
  },
  localCoOpManager: LocalCoOpManager.getInstance(),
  reactCreateElement: function(...args) {},
+ reactUseEffect: function(...args) {},
  createReactLocalCoOpIcon: (attrs) => {
   let reactCE = window.BX_EXPOSED.reactCreateElement;
   return reactCE("svg", { xmlns: "http://www.w3.org/2000/svg", width: "1em", height: "1em", viewBox: "0 0 32 32", "fill-rule": "evenodd", "stroke-linecap": "round", "stroke-linejoin": "round", ...attrs }, reactCE("g", null, reactCE("path", { d: "M24.272 11.165h-3.294l-3.14 3.564c-.391.391-.922.611-1.476.611a2.1 2.1 0 0 1-2.087-2.088 2.09 2.09 0 0 1 .031-.362l1.22-6.274a3.89 3.89 0 0 1 3.81-3.206h6.57c1.834 0 3.439 1.573 3.833 3.295l1.205 6.185a2.09 2.09 0 0 1 .031.362 2.1 2.1 0 0 1-2.087 2.088c-.554 0-1.085-.22-1.476-.611l-3.14-3.564", fill: "none", stroke: "#fff", "stroke-width": "2" }), reactCE("circle", { cx: "22.625", cy: "5.874", r: ".879" }), reactCE("path", { d: "M11.022 24.415H7.728l-3.14 3.564c-.391.391-.922.611-1.476.611a2.1 2.1 0 0 1-2.087-2.088 2.09 2.09 0 0 1 .031-.362l1.22-6.274a3.89 3.89 0 0 1 3.81-3.206h6.57c1.834 0 3.439 1.573 3.833 3.295l1.205 6.185a2.09 2.09 0 0 1 .031.362 2.1 2.1 0 0 1-2.087 2.088c-.554 0-1.085-.22-1.476-.611l-3.14-3.564", fill: "none", stroke: "#fff", "stroke-width": "2" }), reactCE("circle", { cx: "9.375", cy: "19.124", r: ".879" })));
@@ -8363,8 +8375,6 @@ class HeaderSection {
  $btnRemotePlay;
  $btnSettings;
  $buttonsWrapper;
- observer;
- timeoutId;
  constructor() {
   BxLogger.info(this.LOG_TAG, "constructor()"), this.$btnRemotePlay = createButton({
    classes: ["bx-header-remote-play-button", "bx-gone"],
@@ -8372,37 +8382,31 @@ class HeaderSection {
    title: t("remote-play"),
    style: 8 | 64 | 2048,
    onClick: (e) => RemotePlayManager.getInstance()?.togglePopup()
-  }), this.$btnSettings = createButton({
-   classes: ["bx-header-settings-button"],
-   label: "???",
+  });
+  let $btnSettings = this.$btnSettings = createButton({
+   classes: ["bx-header-settings-button", "bx-gone"],
+   label: t("better-xcloud"),
    style: 16 | 32 | 64 | 256,
    onClick: (e) => SettingsDialog.getInstance().show()
-  }), this.$buttonsWrapper = CE("div", !1, getGlobalPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings);
- }
- injectSettingsButton($parent) {
-  if (!$parent) return;
-  let PREF_LATEST_VERSION = getGlobalPref("version.latest"), $btnSettings = this.$btnSettings;
-  if (isElementVisible(this.$buttonsWrapper)) return;
-  if ($btnSettings.querySelector("span").textContent = getPreferredServerRegion(!0) || t("better-xcloud"), !SCRIPT_VERSION.includes("beta") && PREF_LATEST_VERSION && PREF_LATEST_VERSION !== SCRIPT_VERSION) $btnSettings.setAttribute("data-update-available", "true");
-  $parent.appendChild(this.$buttonsWrapper);
+  });
+  this.$buttonsWrapper = CE("div", !1, getGlobalPref("xhome.enabled") ? this.$btnRemotePlay : null, this.$btnSettings), BxEventBus.Script.on("xcloud.server", ({ status }) => {
+   if (status === "ready") {
+    STATES.isSignedIn = !0, $btnSettings.querySelector("span").textContent = getPreferredServerRegion(!0) || t("better-xcloud");
+    let PREF_LATEST_VERSION = getGlobalPref("version.latest");
+    if (!SCRIPT_VERSION.includes("beta") && PREF_LATEST_VERSION && PREF_LATEST_VERSION !== SCRIPT_VERSION) $btnSettings.setAttribute("data-update-available", "true");
+   } else if (status === "unavailable") {
+    if (STATES.supportedRegion = !1, document.querySelector("div[class^=UnsupportedMarketPage-module__container]")) SettingsDialog.getInstance().show();
+   }
+   $btnSettings.classList.remove("bx-gone");
+  });
  }
  checkHeader = () => {
   let $target = document.querySelector("#PageContent div[class*=EdgewaterHeader-module__rightSectionSpacing]");
   if (!$target) $target = document.querySelector("div[class^=UnsupportedMarketPage-module__buttons]");
-  $target && this.injectSettingsButton($target);
+  if ($target?.appendChild(this.$buttonsWrapper), !STATES.isSignedIn) BxEventBus.Script.emit("xcloud.server", { status: "signed-out" });
  };
- watchHeader() {
-  let $root = document.querySelector("#PageContent header") || document.querySelector("#root");
-  if (!$root) return;
-  this.timeoutId && clearTimeout(this.timeoutId), this.timeoutId = null, this.observer && this.observer.disconnect(), this.observer = new MutationObserver((mutationList) => {
-   this.timeoutId && clearTimeout(this.timeoutId), this.timeoutId = window.setTimeout(this.checkHeader, 2000);
-  }), this.observer.observe($root, { subtree: !0, childList: !0 }), this.checkHeader();
- }
  showRemotePlayButton() {
   this.$btnRemotePlay?.classList.remove("bx-gone");
- }
- static watchHeader() {
-  HeaderSection.getInstance().watchHeader();
  }
 }
 class RemotePlayDialog extends NavigationDialog {
@@ -9065,7 +9069,7 @@ class XcloudInterceptor {
    ip && request.headers.set("X-Forwarded-For", ip);
   }
   let response = await NATIVE_FETCH(request, init);
-  if (response.status !== 200) return BxEventBus.Script.emit("xcloud.server.unavailable", {}), response;
+  if (response.status !== 200) return BxEventBus.Script.emit("xcloud.server", { status: "unavailable" }), response;
   let obj = await response.clone().json();
   RemotePlayManager.getInstance()?.setXcloudToken(obj.gsToken);
   let serverRegex = /\/\/(\w+)\./, serverExtra = XcloudInterceptor.SERVER_EXTRA_INFO, region;
@@ -9077,13 +9081,12 @@ class XcloudInterceptor {
     else region.contintent = "other", BX_FLAGS.Debug && alert("New server: " + shortName);
    region.shortName = shortName.toUpperCase(), STATES.serverRegions[region.name] = Object.assign({}, region);
   }
-  BxEventBus.Script.emit("xcloud.server.ready", {});
   let preferredRegion = getPreferredServerRegion();
   if (preferredRegion && preferredRegion in STATES.serverRegions) {
    let tmp = Object.assign({}, STATES.serverRegions[preferredRegion]);
    tmp.isDefault = !0, obj.offeringSettings.regions = [tmp], STATES.selectedRegion = tmp;
   }
-  return STATES.gsToken = obj.gsToken, response.json = () => Promise.resolve(obj), response;
+  return STATES.gsToken = obj.gsToken, BxEventBus.Script.emit("xcloud.server", { status: "ready" }), response.json = () => Promise.resolve(obj), response;
  }
  static async handlePlay(request, init) {
   BxEventBus.Stream.emit("state.loading", {});
@@ -9389,7 +9392,7 @@ function patchHistoryMethod(type) {
 }
 function onHistoryChanged(e) {
  if (e && e.arguments && e.arguments[0] && e.arguments[0].origin === "better-xcloud") return;
- window.setTimeout(RemotePlayManager.detect, 10), NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), window.setTimeout(HeaderSection.watchHeader, 2000), BxEventBus.Stream.emit("state.stopped", {});
+ window.setTimeout(RemotePlayManager.detect, 10), NavigationDialogManager.getInstance().hide(), LoadingScreen.reset(), BxEventBus.Stream.emit("state.stopped", {});
 }
 function setCodecPreferences(sdp, preferredCodec) {
  let h264Pattern = /a=fmtp:(\d+).*profile-level-id=([0-9a-f]{6})/g, profilePrefix = preferredCodec === "high" ? "4d" : preferredCodec === "low" ? "420" : "42e", preferredCodecIds = [], matches = sdp.matchAll(h264Pattern) || [];
@@ -10459,7 +10462,6 @@ window.addEventListener("load", (e) => {
 document.addEventListener("readystatechange", (e) => {
  if (document.readyState !== "interactive") return;
  if (STATES.isSignedIn = !!window.xbcUser?.isSignedIn, STATES.isSignedIn) RemotePlayManager.getInstance()?.initialize();
- else window.setTimeout(HeaderSection.watchHeader, 2000);
  if (getGlobalPref("ui.hideSections").includes("friends") || getGlobalPref("block.features").includes("friends")) {
   let $parent = document.querySelector("div[class*=PlayWithFriendsSkeleton]")?.closest("div[class*=HomePage-module]");
   $parent && ($parent.style.display = "none");
@@ -10471,11 +10473,8 @@ window.addEventListener(BxEvent.POPSTATE, onHistoryChanged);
 window.addEventListener("popstate", onHistoryChanged);
 window.history.pushState = patchHistoryMethod("pushState");
 window.history.replaceState = patchHistoryMethod("replaceState");
-BxEventBus.Script.once("xcloud.server.unavailable", () => {
- if (STATES.supportedRegion = !1, window.setTimeout(HeaderSection.watchHeader, 2000), document.querySelector("div[class^=UnsupportedMarketPage-module__container]")) SettingsDialog.getInstance().show();
-});
-BxEventBus.Script.on("xcloud.server.ready", () => {
- STATES.isSignedIn = !0, window.setTimeout(HeaderSection.watchHeader, 2000);
+BxEventBus.Script.on("header.rendered", () => {
+ HeaderSection.getInstance().checkHeader();
 });
 BxEventBus.Stream.on("state.loading", () => {
  if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
