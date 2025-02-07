@@ -1164,6 +1164,16 @@ ${subsVar} = subs;
         return PatcherUtils.injectUseEffect(str, index, 'Stream', 'ui.streamMenu.rendered');
     },
 
+    injectGuideHomeUseEffect(str: string) {
+        let index = str.indexOf('"HomeLandingPage-module__authenticatedContentContainer');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 200));
+        if (index < 0) {
+            return false;
+        }
+
+        return PatcherUtils.injectUseEffect(str, index, 'Script', 'ui.guideHome.rendered');
+    },
+
     injectCreatePortal(str: string) {
         let index = str.indexOf('.createPortal=function');
         index > -1 && (index = PatcherUtils.indexOf(str, '{', index, 50, true));
@@ -1173,6 +1183,26 @@ ${subsVar} = subs;
 
         str = PatcherUtils.insertAt(str, index, codeCreatePortal);
         return str;
+    },
+
+    injectAchievementsProgressUseEffect(str: string) {
+        let index = str.indexOf('"AchievementsButton-module__progressBarContainer');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 200));
+        if (index < 0) {
+            return false;
+        }
+
+        return PatcherUtils.injectUseEffect(str, index, 'Script', 'ui.guideAchievementProgress.rendered');
+    },
+
+    injectAchievementsDetailUseEffect(str: string) {
+        let index = str.indexOf('GuideAchievementDetail.useParams()');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'const', index, 200));
+        if (index < 0) {
+            return false;
+        }
+
+        return PatcherUtils.injectUseEffect(str, index, 'Script', 'ui.guideAchievementDetail.rendered');
     },
 };
 
@@ -1185,8 +1215,11 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     'exposeReactCreateComponent',
 
     'injectCreatePortal',
+    'injectGuideHomeUseEffect',
     'injectHeaderUseEffect',
     'injectErrorPageUseEffect',
+    'injectAchievementsProgressUseEffect',
+    'injectAchievementsDetailUseEffect',
 
     'gameCardCustomIcons',
     // 'gameCardPassTitle',

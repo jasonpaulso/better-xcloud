@@ -5707,10 +5707,25 @@ ${subsVar} = subs;
   if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
   return PatcherUtils.injectUseEffect(str, index, "Stream", "ui.streamMenu.rendered");
  },
+ injectGuideHomeUseEffect(str) {
+  let index = str.indexOf('"HomeLandingPage-module__authenticatedContentContainer');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
+  return PatcherUtils.injectUseEffect(str, index, "Script", "ui.guideHome.rendered");
+ },
  injectCreatePortal(str) {
   let index = str.indexOf(".createPortal=function");
   if (index > -1 && (index = PatcherUtils.indexOf(str, "{", index, 50, !0)), index < 0) return !1;
   return str = PatcherUtils.insertAt(str, index, create_portal_default), str;
+ },
+ injectAchievementsProgressUseEffect(str) {
+  let index = str.indexOf('"AchievementsButton-module__progressBarContainer');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
+  return PatcherUtils.injectUseEffect(str, index, "Script", "ui.guideAchievementProgress.rendered");
+ },
+ injectAchievementsDetailUseEffect(str) {
+  let index = str.indexOf("GuideAchievementDetail.useParams()");
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "const", index, 200)), index < 0) return !1;
+  return PatcherUtils.injectUseEffect(str, index, "Script", "ui.guideAchievementDetail.rendered");
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...AppInterface && getGlobalPref("nativeMkb.mode") === "on" ? [
@@ -5719,8 +5734,11 @@ ${subsVar} = subs;
  ] : [],
  "exposeReactCreateComponent",
  "injectCreatePortal",
+ "injectGuideHomeUseEffect",
  "injectHeaderUseEffect",
  "injectErrorPageUseEffect",
+ "injectAchievementsProgressUseEffect",
+ "injectAchievementsDetailUseEffect",
  "gameCardCustomIcons",
  ...getGlobalPref("ui.imageQuality") < 90 ? [
   "setImageQuality"
@@ -8830,10 +8848,8 @@ class GuideMenu {
   return this.$renderedButtons = $div, $div;
  }
  injectHome($root, isPlaying = !1) {
-  {
-   let $achievementsProgress = $root.querySelector("button[class*=AchievementsButton-module__progressBarContainer]");
-   if ($achievementsProgress) TrueAchievements.getInstance().injectAchievementsProgress($achievementsProgress);
-  }
+  let $buttons = this.renderButtons();
+  if ($root.contains($buttons)) return;
   let $target = null;
   if (isPlaying) {
    $target = $root.querySelector("a[class*=QuitGameButton]");
@@ -8844,41 +8860,7 @@ class GuideMenu {
    if ($dividers) $target = $dividers[$dividers.length - 1];
   }
   if (!$target) return !1;
-  let $buttons = this.renderButtons();
   $buttons.dataset.isPlaying = isPlaying.toString(), $target.insertAdjacentElement("afterend", $buttons);
- }
- onShown = async (e) => {
-  if (e.where === "home") {
-   let $root = document.querySelector("#gamepass-dialog-root div[role=dialog] div[role=tabpanel] div[class*=HomeLandingPage]");
-   $root && this.injectHome($root, STATES.isPlaying);
-  }
- };
- addEventListeners() {
-  window.addEventListener(BxEvent.XCLOUD_GUIDE_MENU_SHOWN, this.onShown);
- }
- observe($addedElm) {
-  let className = $addedElm.className;
-  if (!className) className = $addedElm.firstElementChild?.className ?? "";
-  if (!className || className.startsWith("bx-")) return;
-  if (className.includes("AchievementsButton-module__progressBarContainer")) {
-   TrueAchievements.getInstance().injectAchievementsProgress($addedElm);
-   return;
-  }
-  if (!className.startsWith("NavigationAnimation") && !className.startsWith("DialogRoutes") && !className.startsWith("Dialog-module__container")) return;
-  {
-   let $achievDetailPage = $addedElm.querySelector("div[class*=AchievementDetailPage]");
-   if ($achievDetailPage) {
-    TrueAchievements.getInstance().injectAchievementDetailPage($achievDetailPage);
-    return;
-   }
-  }
-  let $selectedTab = $addedElm.querySelector("div[class^=NavigationMenu] button[aria-selected=true");
-  if ($selectedTab) {
-   let $elm = $selectedTab, index;
-   for (index = 0;$elm = $elm?.previousElementSibling; index++)
-    ;
-   if (index === 0) BxEvent.dispatch(window, BxEvent.XCLOUD_GUIDE_MENU_SHOWN, { where: "home" });
-  }
  }
 }
 class StreamBadges {
@@ -10334,68 +10316,6 @@ class StreamUiHandler {
   StreamUiHandler.$btnStreamSettings = void 0, StreamUiHandler.$btnStreamStats = void 0, StreamUiHandler.$btnRefresh = void 0, StreamUiHandler.$btnHome = void 0;
  }
 }
-class RootDialogObserver {
- static $btnShortcut = AppInterface && createButton({
-  icon: BxIcon.CREATE_SHORTCUT,
-  label: t("create-shortcut"),
-  style: 64 | 8 | 128 | 4096 | 8192,
-  onClick: (e) => {
-   window.BX_EXPOSED.dialogRoutes?.closeAll();
-   let $btn = e.target.closest("button");
-   AppInterface.createShortcut($btn?.dataset.path);
-  }
- });
- static $btnWallpaper = AppInterface && createButton({
-  icon: BxIcon.DOWNLOAD,
-  label: t("wallpaper"),
-  style: 64 | 8 | 128 | 4096 | 8192,
-  onClick: (e) => {
-   window.BX_EXPOSED.dialogRoutes?.closeAll();
-   let $btn = e.target.closest("button"), details = parseDetailsPath($btn.dataset.path);
-   details && AppInterface.downloadWallpapers(details.titleSlug, details.productId);
-  }
- });
- static handleGameCardMenu($root) {
-  let $detail = $root.querySelector('a[href^="/play/"]');
-  if (!$detail) return;
-  let path = $detail.getAttribute("href");
-  RootDialogObserver.$btnShortcut.dataset.path = path, RootDialogObserver.$btnWallpaper.dataset.path = path, $root.append(RootDialogObserver.$btnShortcut, RootDialogObserver.$btnWallpaper);
- }
- static handleAddedElement($root, $addedElm) {
-  if (AppInterface && $addedElm.className.startsWith("SlideSheet-module__container")) {
-   let $gameCardMenu = $addedElm.querySelector("div[class^=MruContextMenu],div[class^=GameCardContextMenu]");
-   if ($gameCardMenu) return RootDialogObserver.handleGameCardMenu($gameCardMenu), !0;
-  } else if ($root.querySelector("div[class*=GuideDialog]")) return GuideMenu.getInstance().observe($addedElm), !0;
-  return !1;
- }
- static observe($root) {
-  let beingShown = !1;
-  new MutationObserver((mutationList) => {
-   for (let mutation of mutationList) {
-    if (mutation.type !== "childList") continue;
-    if (BX_FLAGS.Debug && BxLogger.warning("RootDialog", "added", mutation.addedNodes), mutation.addedNodes.length === 1) {
-     let $addedElm = mutation.addedNodes[0];
-     if ($addedElm instanceof HTMLElement) RootDialogObserver.handleAddedElement($root, $addedElm);
-    }
-    let shown = !!($root.firstElementChild && $root.firstElementChild.childElementCount > 0);
-    if (shown !== beingShown) beingShown = shown, BxEventBus.Script.emit(shown ? "dialog.shown" : "dialog.dismissed", {});
-   }
-  }).observe($root, { subtree: !0, childList: !0 });
- }
- static waitForRootDialog() {
-  let observer = new MutationObserver((mutationList) => {
-   for (let mutation of mutationList) {
-    if (mutation.type !== "childList") continue;
-    let $target = mutation.target;
-    if ($target.id && $target.id === "gamepass-dialog-root") {
-     observer.disconnect(), RootDialogObserver.observe($target);
-     break;
-    }
-   }
-  });
-  observer.observe(document.documentElement, { subtree: !0, childList: !0 });
- }
-}
 SettingsManager.getInstance();
 if (window.location.pathname.includes("/auth/msa")) {
  let nativePushState = window.history.pushState;
@@ -10472,6 +10392,18 @@ BxEventBus.Stream.on("state.playing", (payload) => {
 BxEventBus.Script.on("ui.error.rendered", () => {
  BxEventBus.Stream.emit("state.stopped", {});
 });
+BxEventBus.Script.on("ui.guideHome.rendered", () => {
+ let $root = document.querySelector("#gamepass-dialog-root div[role=dialog] div[role=tabpanel] div[class*=HomeLandingPage]");
+ $root && GuideMenu.getInstance().injectHome($root, STATES.isPlaying);
+});
+BxEventBus.Script.on("ui.guideAchievementProgress.rendered", () => {
+ let $elm = document.querySelector("#gamepass-dialog-root button[class*=AchievementsButton-module__progressBarContainer]");
+ if ($elm) TrueAchievements.getInstance().injectAchievementsProgress($elm);
+});
+BxEventBus.Script.on("ui.guideAchievementDetail.rendered", () => {
+ let $elm = document.querySelector("#gamepass-dialog-root div[class^=AchievementDetailPage-module]");
+ if ($elm) TrueAchievements.getInstance().injectAchievementDetailPage($elm);
+});
 BxEventBus.Stream.on("ui.streamMenu.rendered", async () => {
  await StreamUiHandler.handleStreamMenu();
 });
@@ -10516,7 +10448,7 @@ function main() {
   BX_FLAGS.ForceNativeMkbTitles.push(...customList);
  }
  if (StreamSettings.setup(), patchRtcPeerConnection(), patchRtcCodecs(), interceptHttpRequests(), patchVideoApi(), patchCanvasContext(), AppInterface && patchPointerLockApi(), getGlobalPref("audio.volume.booster.enabled") && patchAudioContext(), getGlobalPref("block.tracking")) patchMeControl(), disableAdobeAudienceManager();
- if (RootDialogObserver.waitForRootDialog(), addCss(), GuideMenu.getInstance().addEventListeners(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), WebGPUPlayer.prepare(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getGlobalPref("xhome.enabled")) RemotePlayManager.detect();
+ if (addCss(), StreamStatsCollector.setupEvents(), StreamBadges.setupEvents(), StreamStats.setupEvents(), WebGPUPlayer.prepare(), STATES.userAgent.capabilities.touch && TouchController.updateCustomList(), DeviceVibrationManager.getInstance(), BX_FLAGS.CheckForUpdate && checkForUpdate(), Patcher.init(), disablePwa(), getGlobalPref("xhome.enabled")) RemotePlayManager.detect();
  if (getGlobalPref("touchController.mode") === "all") TouchController.setup();
  if (AppInterface && (getGlobalPref("mkb.enabled") || getGlobalPref("nativeMkb.mode") === "on")) STATES.pointerServerPort = AppInterface.startPointerServer() || 9269, BxLogger.info("startPointerServer", "Port", STATES.pointerServerPort.toString());
  if (getGlobalPref("ui.gameCard.waitTime.show") && GameTile.setup(), EmulatedMkbHandler.setupEvents(), getGlobalPref("ui.controllerStatus.show")) window.addEventListener("gamepadconnected", (e) => showGamepadToast(e.gamepad)), window.addEventListener("gamepaddisconnected", (e) => showGamepadToast(e.gamepad));

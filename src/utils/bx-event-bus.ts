@@ -38,6 +38,10 @@ type ScriptEvents = {
 
     'ui.header.rendered': {},
     'ui.error.rendered': {},
+
+    'ui.guideHome.rendered': {},
+    'ui.guideAchievementProgress.rendered': {},
+    'ui.guideAchievementDetail.rendered': {},
 };
 
 type StreamEvents = {

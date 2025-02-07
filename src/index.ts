@@ -25,6 +25,7 @@ import { BxLogger } from "@utils/bx-logger";
 import { GameBar } from "./modules/game-bar/game-bar";
 import { ScreenshotManager } from "./utils/screenshot-manager";
 import { NativeMkbHandler } from "./modules/mkb/native-mkb-handler";
+import { GuideMenu } from "./modules/ui/guide-menu";
 import { updateVideoPlayer } from "./modules/stream/stream-settings-utils";
 import { BlockFeature, NativeMkbMode, TouchControllerMode, UiSection } from "./enums/pref-values";
 import { HeaderSection } from "./modules/ui/header";
@@ -45,8 +46,7 @@ import { SettingsManager } from "./modules/settings-manager";
 import { Toast } from "./utils/toast";
 import { WebGPUPlayer } from "./modules/player/webgpu/webgpu-player";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
-import { RootDialogObserver } from "./utils/root-dialog-observer";
-import { GuideMenu } from "./modules/ui/guide-menu";
+import { TrueAchievements } from "./utils/true-achievements";
 
 SettingsManager.getInstance();
 
@@ -264,6 +264,25 @@ BxEventBus.Script.on('ui.error.rendered', () => {
     BxEventBus.Stream.emit('state.stopped', {});
 });
 
+BxEventBus.Script.on('ui.guideHome.rendered', () => {
+    const $root = document.querySelector<HTMLElement>('#gamepass-dialog-root div[role=dialog] div[role=tabpanel] div[class*=HomeLandingPage]');
+    $root && GuideMenu.getInstance().injectHome($root, STATES.isPlaying);
+});
+
+BxEventBus.Script.on('ui.guideAchievementProgress.rendered', () => {
+    const $elm = document.querySelector('#gamepass-dialog-root button[class*=AchievementsButton-module__progressBarContainer]');
+    if ($elm) {
+        TrueAchievements.getInstance().injectAchievementsProgress($elm as HTMLElement);
+    }
+});
+
+BxEventBus.Script.on('ui.guideAchievementDetail.rendered', () => {
+    const $elm = document.querySelector('#gamepass-dialog-root div[class^=AchievementDetailPage-module]');
+    if ($elm) {
+        TrueAchievements.getInstance().injectAchievementDetailPage($elm as HTMLElement);
+    }
+});
+
 BxEventBus.Stream.on('ui.streamMenu.rendered', async () => {
     await StreamUiHandler.handleStreamMenu();
 });
@@ -403,12 +422,9 @@ function main() {
         disableAdobeAudienceManager();
     }
 
-    RootDialogObserver.waitForRootDialog();
-
     // Setup UI
     addCss();
 
-    GuideMenu.getInstance().addEventListeners();
     StreamStatsCollector.setupEvents();
     StreamBadges.setupEvents();
     StreamStats.setupEvents();
