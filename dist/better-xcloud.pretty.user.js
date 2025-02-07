@@ -3039,6 +3039,7 @@ class StreamStats {
  static instance;
  static getInstance = () => StreamStats.instance ?? (StreamStats.instance = new StreamStats);
  LOG_TAG = "StreamStats";
+ isRunning = !1;
  intervalId;
  REFRESH_INTERVAL = 1000;
  stats = {
@@ -3097,12 +3098,12 @@ class StreamStats {
   BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this), BxEventBus.Stream.on("ui.streamHud.rendered", this.boundOnStreamHudStateChanged), this.render();
  }
  async start(glancing = !1) {
-  if (!this.isHidden() || glancing && this.isGlancing()) return;
-  this.intervalId && clearInterval(this.intervalId), await this.update(!0), this.$container.classList.remove("bx-gone"), this.$container.dataset.display = glancing ? "glancing" : "fixed", this.intervalId = window.setInterval(this.update, this.REFRESH_INTERVAL);
+  if (this.isRunning || !this.isHidden() || glancing && this.isGlancing()) return;
+  this.isRunning = !0, this.intervalId && clearInterval(this.intervalId), await this.update(!0), this.$container.classList.remove("bx-gone"), this.$container.dataset.display = glancing ? "glancing" : "fixed", this.intervalId = window.setInterval(this.update, this.REFRESH_INTERVAL);
  }
  async stop(glancing = !1) {
   if (glancing && !this.isGlancing()) return;
-  this.intervalId && clearInterval(this.intervalId), this.intervalId = null, this.$container.removeAttribute("data-display"), this.$container.classList.add("bx-gone");
+  this.isRunning = !1, this.intervalId && clearInterval(this.intervalId), this.intervalId = null, this.$container.removeAttribute("data-display"), this.$container.classList.add("bx-gone");
  }
  async toggle() {
   if (this.isGlancing()) this.$container && (this.$container.dataset.display = "fixed");

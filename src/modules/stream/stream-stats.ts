@@ -14,6 +14,7 @@ export class StreamStats {
     public static getInstance = () => StreamStats.instance ?? (StreamStats.instance = new StreamStats());
     private readonly LOG_TAG = 'StreamStats';
 
+    private isRunning = false;
     private intervalId?: number | null;
     private readonly REFRESH_INTERVAL = 1 * 1000;
 
@@ -81,10 +82,11 @@ export class StreamStats {
     }
 
     async start(glancing=false) {
-        if (!this.isHidden() || (glancing && this.isGlancing())) {
+        if (this.isRunning || !this.isHidden() || (glancing && this.isGlancing())) {
             return;
         }
 
+        this.isRunning = true;
         this.intervalId && clearInterval(this.intervalId);
         await this.update(true);
 
@@ -99,6 +101,7 @@ export class StreamStats {
             return;
         }
 
+        this.isRunning = false;
         this.intervalId && clearInterval(this.intervalId);
         this.intervalId = null;
 
