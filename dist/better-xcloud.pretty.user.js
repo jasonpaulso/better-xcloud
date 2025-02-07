@@ -5697,6 +5697,12 @@ ${subsVar} = subs;
   if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
   let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('error.rendered', {}));";
   return str = PatcherUtils.insertAt(str, index, newCode), str;
+ },
+ injectStreamMenuUseEffect(str) {
+  let index = str.indexOf('"StreamMenu-module__container');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
+  let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Stream.emit('ui.streamMenu.rendered', {}));";
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...AppInterface && getGlobalPref("nativeMkb.mode") === "on" ? [
@@ -5772,6 +5778,7 @@ ${subsVar} = subs;
  "patchStreamHud",
  "playVibration",
  "alwaysShowStreamHud",
+ "injectStreamMenuUseEffect",
  getGlobalPref("audio.volume.booster.enabled") && !getGlobalPref("stream.video.combineAudio") && "patchAudioMediaStream",
  getGlobalPref("audio.volume.booster.enabled") && getGlobalPref("stream.video.combineAudio") && "patchCombinedAudioVideoMediaStream",
  getGlobalPref("ui.feedbackDialog.disabled") && "skipFeedbackDialog",
@@ -10156,111 +10163,6 @@ class ProductDetailsPage {
   }, 500);
  }
 }
-class StreamUiHandler {
- static $btnStreamSettings;
- static $btnStreamStats;
- static $btnRefresh;
- static $btnHome;
- static observer;
- static cloneStreamHudButton($btnOrg, label, svgIcon) {
-  if (!$btnOrg) return null;
-  let $container = $btnOrg.cloneNode(!0), timeout;
-  if (STATES.browser.capabilities.touch) {
-   let onTransitionStart = (e) => {
-    if (e.propertyName !== "opacity") return;
-    timeout && clearTimeout(timeout), e.target.style.pointerEvents = "none";
-   }, onTransitionEnd = (e) => {
-    if (e.propertyName !== "opacity") return;
-    let $streamHud = e.target.closest("#StreamHud");
-    if (!$streamHud) return;
-    if ($streamHud.style.left === "0px") {
-     let $target = e.target;
-     timeout && clearTimeout(timeout), timeout = window.setTimeout(() => {
-      $target.style.pointerEvents = "auto";
-     }, 100);
-    }
-   };
-   $container.addEventListener("transitionstart", onTransitionStart), $container.addEventListener("transitionend", onTransitionEnd);
-  }
-  let $button = $container.querySelector("button");
-  if (!$button) return null;
-  $button.setAttribute("title", label);
-  let $orgSvg = $button.querySelector("svg");
-  if (!$orgSvg) return null;
-  let $svg = createSvgIcon(svgIcon);
-  return $svg.style.fill = "none", $svg.setAttribute("class", $orgSvg.getAttribute("class") || ""), $svg.ariaHidden = "true", $orgSvg.replaceWith($svg), $container;
- }
- static cloneCloseButton($btnOrg, icon, className, onChange) {
-  if (!$btnOrg) return null;
-  let $btn = $btnOrg.cloneNode(!0), $svg = createSvgIcon(icon);
-  return $svg.setAttribute("class", $btn.firstElementChild.getAttribute("class") || ""), $svg.style.fill = "none", $btn.classList.add(className), $btn.removeChild($btn.firstElementChild), $btn.appendChild($svg), $btn.addEventListener("click", onChange), $btn;
- }
- static async handleStreamMenu() {
-  let $btnCloseHud = document.querySelector("button[class*=StreamMenu-module__backButton]");
-  if (!$btnCloseHud) return;
-  let { $btnRefresh, $btnHome } = StreamUiHandler;
-  if (typeof $btnRefresh === "undefined") $btnRefresh = StreamUiHandler.cloneCloseButton($btnCloseHud, BxIcon.REFRESH, "bx-stream-refresh-button", () => {
-    confirm(t("confirm-reload-stream")) && window.location.reload();
-   });
-  if (typeof $btnHome === "undefined") $btnHome = StreamUiHandler.cloneCloseButton($btnCloseHud, BxIcon.HOME, "bx-stream-home-button", () => {
-    confirm(t("back-to-home-confirm")) && (window.location.href = window.location.href.substring(0, 31));
-   });
-  if ($btnRefresh && $btnHome) $btnCloseHud.insertAdjacentElement("afterend", $btnRefresh), $btnRefresh.insertAdjacentElement("afterend", $btnHome);
-  document.querySelector("div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]")?.appendChild(await StreamBadges.getInstance().render());
- }
- static handleSystemMenu($streamHud) {
-  let $orgButton = $streamHud.querySelector("div[class^=HUDButton]");
-  if (!$orgButton) return;
-  let hideGripHandle = () => {
-   let $gripHandle = document.querySelector("#StreamHud button[class^=GripHandle]");
-   if ($gripHandle && $gripHandle.ariaExpanded === "true") $gripHandle.dispatchEvent(new PointerEvent("pointerdown")), $gripHandle.click(), $gripHandle.dispatchEvent(new PointerEvent("pointerdown")), $gripHandle.click();
-  }, $btnStreamSettings = StreamUiHandler.$btnStreamSettings;
-  if (typeof $btnStreamSettings === "undefined") $btnStreamSettings = StreamUiHandler.cloneStreamHudButton($orgButton, t("better-xcloud"), BxIcon.BETTER_XCLOUD), $btnStreamSettings?.addEventListener("click", (e) => {
-    hideGripHandle(), e.preventDefault(), SettingsDialog.getInstance().show();
-   }), StreamUiHandler.$btnStreamSettings = $btnStreamSettings;
-  let streamStats = StreamStats.getInstance(), $btnStreamStats = StreamUiHandler.$btnStreamStats;
-  if (typeof $btnStreamStats === "undefined") $btnStreamStats = StreamUiHandler.cloneStreamHudButton($orgButton, t("stream-stats"), BxIcon.STREAM_STATS), $btnStreamStats?.addEventListener("click", async (e) => {
-    hideGripHandle(), e.preventDefault(), await streamStats.toggle();
-    let btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing();
-    $btnStreamStats.classList.toggle("bx-stream-menu-button-on", btnStreamStatsOn);
-   }), StreamUiHandler.$btnStreamStats = $btnStreamStats;
-  let $btnParent = $orgButton.parentElement;
-  if ($btnStreamSettings && $btnStreamStats) {
-   let btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing();
-   $btnStreamStats.classList.toggle("bx-stream-menu-button-on", btnStreamStatsOn), $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild), $btnParent.insertBefore($btnStreamSettings, $btnStreamStats);
-  }
-  let $dotsButton = $btnParent.lastElementChild;
-  $dotsButton.parentElement.insertBefore($dotsButton, $dotsButton.parentElement.firstElementChild);
- }
- static reset() {
-  StreamUiHandler.$btnStreamSettings = void 0, StreamUiHandler.$btnStreamStats = void 0, StreamUiHandler.$btnRefresh = void 0, StreamUiHandler.$btnHome = void 0, StreamUiHandler.observer && StreamUiHandler.observer.disconnect(), StreamUiHandler.observer = void 0;
- }
- static observe() {
-  StreamUiHandler.reset();
-  let $screen = document.querySelector("#PageContent section[class*=PureScreens]");
-  if (!$screen) return;
-  let observer = new MutationObserver((mutationList) => {
-   let item2;
-   for (item2 of mutationList) {
-    if (item2.type !== "childList") continue;
-    item2.addedNodes.forEach(async ($node) => {
-     if (!$node || $node.nodeType !== Node.ELEMENT_NODE) return;
-     let $elm = $node;
-     if (!($elm instanceof HTMLElement)) return;
-     let className = $elm.className || "";
-     if (className.startsWith("StreamMenu-module__container")) {
-      StreamUiHandler.handleStreamMenu();
-      return;
-     }
-     if (className.startsWith("Overlay-module_") || className.startsWith("InProgressScreen")) $elm = $elm.querySelector("#StreamHud");
-     if (!$elm || ($elm.id || "") !== "StreamHud") return;
-     StreamUiHandler.handleSystemMenu($elm);
-    });
-   }
-  });
-  observer.observe($screen, { subtree: !0, childList: !0 }), StreamUiHandler.observer = observer;
- }
-}
 class RootDialogObserver {
  static $btnShortcut = AppInterface && createButton({
   icon: BxIcon.CREATE_SHORTCUT,
@@ -10405,6 +10307,86 @@ class DeviceVibrationManager {
   this.removeEventListeners(), this.dataChannel = null;
  }
 }
+class StreamUiHandler {
+ static $btnStreamSettings;
+ static $btnStreamStats;
+ static $btnRefresh;
+ static $btnHome;
+ static cloneStreamHudButton($btnOrg, label, svgIcon) {
+  if (!$btnOrg) return null;
+  let $container = $btnOrg.cloneNode(!0), timeout;
+  if (STATES.browser.capabilities.touch) {
+   let onTransitionStart = (e) => {
+    if (e.propertyName !== "opacity") return;
+    timeout && clearTimeout(timeout), e.target.style.pointerEvents = "none";
+   }, onTransitionEnd = (e) => {
+    if (e.propertyName !== "opacity") return;
+    let $streamHud = e.target.closest("#StreamHud");
+    if (!$streamHud) return;
+    if ($streamHud.style.left === "0px") {
+     let $target = e.target;
+     timeout && clearTimeout(timeout), timeout = window.setTimeout(() => {
+      $target.style.pointerEvents = "auto";
+     }, 100);
+    }
+   };
+   $container.addEventListener("transitionstart", onTransitionStart), $container.addEventListener("transitionend", onTransitionEnd);
+  }
+  let $button = $container.querySelector("button");
+  if (!$button) return null;
+  $button.setAttribute("title", label);
+  let $orgSvg = $button.querySelector("svg");
+  if (!$orgSvg) return null;
+  let $svg = createSvgIcon(svgIcon);
+  return $svg.style.fill = "none", $svg.setAttribute("class", $orgSvg.getAttribute("class") || ""), $svg.ariaHidden = "true", $orgSvg.replaceWith($svg), $container;
+ }
+ static cloneCloseButton($btnOrg, icon, className, onChange) {
+  if (!$btnOrg) return null;
+  let $btn = $btnOrg.cloneNode(!0), $svg = createSvgIcon(icon);
+  return $svg.setAttribute("class", $btn.firstElementChild.getAttribute("class") || ""), $svg.style.fill = "none", $btn.classList.add(className), $btn.removeChild($btn.firstElementChild), $btn.appendChild($svg), $btn.addEventListener("click", onChange), $btn;
+ }
+ static async handleStreamMenu() {
+  let $btnCloseHud = document.querySelector("button[class*=StreamMenu-module__backButton]");
+  if (!$btnCloseHud) return;
+  let { $btnRefresh, $btnHome } = StreamUiHandler;
+  if (typeof $btnRefresh === "undefined") $btnRefresh = StreamUiHandler.cloneCloseButton($btnCloseHud, BxIcon.REFRESH, "bx-stream-refresh-button", () => {
+    confirm(t("confirm-reload-stream")) && window.location.reload();
+   });
+  if (typeof $btnHome === "undefined") $btnHome = StreamUiHandler.cloneCloseButton($btnCloseHud, BxIcon.HOME, "bx-stream-home-button", () => {
+    confirm(t("back-to-home-confirm")) && (window.location.href = window.location.href.substring(0, 31));
+   });
+  if ($btnRefresh && $btnHome) $btnCloseHud.insertAdjacentElement("afterend", $btnRefresh), $btnRefresh.insertAdjacentElement("afterend", $btnHome);
+  document.querySelector("div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]")?.appendChild(await StreamBadges.getInstance().render());
+ }
+ static handleSystemMenu($streamHud) {
+  let $orgButton = $streamHud.querySelector("div[class^=HUDButton]");
+  if (!$orgButton) return;
+  if (StreamUiHandler.$btnStreamSettings && $streamHud.contains(StreamUiHandler.$btnStreamSettings)) return;
+  let hideGripHandle = () => {
+   let $gripHandle = document.querySelector("#StreamHud button[class^=GripHandle]");
+   if ($gripHandle && $gripHandle.ariaExpanded === "true") $gripHandle.dispatchEvent(new PointerEvent("pointerdown")), $gripHandle.click(), $gripHandle.dispatchEvent(new PointerEvent("pointerdown")), $gripHandle.click();
+  }, $btnStreamSettings = StreamUiHandler.$btnStreamSettings;
+  if (typeof $btnStreamSettings === "undefined") $btnStreamSettings = StreamUiHandler.cloneStreamHudButton($orgButton, t("better-xcloud"), BxIcon.BETTER_XCLOUD), $btnStreamSettings?.addEventListener("click", (e) => {
+    hideGripHandle(), e.preventDefault(), SettingsDialog.getInstance().show();
+   }), StreamUiHandler.$btnStreamSettings = $btnStreamSettings;
+  let streamStats = StreamStats.getInstance(), $btnStreamStats = StreamUiHandler.$btnStreamStats;
+  if (typeof $btnStreamStats === "undefined") $btnStreamStats = StreamUiHandler.cloneStreamHudButton($orgButton, t("stream-stats"), BxIcon.STREAM_STATS), $btnStreamStats?.addEventListener("click", async (e) => {
+    hideGripHandle(), e.preventDefault(), await streamStats.toggle();
+    let btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing();
+    $btnStreamStats.classList.toggle("bx-stream-menu-button-on", btnStreamStatsOn);
+   }), StreamUiHandler.$btnStreamStats = $btnStreamStats;
+  let $btnParent = $orgButton.parentElement;
+  if ($btnStreamSettings && $btnStreamStats) {
+   let btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing();
+   $btnStreamStats.classList.toggle("bx-stream-menu-button-on", btnStreamStatsOn), $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild), $btnParent.insertBefore($btnStreamSettings, $btnStreamStats);
+  }
+  let $dotsButton = $btnParent.lastElementChild;
+  $dotsButton.parentElement.insertBefore($dotsButton, $dotsButton.parentElement.firstElementChild);
+ }
+ static reset() {
+  StreamUiHandler.$btnStreamSettings = void 0, StreamUiHandler.$btnStreamStats = void 0, StreamUiHandler.$btnRefresh = void 0, StreamUiHandler.$btnHome = void 0;
+ }
+}
 SettingsManager.getInstance();
 if (window.location.pathname.includes("/auth/msa")) {
  let nativePushState = window.history.pushState;
@@ -10468,7 +10450,7 @@ BxEventBus.Stream.on("state.starting", () => {
  }
 });
 BxEventBus.Stream.on("state.playing", (payload) => {
- window.BX_STREAM_SETTINGS = StreamSettings.settings, StreamSettings.refreshAllSettings(), STATES.isPlaying = !0, StreamUiHandler.observe();
+ window.BX_STREAM_SETTINGS = StreamSettings.settings, StreamSettings.refreshAllSettings(), STATES.isPlaying = !0;
  {
   let gameBar = GameBar.getInstance();
   if (gameBar) gameBar.reset(), gameBar.enable(), gameBar.showBar();
@@ -10480,6 +10462,13 @@ BxEventBus.Stream.on("state.playing", (payload) => {
 });
 BxEventBus.Script.on("error.rendered", () => {
  BxEventBus.Stream.emit("state.stopped", {});
+});
+BxEventBus.Stream.on("ui.streamMenu.rendered", async () => {
+ await StreamUiHandler.handleStreamMenu();
+});
+BxEventBus.Stream.on("ui.streamHud.rendered", async () => {
+ let $elm = document.querySelector("#StreamHud");
+ $elm && StreamUiHandler.handleSystemMenu($elm);
 });
 window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, (e) => {
  if (e.component === "product-detail") ProductDetailsPage.injectButtons();

@@ -69,6 +69,7 @@ type StreamEvents = {
     'microphone.state.changed': { state: MicrophoneState };
 
     'ui.streamHud.rendered': { expanded: boolean },
+    'ui.streamMenu.rendered': {},
 
     dataChannelCreated: { dataChannel: RTCDataChannel };
 };

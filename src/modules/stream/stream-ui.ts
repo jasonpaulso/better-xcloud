@@ -12,7 +12,6 @@ export class StreamUiHandler {
     private static $btnStreamStats: HTMLElement | null | undefined;
     private static $btnRefresh: HTMLElement | null | undefined;
     private static $btnHome: HTMLElement | null | undefined;
-    private static observer: MutationObserver | undefined;
 
     private static cloneStreamHudButton($btnOrg: HTMLElement, label: string, svgIcon: BxIconRaw): HTMLElement | null {
         if (!$btnOrg) {
@@ -100,7 +99,7 @@ export class StreamUiHandler {
         return $btn;
     }
 
-    private static async handleStreamMenu() {
+    static async handleStreamMenu() {
         const $btnCloseHud = document.querySelector<HTMLElement>('button[class*=StreamMenu-module__backButton]');
         if (!$btnCloseHud) {
             return;
@@ -133,10 +132,14 @@ export class StreamUiHandler {
         $menu?.appendChild(await StreamBadges.getInstance().render());
     }
 
-    private static handleSystemMenu($streamHud: HTMLElement) {
+    static handleSystemMenu($streamHud: HTMLElement) {
         // Get the last button
         const $orgButton = $streamHud.querySelector<HTMLElement>('div[class^=HUDButton]');
         if (!$orgButton) {
+            return;
+        }
+
+        if (StreamUiHandler.$btnStreamSettings && $streamHud.contains(StreamUiHandler.$btnStreamSettings)) {
             return;
         }
 
@@ -206,60 +209,5 @@ export class StreamUiHandler {
         StreamUiHandler.$btnStreamStats = undefined;
         StreamUiHandler.$btnRefresh = undefined;
         StreamUiHandler.$btnHome = undefined;
-
-        StreamUiHandler.observer && StreamUiHandler.observer.disconnect();
-        StreamUiHandler.observer = undefined;
-    }
-
-    static observe() {
-        StreamUiHandler.reset();
-
-        const $screen = document.querySelector('#PageContent section[class*=PureScreens]');
-        if (!$screen) {
-            return;
-        }
-
-        const observer = new MutationObserver(mutationList => {
-            let item: MutationRecord;
-            for (item of mutationList) {
-                if (item.type !== 'childList') {
-                    continue;
-                }
-
-                item.addedNodes.forEach(async $node => {
-                    if (!$node || $node.nodeType !== Node.ELEMENT_NODE) {
-                        return;
-                    }
-
-                    let $elm: HTMLElement | null = $node as HTMLElement;
-
-                    // Ignore non-HTML elements
-                    if (!($elm instanceof HTMLElement)) {
-                        return;
-                    }
-
-                    const className = $elm.className || '';
-                    // Render badges
-                    if (className.startsWith('StreamMenu-module__container')) {
-                        StreamUiHandler.handleStreamMenu();
-                        return;
-                    }
-
-                    if (className.startsWith('Overlay-module_') || className.startsWith('InProgressScreen')) {
-                        $elm = $elm.querySelector('#StreamHud');
-                    }
-
-                    if (!$elm || ($elm.id || '') !== 'StreamHud') {
-                        return;
-                    }
-
-                    // Handle System Menu bar
-                    StreamUiHandler.handleSystemMenu($elm);
-                });
-            };
-        });
-
-        observer.observe($screen, { subtree: true, childList: true });
-        StreamUiHandler.observer = observer;
     }
 }

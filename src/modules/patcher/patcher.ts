@@ -1156,6 +1156,18 @@ ${subsVar} = subs;
         str = PatcherUtils.insertAt(str, index, newCode);
         return str;
     },
+
+    injectStreamMenuUseEffect(str: string) {
+        let index = str.indexOf('"StreamMenu-module__container');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 200));
+        if (index < 0) {
+            return false;
+        }
+
+        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Stream.emit('ui.streamMenu.rendered', {}));`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
 };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -1264,6 +1276,8 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     'playVibration',
 
     'alwaysShowStreamHud',
+
+    'injectStreamMenuUseEffect',
 
     // 'exposeEventTarget',
 

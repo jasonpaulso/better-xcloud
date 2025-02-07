@@ -33,7 +33,6 @@ import { GameTile } from "./modules/ui/game-tile";
 import { ProductDetailsPage } from "./modules/ui/product-details";
 import { NavigationDialogManager } from "./modules/ui/dialog/navigation-dialog";
 import { GlobalPref, StreamPref } from "./enums/pref-keys";
-import { StreamUiHandler } from "./modules/stream/stream-ui";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
 import { StreamStatsCollector } from "./utils/stream-stats-collector";
@@ -47,6 +46,7 @@ import { getGlobalPref, getStreamPref } from "./utils/pref-utils";
 import { SettingsManager } from "./modules/settings-manager";
 import { Toast } from "./utils/toast";
 import { WebGPUPlayer } from "./modules/player/webgpu/webgpu-player";
+import { StreamUiHandler } from "./modules/stream/stream-ui";
 
 SettingsManager.getInstance();
 
@@ -234,7 +234,6 @@ BxEventBus.Stream.on('state.playing', payload => {
     }
 
     STATES.isPlaying = true;
-    StreamUiHandler.observe();
 
     if (isFullVersion()) {
         const gameBar = GameBar.getInstance();
@@ -264,6 +263,16 @@ BxEventBus.Stream.on('state.playing', payload => {
 BxEventBus.Script.on('error.rendered', () => {
     BxEventBus.Stream.emit('state.stopped', {});
 });
+
+BxEventBus.Stream.on('ui.streamMenu.rendered', async () => {
+    await StreamUiHandler.handleStreamMenu();
+});
+
+BxEventBus.Stream.on('ui.streamHud.rendered', async () => {
+    const $elm = document.querySelector<HTMLElement>('#StreamHud');
+    $elm && StreamUiHandler.handleSystemMenu($elm);
+});
+
 
 isFullVersion() && window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, e => {
     const component = (e as any).component;
