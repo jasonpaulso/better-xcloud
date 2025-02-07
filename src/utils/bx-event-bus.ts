@@ -36,8 +36,8 @@ type ScriptEvents = {
 
     'webgpu.ready': {},
 
-    'header.rendered': {},
-    'error.rendered': {},
+    'ui.header.rendered': {},
+    'ui.error.rendered': {},
 };
 
 type StreamEvents = {

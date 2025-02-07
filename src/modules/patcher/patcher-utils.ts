@@ -96,4 +96,11 @@ export class PatcherUtils {
 
         return str.substring(start, end);
     }
+
+    static injectUseEffect(str: string, index: number, group: 'Stream' | 'Script', eventName: string) {
+        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}));`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+
+        return str;
+    }
 }

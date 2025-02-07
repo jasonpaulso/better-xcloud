@@ -5131,7 +5131,8 @@ var game_card_icons_default = `var supportedInputIcons=$supportedInputIcons$,{pr
 var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;gamepad._noToast=!0,window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
 var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&!window.location.pathname.includes("/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
 var vibration_adjust_default = `if(e?.gamepad?.connected){let gamepadSettings=window.BX_STREAM_SETTINGS.controllers[e.gamepad.id];if(gamepadSettings?.customization){let intensity=gamepadSettings.customization.vibrationIntensity;if(intensity<=0){e.repeat=0;return}else if(intensity<1)e.leftMotorPercent*=intensity,e.rightMotorPercent*=intensity,e.leftTriggerMotorPercent*=intensity,e.rightTriggerMotorPercent*=intensity}}`;
-var streamhud_default = `var options=arguments[0];window.BX_EXPOSED.showStreamMenu=options.onShowStreamMenu;options.guideUI=null;window.BX_EXPOSED.reactUseEffect(()=>{window.BxEventBus.Stream.emit("ui.streamHud.rendered",{expanded:options.offset.x===0})});`;
+var stream_hud_default = `var options=arguments[0];window.BX_EXPOSED.showStreamMenu=options.onShowStreamMenu;options.guideUI=null;window.BX_EXPOSED.reactUseEffect(()=>{window.BxEventBus.Stream.emit("ui.streamHud.rendered",{expanded:options.offset.x===0})});`;
+var create_portal_default = `var $dom=arguments[1];if($dom&&$dom instanceof HTMLElement&&$dom.id==="gamepass-dialog-root"){let showing=!1,$dialog=$dom.firstElementChild?.firstElementChild;if($dialog)showing=!$dialog.className.includes("pageChangeExit");window.BxEventBus.Script.emit(showing?"dialog.shown":"dialog.dismissed",{})}`;
 class PatcherUtils {
  static indexOf(txt, searchString, startIndex, maxRange = 0, after = !1) {
   if (startIndex < 0) return -1;
@@ -5176,6 +5177,10 @@ class PatcherUtils {
   while (PatcherUtils.isVarCharacter(str[end]))
    end += 1;
   return str.substring(start, end);
+ }
+ static injectUseEffect(str, index, group, eventName) {
+  let newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}));`;
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }
 var LOG_TAG2 = "Patcher", PATCHES = {
@@ -5385,7 +5390,7 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
  patchStreamHud(str) {
   let index = str.indexOf("let{onCollapse");
   if (index < 0) return !1;
-  let newCode = streamhud_default;
+  let newCode = stream_hud_default;
   if (getGlobalPref("touchController.mode") === "off") newCode += "options.canShowTakHUD = false;";
   return str = PatcherUtils.insertAt(str, index, newCode), str;
  },
@@ -5690,20 +5695,22 @@ ${subsVar} = subs;
  injectHeaderUseEffect(str) {
   let index = str.indexOf('"EdgewaterHeader-module__spaceBetween');
   if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 300)), index < 0) return !1;
-  let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('header.rendered', {}));";
-  return str = PatcherUtils.insertAt(str, index, newCode), str;
+  return PatcherUtils.injectUseEffect(str, index, "Script", "ui.header.rendered");
  },
  injectErrorPageUseEffect(str) {
   let index = str.indexOf('"PureErrorPage-module__container');
   if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
-  let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('error.rendered', {}));";
-  return str = PatcherUtils.insertAt(str, index, newCode), str;
+  return PatcherUtils.injectUseEffect(str, index, "Script", "ui.error.rendered");
  },
  injectStreamMenuUseEffect(str) {
   let index = str.indexOf('"StreamMenu-module__container');
   if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
-  let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Stream.emit('ui.streamMenu.rendered', {}));";
-  return str = PatcherUtils.insertAt(str, index, newCode), str;
+  return PatcherUtils.injectUseEffect(str, index, "Stream", "ui.streamMenu.rendered");
+ },
+ injectCreatePortal(str) {
+  let index = str.indexOf(".createPortal=function");
+  if (index > -1 && (index = PatcherUtils.indexOf(str, "{", index, 50, !0)), index < 0) return !1;
+  return str = PatcherUtils.insertAt(str, index, create_portal_default), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
  ...AppInterface && getGlobalPref("nativeMkb.mode") === "on" ? [
@@ -5711,6 +5718,7 @@ ${subsVar} = subs;
   "disableAbsoluteMouse"
  ] : [],
  "exposeReactCreateComponent",
+ "injectCreatePortal",
  "injectHeaderUseEffect",
  "injectErrorPageUseEffect",
  "gameCardCustomIcons",
@@ -10164,68 +10172,6 @@ class ProductDetailsPage {
   }, 500);
  }
 }
-class RootDialogObserver {
- static $btnShortcut = AppInterface && createButton({
-  icon: BxIcon.CREATE_SHORTCUT,
-  label: t("create-shortcut"),
-  style: 64 | 8 | 128 | 4096 | 8192,
-  onClick: (e) => {
-   window.BX_EXPOSED.dialogRoutes?.closeAll();
-   let $btn = e.target.closest("button");
-   AppInterface.createShortcut($btn?.dataset.path);
-  }
- });
- static $btnWallpaper = AppInterface && createButton({
-  icon: BxIcon.DOWNLOAD,
-  label: t("wallpaper"),
-  style: 64 | 8 | 128 | 4096 | 8192,
-  onClick: (e) => {
-   window.BX_EXPOSED.dialogRoutes?.closeAll();
-   let $btn = e.target.closest("button"), details = parseDetailsPath($btn.dataset.path);
-   details && AppInterface.downloadWallpapers(details.titleSlug, details.productId);
-  }
- });
- static handleGameCardMenu($root) {
-  let $detail = $root.querySelector('a[href^="/play/"]');
-  if (!$detail) return;
-  let path = $detail.getAttribute("href");
-  RootDialogObserver.$btnShortcut.dataset.path = path, RootDialogObserver.$btnWallpaper.dataset.path = path, $root.append(RootDialogObserver.$btnShortcut, RootDialogObserver.$btnWallpaper);
- }
- static handleAddedElement($root, $addedElm) {
-  if (AppInterface && $addedElm.className.startsWith("SlideSheet-module__container")) {
-   let $gameCardMenu = $addedElm.querySelector("div[class^=MruContextMenu],div[class^=GameCardContextMenu]");
-   if ($gameCardMenu) return RootDialogObserver.handleGameCardMenu($gameCardMenu), !0;
-  } else if ($root.querySelector("div[class*=GuideDialog]")) return GuideMenu.getInstance().observe($addedElm), !0;
-  return !1;
- }
- static observe($root) {
-  let beingShown = !1;
-  new MutationObserver((mutationList) => {
-   for (let mutation of mutationList) {
-    if (mutation.type !== "childList") continue;
-    if (BX_FLAGS.Debug && BxLogger.warning("RootDialog", "added", mutation.addedNodes), mutation.addedNodes.length === 1) {
-     let $addedElm = mutation.addedNodes[0];
-     if ($addedElm instanceof HTMLElement) RootDialogObserver.handleAddedElement($root, $addedElm);
-    }
-    let shown = !!($root.firstElementChild && $root.firstElementChild.childElementCount > 0);
-    if (shown !== beingShown) beingShown = shown, BxEventBus.Script.emit(shown ? "dialog.shown" : "dialog.dismissed", {});
-   }
-  }).observe($root, { subtree: !0, childList: !0 });
- }
- static waitForRootDialog() {
-  let observer = new MutationObserver((mutationList) => {
-   for (let mutation of mutationList) {
-    if (mutation.type !== "childList") continue;
-    let $target = mutation.target;
-    if ($target.id && $target.id === "gamepass-dialog-root") {
-     observer.disconnect(), RootDialogObserver.observe($target);
-     break;
-    }
-   }
-  });
-  observer.observe(document.documentElement, { subtree: !0, childList: !0 });
- }
-}
 class KeyboardShortcutHandler {
  static instance;
  static getInstance = () => KeyboardShortcutHandler.instance ?? (KeyboardShortcutHandler.instance = new KeyboardShortcutHandler);
@@ -10388,6 +10334,68 @@ class StreamUiHandler {
   StreamUiHandler.$btnStreamSettings = void 0, StreamUiHandler.$btnStreamStats = void 0, StreamUiHandler.$btnRefresh = void 0, StreamUiHandler.$btnHome = void 0;
  }
 }
+class RootDialogObserver {
+ static $btnShortcut = AppInterface && createButton({
+  icon: BxIcon.CREATE_SHORTCUT,
+  label: t("create-shortcut"),
+  style: 64 | 8 | 128 | 4096 | 8192,
+  onClick: (e) => {
+   window.BX_EXPOSED.dialogRoutes?.closeAll();
+   let $btn = e.target.closest("button");
+   AppInterface.createShortcut($btn?.dataset.path);
+  }
+ });
+ static $btnWallpaper = AppInterface && createButton({
+  icon: BxIcon.DOWNLOAD,
+  label: t("wallpaper"),
+  style: 64 | 8 | 128 | 4096 | 8192,
+  onClick: (e) => {
+   window.BX_EXPOSED.dialogRoutes?.closeAll();
+   let $btn = e.target.closest("button"), details = parseDetailsPath($btn.dataset.path);
+   details && AppInterface.downloadWallpapers(details.titleSlug, details.productId);
+  }
+ });
+ static handleGameCardMenu($root) {
+  let $detail = $root.querySelector('a[href^="/play/"]');
+  if (!$detail) return;
+  let path = $detail.getAttribute("href");
+  RootDialogObserver.$btnShortcut.dataset.path = path, RootDialogObserver.$btnWallpaper.dataset.path = path, $root.append(RootDialogObserver.$btnShortcut, RootDialogObserver.$btnWallpaper);
+ }
+ static handleAddedElement($root, $addedElm) {
+  if (AppInterface && $addedElm.className.startsWith("SlideSheet-module__container")) {
+   let $gameCardMenu = $addedElm.querySelector("div[class^=MruContextMenu],div[class^=GameCardContextMenu]");
+   if ($gameCardMenu) return RootDialogObserver.handleGameCardMenu($gameCardMenu), !0;
+  } else if ($root.querySelector("div[class*=GuideDialog]")) return GuideMenu.getInstance().observe($addedElm), !0;
+  return !1;
+ }
+ static observe($root) {
+  let beingShown = !1;
+  new MutationObserver((mutationList) => {
+   for (let mutation of mutationList) {
+    if (mutation.type !== "childList") continue;
+    if (BX_FLAGS.Debug && BxLogger.warning("RootDialog", "added", mutation.addedNodes), mutation.addedNodes.length === 1) {
+     let $addedElm = mutation.addedNodes[0];
+     if ($addedElm instanceof HTMLElement) RootDialogObserver.handleAddedElement($root, $addedElm);
+    }
+    let shown = !!($root.firstElementChild && $root.firstElementChild.childElementCount > 0);
+    if (shown !== beingShown) beingShown = shown, BxEventBus.Script.emit(shown ? "dialog.shown" : "dialog.dismissed", {});
+   }
+  }).observe($root, { subtree: !0, childList: !0 });
+ }
+ static waitForRootDialog() {
+  let observer = new MutationObserver((mutationList) => {
+   for (let mutation of mutationList) {
+    if (mutation.type !== "childList") continue;
+    let $target = mutation.target;
+    if ($target.id && $target.id === "gamepass-dialog-root") {
+     observer.disconnect(), RootDialogObserver.observe($target);
+     break;
+    }
+   }
+  });
+  observer.observe(document.documentElement, { subtree: !0, childList: !0 });
+ }
+}
 SettingsManager.getInstance();
 if (window.location.pathname.includes("/auth/msa")) {
  let nativePushState = window.history.pushState;
@@ -10435,7 +10443,7 @@ window.addEventListener(BxEvent.POPSTATE, onHistoryChanged);
 window.addEventListener("popstate", onHistoryChanged);
 window.history.pushState = patchHistoryMethod("pushState");
 window.history.replaceState = patchHistoryMethod("replaceState");
-BxEventBus.Script.on("header.rendered", () => {
+BxEventBus.Script.on("ui.header.rendered", () => {
  HeaderSection.getInstance().checkHeader();
 });
 BxEventBus.Stream.on("state.loading", () => {
@@ -10461,7 +10469,7 @@ BxEventBus.Stream.on("state.playing", (payload) => {
  }
  updateVideoPlayer();
 });
-BxEventBus.Script.on("error.rendered", () => {
+BxEventBus.Script.on("ui.error.rendered", () => {
  BxEventBus.Stream.emit("state.stopped", {});
 });
 BxEventBus.Stream.on("ui.streamMenu.rendered", async () => {

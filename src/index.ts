@@ -25,7 +25,6 @@ import { BxLogger } from "@utils/bx-logger";
 import { GameBar } from "./modules/game-bar/game-bar";
 import { ScreenshotManager } from "./utils/screenshot-manager";
 import { NativeMkbHandler } from "./modules/mkb/native-mkb-handler";
-import { GuideMenu } from "./modules/ui/guide-menu";
 import { updateVideoPlayer } from "./modules/stream/stream-settings-utils";
 import { BlockFeature, NativeMkbMode, TouchControllerMode, UiSection } from "./enums/pref-values";
 import { HeaderSection } from "./modules/ui/header";
@@ -36,7 +35,6 @@ import { GlobalPref, StreamPref } from "./enums/pref-keys";
 import { UserAgent } from "./utils/user-agent";
 import { XboxApi } from "./utils/xbox-api";
 import { StreamStatsCollector } from "./utils/stream-stats-collector";
-import { RootDialogObserver } from "./utils/root-dialog-observer";
 import { StreamSettings } from "./utils/stream-settings";
 import { KeyboardShortcutHandler } from "./modules/mkb/keyboard-shortcut-handler";
 import { GhPagesUtils } from "./utils/gh-pages";
@@ -47,6 +45,8 @@ import { SettingsManager } from "./modules/settings-manager";
 import { Toast } from "./utils/toast";
 import { WebGPUPlayer } from "./modules/player/webgpu/webgpu-player";
 import { StreamUiHandler } from "./modules/stream/stream-ui";
+import { RootDialogObserver } from "./utils/root-dialog-observer";
+import { GuideMenu } from "./modules/ui/guide-menu";
 
 SettingsManager.getInstance();
 
@@ -197,7 +197,7 @@ window.addEventListener('popstate', onHistoryChanged);
 window.history.pushState = patchHistoryMethod('pushState');
 window.history.replaceState = patchHistoryMethod('replaceState');
 
-BxEventBus.Script.on('header.rendered', () => {
+BxEventBus.Script.on('ui.header.rendered', () => {
     HeaderSection.getInstance().checkHeader();
 });
 
@@ -260,7 +260,7 @@ BxEventBus.Stream.on('state.playing', payload => {
     updateVideoPlayer();
 });
 
-BxEventBus.Script.on('error.rendered', () => {
+BxEventBus.Script.on('ui.error.rendered', () => {
     BxEventBus.Stream.emit('state.stopped', {});
 });
 

@@ -11,7 +11,8 @@ import codeGameCardIcons from "./patches/game-card-icons.js" with { type: "text"
 import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
-import codeStreamHud from "./patches/streamhud.js" with { type: "text" };
+import codeStreamHud from "./patches/stream-hud.js" with { type: "text" };
+import codeCreatePortal from "./patches/create-portal.js" with { type: "text" };
 import { GlobalPref, StorageKey } from "@/enums/pref-keys.js";
 import { getGlobalPref } from "@/utils/pref-utils.js";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
@@ -1140,9 +1141,7 @@ ${subsVar} = subs;
             return false;
         }
 
-        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('header.rendered', {}));`;
-        str = PatcherUtils.insertAt(str, index, newCode);
-        return str;
+        return PatcherUtils.injectUseEffect(str, index, 'Script', 'ui.header.rendered');
     },
 
     injectErrorPageUseEffect(str: string) {
@@ -1152,9 +1151,7 @@ ${subsVar} = subs;
             return false;
         }
 
-        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('error.rendered', {}));`;
-        str = PatcherUtils.insertAt(str, index, newCode);
-        return str;
+        return PatcherUtils.injectUseEffect(str, index, 'Script', 'ui.error.rendered');
     },
 
     injectStreamMenuUseEffect(str: string) {
@@ -1164,8 +1161,17 @@ ${subsVar} = subs;
             return false;
         }
 
-        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Stream.emit('ui.streamMenu.rendered', {}));`;
-        str = PatcherUtils.insertAt(str, index, newCode);
+        return PatcherUtils.injectUseEffect(str, index, 'Stream', 'ui.streamMenu.rendered');
+    },
+
+    injectCreatePortal(str: string) {
+        let index = str.indexOf('.createPortal=function');
+        index > -1 && (index = PatcherUtils.indexOf(str, '{', index, 50, true));
+        if (index < 0) {
+            return false;
+        }
+
+        str = PatcherUtils.insertAt(str, index, codeCreatePortal);
         return str;
     },
 };
@@ -1178,6 +1184,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     'exposeReactCreateComponent',
 
+    'injectCreatePortal',
     'injectHeaderUseEffect',
     'injectErrorPageUseEffect',
 
