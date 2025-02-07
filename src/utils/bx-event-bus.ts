@@ -68,6 +68,8 @@ type StreamEvents = {
     // Inside patch
     'microphone.state.changed': { state: MicrophoneState };
 
+    'ui.streamHud.expanded': { state: 'expanded' | 'collapsed' },
+
     dataChannelCreated: { dataChannel: RTCDataChannel };
 };
 

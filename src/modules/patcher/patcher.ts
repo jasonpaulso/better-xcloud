@@ -11,6 +11,7 @@ import codeGameCardIcons from "./patches/game-card-icons.js" with { type: "text"
 import codeLocalCoOpEnable from "./patches/local-co-op-enable.js" with { type: "text" };
 import codeRemotePlayKeepAlive from "./patches/remote-play-keep-alive.js" with { type: "text" };
 import codeVibrationAdjust from "./patches/vibration-adjust.js" with { type: "text" };
+import codeStreamHud from "./patches/streamhud.js" with { type: "text" };
 import { GlobalPref, StorageKey } from "@/enums/pref-keys.js";
 import { getGlobalPref } from "@/utils/pref-utils.js";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
@@ -426,16 +427,11 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
             return false;
         }
 
-        let newCode = `
-// Expose onShowStreamMenu
-window.BX_EXPOSED.showStreamMenu = e.onShowStreamMenu;
-// Restore the "..." button
-e.guideUI = null;
-`;
+        let newCode = codeStreamHud;
 
         // Remove the TAK Edit button when the touch controller is disabled
         if (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF) {
-            newCode += 'e.canShowTakHUD = false;';
+            newCode += 'options.canShowTakHUD = false;';
         }
 
         str = str.replace(text, newCode + text);

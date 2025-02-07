@@ -69,11 +69,12 @@ export class StreamStats {
     };
 
     private $container!: HTMLElement;
-
-    quickGlanceObserver?: MutationObserver | null;
+    private boundOnStreamHudStateChanged: typeof this.onStreamHudStateChanged;
 
     private constructor() {
         BxLogger.info(this.LOG_TAG, 'constructor()');
+
+        this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this);
         this.render();
     }
 
@@ -120,42 +121,24 @@ export class StreamStats {
     isHidden = () => this.$container.classList.contains('bx-gone');
     isGlancing = () => this.$container.dataset.display === 'glancing';
 
+    onStreamHudStateChanged({ state }: { state: string }) {
+        if (state === 'expanded') {
+            this.isHidden() && this.start(true);
+        } else {
+            this.stop(true);
+        }
+    }
+
     quickGlanceSetup() {
-        if (!STATES.isPlaying || this.quickGlanceObserver) {
+        if (!STATES.isPlaying) {
             return;
         }
 
-        const $uiContainer = document.querySelector('div[data-testid=ui-container]')!;
-        if (!$uiContainer) {
-            return;
-        }
-
-        this.quickGlanceObserver = new MutationObserver((mutationList, observer) => {
-            for (const record of mutationList) {
-                const $target = record.target as HTMLElement;
-                if (!$target.className || !$target.className.startsWith('GripHandle')) {
-                    continue;
-                }
-
-                const expanded = (record.target as HTMLElement).ariaExpanded;
-                if (expanded === 'true') {
-                    this.isHidden() && this.start(true);
-                } else {
-                    this.stop(true);
-                }
-            }
-        });
-
-        this.quickGlanceObserver.observe($uiContainer, {
-            attributes: true,
-            attributeFilter: ['aria-expanded'],
-            subtree: true,
-        });
+        BxEventBus.Stream.on('ui.streamHud.expanded', this.boundOnStreamHudStateChanged);
     }
 
     quickGlanceStop() {
-        this.quickGlanceObserver && this.quickGlanceObserver.disconnect();
-        this.quickGlanceObserver = null;
+        BxEventBus.Stream.off('ui.streamHud.expanded', this.boundOnStreamHudStateChanged);
     }
 
     private update = async (forceUpdate=false) => {

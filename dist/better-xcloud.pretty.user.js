@@ -3092,9 +3092,9 @@ class StreamStats {
   }
  };
  $container;
- quickGlanceObserver;
+ boundOnStreamHudStateChanged;
  constructor() {
-  BxLogger.info(this.LOG_TAG, "constructor()"), this.render();
+  BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this), this.render();
  }
  async start(glancing = !1) {
   if (!this.isHidden() || glancing && this.isGlancing()) return;
@@ -3113,25 +3113,16 @@ class StreamStats {
  }
  isHidden = () => this.$container.classList.contains("bx-gone");
  isGlancing = () => this.$container.dataset.display === "glancing";
+ onStreamHudStateChanged({ state }) {
+  if (state === "expanded") this.isHidden() && this.start(!0);
+  else this.stop(!0);
+ }
  quickGlanceSetup() {
-  if (!STATES.isPlaying || this.quickGlanceObserver) return;
-  let $uiContainer = document.querySelector("div[data-testid=ui-container]");
-  if (!$uiContainer) return;
-  this.quickGlanceObserver = new MutationObserver((mutationList, observer) => {
-   for (let record of mutationList) {
-    let $target = record.target;
-    if (!$target.className || !$target.className.startsWith("GripHandle")) continue;
-    if (record.target.ariaExpanded === "true") this.isHidden() && this.start(!0);
-    else this.stop(!0);
-   }
-  }), this.quickGlanceObserver.observe($uiContainer, {
-   attributes: !0,
-   attributeFilter: ["aria-expanded"],
-   subtree: !0
-  });
+  if (!STATES.isPlaying) return;
+  BxEventBus.Stream.on("ui.streamHud.expanded", this.boundOnStreamHudStateChanged);
  }
  quickGlanceStop() {
-  this.quickGlanceObserver && this.quickGlanceObserver.disconnect(), this.quickGlanceObserver = null;
+  BxEventBus.Stream.off("ui.streamHud.expanded", this.boundOnStreamHudStateChanged);
  }
  update = async (forceUpdate = !1) => {
   if (!forceUpdate && this.isHidden() || !STATES.currentStream.peerConnection) {
@@ -5146,6 +5137,7 @@ var game_card_icons_default = `var supportedInputIcons=$supportedInputIcons$,{pr
 var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;gamepad._noToast=!0,window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
 var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&!window.location.pathname.includes("/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
 var vibration_adjust_default = `if(e?.gamepad?.connected){let gamepadSettings=window.BX_STREAM_SETTINGS.controllers[e.gamepad.id];if(gamepadSettings?.customization){let intensity=gamepadSettings.customization.vibrationIntensity;if(intensity<=0){e.repeat=0;return}else if(intensity<1)e.leftMotorPercent*=intensity,e.rightMotorPercent*=intensity,e.leftTriggerMotorPercent*=intensity,e.rightTriggerMotorPercent*=intensity}}`;
+var streamhud_default = `var options=arguments[0];window.BX_EXPOSED.showStreamMenu=options.onShowStreamMenu;options.guideUI=null;window.BX_EXPOSED.reactUseEffect(()=>{window.BxEventBus.Stream.emit("ui.streamHud.expanded",{state:options.offset.x<0?"collapsed":"expanded"})});`;
 class PatcherUtils {
  static indexOf(txt, searchString, startIndex, maxRange = 0, after = !1) {
   if (startIndex < 0) return -1;
@@ -5399,13 +5391,8 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
  patchStreamHud(str) {
   let text = "let{onCollapse";
   if (!str.includes(text)) return !1;
-  let newCode = `
-// Expose onShowStreamMenu
-window.BX_EXPOSED.showStreamMenu = e.onShowStreamMenu;
-// Restore the "..." button
-e.guideUI = null;
-`;
-  if (getGlobalPref("touchController.mode") === "off") newCode += "e.canShowTakHUD = false;";
+  let newCode = streamhud_default;
+  if (getGlobalPref("touchController.mode") === "off") newCode += "options.canShowTakHUD = false;";
   return str = str.replace(text, newCode + text), str;
  },
  broadcastPollingMode(str) {
