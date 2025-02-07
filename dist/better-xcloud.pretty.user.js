@@ -5179,7 +5179,7 @@ class PatcherUtils {
   return str.substring(start, end);
  }
  static injectUseEffect(str, index, group, eventName) {
-  let newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}));`;
+  let newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}), []);`;
   return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }

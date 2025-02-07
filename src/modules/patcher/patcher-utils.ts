@@ -98,7 +98,7 @@ export class PatcherUtils {
     }
 
     static injectUseEffect(str: string, index: number, group: 'Stream' | 'Script', eventName: string) {
-        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}));`;
+        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}), []);`;
         str = PatcherUtils.insertAt(str, index, newCode);
 
         return str;
