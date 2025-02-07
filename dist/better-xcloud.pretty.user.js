@@ -3094,7 +3094,7 @@ class StreamStats {
  $container;
  boundOnStreamHudStateChanged;
  constructor() {
-  BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this), this.render();
+  BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this), BxEventBus.Stream.on("ui.streamHud.expanded", this.boundOnStreamHudStateChanged), this.render();
  }
  async start(glancing = !1) {
   if (!this.isHidden() || glancing && this.isGlancing()) return;
@@ -3109,20 +3109,14 @@ class StreamStats {
   else this.isHidden() ? await this.start() : await this.stop();
  }
  destroy() {
-  this.stop(), this.quickGlanceStop(), this.hideSettingsUi();
+  this.stop(), this.hideSettingsUi();
  }
  isHidden = () => this.$container.classList.contains("bx-gone");
  isGlancing = () => this.$container.dataset.display === "glancing";
  onStreamHudStateChanged({ state }) {
+  if (!getStreamPref("stats.quickGlance.enabled")) return;
   if (state === "expanded") this.isHidden() && this.start(!0);
   else this.stop(!0);
- }
- quickGlanceSetup() {
-  if (!STATES.isPlaying) return;
-  BxEventBus.Stream.on("ui.streamHud.expanded", this.boundOnStreamHudStateChanged);
- }
- quickGlanceStop() {
-  BxEventBus.Stream.off("ui.streamHud.expanded", this.boundOnStreamHudStateChanged);
  }
  update = async (forceUpdate = !1) => {
   if (!forceUpdate && this.isHidden() || !STATES.currentStream.peerConnection) {
@@ -3164,7 +3158,7 @@ class StreamStats {
   BxEventBus.Stream.on("state.playing", () => {
    let PREF_STATS_QUICK_GLANCE = getStreamPref("stats.quickGlance.enabled"), PREF_STATS_SHOW_WHEN_PLAYING = getStreamPref("stats.showWhenPlaying"), streamStats = StreamStats.getInstance();
    if (PREF_STATS_SHOW_WHEN_PLAYING) streamStats.start();
-   else if (PREF_STATS_QUICK_GLANCE) streamStats.quickGlanceSetup(), !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(!0);
+   else if (PREF_STATS_QUICK_GLANCE) !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(!0);
   });
  }
  static refreshStyles() {
@@ -4509,8 +4503,7 @@ class SettingsManager {
   },
   "stats.quickGlance.enabled": {
    onChange: () => {
-    let value = getStreamPref("stats.quickGlance.enabled"), streamStats = StreamStats.getInstance();
-    value ? streamStats.quickGlanceSetup() : streamStats.quickGlanceStop();
+    if (!getStreamPref("stats.quickGlance.enabled")) StreamStats.getInstance().stop(!0);
    }
   },
   "stats.position": {
@@ -5389,11 +5382,11 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
   return str = str.replace(text, "this.useCombinedAudioVideoStream=true"), str;
  },
  patchStreamHud(str) {
-  let text = "let{onCollapse";
-  if (!str.includes(text)) return !1;
+  let index = str.indexOf("let{onCollapse");
+  if (index < 0) return !1;
   let newCode = streamhud_default;
   if (getGlobalPref("touchController.mode") === "off") newCode += "options.canShowTakHUD = false;";
-  return str = str.replace(text, newCode + text), str;
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  },
  broadcastPollingMode(str) {
   let text = ".setPollingMode=e=>{";

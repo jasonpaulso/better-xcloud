@@ -75,6 +75,8 @@ export class StreamStats {
         BxLogger.info(this.LOG_TAG, 'constructor()');
 
         this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this);
+        BxEventBus.Stream.on('ui.streamHud.expanded', this.boundOnStreamHudStateChanged);
+
         this.render();
     }
 
@@ -114,7 +116,6 @@ export class StreamStats {
 
     destroy() {
         this.stop();
-        this.quickGlanceStop();
         this.hideSettingsUi();
     }
 
@@ -122,23 +123,15 @@ export class StreamStats {
     isGlancing = () => this.$container.dataset.display === 'glancing';
 
     onStreamHudStateChanged({ state }: { state: string }) {
+        if (!getStreamPref(StreamPref.STATS_QUICK_GLANCE_ENABLED)) {
+            return;
+        }
+
         if (state === 'expanded') {
             this.isHidden() && this.start(true);
         } else {
             this.stop(true);
         }
-    }
-
-    quickGlanceSetup() {
-        if (!STATES.isPlaying) {
-            return;
-        }
-
-        BxEventBus.Stream.on('ui.streamHud.expanded', this.boundOnStreamHudStateChanged);
-    }
-
-    quickGlanceStop() {
-        BxEventBus.Stream.off('ui.streamHud.expanded', this.boundOnStreamHudStateChanged);
     }
 
     private update = async (forceUpdate=false) => {
@@ -232,7 +225,6 @@ export class StreamStats {
             if (PREF_STATS_SHOW_WHEN_PLAYING) {
                 streamStats.start();
             } else if (PREF_STATS_QUICK_GLANCE) {
-                streamStats.quickGlanceSetup();
                 // Show stats bar
                 !PREF_STATS_SHOW_WHEN_PLAYING && streamStats.start(true);
             }

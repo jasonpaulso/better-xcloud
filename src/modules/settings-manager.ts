@@ -120,8 +120,9 @@ export class SettingsManager {
         [StreamPref.STATS_QUICK_GLANCE_ENABLED]: {
             onChange: () => {
                 const value = getStreamPref(StreamPref.STATS_QUICK_GLANCE_ENABLED);
-                const streamStats = StreamStats.getInstance();
-                value ? streamStats.quickGlanceSetup() : streamStats.quickGlanceStop();
+                if (!value) {
+                    StreamStats.getInstance().stop(true);
+                }
             },
         },
         [StreamPref.STATS_POSITION]: {

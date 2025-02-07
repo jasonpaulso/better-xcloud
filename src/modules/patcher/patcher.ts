@@ -422,8 +422,8 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
     },
 
     patchStreamHud(str: string) {
-        let text = 'let{onCollapse';
-        if (!str.includes(text)) {
+        let index = str.indexOf('let{onCollapse');
+        if (index < 0) {
             return false;
         }
 
@@ -434,7 +434,7 @@ if (titleInfo && !titleInfo.details.hasTouchSupport && !titleInfo.details.hasFak
             newCode += 'options.canShowTakHUD = false;';
         }
 
-        str = str.replace(text, newCode + text);
+        str = PatcherUtils.insertAt(str, index, newCode);
         return str;
     },
 
