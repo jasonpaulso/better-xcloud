@@ -9,5 +9,5 @@ window.BX_EXPOSED.showStreamMenu = options.onShowStreamMenu;
 options.guideUI = null;
 
 window.BX_EXPOSED.reactUseEffect(() => {
-    window.BxEventBus.Stream.emit('ui.streamHud.expanded', { state: options.offset.x < 0 ? 'collapsed' : 'expanded' });
+    window.BxEventBus.Stream.emit('ui.streamHud.rendered', { expanded: options.offset.x === 0 });
 });

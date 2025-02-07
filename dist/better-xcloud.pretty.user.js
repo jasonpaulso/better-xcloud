@@ -3094,7 +3094,7 @@ class StreamStats {
  $container;
  boundOnStreamHudStateChanged;
  constructor() {
-  BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this), BxEventBus.Stream.on("ui.streamHud.expanded", this.boundOnStreamHudStateChanged), this.render();
+  BxLogger.info(this.LOG_TAG, "constructor()"), this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this), BxEventBus.Stream.on("ui.streamHud.rendered", this.boundOnStreamHudStateChanged), this.render();
  }
  async start(glancing = !1) {
   if (!this.isHidden() || glancing && this.isGlancing()) return;
@@ -3113,9 +3113,9 @@ class StreamStats {
  }
  isHidden = () => this.$container.classList.contains("bx-gone");
  isGlancing = () => this.$container.dataset.display === "glancing";
- onStreamHudStateChanged({ state }) {
+ onStreamHudStateChanged({ expanded }) {
   if (!getStreamPref("stats.quickGlance.enabled")) return;
-  if (state === "expanded") this.isHidden() && this.start(!0);
+  if (expanded) this.isHidden() && this.start(!0);
   else this.stop(!0);
  }
  update = async (forceUpdate = !1) => {
@@ -5130,7 +5130,7 @@ var game_card_icons_default = `var supportedInputIcons=$supportedInputIcons$,{pr
 var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;gamepad._noToast=!0,window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
 var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&!window.location.pathname.includes("/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
 var vibration_adjust_default = `if(e?.gamepad?.connected){let gamepadSettings=window.BX_STREAM_SETTINGS.controllers[e.gamepad.id];if(gamepadSettings?.customization){let intensity=gamepadSettings.customization.vibrationIntensity;if(intensity<=0){e.repeat=0;return}else if(intensity<1)e.leftMotorPercent*=intensity,e.rightMotorPercent*=intensity,e.leftTriggerMotorPercent*=intensity,e.rightTriggerMotorPercent*=intensity}}`;
-var streamhud_default = `var options=arguments[0];window.BX_EXPOSED.showStreamMenu=options.onShowStreamMenu;options.guideUI=null;window.BX_EXPOSED.reactUseEffect(()=>{window.BxEventBus.Stream.emit("ui.streamHud.expanded",{state:options.offset.x<0?"collapsed":"expanded"})});`;
+var streamhud_default = `var options=arguments[0];window.BX_EXPOSED.showStreamMenu=options.onShowStreamMenu;options.guideUI=null;window.BX_EXPOSED.reactUseEffect(()=>{window.BxEventBus.Stream.emit("ui.streamHud.rendered",{expanded:options.offset.x===0})});`;
 class PatcherUtils {
  static indexOf(txt, searchString, startIndex, maxRange = 0, after = !1) {
   if (startIndex < 0) return -1;
@@ -5689,11 +5689,13 @@ ${subsVar} = subs;
  injectHeaderUseEffect(str) {
   let index = str.indexOf('"EdgewaterHeader-module__spaceBetween');
   if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 300)), index < 0) return !1;
-  let newCode = `
-window.BX_EXPOSED.reactUseEffect(() => {
-  window.BxEventBus.Script.emit('header.rendered', {});
-});
-`;
+  let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('header.rendered', {}));";
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
+ },
+ injectErrorPageUseEffect(str) {
+  let index = str.indexOf('"PureErrorPage-module__container');
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "return", index, 200)), index < 0) return !1;
+  let newCode = "window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('error.rendered', {}));";
   return str = PatcherUtils.insertAt(str, index, newCode), str;
  }
 }, PATCH_ORDERS = PatcherUtils.filterPatches([
@@ -5703,6 +5705,7 @@ window.BX_EXPOSED.reactUseEffect(() => {
  ] : [],
  "exposeReactCreateComponent",
  "injectHeaderUseEffect",
+ "injectErrorPageUseEffect",
  "gameCardCustomIcons",
  ...getGlobalPref("ui.imageQuality") < 90 ? [
   "setImageQuality"
@@ -10245,10 +10248,6 @@ class StreamUiHandler {
      let $elm = $node;
      if (!($elm instanceof HTMLElement)) return;
      let className = $elm.className || "";
-     if (className.includes("PureErrorPage")) {
-      BxEventBus.Stream.emit("state.error", {});
-      return;
-     }
      if (className.startsWith("StreamMenu-module__container")) {
       StreamUiHandler.handleStreamMenu();
       return;
@@ -10479,7 +10478,7 @@ BxEventBus.Stream.on("state.playing", (payload) => {
  }
  updateVideoPlayer();
 });
-BxEventBus.Stream.on("state.error", () => {
+BxEventBus.Script.on("error.rendered", () => {
  BxEventBus.Stream.emit("state.stopped", {});
 });
 window.addEventListener(BxEvent.XCLOUD_RENDERING_COMPONENT, (e) => {
@@ -10504,7 +10503,7 @@ BxEventBus.Stream.on("dataChannelCreated", (payload) => {
 });
 function unload() {
  if (!STATES.isPlaying) return;
- KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayerManager?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable(), BxEventBus.Stream.emit("xboxTitleId.changed", { id: -1 });
+ BxLogger.warning("Unloading"), KeyboardShortcutHandler.getInstance().stop(), EmulatedMkbHandler.getInstance()?.destroy(), NativeMkbHandler.getInstance()?.destroy(), DeviceVibrationManager.getInstance()?.reset(), STATES.currentStream.streamPlayerManager?.destroy(), STATES.isPlaying = !1, STATES.currentStream = {}, window.BX_EXPOSED.shouldShowSensorControls = !1, window.BX_EXPOSED.stopTakRendering = !1, NavigationDialogManager.getInstance().hide(), StreamStats.getInstance().destroy(), StreamBadges.getInstance().destroy(), MouseCursorHider.getInstance()?.stop(), TouchController.reset(), GameBar.getInstance()?.disable(), BxEventBus.Stream.emit("xboxTitleId.changed", { id: -1 });
 }
 BxEventBus.Stream.on("state.stopped", unload);
 window.addEventListener("pagehide", (e) => {

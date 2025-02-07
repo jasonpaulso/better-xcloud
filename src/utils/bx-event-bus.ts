@@ -37,6 +37,7 @@ type ScriptEvents = {
     'webgpu.ready': {},
 
     'header.rendered': {},
+    'error.rendered': {},
 };
 
 type StreamEvents = {
@@ -44,7 +45,6 @@ type StreamEvents = {
     'state.starting': {};
     'state.playing': { $video?: HTMLVideoElement };
     'state.stopped': {};
-    'state.error': {};
 
     'xboxTitleId.changed': {
         id: number;
@@ -68,7 +68,7 @@ type StreamEvents = {
     // Inside patch
     'microphone.state.changed': { state: MicrophoneState };
 
-    'ui.streamHud.expanded': { state: 'expanded' | 'collapsed' },
+    'ui.streamHud.rendered': { expanded: boolean },
 
     dataChannelCreated: { dataChannel: RTCDataChannel };
 };

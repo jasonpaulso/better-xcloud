@@ -5,7 +5,6 @@ import { t } from "@utils/translation.ts";
 import { StreamBadges } from "./stream-badges.ts";
 import { StreamStats } from "./stream-stats.ts";
 import { SettingsDialog } from "../ui/dialog/settings-dialog.ts";
-import { BxEventBus } from "@/utils/bx-event-bus.ts";
 
 
 export class StreamUiHandler {
@@ -240,13 +239,6 @@ export class StreamUiHandler {
                     }
 
                     const className = $elm.className || '';
-
-                    // Error Page: .PureErrorPage.ErrorScreen
-                    if (className.includes('PureErrorPage')) {
-                        BxEventBus.Stream.emit('state.error', {});
-                        return;
-                    }
-
                     // Render badges
                     if (className.startsWith('StreamMenu-module__container')) {
                         StreamUiHandler.handleStreamMenu();

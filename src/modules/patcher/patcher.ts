@@ -1136,16 +1136,23 @@ ${subsVar} = subs;
     injectHeaderUseEffect(str: string) {
         let index = str.indexOf('"EdgewaterHeader-module__spaceBetween');
         index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 300));
-
         if (index < 0) {
             return false;
         }
 
-        const newCode = `
-window.BX_EXPOSED.reactUseEffect(() => {
-    window.BxEventBus.Script.emit('header.rendered', {});
-});
-`;
+        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('header.rendered', {}));`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
+
+    injectErrorPageUseEffect(str: string) {
+        let index = str.indexOf('"PureErrorPage-module__container');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return', index, 200));
+        if (index < 0) {
+            return false;
+        }
+
+        const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.Script.emit('error.rendered', {}));`;
         str = PatcherUtils.insertAt(str, index, newCode);
         return str;
     },
@@ -1158,7 +1165,10 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []),
 
     'exposeReactCreateComponent',
+
     'injectHeaderUseEffect',
+    'injectErrorPageUseEffect',
+
     'gameCardCustomIcons',
     // 'gameCardPassTitle',
 

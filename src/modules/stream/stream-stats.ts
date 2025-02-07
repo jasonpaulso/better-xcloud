@@ -75,7 +75,7 @@ export class StreamStats {
         BxLogger.info(this.LOG_TAG, 'constructor()');
 
         this.boundOnStreamHudStateChanged = this.onStreamHudStateChanged.bind(this);
-        BxEventBus.Stream.on('ui.streamHud.expanded', this.boundOnStreamHudStateChanged);
+        BxEventBus.Stream.on('ui.streamHud.rendered', this.boundOnStreamHudStateChanged);
 
         this.render();
     }
@@ -122,12 +122,12 @@ export class StreamStats {
     isHidden = () => this.$container.classList.contains('bx-gone');
     isGlancing = () => this.$container.dataset.display === 'glancing';
 
-    onStreamHudStateChanged({ state }: { state: string }) {
+    onStreamHudStateChanged({ expanded }: { expanded: boolean }) {
         if (!getStreamPref(StreamPref.STATS_QUICK_GLANCE_ENABLED)) {
             return;
         }
 
-        if (state === 'expanded') {
+        if (expanded) {
             this.isHidden() && this.start(true);
         } else {
             this.stop(true);

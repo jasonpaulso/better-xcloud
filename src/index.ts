@@ -261,7 +261,7 @@ BxEventBus.Stream.on('state.playing', payload => {
     updateVideoPlayer();
 });
 
-BxEventBus.Stream.on('state.error', () => {
+BxEventBus.Script.on('error.rendered', () => {
     BxEventBus.Stream.emit('state.stopped', {});
 });
 
@@ -324,6 +324,7 @@ function unload() {
         return;
     }
 
+    BxLogger.warning('Unloading');
     if (isFullVersion()) {
         KeyboardShortcutHandler.getInstance().stop();
 
