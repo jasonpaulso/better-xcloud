@@ -1393,6 +1393,7 @@ export class Patcher {
             let patchedFuncStr = funcStr;
 
             let modified = false;
+            const chunkAppliedPatches = [];
 
             for (let patchIndex = 0; patchIndex < patchesToCheck.length; patchIndex++) {
                 const patchName = patchesToCheck[patchIndex];
@@ -1415,18 +1416,20 @@ export class Patcher {
                 modified = true;
                 patchedFuncStr = tmpStr;
 
-                BxLogger.info(LOG_TAG, `✅ ${patchName}`);
                 appliedPatches.push(patchName);
+                chunkAppliedPatches.push(patchName);
 
                 // Remove patch
                 patchesToCheck.splice(patchIndex, 1);
                 patchIndex--;
                 PATCH_ORDERS = PATCH_ORDERS.filter(item => item != patchName);
-                BxLogger.info(LOG_TAG, 'Remaining patches', PATCH_ORDERS);
             }
 
             // Apply patched functions
             if (modified) {
+                BxLogger.info(LOG_TAG, `✅ [${chunkId}] ${chunkAppliedPatches.join(', ')}`);
+                PATCH_ORDERS.length && BxLogger.info(LOG_TAG, 'Remaining patches', PATCH_ORDERS);
+
                 BX_FLAGS.Debug && console.time(LOG_TAG);
                 try {
                     chunkData[chunkId] = eval(patchedFuncStr);

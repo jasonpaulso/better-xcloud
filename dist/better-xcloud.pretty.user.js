@@ -5830,17 +5830,17 @@ class Patcher {
    if (cachedPatches) patchesToCheck = cachedPatches.slice(0), patchesToCheck.push(...PATCH_ORDERS);
    else patchesToCheck = PATCH_ORDERS.slice(0);
    if (!patchesToCheck.length) continue;
-   let func = chunkData[chunkId], funcStr = func.toString(), patchedFuncStr = funcStr, modified = !1;
+   let func = chunkData[chunkId], funcStr = func.toString(), patchedFuncStr = funcStr, modified = !1, chunkAppliedPatches = [];
    for (let patchIndex = 0;patchIndex < patchesToCheck.length; patchIndex++) {
     let patchName = patchesToCheck[patchIndex];
     if (appliedPatches.indexOf(patchName) > -1) continue;
     if (!PATCHES[patchName]) continue;
     let tmpStr = PATCHES[patchName].call(null, patchedFuncStr);
     if (!tmpStr) continue;
-    modified = !0, patchedFuncStr = tmpStr, BxLogger.info(LOG_TAG2, `✅ ${patchName}`), appliedPatches.push(patchName), patchesToCheck.splice(patchIndex, 1), patchIndex--, PATCH_ORDERS = PATCH_ORDERS.filter((item2) => item2 != patchName), BxLogger.info(LOG_TAG2, "Remaining patches", PATCH_ORDERS);
+    modified = !0, patchedFuncStr = tmpStr, appliedPatches.push(patchName), chunkAppliedPatches.push(patchName), patchesToCheck.splice(patchIndex, 1), patchIndex--, PATCH_ORDERS = PATCH_ORDERS.filter((item2) => item2 != patchName);
    }
    if (modified) {
-    BX_FLAGS.Debug && console.time(LOG_TAG2);
+    BxLogger.info(LOG_TAG2, `✅ [${chunkId}] ${chunkAppliedPatches.join(", ")}`), PATCH_ORDERS.length && BxLogger.info(LOG_TAG2, "Remaining patches", PATCH_ORDERS), BX_FLAGS.Debug && console.time(LOG_TAG2);
     try {
      chunkData[chunkId] = eval(patchedFuncStr);
     } catch (e) {
