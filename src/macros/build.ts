@@ -25,3 +25,17 @@ export const renderStylus = async () => {
 export const compressCss = (css: string) => {
     return (stylus(css, {}).set('compress', true)).render();
 };
+
+export const compressCode = (code: string): string => {
+    return code.split('\n') // Split into lines
+        .map(line => line.startsWith('#') || line.startsWith('@') ? line + '\n' : line.trim()) // Trim spaces, with exceptions for shader files
+        .filter(line => line && !line.startsWith('//')) // Remove empty and commented lines
+        .join(''); // Join into a single line
+};
+
+export const compressCodeFile = async (path: string) => {
+    const file = Bun.file(path);
+    const code = await file.text();
+
+    return compressCode(code);
+};

@@ -2053,67 +2053,6 @@ class ControllerShortcutsTable extends BasePresetsTable {
   BxLogger.info(this.LOG_TAG, "constructor()");
  }
 }
-var clarity_boost_default = `struct Params {
-filterId: f32,
-sharpness: f32,
-brightness: f32,
-contrast: f32,
-saturation: f32,
-};
-struct VertexOutput {
-@builtin(position) position: vec4<f32>,
-@location(0) uv: vec2<f32>,
-};
-@group(0) @binding(0) var ourSampler: sampler;
-@group(0) @binding(1) var ourTexture: texture_external;
-@group(0) @binding(2) var<uniform> ourParams: Params;
-const FILTER_UNSHARP_MASKING: f32 = 1.0;
-const CAS_CONTRAST_PEAK: f32 = 0.8 * -3.0 + 8.0;
-const LUMINOSITY_FACTOR = vec3(0.299, 0.587, 0.114);
-@vertex
-fn vsMain(@location(0) pos: vec2<f32>) -> VertexOutput {
-var out: VertexOutput;
-out.position = vec4(pos, 0.0, 1.0);
-out.uv = (vec2(pos.x, 1.0 - (pos.y + 1.0)) + vec2(1.0, 1.0)) * 0.5;
-return out;
-}
-fn clarityBoost(coord: vec2<f32>, texSize: vec2<f32>, e: vec3<f32>) -> vec3<f32> {
-let texelSize = 1.0 / texSize;
-let a = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0,  1.0)).rgb;
-let b = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 0.0,  1.0)).rgb;
-let c = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0,  1.0)).rgb;
-let d = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0,  0.0)).rgb;
-let f = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0,  0.0)).rgb;
-let g = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0, -1.0)).rgb;
-let h = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 0.0, -1.0)).rgb;
-let i = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0, -1.0)).rgb;
-if ourParams.filterId == FILTER_UNSHARP_MASKING {
-let gaussianBlur = (a + c + g + i) * 1.0 + (b + d + f + h) * 2.0 + e * 4.0;
-let blurred = gaussianBlur / 16.0;
-return e + (e - blurred) * (ourParams.sharpness / 3.0);
-}
-let minRgb = min(min(min(d, e), min(f, b)), h) + min(min(a, c), min(g, i));
-let maxRgb = max(max(max(d, e), max(f, b)), h) + max(max(a, c), max(g, i));
-let reciprocalMaxRgb = 1.0 / maxRgb;
-var amplifyRgb = clamp(min(minRgb, 2.0 - maxRgb) * reciprocalMaxRgb, vec3(0.0), vec3(1.0));
-amplifyRgb = 1.0 / sqrt(amplifyRgb);
-let weightRgb = -(1.0 / (amplifyRgb * CAS_CONTRAST_PEAK));
-let reciprocalWeightRgb = 1.0 / (4.0 * weightRgb + 1.0);
-let window = b + d + f + h;
-let outColor = clamp((window * weightRgb + e) * reciprocalWeightRgb, vec3(0.0), vec3(1.0));
-return mix(e, outColor, ourParams.sharpness / 2.0);
-}
-@fragment
-fn fsMain(input: VertexOutput) -> @location(0) vec4<f32> {
-let texSize = vec2<f32>(textureDimensions(ourTexture));
-let center = textureSampleBaseClampToEdge(ourTexture, ourSampler, input.uv);
-var adjustedRgb = clarityBoost(input.uv, texSize, center.rgb);
-let gray = dot(adjustedRgb, LUMINOSITY_FACTOR);
-adjustedRgb = mix(vec3(gray), adjustedRgb, ourParams.saturation);
-adjustedRgb = (adjustedRgb - 0.5) * ourParams.contrast + 0.5;
-adjustedRgb *= ourParams.brightness;
-return vec4(adjustedRgb, 1.0);
-}`;
 class BaseStreamPlayer {
  logTag;
  playerType;
@@ -2245,7 +2184,12 @@ class WebGPUPlayer extends BaseCanvasPlayer {
    3,
    -1
   ]), this.vertexBuffer.unmap();
-  let shaderModule = WebGPUPlayer.device.createShaderModule({ code: clarity_boost_default });
+  let shaderModule = WebGPUPlayer.device.createShaderModule({ code: `struct Params {filterId: f32,sharpness: f32,brightness: f32,contrast: f32,saturation: f32,};struct VertexOutput {@builtin(position) position: vec4<f32>,@location(0) uv: vec2<f32>,};@group(0) @binding(0) var ourSampler: sampler;
+@group(0) @binding(1) var ourTexture: texture_external;
+@group(0) @binding(2) var<uniform> ourParams: Params;
+const FILTER_UNSHARP_MASKING: f32 = 1.0;const CAS_CONTRAST_PEAK: f32 = 0.8 * -3.0 + 8.0;const LUMINOSITY_FACTOR = vec3(0.299, 0.587, 0.114);@vertex
+fn vsMain(@location(0) pos: vec2<f32>) -> VertexOutput {var out: VertexOutput;out.position = vec4(pos, 0.0, 1.0);out.uv = (vec2(pos.x, 1.0 - (pos.y + 1.0)) + vec2(1.0, 1.0)) * 0.5;return out;}fn clarityBoost(coord: vec2<f32>, texSize: vec2<f32>, e: vec3<f32>) -> vec3<f32> {let texelSize = 1.0 / texSize;let a = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0,  1.0)).rgb;let b = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 0.0,  1.0)).rgb;let c = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0,  1.0)).rgb;let d = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0,  0.0)).rgb;let f = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0,  0.0)).rgb;let g = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2(-1.0, -1.0)).rgb;let h = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 0.0, -1.0)).rgb;let i = textureSampleBaseClampToEdge(ourTexture, ourSampler, coord + texelSize * vec2( 1.0, -1.0)).rgb;if ourParams.filterId == FILTER_UNSHARP_MASKING {let gaussianBlur = (a + c + g + i) * 1.0 + (b + d + f + h) * 2.0 + e * 4.0;let blurred = gaussianBlur / 16.0;return e + (e - blurred) * (ourParams.sharpness / 3.0);}let minRgb = min(min(min(d, e), min(f, b)), h) + min(min(a, c), min(g, i));let maxRgb = max(max(max(d, e), max(f, b)), h) + max(max(a, c), max(g, i));let reciprocalMaxRgb = 1.0 / maxRgb;var amplifyRgb = clamp(min(minRgb, 2.0 - maxRgb) * reciprocalMaxRgb, vec3(0.0), vec3(1.0));amplifyRgb = 1.0 / sqrt(amplifyRgb);let weightRgb = -(1.0 / (amplifyRgb * CAS_CONTRAST_PEAK));let reciprocalWeightRgb = 1.0 / (4.0 * weightRgb + 1.0);let window = b + d + f + h;let outColor = clamp((window * weightRgb + e) * reciprocalWeightRgb, vec3(0.0), vec3(1.0));return mix(e, outColor, ourParams.sharpness / 2.0);}@fragment
+fn fsMain(input: VertexOutput) -> @location(0) vec4<f32> {let texSize = vec2<f32>(textureDimensions(ourTexture));let center = textureSampleBaseClampToEdge(ourTexture, ourSampler, input.uv);var adjustedRgb = clarityBoost(input.uv, texSize, center.rgb);let gray = dot(adjustedRgb, LUMINOSITY_FACTOR);adjustedRgb = mix(vec3(gray), adjustedRgb, ourParams.saturation);adjustedRgb = (adjustedRgb - 0.5) * ourParams.contrast + 0.5;adjustedRgb *= ourParams.brightness;return vec4(adjustedRgb, 1.0);}` });
   this.pipeline = WebGPUPlayer.device.createRenderPipeline({
    layout: "auto",
    vertex: {
@@ -9424,61 +9368,6 @@ function patchSdpBitrate(sdp, video, audio) {
  return lines.join(`\r
 `);
 }
-var clarity_boost_default2 = `#version 300 es
-in vec4 position;
-void main() {
-gl_Position = position;
-}`;
-var clarity_boost_default3 = `#version 300 es
-precision mediump float;
-uniform sampler2D data;
-uniform vec2 iResolution;
-const int FILTER_UNSHARP_MASKING = 1;
-const float CAS_CONTRAST_PEAK = 0.8 * -3.0 + 8.0;
-const vec3 LUMINOSITY_FACTOR = vec3(0.299, 0.587, 0.114);
-uniform int filterId;
-uniform float sharpenFactor;
-uniform float brightness;
-uniform float contrast;
-uniform float saturation;
-out vec4 fragColor;
-vec3 clarityBoost(sampler2D tex, vec2 coord, vec3 e) {
-vec2 texelSize = 1.0 / iResolution.xy;
-vec3 a = texture(tex, coord + texelSize * vec2(-1, 1)).rgb;
-vec3 b = texture(tex, coord + texelSize * vec2(0, 1)).rgb;
-vec3 c = texture(tex, coord + texelSize * vec2(1, 1)).rgb;
-vec3 d = texture(tex, coord + texelSize * vec2(-1, 0)).rgb;
-vec3 f = texture(tex, coord + texelSize * vec2(1, 0)).rgb;
-vec3 g = texture(tex, coord + texelSize * vec2(-1, -1)).rgb;
-vec3 h = texture(tex, coord + texelSize * vec2(0, -1)).rgb;
-vec3 i = texture(tex, coord + texelSize * vec2(1, -1)).rgb;
-if (filterId == FILTER_UNSHARP_MASKING) {
-vec3 gaussianBlur = (a + c + g + i) * 1.0 + (b + d + f + h) * 2.0 + e * 4.0;
-gaussianBlur /= 16.0;
-return e + (e - gaussianBlur) * sharpenFactor / 3.0;
-}
-vec3 minRgb = min(min(min(d, e), min(f, b)), h);
-minRgb += min(min(a, c), min(g, i));
-vec3 maxRgb = max(max(max(d, e), max(f, b)), h);
-maxRgb += max(max(a, c), max(g, i));
-vec3 reciprocalMaxRgb = 1.0 / maxRgb;
-vec3 amplifyRgb = clamp(min(minRgb, 2.0 - maxRgb) * reciprocalMaxRgb, 0.0, 1.0);
-amplifyRgb = inversesqrt(amplifyRgb);
-vec3 weightRgb = -(1.0 / (amplifyRgb * CAS_CONTRAST_PEAK));
-vec3 reciprocalWeightRgb = 1.0 / (4.0 * weightRgb + 1.0);
-vec3 window = b + d + f + h;
-vec3 outColor = clamp((window * weightRgb + e) * reciprocalWeightRgb, 0.0, 1.0);
-return mix(e, outColor, sharpenFactor / 2.0);
-}
-void main() {
-vec2 uv = gl_FragCoord.xy / iResolution.xy;
-vec3 color = texture(data, uv).rgb;
-color = sharpenFactor > 0.0 ? clarityBoost(data, uv, color) : color;
-color = saturation != 1.0 ? mix(vec3(dot(color, LUMINOSITY_FACTOR)), color, saturation) : color;
-color = contrast * (color - 0.5) + 0.5;
-color = brightness * color;
-fragColor = vec4(color, 1.0);
-}`;
 class WebGL2Player extends BaseCanvasPlayer {
  gl = null;
  resources = [];
@@ -9507,9 +9396,11 @@ class WebGL2Player extends BaseCanvasPlayer {
   });
   this.gl = gl, gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferWidth);
   let vShader = gl.createShader(gl.VERTEX_SHADER);
-  gl.shaderSource(vShader, clarity_boost_default2), gl.compileShader(vShader);
+  gl.shaderSource(vShader, `#version 300 es
+in vec4 position;void main() {gl_Position = position;}`), gl.compileShader(vShader);
   let fShader = gl.createShader(gl.FRAGMENT_SHADER);
-  gl.shaderSource(fShader, clarity_boost_default3), gl.compileShader(fShader);
+  gl.shaderSource(fShader, `#version 300 es
+precision mediump float;uniform sampler2D data;uniform vec2 iResolution;const int FILTER_UNSHARP_MASKING = 1;const float CAS_CONTRAST_PEAK = 0.8 * -3.0 + 8.0;const vec3 LUMINOSITY_FACTOR = vec3(0.299, 0.587, 0.114);uniform int filterId;uniform float sharpenFactor;uniform float brightness;uniform float contrast;uniform float saturation;out vec4 fragColor;vec3 clarityBoost(sampler2D tex, vec2 coord, vec3 e) {vec2 texelSize = 1.0 / iResolution.xy;vec3 a = texture(tex, coord + texelSize * vec2(-1, 1)).rgb;vec3 b = texture(tex, coord + texelSize * vec2(0, 1)).rgb;vec3 c = texture(tex, coord + texelSize * vec2(1, 1)).rgb;vec3 d = texture(tex, coord + texelSize * vec2(-1, 0)).rgb;vec3 f = texture(tex, coord + texelSize * vec2(1, 0)).rgb;vec3 g = texture(tex, coord + texelSize * vec2(-1, -1)).rgb;vec3 h = texture(tex, coord + texelSize * vec2(0, -1)).rgb;vec3 i = texture(tex, coord + texelSize * vec2(1, -1)).rgb;if (filterId == FILTER_UNSHARP_MASKING) {vec3 gaussianBlur = (a + c + g + i) * 1.0 + (b + d + f + h) * 2.0 + e * 4.0;gaussianBlur /= 16.0;return e + (e - gaussianBlur) * sharpenFactor / 3.0;}vec3 minRgb = min(min(min(d, e), min(f, b)), h);minRgb += min(min(a, c), min(g, i));vec3 maxRgb = max(max(max(d, e), max(f, b)), h);maxRgb += max(max(a, c), max(g, i));vec3 reciprocalMaxRgb = 1.0 / maxRgb;vec3 amplifyRgb = clamp(min(minRgb, 2.0 - maxRgb) * reciprocalMaxRgb, 0.0, 1.0);amplifyRgb = inversesqrt(amplifyRgb);vec3 weightRgb = -(1.0 / (amplifyRgb * CAS_CONTRAST_PEAK));vec3 reciprocalWeightRgb = 1.0 / (4.0 * weightRgb + 1.0);vec3 window = b + d + f + h;vec3 outColor = clamp((window * weightRgb + e) * reciprocalWeightRgb, 0.0, 1.0);return mix(e, outColor, sharpenFactor / 2.0);}void main() {vec2 uv = gl_FragCoord.xy / iResolution.xy;vec3 color = texture(data, uv).rgb;color = sharpenFactor > 0.0 ? clarityBoost(data, uv, color) : color;color = saturation != 1.0 ? mix(vec3(dot(color, LUMINOSITY_FACTOR)), color, saturation) : color;color = contrast * (color - 0.5) + 0.5;color = brightness * color;fragColor = vec4(color, 1.0);}`), gl.compileShader(fShader);
   let program = gl.createProgram();
   if (this.program = program, gl.attachShader(program, vShader), gl.attachShader(program, fShader), gl.linkProgram(program), gl.useProgram(program), !gl.getProgramParameter(program, gl.LINK_STATUS)) console.error(`Link failed: ${gl.getProgramInfoLog(program)}`), console.error(`vs info-log: ${gl.getShaderInfoLog(vShader)}`), console.error(`fs info-log: ${gl.getShaderInfoLog(fShader)}`);
   this.updateCanvas();

@@ -1,4 +1,5 @@
-import wgslClarityBoost from "./shaders/clarity-boost.wgsl" with { type: "text" };
+import { compressCodeFile } from "@macros/build" with { type: "macro" };
+
 import { BaseCanvasPlayer } from "../base-canvas-player";
 import { StreamPlayerType } from "@/enums/pref-values";
 import { BxEventBus } from "@/utils/bx-event-bus";
@@ -70,7 +71,7 @@ export class WebGPUPlayer extends BaseCanvasPlayer {
         ]);
         this.vertexBuffer.unmap();
 
-        const shaderModule = WebGPUPlayer.device.createShaderModule({ code: wgslClarityBoost });
+        const shaderModule = WebGPUPlayer.device.createShaderModule({ code: compressCodeFile('./src/modules/player/webgpu/shaders/clarity-boost.wgsl') as any as string });
         this.pipeline = WebGPUPlayer.device.createRenderPipeline({
             layout: 'auto',
             vertex: {

@@ -1,5 +1,5 @@
-import vertClarityBoost from "./shaders/clarity-boost.vert" with { type: "text" };
-import fsClarityBoost from "./shaders/clarity-boost.fs" with { type: "text" };
+import { compressCodeFile } from "@macros/build" with { type: "macro" };
+
 import { StreamPref } from "@/enums/pref-keys";
 import { getStreamPref } from "@/utils/pref-utils";
 import { BaseCanvasPlayer } from "../base-canvas-player";
@@ -53,11 +53,11 @@ export class WebGL2Player extends BaseCanvasPlayer {
 
         // Vertex shader: Identity map
         const vShader = gl.createShader(gl.VERTEX_SHADER)!;
-        gl.shaderSource(vShader, vertClarityBoost);
+        gl.shaderSource(vShader, compressCodeFile('./src/modules/player/webgl2/shaders/clarity-boost.vert') as any as string);
         gl.compileShader(vShader);
 
         const fShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-        gl.shaderSource(fShader, fsClarityBoost);
+        gl.shaderSource(fShader, compressCodeFile('./src/modules/player/webgl2/shaders/clarity-boost.fs') as any as string);
         gl.compileShader(fShader);
 
         // Create and link program
