@@ -949,6 +949,11 @@ export class SettingsDialog extends NavigationDialog {
         }
         $row.dataset.type = settingTabContent.group;
 
+        // Highlight "Bypass region" row
+        if (!STATES.supportedRegion && setting.pref === GlobalPref.SERVER_BYPASS_RESTRICTION) {
+            $row.classList.add('bx-settings-important-row');
+        }
+
         $tabContent.appendChild($row);
         !prefDefinition?.unsupported && setting.onCreated && setting.onCreated(setting, $control);
     }
