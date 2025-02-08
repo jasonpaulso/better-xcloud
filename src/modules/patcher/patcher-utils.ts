@@ -1,3 +1,4 @@
+import type { ScriptEvents, StreamEvents } from "@/utils/bx-event-bus";
 import type { PatchArray, PatchName, PatchPage } from "./patcher";
 
 export class PatcherUtils {
@@ -35,7 +36,7 @@ export class PatcherUtils {
         return txt.substring(0, index) + toString + txt.substring(index + fromString.length);
     }
 
-    static filterPatches(patches: Array<string | false>): PatchArray {
+    static filterPatches(patches: Array<PatchName | false>): PatchArray {
         return patches.filter((item): item is PatchName => !!item);
     }
 
@@ -97,7 +98,7 @@ export class PatcherUtils {
         return str.substring(start, end);
     }
 
-    static injectUseEffect(str: string, index: number, group: 'Stream' | 'Script', eventName: string) {
+    static injectUseEffect<T extends 'Stream' | 'Script'>(str: string, index: number, group: T, eventName: T extends 'Stream' ? keyof StreamEvents : keyof ScriptEvents) {
         const newCode = `window.BX_EXPOSED.reactUseEffect(() => window.BxEventBus.${group}.emit('${eventName}', {}), []);`;
         str = PatcherUtils.insertAt(str, index, newCode);
 

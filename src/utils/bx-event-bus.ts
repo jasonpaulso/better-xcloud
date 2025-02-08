@@ -7,7 +7,7 @@ import type { SpeakerState } from "@/modules/shortcuts/sound-shortcut";
 
 type EventCallback<T = any> = (payload: T) => void;
 
-type ScriptEvents = {
+export type ScriptEvents = {
     'xcloud.server': {
         status: 'ready' | 'unavailable' | 'signed-out',
     };
@@ -44,7 +44,7 @@ type ScriptEvents = {
     'ui.guideAchievementDetail.rendered': {},
 };
 
-type StreamEvents = {
+export type StreamEvents = {
     'state.loading': {};
     'state.starting': {};
     'state.playing': { $video?: HTMLVideoElement };

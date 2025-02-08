@@ -23,6 +23,7 @@ import { PatcherUtils } from "./patcher-utils.js";
 export type PatchName = keyof typeof PATCHES;
 export type PatchArray = PatchName[];
 export type PatchPage = 'home' | 'stream' | 'product-detail';
+type PatchFunction = (str: string) => string | false;
 
 const LOG_TAG = 'Patcher';
 
@@ -31,11 +32,7 @@ const PATCHES = {
     disableAiTrack(str: string) {
         let text = '.track=function(';
         const index = str.indexOf(text);
-        if (index < 0) {
-            return false;
-        }
-
-        if (PatcherUtils.indexOf(str, '"AppInsightsCore', index, 200) < 0) {
+        if (index < 0 || PatcherUtils.indexOf(str, '"AppInsightsCore', index, 200) < 0) {
             return false;
         }
 
@@ -1204,62 +1201,95 @@ ${subsVar} = subs;
 
         return PatcherUtils.injectUseEffect(str, index, 'Script', 'ui.guideAchievementDetail.rendered');
     },
-};
+
+    /*
+    patchBasicGameInfo(str: string) {
+        let index = str.indexOf('.ChildXboxTitleIds,offerings');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, 'return{', index, 1000));
+        if (index < 0) {
+            return false;
+        }
+
+        const varName = PatcherUtils.getVariableNameBefore(str, PatcherUtils.lastIndexOf(str, '=>{', index));
+        if (!varName) {
+            return false;
+        }
+
+        const newCode = `
+const info = ${varName};
+if (info.ProductTitle.includes('Xbox One')) {
+    return {};
+}
+`;
+        str = PatcherUtils.insertAt(str, index, newCode);
+        return str;
+    },
+    */
+} as const satisfies { [key: string]: PatchFunction };
 
 let PATCH_ORDERS = PatcherUtils.filterPatches([
     ...(AppInterface && getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'enableNativeMkb',
         'disableAbsoluteMouse',
-    ] : []),
+    ] : []) as PatchArray,
 
     'exposeReactCreateComponent',
 
     'injectCreatePortal',
-    'injectGuideHomeUseEffect',
-    'injectHeaderUseEffect',
+
+    'broadcastPollingMode',
+
+    getGlobalPref(GlobalPref.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentFocus',
+
+    'patchGamepadPolling',
+
+    'optimizeGameSlugGenerator',
+
+    'modifyPreloadedState',
+
+    'detectBrowserRouterReady',
+
+    'exposeStreamSession',
+    'supportLocalCoOp',
+
+    'disableStreamGate',
+
+    'exposeDialogRoutes',
+
+    ...(getGlobalPref(GlobalPref.UI_IMAGE_QUALITY) < 90 ? [
+        'setImageQuality',
+    ] : []) as PatchArray,
+
+    'patchRequestInfoCrash',
+
     'injectErrorPageUseEffect',
+
+    'streamPageBeforeLoad',
+
+    'injectGuideHomeUseEffect',
     'injectAchievementsProgressUseEffect',
     'injectAchievementsDetailUseEffect',
+    'guideAchievementsDefaultLocked',
+
+    'injectHeaderUseEffect',
+
+    'homePageBeforeLoad',
 
     'gameCardCustomIcons',
     // 'gameCardPassTitle',
 
-    ...(getGlobalPref(GlobalPref.UI_IMAGE_QUALITY) < 90 ? [
-        'setImageQuality',
-    ] : []),
-
-    'modifyPreloadedState',
-
-    'optimizeGameSlugGenerator',
-
-    'detectBrowserRouterReady',
-    'patchRequestInfoCrash',
-
-    'disableStreamGate',
-    'broadcastPollingMode',
-    'patchGamepadPolling',
-
-    'exposeStreamSession',
-    'exposeDialogRoutes',
-
-    'homePageBeforeLoad',
     'productDetailPageBeforeLoad',
-    'streamPageBeforeLoad',
-
-    'guideAchievementsDefaultLocked',
 
     'enableTvRoutes',
 
-    'supportLocalCoOp',
     'overrideStorageGetSettings',
-    getGlobalPref(GlobalPref.UI_GAME_CARD_SHOW_WAIT_TIME) && 'patchSetCurrentFocus',
 
     getGlobalPref(GlobalPref.UI_LAYOUT) !== UiLayout.DEFAULT && 'websiteLayout',
     getGlobalPref(GlobalPref.GAME_FORTNITE_FORCE_CONSOLE) && 'forceFortniteConsole',
 
     ...(STATES.userAgent.capabilities.touch ? [
         'disableTouchContextMenu',
-    ] : []),
+    ] : []) as PatchArray,
 
     ...(getGlobalPref(GlobalPref.BLOCK_TRACKING) ? [
         'disableAiTrack',
@@ -1269,41 +1299,41 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
         'disableIndexDbLogging',
 
         'disableTelemetryProvider',
-    ] : []),
+    ] : []) as PatchArray,
 
     ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
-        'remotePlayKeepAlive',
         'remotePlayDirectConnectUrl',
+        'remotePlayKeepAlive',
+        'remotePlayWebTitle',
         'remotePlayDisableAchievementToast',
         'remotePlayRecentlyUsedTitleIds',
-        'remotePlayWebTitle',
         STATES.userAgent.capabilities.touch && 'patchUpdateInputConfigurationAsync',
-    ] : []),
+    ] : []) as PatchArray,
 
     ...(BX_FLAGS.EnableXcloudLogging ? [
         'enableConsoleLogging',
         'enableXcloudLogger',
-    ] : []),
+    ] : []) as PatchArray,
 ]);
 
 const hideSections = getGlobalPref(GlobalPref.UI_HIDE_SECTIONS);
 let HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
-    hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
-    (getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.FRIENDS) || hideSections.includes(UiSection.FRIENDS)) && 'ignorePlayWithFriendsSection',
-    hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
     hideSections.includes(UiSection.GENRES) && 'ignoreGenresSection',
     !getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.BYOG) && hideSections.includes(UiSection.BOYG) && 'ignoreByogSection',
 
     STATES.browser.capabilities.touch && hideSections.includes(UiSection.TOUCH) && 'ignorePlayWithTouchSection',
+
+    getGlobalPref(GlobalPref.UI_IMAGE_QUALITY) < 90 && 'setBackgroundImageQuality',
+
     hideSections.some(value => [UiSection.NATIVE_MKB, UiSection.MOST_POPULAR].includes(value)) && 'ignoreSiglSections',
 
-    ...(getGlobalPref(GlobalPref.UI_IMAGE_QUALITY) < 90 ? [
-        'setBackgroundImageQuality',
-    ] : []),
+    hideSections.includes(UiSection.NEWS) && 'ignoreNewsSection',
+    (getGlobalPref(GlobalPref.BLOCK_FEATURES).includes(BlockFeature.FRIENDS) || hideSections.includes(UiSection.FRIENDS)) && 'ignorePlayWithFriendsSection',
+    hideSections.includes(UiSection.ALL_GAMES) && 'ignoreAllGamesSection',
 
     ...(blockSomeNotifications() ? [
         'changeNotificationsSubscription',
-    ] : []),
+    ] : []) as PatchArray,
 ]);
 
 // Only when playing
@@ -1335,7 +1365,7 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
         (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) === TouchControllerMode.OFF || getGlobalPref(GlobalPref.TOUCH_CONTROLLER_AUTO_OFF)) && 'disableTakRenderer',
         getGlobalPref(GlobalPref.TOUCH_CONTROLLER_DEFAULT_OPACITY) !== 100 && 'patchTouchControlDefaultOpacity',
         (getGlobalPref(GlobalPref.TOUCH_CONTROLLER_MODE) !== TouchControllerMode.OFF && (getGlobalPref(GlobalPref.MKB_ENABLED) || getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON)) && 'patchBabylonRendererClass',
-    ] : []),
+    ] : []) as PatchArray,
 
     BX_FLAGS.EnableXcloudLogging && 'enableConsoleLogging',
 
@@ -1346,13 +1376,13 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
         'patchRemotePlayMkb',
         'remotePlayConnectMode',
-    ] : []),
+    ] : []) as PatchArray,
 
     // Native MKB
     ...(AppInterface && getGlobalPref(GlobalPref.NATIVE_MKB_MODE) === NativeMkbMode.ON ? [
         'patchMouseAndKeyboardEnabled',
         'disableNativeRequestPointerLock',
-    ] : []),
+    ] : []) as PatchArray,
 ]);
 
 let PRODUCT_DETAIL_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([

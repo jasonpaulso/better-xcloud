@@ -5186,8 +5186,7 @@ class PatcherUtils {
 var LOG_TAG2 = "Patcher", PATCHES = {
  disableAiTrack(str) {
   let text = ".track=function(", index = str.indexOf(text);
-  if (index < 0) return !1;
-  if (PatcherUtils.indexOf(str, '"AppInsightsCore', index, 200) < 0) return !1;
+  if (index < 0 || PatcherUtils.indexOf(str, '"AppInsightsCore', index, 200) < 0) return !1;
   return PatcherUtils.replaceWith(str, index, text, ".track=function(e){},!!function(");
  },
  disableTelemetry(str) {
@@ -5734,32 +5733,32 @@ ${subsVar} = subs;
  ] : [],
  "exposeReactCreateComponent",
  "injectCreatePortal",
- "injectGuideHomeUseEffect",
- "injectHeaderUseEffect",
- "injectErrorPageUseEffect",
- "injectAchievementsProgressUseEffect",
- "injectAchievementsDetailUseEffect",
- "gameCardCustomIcons",
+ "broadcastPollingMode",
+ getGlobalPref("ui.gameCard.waitTime.show") && "patchSetCurrentFocus",
+ "patchGamepadPolling",
+ "optimizeGameSlugGenerator",
+ "modifyPreloadedState",
+ "detectBrowserRouterReady",
+ "exposeStreamSession",
+ "supportLocalCoOp",
+ "disableStreamGate",
+ "exposeDialogRoutes",
  ...getGlobalPref("ui.imageQuality") < 90 ? [
   "setImageQuality"
  ] : [],
- "modifyPreloadedState",
- "optimizeGameSlugGenerator",
- "detectBrowserRouterReady",
  "patchRequestInfoCrash",
- "disableStreamGate",
- "broadcastPollingMode",
- "patchGamepadPolling",
- "exposeStreamSession",
- "exposeDialogRoutes",
- "homePageBeforeLoad",
- "productDetailPageBeforeLoad",
+ "injectErrorPageUseEffect",
  "streamPageBeforeLoad",
+ "injectGuideHomeUseEffect",
+ "injectAchievementsProgressUseEffect",
+ "injectAchievementsDetailUseEffect",
  "guideAchievementsDefaultLocked",
+ "injectHeaderUseEffect",
+ "homePageBeforeLoad",
+ "gameCardCustomIcons",
+ "productDetailPageBeforeLoad",
  "enableTvRoutes",
- "supportLocalCoOp",
  "overrideStorageGetSettings",
- getGlobalPref("ui.gameCard.waitTime.show") && "patchSetCurrentFocus",
  getGlobalPref("ui.layout") !== "default" && "websiteLayout",
  getGlobalPref("game.fortnite.forceConsole") && "forceFortniteConsole",
  ...STATES.userAgent.capabilities.touch ? [
@@ -5773,11 +5772,11 @@ ${subsVar} = subs;
   "disableTelemetryProvider"
  ] : [],
  ...getGlobalPref("xhome.enabled") ? [
-  "remotePlayKeepAlive",
   "remotePlayDirectConnectUrl",
+  "remotePlayKeepAlive",
+  "remotePlayWebTitle",
   "remotePlayDisableAchievementToast",
   "remotePlayRecentlyUsedTitleIds",
-  "remotePlayWebTitle",
   STATES.userAgent.capabilities.touch && "patchUpdateInputConfigurationAsync"
  ] : [],
  ...BX_FLAGS.EnableXcloudLogging ? [
@@ -5785,16 +5784,14 @@ ${subsVar} = subs;
   "enableXcloudLogger"
  ] : []
 ]), hideSections = getGlobalPref("ui.hideSections"), HOME_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
- hideSections.includes("news") && "ignoreNewsSection",
- (getGlobalPref("block.features").includes("friends") || hideSections.includes("friends")) && "ignorePlayWithFriendsSection",
- hideSections.includes("all-games") && "ignoreAllGamesSection",
  hideSections.includes("genres") && "ignoreGenresSection",
  !getGlobalPref("block.features").includes("byog") && hideSections.includes("byog") && "ignoreByogSection",
  STATES.browser.capabilities.touch && hideSections.includes("touch") && "ignorePlayWithTouchSection",
+ getGlobalPref("ui.imageQuality") < 90 && "setBackgroundImageQuality",
  hideSections.some((value) => ["native-mkb", "most-popular"].includes(value)) && "ignoreSiglSections",
- ...getGlobalPref("ui.imageQuality") < 90 ? [
-  "setBackgroundImageQuality"
- ] : [],
+ hideSections.includes("news") && "ignoreNewsSection",
+ (getGlobalPref("block.features").includes("friends") || hideSections.includes("friends")) && "ignorePlayWithFriendsSection",
+ hideSections.includes("all-games") && "ignoreAllGamesSection",
  ...blockSomeNotifications() ? [
   "changeNotificationsSubscription"
  ] : []
