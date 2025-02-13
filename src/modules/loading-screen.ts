@@ -35,7 +35,9 @@ export class LoadingScreen {
             LoadingScreen.$bgStyle = $bgStyle;
         }
 
-        LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl);
+        if (titleInfo.productInfo) {
+            LoadingScreen.setBackground(titleInfo.productInfo.heroImageUrl || titleInfo.productInfo.titledHeroImageUrl || titleInfo.productInfo.tileImageUrl);
+        }
 
         if (getGlobalPref(GlobalPref.LOADING_SCREEN_ROCKET) === LoadingScreenRocket.HIDE) {
             LoadingScreen.hideRocket();

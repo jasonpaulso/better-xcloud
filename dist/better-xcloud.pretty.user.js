@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.4.1
+// @version      6.4.2-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -192,7 +192,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.4.1", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.4.2-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -8662,7 +8662,8 @@ class LoadingScreen {
    let $bgStyle = CE("style");
    document.documentElement.appendChild($bgStyle), LoadingScreen.$bgStyle = $bgStyle;
   }
-  if (LoadingScreen.setBackground(titleInfo.product.heroImageUrl || titleInfo.product.titledHeroImageUrl || titleInfo.product.tileImageUrl), getGlobalPref("loadingScreen.rocket") === "hide") LoadingScreen.hideRocket();
+  if (titleInfo.productInfo) LoadingScreen.setBackground(titleInfo.productInfo.heroImageUrl || titleInfo.productInfo.titledHeroImageUrl || titleInfo.productInfo.tileImageUrl);
+  if (getGlobalPref("loadingScreen.rocket") === "hide") LoadingScreen.hideRocket();
  }
  static hideRocket() {
   let $bgStyle = LoadingScreen.$bgStyle;
@@ -10256,7 +10257,7 @@ BxEventBus.Script.on("ui.header.rendered", () => {
  HeaderSection.getInstance().checkHeader();
 });
 BxEventBus.Stream.on("state.loading", () => {
- if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.product.title);
+ if (window.location.pathname.includes("/launch/") && STATES.currentStream.titleInfo) STATES.currentStream.titleSlug = productTitleToSlug(STATES.currentStream.titleInfo.productInfo.title);
  else STATES.currentStream.titleSlug = "remote-play";
 });
 getGlobalPref("loadingScreen.gameArt.show") && BxEventBus.Script.on("titleInfo.ready", LoadingScreen.setup);
