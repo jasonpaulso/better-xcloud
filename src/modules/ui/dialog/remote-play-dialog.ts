@@ -44,14 +44,14 @@ export class RemotePlayDialog extends NavigationDialog {
         let $resolutions : HTMLSelectElement | NavigationElement = CE('select', false,
             CE('option', { value: StreamResolution.DIM_720P }, '720p'),
             CE('option', { value: StreamResolution.DIM_1080P }, '1080p'),
-            // CE('option', { value: StreamResolution.DIM_1080P_HQ }, `1080p (HQ)`),
+            CE('option', { value: StreamResolution.DIM_1080P_HQ }, `1080p (HQ)`),
         );
 
         $resolutions = BxSelectElement.create($resolutions as HTMLSelectElement);
         $resolutions.addEventListener('input', (e: Event) => {
             const value = (e.target as HTMLSelectElement).value;
 
-            $settingNote.textContent = value === '1080p' ? '✅ ' + t('can-stream-xbox-360-games') : '❌ ' + t('cant-stream-xbox-360-games');
+            $settingNote.textContent = value === StreamResolution.DIM_1080P ? '✅ ' + t('can-stream-xbox-360-games') : '❌ ' + t('cant-stream-xbox-360-games');
             setGlobalPref(GlobalPref.REMOTE_PLAY_STREAM_RESOLUTION, value, 'ui');
         });
 
