@@ -16,7 +16,6 @@ import codeCreatePortal from "./patches/create-portal.js" with { type: "text" };
 import { GlobalPref, StorageKey } from "@/enums/pref-keys.js";
 import { getGlobalPref } from "@/utils/pref-utils.js";
 import { GamePassCloudGallery } from "@/enums/game-pass-gallery";
-import { t } from "@/utils/translation";
 import { BlockFeature, NativeMkbMode, TouchControllerMode, UiLayout, UiSection } from "@/enums/pref-values";
 import { PatcherUtils } from "./patcher-utils.js";
 
@@ -134,29 +133,6 @@ remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFI
 
         const newCode = `if (!!window.BX_REMOTE_PLAY_CONFIG) return;`;
         return str.replace(text, text + newCode);
-    },
-
-    // Remote Play: Prevent adding "Fortnite" to the "Jump back in" list
-    remotePlayRecentlyUsedTitleIds(str: string) {
-        let text = '(e.data.recentlyUsedTitleIds)){';
-        if (!str.includes(text)) {
-            return false;
-        }
-
-        const newCode = `if (window.BX_REMOTE_PLAY_CONFIG) return;`;
-        return str.replace(text, text + newCode);
-    },
-
-    // Remote Play: change web page's title
-    remotePlayWebTitle(str: string) {
-        let text = 'titleTemplate:void 0,title:';
-        const index = str.indexOf(text);
-        if (index < 0) {
-            return false;
-        }
-
-        str = PatcherUtils.insertAt(str, index + text.length, `!!window.BX_REMOTE_PLAY_CONFIG ? "${t('remote-play')} - Better xCloud" :`);
-        return str;
     },
 
     // Block WebRTC stats collector
@@ -1304,9 +1280,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
         'remotePlayDirectConnectUrl',
         'remotePlayKeepAlive',
-        'remotePlayWebTitle',
         'remotePlayDisableAchievementToast',
-        'remotePlayRecentlyUsedTitleIds',
         STATES.userAgent.capabilities.touch && 'patchUpdateInputConfigurationAsync',
     ] : []) as PatchArray,
 

@@ -195,6 +195,7 @@ export class RemotePlayManager {
         window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config;
 
         localRedirect('/launch/fortnite/BT5P2X999VH2#remote-play');
+        setTimeout(() => localRedirect('/consoles/launch/' + serverId), 100);
     }
 
     togglePopup(force = null) {

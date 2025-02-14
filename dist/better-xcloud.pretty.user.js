@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.4.3
+// @version      6.4.4-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -192,7 +192,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.4.3", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.4.4-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -5073,7 +5073,7 @@ var poll_gamepad_default = "var self=this;if(window.BX_EXPOSED.disableGamepadPol
 var expose_stream_session_default = 'var self=this;window.BX_EXPOSED.streamSession=self;var orgSetMicrophoneState=self.setMicrophoneState.bind(self);self.setMicrophoneState=(state)=>{orgSetMicrophoneState(state),window.BxEventBus.Stream.emit("microphone.state.changed",{state})};window.dispatchEvent(new Event(BxEvent.STREAM_SESSION_READY));var updateDimensionsStr=self.updateDimensions.toString();if(updateDimensionsStr.startsWith("function "))updateDimensionsStr=updateDimensionsStr.substring(9);var renderTargetVar=updateDimensionsStr.match(/if\\((\\w+)\\){/)[1];updateDimensionsStr=updateDimensionsStr.replaceAll(renderTargetVar+".scroll","scroll");updateDimensionsStr=updateDimensionsStr.replace(`if(${renderTargetVar}){`,`\nif (${renderTargetVar}) {\nconst scrollWidth = ${renderTargetVar}.dataset.width ? parseInt(${renderTargetVar}.dataset.width) : ${renderTargetVar}.scrollWidth;\nconst scrollHeight = ${renderTargetVar}.dataset.height ? parseInt(${renderTargetVar}.dataset.height) : ${renderTargetVar}.scrollHeight;\n`);eval(`this.updateDimensions = function ${updateDimensionsStr}`);\n';
 var game_card_icons_default = `var supportedInputIcons=$supportedInputIcons$,{productId}=$param$;supportedInputIcons.shift();if(window.BX_EXPOSED.localCoOpManager.isSupported(productId))supportedInputIcons.push(window.BX_EXPOSED.createReactLocalCoOpIcon);`;
 var local_co_op_enable_default = 'this.orgOnGamepadChanged=this.onGamepadChanged;this.orgOnGamepadInput=this.onGamepadInput;var match,onGamepadChangedStr=this.onGamepadChanged.toString();if(onGamepadChangedStr.startsWith("function "))onGamepadChangedStr=onGamepadChangedStr.substring(9);onGamepadChangedStr=onGamepadChangedStr.replaceAll("0","arguments[1]");eval(`this.patchedOnGamepadChanged = function ${onGamepadChangedStr}`);var onGamepadInputStr=this.onGamepadInput.toString();if(onGamepadInputStr.startsWith("function "))onGamepadInputStr=onGamepadInputStr.substring(9);match=onGamepadInputStr.match(/(\\w+\\.GamepadIndex)/);if(match){let gamepadIndexVar=match[0];onGamepadInputStr=onGamepadInputStr.replace("this.gamepadStates.get(",`this.gamepadStates.get(${gamepadIndexVar},`),eval(`this.patchedOnGamepadInput = function ${onGamepadInputStr}`),BxLogger.info("supportLocalCoOp","✅ Successfully patched local co-op support")}else BxLogger.error("supportLocalCoOp","❌ Unable to patch local co-op support");this.toggleLocalCoOp=(enable)=>{BxLogger.info("toggleLocalCoOp",enable?"Enabled":"Disabled"),this.onGamepadChanged=enable?this.patchedOnGamepadChanged:this.orgOnGamepadChanged,this.onGamepadInput=enable?this.patchedOnGamepadInput:this.orgOnGamepadInput;let gamepads=window.navigator.getGamepads();for(let gamepad of gamepads){if(!gamepad?.connected)continue;if(gamepad.id.includes("Better xCloud"))continue;gamepad._noToast=!0,window.dispatchEvent(new GamepadEvent("gamepaddisconnected",{gamepad})),window.dispatchEvent(new GamepadEvent("gamepadconnected",{gamepad}))}};window.BX_EXPOSED.toggleLocalCoOp=this.toggleLocalCoOp.bind(null);\n';
-var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&!window.location.pathname.includes("/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
+var remote_play_keep_alive_default = `try{if(JSON.parse(e).reason==="WarningForBeingIdle"&&window.location.pathname.includes("/consoles/launch/")){this.sendKeepAlive();return}}catch(ex){console.log(ex)}`;
 var vibration_adjust_default = `if(e?.gamepad?.connected){let gamepadSettings=window.BX_STREAM_SETTINGS.controllers[e.gamepad.id];if(gamepadSettings?.customization){let intensity=gamepadSettings.customization.vibrationIntensity;if(intensity<=0){e.repeat=0;return}else if(intensity<1)e.leftMotorPercent*=intensity,e.rightMotorPercent*=intensity,e.leftTriggerMotorPercent*=intensity,e.rightTriggerMotorPercent*=intensity}}`;
 var stream_hud_default = `var options=arguments[0];window.BX_EXPOSED.showStreamMenu=options.onShowStreamMenu;options.guideUI=null;window.BX_EXPOSED.reactUseEffect(()=>{window.BxEventBus.Stream.emit("ui.streamHud.rendered",{expanded:options.offset.x===0})});`;
 var create_portal_default = `var $dom=arguments[1];if($dom&&$dom instanceof HTMLElement&&$dom.id==="gamepass-dialog-root"){let showing=!1,$dialog=$dom.firstElementChild?.firstElementChild;if($dialog)showing=!$dialog.className.includes("pageChangeExit");window.BxEventBus.Script.emit(showing?"dialog.shown":"dialog.dismissed",{})}`;
@@ -5187,17 +5187,6 @@ remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFI
   if (!str.includes(text)) return !1;
   let newCode = "if (!!window.BX_REMOTE_PLAY_CONFIG) return;";
   return str.replace(text, text + newCode);
- },
- remotePlayRecentlyUsedTitleIds(str) {
-  let text = "(e.data.recentlyUsedTitleIds)){";
-  if (!str.includes(text)) return !1;
-  let newCode = "if (window.BX_REMOTE_PLAY_CONFIG) return;";
-  return str.replace(text, text + newCode);
- },
- remotePlayWebTitle(str) {
-  let text = "titleTemplate:void 0,title:", index = str.indexOf(text);
-  if (index < 0) return !1;
-  return str = PatcherUtils.insertAt(str, index + text.length, `!!window.BX_REMOTE_PLAY_CONFIG ? "${t("remote-play")} - Better xCloud" :`), str;
  },
  blockWebRtcStatsCollector(str) {
   let text = "this.shouldCollectStats=!0";
@@ -5718,9 +5707,7 @@ ${subsVar} = subs;
  ...getGlobalPref("xhome.enabled") ? [
   "remotePlayDirectConnectUrl",
   "remotePlayKeepAlive",
-  "remotePlayWebTitle",
   "remotePlayDisableAchievementToast",
-  "remotePlayRecentlyUsedTitleIds",
   STATES.userAgent.capabilities.touch && "patchUpdateInputConfigurationAsync"
  ] : [],
  ...BX_FLAGS.EnableXcloudLogging ? [
@@ -8161,7 +8148,8 @@ var FeatureGates = {
  EnableUpdateRequiredPage: !1,
  ShowForcedUpdateScreen: !1,
  EnableTakControlResizing: !0,
- EnableLazyLoadedHome: !1
+ EnableLazyLoadedHome: !1,
+ EnableRemotePlay: getGlobalPref("xhome.enabled")
 }, nativeMkbMode = getGlobalPref("nativeMkb.mode");
 if (nativeMkbMode !== "default") FeatureGates.EnableMouseAndKeyboard = nativeMkbMode === "on";
 var blockFeatures = getGlobalPref("block.features");
@@ -8528,7 +8516,7 @@ class RemotePlayManager {
   if (resolution) setGlobalPref("xhome.video.resolution", resolution, "ui");
   STATES.remotePlay.config = {
    serverId
-  }, window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config, localRedirect("/launch/fortnite/BT5P2X999VH2#remote-play");
+  }, window.BX_REMOTE_PLAY_CONFIG = STATES.remotePlay.config, localRedirect("/launch/fortnite/BT5P2X999VH2#remote-play"), setTimeout(() => localRedirect("/consoles/launch/" + serverId), 100);
  }
  togglePopup(force = null) {
   if (!this.isReady()) {
