@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better xCloud
 // @namespace    https://github.com/redphx
-// @version      6.4.4
+// @version      6.4.5-beta
 // @description  Improve Xbox Cloud Gaming (xCloud) experience
 // @author       redphx
 // @license      MIT
@@ -192,7 +192,7 @@ class UserAgent {
   });
  }
 }
-var SCRIPT_VERSION = "6.4.4", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
+var SCRIPT_VERSION = "6.4.5-beta", SCRIPT_VARIANT = "full", AppInterface = window.AppInterface;
 UserAgent.init();
 var userAgent = window.navigator.userAgent.toLowerCase(), isTv = userAgent.includes("smart-tv") || userAgent.includes("smarttv") || /\baft.*\b/.test(userAgent), isVr = window.navigator.userAgent.includes("VR") && window.navigator.userAgent.includes("OculusBrowser"), browserHasTouchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0, userAgentHasTouchSupport = !isTv && !isVr && browserHasTouchSupport, STATES = {
  supportedRegion: !0,
@@ -5133,11 +5133,6 @@ var LOG_TAG2 = "Patcher", PATCHES = {
   if (index < 0 || PatcherUtils.indexOf(str, '"AppInsightsCore', index, 200) < 0) return !1;
   return PatcherUtils.replaceWith(str, index, text, ".track=function(e){},!!function(");
  },
- disableTelemetry(str) {
-  let text = ".disableTelemetry=function(){return!1}";
-  if (!str.includes(text)) return !1;
-  return str.replace(text, ".disableTelemetry=function(){return!0}");
- },
  disableTelemetryProvider(str) {
   let text = "this.enableLightweightTelemetry=!";
   if (!str.includes(text)) return !1;
@@ -5165,10 +5160,10 @@ var LOG_TAG2 = "Patcher", PATCHES = {
   let layout = getGlobalPref("ui.layout") === "tv" ? "tv" : "default";
   return str.replace(text, `?"${layout}":"${layout}"`);
  },
- remotePlayDirectConnectUrl(str) {
-  let index = str.indexOf("/direct-connect");
-  if (index < 0) return !1;
-  return str.replace(str.substring(index - 9, index + 15), "https://www.xbox.com/play");
+ remotePlayPostStreamRedirectUrl(str) {
+  let text = ".RemotePlayRoot.getLink()):";
+  if (!str.includes(text)) return !1;
+  return str = str.replace(text, ".Home.getLink()):"), str;
  },
  remotePlayKeepAlive(str) {
   let text = "onServerDisconnectMessage(e){";
@@ -5212,14 +5207,14 @@ remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFI
   return customizationCode += renderString(controller_customization_default, { xCloudGamepadVar }), codeBlock = PatcherUtils.insertAt(codeBlock, backetIndex, customizationCode), str = str.substring(0, index) + codeBlock + str.substring(setTimeoutIndex), str;
  },
  enableXcloudLogger(str) {
-  let text = "this.telemetryProvider=e}log(e,t,r){";
-  if (!str.includes(text)) return !1;
+  let index = str.indexOf("this.telemetryProvider.trackErrorLike");
+  if (index > -1 && (index = PatcherUtils.lastIndexOf(str, "}log(", index, 1500)), index > -1 && (index = PatcherUtils.indexOf(str, "{", index, 30, !0)), index < 0) return !1;
   let newCode = `
 const [logTag, logLevel, logMessage] = Array.from(arguments);
 const logFunc = [console.debug, console.log, console.warn, console.error][logLevel];
 logFunc(logTag, '//', logMessage);
 `;
-  return str = str.replaceAll(text, text + newCode), str;
+  return str = PatcherUtils.insertAt(str, index, newCode), str;
  },
  enableConsoleLogging(str) {
   let text = "static isConsoleLoggingAllowed(){";
@@ -5548,11 +5543,6 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
   if (index >= 0 && (index = str.indexOf('addEventListener("touchstart"', index)), index >= 0 && (index = PatcherUtils.lastIndexOf(str, "return ", index, 50)), index < 0) return !1;
   return str = PatcherUtils.replaceWith(str, index, "return", "return () => {};"), str;
  },
- optimizeGameSlugGenerator(str) {
-  let text = "/[;,/?:@&=+_`~$%#^*()!^\\u2122\\xae\\xa9]/g";
-  if (!str.includes(text)) return !1;
-  return str = str.replace(text, "window.BX_EXPOSED.GameSlugRegexes[0]"), str = str.replace("/ {2,}/g", "window.BX_EXPOSED.GameSlugRegexes[1]"), str = str.replace("/ /g", "window.BX_EXPOSED.GameSlugRegexes[2]"), str;
- },
  modifyPreloadedState(str) {
   let text = "=window.__PRELOADED_STATE__;";
   if (!str.includes(text)) return !1;
@@ -5669,7 +5659,6 @@ ${subsVar} = subs;
  "broadcastPollingMode",
  getGlobalPref("ui.gameCard.waitTime.show") && "patchSetCurrentFocus",
  "patchGamepadPolling",
- "optimizeGameSlugGenerator",
  "modifyPreloadedState",
  "detectBrowserRouterReady",
  "exposeStreamSession",
@@ -5699,13 +5688,11 @@ ${subsVar} = subs;
  ] : [],
  ...getGlobalPref("block.tracking") ? [
   "disableAiTrack",
-  "disableTelemetry",
   "blockWebRtcStatsCollector",
   "disableIndexDbLogging",
   "disableTelemetryProvider"
  ] : [],
  ...getGlobalPref("xhome.enabled") ? [
-  "remotePlayDirectConnectUrl",
   "remotePlayKeepAlive",
   "remotePlayDisableAchievementToast",
   STATES.userAgent.capabilities.touch && "patchUpdateInputConfigurationAsync"
@@ -5748,6 +5735,7 @@ ${subsVar} = subs;
  "patchPollGamepads",
  getGlobalPref("stream.video.combineAudio") && "streamCombineSources",
  ...getGlobalPref("xhome.enabled") ? [
+  "remotePlayPostStreamRedirectUrl",
   "patchRemotePlayMkb",
   "remotePlayConnectMode"
  ] : [],

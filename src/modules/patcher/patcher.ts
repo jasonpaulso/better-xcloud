@@ -39,6 +39,7 @@ const PATCHES = {
     },
 
     // Set disableTelemetry() to true
+    /*
     disableTelemetry(str: string) {
         let text = '.disableTelemetry=function(){return!1}';
         if (!str.includes(text)) {
@@ -47,6 +48,7 @@ const PATCHES = {
 
         return str.replace(text, '.disableTelemetry=function(){return!0}');
     },
+    */
 
     disableTelemetryProvider(str: string) {
         let text = 'this.enableLightweightTelemetry=!';
@@ -91,14 +93,14 @@ const PATCHES = {
         return str.replace(text, `?"${layout}":"${layout}"`);
     },
 
-    // Replace "/direct-connect" with "/play"
-    remotePlayDirectConnectUrl(str: string) {
-        const index = str.indexOf('/direct-connect');
-        if (index < 0) {
+    remotePlayPostStreamRedirectUrl(str: string) {
+        let text = '.RemotePlayRoot.getLink()):';
+        if (!str.includes(text)) {
             return false;
         }
 
-        return str.replace(str.substring(index - 9, index + 15), 'https://www.xbox.com/play');
+        str = str.replace(text, '.Home.getLink()):');
+        return str;
     },
 
     remotePlayKeepAlive(str: string) {
@@ -202,8 +204,11 @@ remotePlayServerId: (window.BX_REMOTE_PLAY_CONFIG && window.BX_REMOTE_PLAY_CONFI
     },
 
     enableXcloudLogger(str: string) {
-        let text = 'this.telemetryProvider=e}log(e,t,r){';
-        if (!str.includes(text)) {
+        let index = str.indexOf('this.telemetryProvider.trackErrorLike');
+        index > -1 && (index = PatcherUtils.lastIndexOf(str, '}log(', index, 1500));
+        index > -1 && (index = PatcherUtils.indexOf(str, '{', index, 30, true));
+
+        if (index < 0) {
             return false;
         }
 
@@ -213,7 +218,7 @@ const logFunc = [console.debug, console.log, console.warn, console.error][logLev
 logFunc(logTag, '//', logMessage);
 `;
 
-        str = str.replaceAll(text, text + newCode);
+        str = PatcherUtils.insertAt(str, index, newCode);
         return str;
     },
 
@@ -909,20 +914,6 @@ if (this.baseStorageKey in window.BX_EXPOSED.overrideSettings) {
         return str;
     },
 
-    // Optimize Game slug generator by using cached RegEx
-    optimizeGameSlugGenerator(str: string) {
-        let text = '/[;,/?:@&=+_`~$%#^*()!^\\u2122\\xae\\xa9]/g';
-        if (!str.includes(text)) {
-            return false;
-        }
-
-        str = str.replace(text, 'window.BX_EXPOSED.GameSlugRegexes[0]');
-        str = str.replace('/ {2,}/g', 'window.BX_EXPOSED.GameSlugRegexes[1]');
-        str = str.replace('/ /g', 'window.BX_EXPOSED.GameSlugRegexes[2]');
-
-        return str;
-    },
-
     modifyPreloadedState(str: string) {
         let text = '=window.__PRELOADED_STATE__;';
         if (!str.includes(text)) {
@@ -1219,8 +1210,6 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     'patchGamepadPolling',
 
-    'optimizeGameSlugGenerator',
-
     'modifyPreloadedState',
 
     'detectBrowserRouterReady',
@@ -1269,7 +1258,7 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
 
     ...(getGlobalPref(GlobalPref.BLOCK_TRACKING) ? [
         'disableAiTrack',
-        'disableTelemetry',
+        // 'disableTelemetry',
 
         'blockWebRtcStatsCollector',
         'disableIndexDbLogging',
@@ -1278,7 +1267,6 @@ let PATCH_ORDERS = PatcherUtils.filterPatches([
     ] : []) as PatchArray,
 
     ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
-        'remotePlayDirectConnectUrl',
         'remotePlayKeepAlive',
         'remotePlayDisableAchievementToast',
         STATES.userAgent.capabilities.touch && 'patchUpdateInputConfigurationAsync',
@@ -1348,6 +1336,7 @@ let STREAM_PAGE_PATCH_ORDERS = PatcherUtils.filterPatches([
     getGlobalPref(GlobalPref.STREAM_COMBINE_SOURCES) && 'streamCombineSources',
 
     ...(getGlobalPref(GlobalPref.REMOTE_PLAY_ENABLED) ? [
+        'remotePlayPostStreamRedirectUrl',
         'patchRemotePlayMkb',
         'remotePlayConnectMode',
     ] : []) as PatchArray,
