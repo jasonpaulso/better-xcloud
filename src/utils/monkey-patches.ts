@@ -55,9 +55,9 @@ export function patchVideoApi() {
             return nativePlay.apply(this);
         }
 
-        const $parent = this.parentElement!!;
+        const $parent = this.parentElement;
         // Video tag is stream player
-        if (!this.src && $parent.dataset.testid === 'media-container') {
+        if (!this.src && $parent?.dataset.testid === 'media-container') {
             this.addEventListener('loadedmetadata', showFunc, { once: true });
         }
 

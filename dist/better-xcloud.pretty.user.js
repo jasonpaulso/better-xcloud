@@ -9556,7 +9556,7 @@ function patchVideoApi() {
    return nativePlay.apply(this);
   }
   let $parent = this.parentElement;
-  if (!this.src && $parent.dataset.testid === "media-container") this.addEventListener("loadedmetadata", showFunc, { once: !0 });
+  if (!this.src && $parent?.dataset.testid === "media-container") this.addEventListener("loadedmetadata", showFunc, { once: !0 });
   return nativePlay.apply(this);
  };
 }
