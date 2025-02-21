@@ -4981,7 +4981,7 @@ class TouchController {
   }
   if (!layoutId) layoutId = TouchController.#customLayouts[xboxTitleId]?.default_layout || null;
   if (!layoutId) {
-   BxLogger.error(LOG_TAG, "Invalid layoutId, show default controller"), TouchController.#enabled && TouchController.#showDefault();
+   BxLogger.warning(LOG_TAG, "Invalid layoutId, show default controller"), TouchController.#enabled && TouchController.#showDefault();
    return;
   }
   let layoutChanged = TouchController.#currentLayoutId !== layoutId;
@@ -8573,7 +8573,7 @@ class XhomeInterceptor {
   if (hasTouchSupport) TouchController.disable(), BxEvent.dispatch(window, BxEvent.CUSTOM_TOUCH_LAYOUTS_LOADED, {
     data: null
    });
-  else TouchController.enable(), TouchController.requestCustomLayouts(xboxTitleId);
+  else TouchController.enable(), TouchController.requestCustomLayouts();
   return response.json = () => Promise.resolve(obj), response.text = () => Promise.resolve(JSON.stringify(obj)), response;
  }
  static async handleTitles(request) {

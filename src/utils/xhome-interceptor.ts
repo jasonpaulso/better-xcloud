@@ -95,7 +95,7 @@ export class XhomeInterceptor {
             });
         } else {
             TouchController.enable();
-            TouchController.requestCustomLayouts(xboxTitleId);
+            TouchController.requestCustomLayouts();
         }
 
         response.json = () => Promise.resolve(obj);
