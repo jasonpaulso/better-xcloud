@@ -1,11 +1,12 @@
+import { BxEvent } from '@utils/bx-event.ts'
+import { BxIcon } from '@utils/bx-icon'
 import { STATES } from '@utils/global.ts'
 import { createSvgIcon } from '@utils/html.ts'
-import { BxIcon } from '@utils/bx-icon'
-import { BxEvent } from '@utils/bx-event.ts'
 import { t } from '@utils/translation.ts'
+import { FO76_AUTOMATION_EVENTS } from '../game-automation/game-automation-handler.ts'
+import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
 import { StreamBadges } from './stream-badges.ts'
 import { StreamStats } from './stream-stats.ts'
-import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
 
 export class StreamUiHandler {
   private static $btnStreamSettings: HTMLElement | null | undefined
@@ -13,6 +14,7 @@ export class StreamUiHandler {
   private static $btnRefresh: HTMLElement | null | undefined
   private static $btnHome: HTMLElement | null | undefined
   private static observer: MutationObserver | undefined
+  private static $btnAway: HTMLElement | null | undefined
 
   private static cloneStreamHudButton(
     $btnOrg: HTMLElement,
@@ -42,10 +44,10 @@ export class StreamUiHandler {
           return
         }
 
-                const $streamHud = (e.target as HTMLElement).closest<HTMLElement>('#StreamHud');
-                if (!$streamHud) {
-                    return;
-                }
+        const $streamHud = (e.target as HTMLElement).closest<HTMLElement>('#StreamHud')
+        if (!$streamHud) {
+          return
+        }
 
         const left = $streamHud.style.left
         if (left === '0px') {
@@ -61,16 +63,16 @@ export class StreamUiHandler {
       $container.addEventListener('transitionend', onTransitionEnd)
     }
 
-        const $button = $container.querySelector<HTMLButtonElement>('button');
-        if (!$button) {
-            return null;
-        }
-        $button.setAttribute('title', label);
+    const $button = $container.querySelector<HTMLButtonElement>('button')
+    if (!$button) {
+      return null
+    }
+    $button.setAttribute('title', label)
 
-        const $orgSvg = $button.querySelector<SVGElement>('svg');
-        if (!$orgSvg) {
-            return null;
-        }
+    const $orgSvg = $button.querySelector<SVGElement>('svg')
+    if (!$orgSvg) {
+      return null
+    }
 
     const $svg = createSvgIcon(svgIcon)
     $svg.style.fill = 'none'
@@ -109,11 +111,13 @@ export class StreamUiHandler {
     return $btn
   }
 
-    private static async handleStreamMenu() {
-        const $btnCloseHud = document.querySelector<HTMLElement>('button[class*=StreamMenu-module__backButton]');
-        if (!$btnCloseHud) {
-            return;
-        }
+  private static async handleStreamMenu() {
+    const $btnCloseHud = document.querySelector<HTMLElement>(
+      'button[class*=StreamMenu-module__backButton]'
+    )
+    if (!$btnCloseHud) {
+      return
+    }
 
     let $btnRefresh = StreamUiHandler.$btnRefresh
     let $btnHome = StreamUiHandler.$btnHome
@@ -142,10 +146,27 @@ export class StreamUiHandler {
       )
     }
 
+    let $btnAway = StreamUiHandler.$btnAway
+
+    // Create Refresh button from the Close button
+    if (typeof $btnAway === 'undefined') {
+      $btnRefresh = StreamUiHandler.cloneCloseButton(
+        $btnCloseHud,
+        BxIcon.VIRTUAL_CONTROLLER,
+        'bx-stream-away-button',
+        (() => {
+          BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+            detail: { name: 'pivot', toggle: true },
+          })
+        }).bind(this)
+      )
+    }
+
     // Add to website
-    if ($btnRefresh && $btnHome) {
+    if ($btnRefresh && $btnHome && $btnAway) {
       $btnCloseHud.insertAdjacentElement('afterend', $btnRefresh)
       $btnRefresh.insertAdjacentElement('afterend', $btnHome)
+      $btnHome.insertAdjacentElement('afterend', $btnAway)
     }
 
     // Render stream badges
@@ -155,23 +176,25 @@ export class StreamUiHandler {
     $menu?.appendChild(await StreamBadges.getInstance().render())
   }
 
-    private static handleSystemMenu($streamHud: HTMLElement) {
-        // Get the last button
-        const $orgButton = $streamHud.querySelector<HTMLElement>('div[class^=HUDButton]');
-        if (!$orgButton) {
-            return;
-        }
+  private static handleSystemMenu($streamHud: HTMLElement) {
+    // Get the last button
+    const $orgButton = $streamHud.querySelector<HTMLElement>('div[class^=HUDButton]')
+    if (!$orgButton) {
+      return
+    }
 
-        const hideGripHandle = () => {
-            // Grip handle
-            const $gripHandle = document.querySelector<HTMLElement>('#StreamHud button[class^=GripHandle]');
-            if ($gripHandle && $gripHandle.ariaExpanded === 'true') {
-                $gripHandle.dispatchEvent(new PointerEvent('pointerdown'));
-                $gripHandle.click();
-                $gripHandle.dispatchEvent(new PointerEvent('pointerdown'));
-                $gripHandle.click();
-            }
-        }
+    const hideGripHandle = () => {
+      // Grip handle
+      const $gripHandle = document.querySelector<HTMLElement>(
+        '#StreamHud button[class^=GripHandle]'
+      )
+      if ($gripHandle && $gripHandle.ariaExpanded === 'true') {
+        $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
+        $gripHandle.click()
+        $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
+        $gripHandle.click()
+      }
+    }
 
     // Create Stream Settings button
     let $btnStreamSettings = StreamUiHandler.$btnStreamSettings
@@ -252,12 +275,12 @@ export class StreamUiHandler {
       return
     }
 
-        const observer = new MutationObserver(mutationList => {
-            let item: MutationRecord;
-            for (item of mutationList) {
-                if (item.type !== 'childList') {
-                    continue;
-                }
+    const observer = new MutationObserver((mutationList) => {
+      let item: MutationRecord
+      for (item of mutationList) {
+        if (item.type !== 'childList') {
+          continue
+        }
 
         item.addedNodes.forEach(async ($node) => {
           if (!$node || $node.nodeType !== Node.ELEMENT_NODE) {
@@ -293,13 +316,13 @@ export class StreamUiHandler {
             return
           }
 
-                    // Handle System Menu bar
-                    StreamUiHandler.handleSystemMenu($elm);
-                });
-            };
-        });
+          // Handle System Menu bar
+          StreamUiHandler.handleSystemMenu($elm)
+        })
+      }
+    })
 
-        observer.observe($screen, {subtree: true, childList: true});
-        StreamUiHandler.observer = observer;
-    }
+    observer.observe($screen, { subtree: true, childList: true })
+    StreamUiHandler.observer = observer
+  }
 }
