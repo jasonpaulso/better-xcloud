@@ -42,6 +42,7 @@ const enum ShortcutAction {
   TOGGLE_AWAY_MODE_PIVOT = 'toggle-away-mode-pivot',
   TOGGLE_AWAY_MODE_AWAY = 'toggle-away-mode-away',
   TOGGLE_AWAY_MODE_VATS = 'toggle-away-mode-vats',
+  TOGGLE_AWAY_MODE_INTERACT = 'toggle-away-mode-interact',
   INCREMENT_AWAY_MODE_INTERVAL = 'increment-away-mode-interval',
   DECREMENT_AWAY_MODE_INTERVAL = 'decrement-away-mode-interval',
 }
@@ -181,6 +182,11 @@ export class ControllerShortcut {
           detail: { decrement: true, source: 'controller' },
         })
         break
+      case ShortcutAction.TOGGLE_AWAY_MODE_INTERACT:
+        BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+          detail: { name: 'interact', toggle: true },
+        })
+        break  
 
       case ShortcutAction.DEVICE_BRIGHTNESS_INC:
       case ShortcutAction.DEVICE_BRIGHTNESS_DEC:
@@ -327,6 +333,7 @@ export class ControllerShortcut {
         [ShortcutAction.TOGGLE_AWAY_MODE_VATS]: ['Away Mode — Vats', t('toggle')],
         [ShortcutAction.INCREMENT_AWAY_MODE_INTERVAL]: ['Away Mode - Interval', t('increase')],
         [ShortcutAction.DECREMENT_AWAY_MODE_INTERVAL]: ['Away Mode - Interval', t('decrease')],
+        [ShortcutAction.TOGGLE_AWAY_MODE_INTERACT]: ['Away Mode — Interact', t('toggle')],
       },
 
       [t('device')]: AppInterface && {

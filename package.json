@@ -22,5 +22,8 @@
   },
   "peerDependencies": {
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "caniuse-lite": "^1.0.30001700"
   }
 }
