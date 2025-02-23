@@ -146,27 +146,10 @@ export class StreamUiHandler {
       )
     }
 
-    let $btnAway = StreamUiHandler.$btnAway
-
-    // Create Refresh button from the Close button
-    if (typeof $btnAway === 'undefined') {
-      $btnRefresh = StreamUiHandler.cloneCloseButton(
-        $btnCloseHud,
-        BxIcon.VIRTUAL_CONTROLLER,
-        'bx-stream-away-button',
-        (() => {
-          BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
-            detail: { name: 'pivot', toggle: true },
-          })
-        }).bind(this)
-      )
-    }
-
     // Add to website
-    if ($btnRefresh && $btnHome && $btnAway) {
+    if ($btnRefresh && $btnHome) {
       $btnCloseHud.insertAdjacentElement('afterend', $btnRefresh)
       $btnRefresh.insertAdjacentElement('afterend', $btnHome)
-      $btnHome.insertAdjacentElement('afterend', $btnAway)
     }
 
     // Render stream badges
@@ -215,6 +198,27 @@ export class StreamUiHandler {
       StreamUiHandler.$btnStreamSettings = $btnStreamSettings
     }
 
+    let $btnAway = StreamUiHandler.$btnAway
+
+    // Create Refresh button from the Close button
+    if (typeof $btnAway === 'undefined') {
+      $btnAway = StreamUiHandler.cloneStreamHudButton(
+        $orgButton,
+        'Away Mode — Pivot',
+        BxIcon.VIRTUAL_CONTROLLER
+      )
+
+      $btnAway?.addEventListener('click', (e) => {
+        hideGripHandle()
+        e.preventDefault()
+
+        BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
+          detail: { name: 'pivot', toggle: true },
+        })
+      })
+      StreamUiHandler.$btnAway = $btnAway
+    }
+
     // Create Stream Stats button
     const streamStats = StreamStats.getInstance()
     let $btnStreamStats = StreamUiHandler.$btnStreamStats
@@ -240,13 +244,14 @@ export class StreamUiHandler {
 
     const $btnParent = $orgButton.parentElement!
 
-    if ($btnStreamSettings && $btnStreamStats) {
+    if ($btnStreamSettings && $btnStreamStats && $btnAway) {
       const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
       $btnStreamStats.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
 
       // Insert buttons after Stream Settings button
       $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild)
       $btnParent.insertBefore($btnStreamSettings, $btnStreamStats)
+      $btnParent.insertBefore($btnAway, $btnParent.lastElementChild)
     }
 
     // Move the Dots button to the beginning
