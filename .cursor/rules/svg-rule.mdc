@@ -1,0 +1,39 @@
+---
+description: SVG Rule
+globs: *.svg
+---
+When reviewing SVG files in this workspace:
+
+1. Use single quotes (') instead of double quotes (")
+2. Include these attributes in the root SVG element:
+   - xmlns='http://www.w3.org/2000/svg'
+   - fill='none'
+   - stroke='#fff'
+   - fill-rule='evenodd'
+   - stroke-linecap='round'
+   - stroke-linejoin='round'
+   - stroke-width='1' or '2' (preserve original width)
+   - Preserve original width/height/viewBox attributes
+3. Remove redundant stroke attributes from individual paths
+4. Keep path data unchanged, but convert any quotes within to single quotes
+
+Example transformation:
+Before:
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+
+  <path stroke="#fff" stroke-width="2" d="M10 10L20 20"/>
+
+</svg>
+```
+
+After:
+
+```svg
+<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' fill='none' stroke='#fff' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'>
+
+  <path d='M10 10L20 20'/>
+
+</svg>
+
+```

@@ -39,6 +39,14 @@ import iconDownload from "@assets/svg/download.svg" with { type: "text" };
 import iconSpeakerHigh from "@assets/svg/speaker-high.svg" with { type: "text" };
 import iconUpload from "@assets/svg/upload.svg" with { type: "text" };
 
+// Heart Pulse
+import iconHeartPulse from "@assets/svg/heart-pulse.svg" with { type: "text" };
+
+// Suitcase
+import iconSuitcase from "@assets/svg/suitcase.svg" with { type: "text" };
+
+// Pivot
+import iconPivot from "@assets/svg/pivot-new.svg" with { type: "text" };
 
 export const BxIcon = {
     BETTER_XCLOUD: iconBetterXcloud,
@@ -62,9 +70,10 @@ export const BxIcon = {
     QUESTION: iconQuestion,
     REFRESH: iconRefresh,
     VIRTUAL_CONTROLLER: iconVirtualController,
-
+    HEART_PULSE: iconHeartPulse,
+    SUITCASE: iconSuitcase,
     REMOTE_PLAY: iconRemotePlay,
-
+    PIVOT: iconPivot,
     // Game Bar
     CARET_LEFT: iconCaretLeft,
     CARET_RIGHT: iconCaretRight,

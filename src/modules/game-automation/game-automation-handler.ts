@@ -1,9 +1,10 @@
 import { BxLogger } from "@/utils/bx-logger";
-import { Toast } from "@/utils/toast";
+import { Toast, CountdownToast } from "@/utils/toast";
 import { EmulatedMkbHandler } from "../mkb/mkb-handler";
 import { GamepadKey } from "@/enums/mkb";
 import { BxEvent } from "@/utils/bx-event";
 import { SoundShortcut } from "../shortcuts/shortcut-sound";
+import { BxIcon } from "@/utils/bx-icon";
 
 export enum FO76AutomationModes {
   HEAL = "heal",
@@ -53,6 +54,15 @@ interface LoopConfig {
  * @description Handles the game automation functionality
  */
 export class FO76AutomationHandler {
+  // Add a map to store active countdowns and their intervals
+  private activeCountdowns: Map<string, {
+    element: HTMLElement,
+    intervalId: number
+  }> = new Map();
+  
+  // Add a container element for the countdown toast
+  private countdownContainer: HTMLElement;
+  
   private _enabled: boolean = false;
   private mkbHandler: EmulatedMkbHandler;
   private _windowFocused: boolean = true;
@@ -68,12 +78,26 @@ export class FO76AutomationHandler {
   private loopManager: LoopManager;
   private observers: Set<FO76AutomationStateObserver> = new Set();
 
+  private currentModes: LoopConfig[] = [];
+
   private constructor() {
     this.mkbHandler = EmulatedMkbHandler.getInstance();
     this.pressButton = this.mkbHandler.pressButton.bind(this.mkbHandler);
     this.onPointerLockExited = this.mkbHandler.onPointerLockExited.bind(this);
     this.buttonPressHandler = new ButtonPressHandler(this.pressButton);
     this.loopManager = new LoopManager();
+    
+    // Initialize the countdown container
+    this.countdownContainer = document.createElement("div");
+    this.countdownContainer.style.display = "flex";
+    this.countdownContainer.style.flexDirection = "row";
+    this.countdownContainer.style.gap = "8px";
+  }
+  
+  // Create or update the countdown container in the toast
+  private updateCountdownToast() {
+    // Always show the toast, even if no countdowns are active
+    CountdownToast.show(this.countdownContainer);
   }
 
   static getInstance() {
@@ -126,6 +150,9 @@ export class FO76AutomationHandler {
     this.initializeDefaultConfigs();
     this.afkObserver.startObserving();
     this.idleHandler.init();
+    
+    // Show the persistent toast with all available modes
+    this.showAllModes();
   };
 
   // Getter and Setter for enabled
@@ -160,6 +187,7 @@ export class FO76AutomationHandler {
         name: FO76AutomationModes.HEAL,
         actionInterval: this.DEFAULT_ACTION_INTERVAL,
         pauseDuration: this.DEFAULT_PAUSE_DURATION,
+        icon: BxIcon.HEART_PULSE,
         action: async () => {
           this.pressButton(GamepadKey.RIGHT, true);
           await this.delay(500);
@@ -170,6 +198,7 @@ export class FO76AutomationHandler {
         name: FO76AutomationModes.PIVOT,
         actionInterval: this.PIVOT_ACTION_INTERVAL,
         pauseDuration: this.PIVOT_PAUSE_DURATION,
+        icon: BxIcon.PIVOT,
         action: async () => {
           await this.pressButtonWithRandomDelay(
             GamepadKey.RS_RIGHT,
@@ -186,6 +215,7 @@ export class FO76AutomationHandler {
         name: FO76AutomationModes.AUTOMATION,
         actionInterval: this.DEFAULT_ACTION_INTERVAL,
         pauseDuration: this.PIVOT_PAUSE_DURATION,
+        icon: undefined,
         action: async () => {
           this.pressButton(GamepadKey.L3, true);
           await this.delay(500);
@@ -196,6 +226,7 @@ export class FO76AutomationHandler {
         name: FO76AutomationModes.VATS,
         actionInterval: this.DEFAULT_ACTION_INTERVAL,
         pauseDuration: this.DEFAULT_PAUSE_DURATION,
+        icon: undefined,
         action: async () => {
           this.pressButton(GamepadKey.LB, true);
           await this.delay(500);
@@ -209,6 +240,7 @@ export class FO76AutomationHandler {
         name: FO76AutomationModes.INTERACT,
         actionInterval: this.INTERACT_ACTION_INTERVAL,
         pauseDuration: this.DEFAULT_PAUSE_DURATION,
+        icon: undefined,
         action: async () => {
           this.pressButton(GamepadKey.A, true);
           await this.delay(50);
@@ -246,6 +278,7 @@ export class FO76AutomationHandler {
       instant: true,
     });
     this.setButtonLoop(mode, true);
+    this.showAllModes(); // Refresh the display
   }
 
   private stopButtonLoop(mode: string): void {
@@ -253,6 +286,7 @@ export class FO76AutomationHandler {
       instant: true,
     });
     this.setButtonLoop(mode, false);
+    this.showAllModes(); // Refresh the display
   }
 
   /**
@@ -263,14 +297,32 @@ export class FO76AutomationHandler {
   private setButtonLoop(mode: string, shouldStart: boolean): void {
     const config = this.loopConfigs.get(mode);
     if (!config) return;
-
+    
     if (shouldStart) {
       this.loopManager.startLoop(config, mode, this);
+      this.currentModes.push(config);
     } else {
       this.loopManager.stopLoop(config, mode);
+      this.currentModes = this.currentModes.filter((m) => m.name !== mode);
+      // Stop the countdown when stopping a mode
+      this.stopCountdown(mode);
     }
     this.notifyObservers();
   }
+
+  getSelfMode(mode: FO76AutomationModes): boolean {
+    console.log("FO76AutomationHandler", "getSelfMode", mode, this.currentModes);
+    return this.currentModes.some((m) => m.name === mode);
+  }
+
+  private FO76_AUTOMATION_MODE_ICONS: Record<FO76AutomationModes, typeof BxIcon | undefined> = {
+    [FO76AutomationModes.HEAL]: BxIcon.HEART_PULSE,
+    [FO76AutomationModes.PIVOT]: BxIcon.PIVOT,
+    [FO76AutomationModes.AUTOMATION]: BxIcon.SUITCASE,
+    [FO76AutomationModes.VATS]: undefined,
+    [FO76AutomationModes.INTERACT]: undefined,
+  }
+  
 
   /**
    * Starts a countdown for the next loop iteration.
@@ -280,28 +332,234 @@ export class FO76AutomationHandler {
     const config = this.loopConfigs.get(mode);
     if (!config) return;
 
+    // If there's already a countdown for this mode, clear it
+    this.stopCountdown(mode);
+    
     let countdown = (config.actionInterval + config.pauseDuration) / 1000;
-    const logIntervalId = setInterval((): void => {
+    
+    // Create the countdown element for this mode
+    const countdownElement = document.createElement("div");
+    countdownElement.style.display = "flex";
+    countdownElement.style.alignItems = "center";
+    countdownElement.style.gap = "10px";
+    countdownElement.style.padding = "4px";
+    countdownElement.style.borderRadius = "4px";
+    countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+    // Add hover effects for interactive elements
+    countdownElement.style.cursor = "pointer";
+    countdownElement.style.transition = "background-color 0.2s ease";
+    
+    // Add active state effect
+    if (config.isRunning) {
+      countdownElement.style.borderLeft = "3px solid #4CAF50"; // Green indicator for active
+    }
+    
+    // Hover effect
+    countdownElement.addEventListener("mouseenter", () => {
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    });
+    
+    countdownElement.addEventListener("mouseleave", () => {
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+    });
+    
+    // Click to toggle mode
+    countdownElement.addEventListener("click", () => {
+      // Toggle this specific mode
+      this.stopButtonLoop(mode);
+      if (!config.isRunning) {
+        this.startButtonLoop(mode);
+      }
+      
+      // For visual feedback on click
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+      setTimeout(() => {
+        if (countdownElement.parentNode) { // Check if still in DOM
+          countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+        }
+      }, 200);
+    });
+    
+    const toastIcon = document.createElement("div");
+    switch (mode) {
+      case FO76AutomationModes.PIVOT:
+        toastIcon.innerHTML = BxIcon.PIVOT;
+        break;
+      case FO76AutomationModes.HEAL:
+        toastIcon.innerHTML = BxIcon.HEART_PULSE;
+        break;
+      case FO76AutomationModes.AUTOMATION:
+        toastIcon.innerHTML = BxIcon.SUITCASE;
+        break;
+        
+      default:
+        toastIcon.innerHTML = "";
+    }
+    
+    // Add mode name
+    const modeLabel = document.createElement("div");
+    modeLabel.style.fontWeight = "bold";
+    modeLabel.textContent = mode;
+    
+    toastIcon.style.display = "inline-block";
+    toastIcon.classList.add("bx-toast-icon");
+    
+    // Different animations based on icon type
+    if (mode === FO76AutomationModes.HEAL) {
+      // Heart beat animation
+      let scale = 1;
+      let growing = true;
+      const MIN_SCALE = 1;
+      const MAX_SCALE = 1.4;
+      const SCALE_STEP = 0.04;
+      
+      const pulseHeart = () => {
+        if (growing) {
+          scale += SCALE_STEP;
+          if (scale >= MAX_SCALE) {
+            growing = false;
+          }
+        } else {
+          scale -= SCALE_STEP;
+          if (scale <= MIN_SCALE) {
+            growing = true;
+          }
+        }
+        
+        toastIcon.style.transform = `scale(${scale})`;
+        if (config.isRunning) {
+          requestAnimationFrame(pulseHeart);
+        } else {
+          // Reset to normal on stop
+          toastIcon.style.transform = 'scale(1)';
+        }
+      };
+      
+      // Start the heart beat animation
+      requestAnimationFrame(pulseHeart);
+      
+    } else if (mode === FO76AutomationModes.AUTOMATION) {
+      // Suitcase swing animation
+      let angle = 0;
+      let swingRight = true;
+      const MAX_ANGLE = 20;
+      const ANGLE_STEP = 1;
+      
+      const swingSuitcase = () => {
+        if (swingRight) {
+          angle += ANGLE_STEP;
+          if (angle >= MAX_ANGLE) {
+            swingRight = false;
+          }
+        } else {
+          angle -= ANGLE_STEP;
+          if (angle <= -MAX_ANGLE) {
+            swingRight = true;
+          }
+        }
+        
+        toastIcon.style.transform = `rotate(${angle}deg)`;
+        if (config.isRunning) {
+          requestAnimationFrame(swingSuitcase);
+        } else {
+          // Reset to normal on stop
+          toastIcon.style.transform = 'rotate(0deg)';
+        }
+      };
+      
+      // Start the swing animation
+      requestAnimationFrame(swingSuitcase);
+      
+    } else {
+      // Default rotate animation for other icons
+      let rotation = 0;
+      const rotateIcon = () => {
+        rotation = (rotation + 2) % 360;
+        toastIcon.style.transform = `rotate(${rotation}deg)`;
+        if (config.isRunning) {
+          requestAnimationFrame(rotateIcon);
+        } else {
+          // Reset on stop
+          toastIcon.style.transform = 'rotate(0deg)';
+        }
+      };
+      
+      // Start the rotation
+      requestAnimationFrame(rotateIcon);
+    }
+    
+    const toastText = document.createElement("div");
+    toastText.style.display = "inline-block";
+    toastText.style.marginLeft = "auto";
+    toastText.textContent = `${countdown}s`;
+    
+    countdownElement.appendChild(toastIcon);
+    countdownElement.appendChild(modeLabel);
+    countdownElement.appendChild(toastText);
+    
+    // Add tooltip to explain functionality
+    countdownElement.title = `Click to toggle ${mode} mode`;
+    
+    // Add this countdown to the container
+    this.countdownContainer.appendChild(countdownElement);
+    
+    // Start the interval for this countdown
+    const intervalId = window.setInterval((): void => {
       if (config.isRunning) {
         console.log(
           "FO76AutomationHandler",
           `Loop ${mode} will run again in ${countdown} seconds`
         );
-        Toast.show(
-          "Game FO76Automation",
-          `${mode} will run again in ${countdown} seconds`,
-          {
-            instant: true,
-          }
-        );
+        
+        // Only update the countdown text, not the entire toast
         countdown--;
         if (countdown < 0) {
           countdown = (config.actionInterval + config.pauseDuration) / 1000;
         }
+        
+        // Update just the text content of the countdown element
+        toastText.textContent = `${countdown}s`;
+        
+        // Ensure the active indicator is present
+        countdownElement.style.borderLeft = "3px solid #4CAF50";
+        
       } else {
-        clearInterval(logIntervalId);
+        // Stop this specific countdown
+        this.stopCountdown(mode);
       }
     }, 1000);
+    
+    // Store the active countdown information
+    this.activeCountdowns.set(mode, {
+      element: countdownElement,
+      intervalId: intervalId
+    });
+    
+    // Update the countdown toast
+    this.updateCountdownToast();
+  }
+  
+  /**
+   * Stops the countdown for a specific mode
+   * @param mode - The name of the automation mode
+   */
+  private stopCountdown(mode: string): void {
+    const countdown = this.activeCountdowns.get(mode);
+    if (!countdown) return;
+    
+    // Clear the interval
+    clearInterval(countdown.intervalId);
+    
+    // Remove the element from the container
+    if (countdown.element && countdown.element.parentNode) {
+      countdown.element.parentNode.removeChild(countdown.element);
+    }
+    
+    // Remove from active countdowns
+    this.activeCountdowns.delete(mode);
+    
+    // Update the countdown toast
+    this.updateCountdownToast();
   }
 
   toggle = () => {
@@ -371,6 +629,11 @@ export class FO76AutomationHandler {
     this.enabled = false;
     this.stopAllLoops();
     this.mkbHandler.destroy();
+    
+    // Clean up all countdowns
+    for (const [mode] of this.activeCountdowns) {
+      this.stopCountdown(mode);
+    }
   };
 
   private stopAllLoops() {
@@ -610,9 +873,10 @@ export class FO76AutomationHandler {
     }
   };
 
-  toggleFO76Automation = async (
-    _toggle: boolean
-  ): Promise<{ status: string; automationActive: boolean }> => {
+  toggleFO76Automation = async (): Promise<{
+    status: string;
+    automationActive: boolean;
+  }> => {
     try {
       this.toggle();
       return {
@@ -716,6 +980,207 @@ export class FO76AutomationHandler {
       automationActive: this.enabled,
     };
   };
+
+  /**
+   * Shows all available automation modes in the toast
+   */
+  private showAllModes() {
+    // Clear existing content
+    this.countdownContainer.innerHTML = '';
+    
+    // Create elements for all available modes
+    for (const [mode, config] of this.loopConfigs) {
+      this.createModeElement(mode, config);
+    }
+    
+    // Show the toast
+    this.updateCountdownToast();
+  }
+
+  /**
+   * Creates a UI element for a mode
+   */
+  private createModeElement(mode: string, config: LoopConfig) {
+    const countdownElement = document.createElement("div");
+    countdownElement.style.display = "flex";
+    countdownElement.style.alignItems = "center";
+    countdownElement.style.gap = "10px";
+    countdownElement.style.padding = "4px";
+    countdownElement.style.borderRadius = "4px";
+    countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+    countdownElement.style.cursor = "pointer";
+    countdownElement.style.transition = "all 0.2s ease";
+    countdownElement.style.opacity = config.isRunning ? "1" : "0.7";
+    countdownElement.style.minWidth = "120px";
+    
+    // Add active state effect
+    if (config.isRunning) {
+      countdownElement.style.borderLeft = "3px solid #4CAF50";
+    } else {
+      countdownElement.style.borderLeft = "3px solid transparent";
+    }
+    
+    // Hover effect
+    countdownElement.addEventListener("mouseenter", () => {
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+      countdownElement.style.opacity = "1";
+    });
+    
+    countdownElement.addEventListener("mouseleave", () => {
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+      if (!config.isRunning) {
+        countdownElement.style.opacity = "0.7";
+      }
+    });
+    
+    // Click to toggle mode
+    countdownElement.addEventListener("click", () => {
+      if (config.isRunning) {
+        this.stopButtonLoop(mode);
+      } else {
+        this.startButtonLoop(mode);
+      }
+      
+      // For visual feedback on click
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+      setTimeout(() => {
+        if (countdownElement.parentNode) {
+          countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+        }
+      }, 200);
+    });
+    
+    const toastIcon = document.createElement("div");
+    switch (mode) {
+      case FO76AutomationModes.PIVOT:
+        toastIcon.innerHTML = BxIcon.PIVOT;
+        break;
+      case FO76AutomationModes.HEAL:
+        toastIcon.innerHTML = BxIcon.HEART_PULSE;
+        break;
+      case FO76AutomationModes.AUTOMATION:
+        toastIcon.innerHTML = BxIcon.SUITCASE;
+        break;
+      default:
+        toastIcon.innerHTML = "";
+    }
+    
+    toastIcon.style.display = "inline-block";
+    toastIcon.classList.add("bx-toast-icon");
+    
+    // Add mode name
+    const modeLabel = document.createElement("div");
+    modeLabel.style.fontWeight = "bold";
+    modeLabel.textContent = mode;
+    
+    const toastText = document.createElement("div");
+    toastText.style.display = "inline-block";
+    toastText.style.marginLeft = "auto";
+    
+    if (config.isRunning) {
+      let countdown = (config.actionInterval + config.pauseDuration) / 1000;
+      toastText.textContent = `${countdown}s`;
+      
+      // Start the countdown interval
+      const intervalId = window.setInterval(() => {
+        if (config.isRunning) {
+          countdown--;
+          if (countdown < 0) {
+            countdown = (config.actionInterval + config.pauseDuration) / 1000;
+          }
+          toastText.textContent = `${countdown}s`;
+        } else {
+          clearInterval(intervalId);
+          toastText.textContent = "OFF";
+        }
+      }, 1000);
+      
+      // Store the interval ID
+      this.activeCountdowns.set(mode, {
+        element: countdownElement,
+        intervalId: intervalId
+      });
+    } else {
+      toastText.textContent = "OFF";
+    }
+    
+    // Apply animations based on mode type
+    if (config.isRunning) {
+      if (mode === FO76AutomationModes.HEAL) {
+        this.applyHeartbeatAnimation(toastIcon);
+      } else if (mode === FO76AutomationModes.AUTOMATION) {
+        this.applySwingAnimation(toastIcon);
+      } else {
+        this.applyRotateAnimation(toastIcon);
+      }
+    }
+    
+    countdownElement.appendChild(toastIcon);
+    countdownElement.appendChild(modeLabel);
+    countdownElement.appendChild(toastText);
+    
+    // Add tooltip
+    countdownElement.title = `Click to ${config.isRunning ? 'stop' : 'start'} ${mode} mode`;
+    
+    // Add to container
+    this.countdownContainer.appendChild(countdownElement);
+  }
+
+  private applyHeartbeatAnimation(element: HTMLElement) {
+    let scale = 1;
+    let growing = true;
+    const MIN_SCALE = 1;
+    const MAX_SCALE = 1.4;
+    const SCALE_STEP = 0.04;
+    
+    const pulseHeart = () => {
+      if (growing) {
+        scale += SCALE_STEP;
+        if (scale >= MAX_SCALE) growing = false;
+      } else {
+        scale -= SCALE_STEP;
+        if (scale <= MIN_SCALE) growing = true;
+      }
+      
+      element.style.transform = `scale(${scale})`;
+      requestAnimationFrame(pulseHeart);
+    };
+    
+    requestAnimationFrame(pulseHeart);
+  }
+
+  private applySwingAnimation(element: HTMLElement) {
+    let angle = 0;
+    let swingRight = true;
+    const MAX_ANGLE = 20;
+    const ANGLE_STEP = 1;
+    
+    const swingSuitcase = () => {
+      if (swingRight) {
+        angle += ANGLE_STEP;
+        if (angle >= MAX_ANGLE) swingRight = false;
+      } else {
+        angle -= ANGLE_STEP;
+        if (angle <= -MAX_ANGLE) swingRight = true;
+      }
+      
+      element.style.transform = `rotate(${angle}deg)`;
+      requestAnimationFrame(swingSuitcase);
+    };
+    
+    requestAnimationFrame(swingSuitcase);
+  }
+
+  private applyRotateAnimation(element: HTMLElement) {
+    let rotation = 0;
+    const rotateIcon = () => {
+      rotation = (rotation + 2) % 360;
+      element.style.transform = `rotate(${rotation}deg)`;
+      requestAnimationFrame(rotateIcon);
+    };
+    
+    requestAnimationFrame(rotateIcon);
+  }
 }
 
 class EventManager {
@@ -820,8 +1285,9 @@ class AfkObserver {
         if (mutation.type === "childList") {
           mutation.addedNodes.forEach((node) => {
             if (node instanceof HTMLElement) {
+              // Look for the button with the specific class names
               const afkButton = node.querySelector(
-                'button:contains("are you still there")'
+                'button.Button-module__buttonBase___L-\\+qv.Button-module__callToAction___ULPzP[data-auto-focus="true"]'
               );
               if (afkButton instanceof HTMLButtonElement) {
                 console.log("Found AFK check button, clicking it");
@@ -904,5 +1370,67 @@ class IdleHandler {
     }
 
     document.body.style.cursor = "default";
+  }
+}
+
+
+/**
+ * Handles notifications for the game automation system
+ */
+export class NotificationHandler {
+  private static readonly NOTIFICATION_TIMEOUT = 3000;
+  private static instance: NotificationHandler;
+
+  private constructor() {
+    this.requestPermission();
+  }
+
+  static getInstance(): NotificationHandler {
+    if (!NotificationHandler.instance) {
+      NotificationHandler.instance = new NotificationHandler();
+    }
+    return NotificationHandler.instance;
+  }
+
+  private async requestPermission(): Promise<void> {
+    try {
+      if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+      }
+    } catch (err) {
+      console.error("Failed to request notification permission:", err);
+    }
+  }
+
+  /**
+   * Shows a notification with the given title and message
+   */
+  showNotification(title: string, message: string): void {
+    try {
+      if (Notification.permission === "granted") {
+        const notification = new Notification(title, {
+          body: message,
+          icon: "/assets/icons/notification.png",
+          silent: false
+        });
+
+        setTimeout(() => {
+          notification.close();
+        }, NotificationHandler.NOTIFICATION_TIMEOUT);
+      } else {
+        // Fallback to Toast if notifications not permitted
+        Toast.show(title, message, {
+          instant: true,
+          // timeout: NotificationHandler.NOTIFICATION_TIMEOUT
+        });
+      }
+    } catch (err) {
+      console.error("Failed to show notification:", err);
+      // Fallback to Toast on error
+      Toast.show(title, message, {
+        instant: true,
+        // timeout: NotificationHandler.NOTIFICATION_TIMEOUT
+      });
+    }
   }
 }
