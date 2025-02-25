@@ -175,7 +175,11 @@ export class FO76AutomationHandler
   // Event handlers
   public handleToggleFO76AutomationEvent = async (event: Event) => {
     const customEvent = event as CustomEvent;
-    this.setEnabled(!this.isEnabled);
+    if (this.isEnabled) {
+      this.setEnabled(false);
+    } else {
+      this.setEnabled(true);
+    }
 
     if (customEvent.detail?.callback) {
       customEvent.detail.callback({
@@ -188,6 +192,9 @@ export class FO76AutomationHandler
   public handleToggleModeEvent = async (event: Event) => {
     const customEvent = event as CustomEvent;
     const mode = customEvent.detail as FO76AutomationMode;
+    if (!this.isEnabled) {
+      this.setEnabled(true);
+    }
 
     if (mode?.name) {
       this.toggleMode(mode.name as FO76AutomationModes, mode);
