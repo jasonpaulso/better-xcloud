@@ -168,7 +168,10 @@ export class AutomationUIManager {
       }
     });
 
-    element.addEventListener("click", () => {
+    element.addEventListener("click", (event) => {
+      console.log('Mode element clicked:', mode);
+      event.preventDefault();
+      event.stopPropagation();
       onToggle(mode);
       element.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
       setTimeout(() => {

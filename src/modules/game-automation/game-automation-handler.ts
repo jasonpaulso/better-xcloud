@@ -45,10 +45,14 @@ export class FO76AutomationHandler
     readonly VATS_PAUSE_DURATION: number = 2000,
     readonly INTERACT_ACTION_INTERVAL: number = 50
   ) {
+    console.log('Initializing FO76AutomationHandler with pressButton:', pressButton);
     this.currentActionInterval = defaultActionInterval;
     this.mkbHandler = EmulatedMkbHandler.getInstance();
     this.automationManager = new AutomationManager(
-      pressButton,
+      (buttonCode: number, isPressed: boolean) => {
+        console.log('Pressing button:', buttonCode, isPressed);
+        pressButton(buttonCode, isPressed);
+      },
       defaultActionInterval,
       DEFAULT_PAUSE_DURATION,
       PIVOT_ACTION_INTERVAL,
@@ -62,13 +66,13 @@ export class FO76AutomationHandler
 
   static getInstance(): FO76AutomationHandler {
     if (!FO76AutomationHandler.instance) {
-      FO76AutomationHandler.mkbHandlerInstance =
-        EmulatedMkbHandler.getInstance();
-      FO76AutomationHandler.instance = new FO76AutomationHandler(
-        FO76AutomationHandler.mkbHandlerInstance.pressButton.bind(
-          FO76AutomationHandler.mkbHandlerInstance
-        )
+      console.log('Creating new FO76AutomationHandler instance');
+      FO76AutomationHandler.mkbHandlerInstance = EmulatedMkbHandler.getInstance();
+      const boundPressButton = FO76AutomationHandler.mkbHandlerInstance.pressButton.bind(
+        FO76AutomationHandler.mkbHandlerInstance
       );
+      console.log('Created bound pressButton function:', boundPressButton);
+      FO76AutomationHandler.instance = new FO76AutomationHandler(boundPressButton);
     }
     return FO76AutomationHandler.instance;
   }
@@ -91,8 +95,11 @@ export class FO76AutomationHandler
    */
   showAllModes(): void {
     this.uiManager.updateDisplay(this.automationManager.getModes(), (mode) => {
-      this.automationManager.toggleMode(mode as FO76AutomationModes);
-      this.showAllModes(); // Refresh display
+      console.log('Mode clicked:', mode);
+      if (!this.isEnabled) {
+        this.setEnabled(true);
+      }
+      this.toggleMode(mode as FO76AutomationModes);
     });
   }
 
@@ -103,12 +110,16 @@ export class FO76AutomationHandler
     mode: FO76AutomationModes,
     config?: Partial<FO76AutomationMode>
   ): void {
+    console.log('Toggling mode:', mode, 'with config:', config);
     const loopConfig: Partial<LoopConfig> = {
       actionInterval: config?.interval,
       pauseDuration: config?.pause,
       isRunning: config?.enabled,
     };
     this.automationManager.toggleMode(mode, loopConfig);
+    console.log('Mode toggle complete');
+    // Update UI after toggle
+    this.showAllModes();
   }
 
   /**
