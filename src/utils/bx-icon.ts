@@ -46,7 +46,7 @@ import iconHeartPulse from "@assets/svg/heart-pulse.svg" with { type: "text" };
 import iconSuitcase from "@assets/svg/suitcase.svg" with { type: "text" };
 
 // Pivot
-import iconPivot from "@assets/svg/pivot-new.svg" with { type: "text" };
+import iconPivot from "@assets/svg/pivot.svg" with { type: "text" };
 
 export const BxIcon = {
     BETTER_XCLOUD: iconBetterXcloud,

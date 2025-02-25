@@ -22,7 +22,6 @@ export class AutomationUIManager {
     this.container.style.display = "flex";
     this.container.style.flexDirection = "row";
     this.container.style.gap = "8px";
-    this.container.style.maxWidth = "300px";
     this.animationService = new AnimationService();
   }
 
