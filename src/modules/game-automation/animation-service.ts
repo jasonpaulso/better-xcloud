@@ -88,7 +88,7 @@ export class AnimationService {
    * Stops all running animations
    */
   stopAll(): void {
-    for (const [element, frameId] of this.animationFrames) {
+    for (const [_, frameId] of this.animationFrames) {
       cancelAnimationFrame(frameId);
     }
     this.animationFrames.clear();
