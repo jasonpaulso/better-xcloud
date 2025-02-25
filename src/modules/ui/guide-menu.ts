@@ -35,54 +35,6 @@ export class GuideMenu {
             return this.$renderedButtons;
         }
 
-        const awayModeButtons = {
-            heal: createButton({
-                classes: ['bx-button','away-mode-button'],
-                label: 'Medic',
-                title: 'Start Medic',
-                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
-                onClick: (() => {
-                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
-                        detail: { name: 'heal', enabled: true },
-                      })
-                }).bind(this),
-            }),
-            pivot: createButton({
-                classes: ['bx-button','away-mode-button'],
-                label: 'Pivot',
-                title: 'Start Pivot',
-                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
-                onClick: (() => {
-                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
-                        detail: { name: 'pivot', enabled: true },
-                      })
-                }).bind(this),
-            }),
-            vats: createButton({
-                classes: ['bx-button','away-mode-button'],
-                label: 'VATS',
-                title: 'Start VATS',
-                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE ,
-                onClick: (() => {
-                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
-                        detail: { name: 'vats', enabled: true },
-                      })
-                }).bind(this),
-            }),
-            away: createButton({
-                classes: ['bx-button','away-mode-button'],
-                label: 'Away',
-                title: 'Start Away',
-                style: ButtonStyle.FULL_WIDTH | ButtonStyle.FOCUSABLE,
-                onClick: (() => {
-                    BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
-                        detail: { name: 'away', enabled: true },
-                      })
-                }).bind(this),
-            }),
-        
-        }
-
         const buttons = {
             toggleAwayMode: createButton({
                 label: 'Away Mode',
@@ -156,12 +108,6 @@ export class GuideMenu {
 
         const buttonsLayout = [
             buttons.toggleAwayMode,
-            [
-                awayModeButtons.heal,
-                awayModeButtons.pivot,
-                awayModeButtons.vats,
-                awayModeButtons.away,
-            ],
             buttons.scriptSettings,
             [
                 buttons.backToHome,

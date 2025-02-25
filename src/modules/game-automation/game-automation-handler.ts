@@ -313,16 +313,7 @@ export class FO76AutomationHandler {
   getSelfMode(mode: FO76AutomationModes): boolean {
     console.log("FO76AutomationHandler", "getSelfMode", mode, this.currentModes);
     return this.currentModes.some((m) => m.name === mode);
-  }
-
-  private FO76_AUTOMATION_MODE_ICONS: Record<FO76AutomationModes, typeof BxIcon | undefined> = {
-    [FO76AutomationModes.HEAL]: BxIcon.HEART_PULSE,
-    [FO76AutomationModes.PIVOT]: BxIcon.PIVOT,
-    [FO76AutomationModes.AUTOMATION]: BxIcon.SUITCASE,
-    [FO76AutomationModes.VATS]: undefined,
-    [FO76AutomationModes.INTERACT]: undefined,
-  }
-  
+  }  
 
   /**
    * Starts a countdown for the next loop iteration.
@@ -1035,11 +1026,12 @@ export class FO76AutomationHandler {
     
     // Click to toggle mode
     countdownElement.addEventListener("click", () => {
-      if (config.isRunning) {
-        this.stopButtonLoop(mode);
-      } else {
-        this.startButtonLoop(mode);
-      }
+      this.handleFO76AutomationEvent({
+        automationMode: {
+          name: mode as FO76AutomationModes,
+          toggle: true,
+        },
+      });
       
       // For visual feedback on click
       countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";

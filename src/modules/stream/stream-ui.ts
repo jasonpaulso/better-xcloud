@@ -3,7 +3,6 @@ import { BxIcon } from '@utils/bx-icon'
 import { STATES } from '@utils/global.ts'
 import { createSvgIcon } from '@utils/html.ts'
 import { t } from '@utils/translation.ts'
-import { FO76_AUTOMATION_EVENTS } from '../game-automation/game-automation-handler.ts'
 import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
 import { StreamBadges } from './stream-badges.ts'
 import { StreamStats } from './stream-stats.ts'
@@ -14,7 +13,6 @@ export class StreamUiHandler {
   private static $btnRefresh: HTMLElement | null | undefined
   private static $btnHome: HTMLElement | null | undefined
   private static observer: MutationObserver | undefined
-  private static $btnAway: HTMLElement | null | undefined
 
   private static cloneStreamHudButton(
     $btnOrg: HTMLElement,
@@ -198,27 +196,6 @@ export class StreamUiHandler {
       StreamUiHandler.$btnStreamSettings = $btnStreamSettings
     }
 
-    let $btnAway = StreamUiHandler.$btnAway
-
-    // Create Refresh button from the Close button
-    if (typeof $btnAway === 'undefined') {
-      $btnAway = StreamUiHandler.cloneStreamHudButton(
-        $orgButton,
-        'Away Mode — Pivot',
-        BxIcon.VIRTUAL_CONTROLLER
-      )
-
-      $btnAway?.addEventListener('click', (e) => {
-        hideGripHandle()
-        e.preventDefault()
-
-        BxEvent.dispatch(window, FO76_AUTOMATION_EVENTS.TOGGLE_MODE, {
-          detail: { name: 'pivot', toggle: true },
-        })
-      })
-      StreamUiHandler.$btnAway = $btnAway
-    }
-
     // Create Stream Stats button
     const streamStats = StreamStats.getInstance()
     let $btnStreamStats = StreamUiHandler.$btnStreamStats
@@ -244,14 +221,14 @@ export class StreamUiHandler {
 
     const $btnParent = $orgButton.parentElement!
 
-    if ($btnStreamSettings && $btnStreamStats && $btnAway) {
+    if ($btnStreamSettings && $btnStreamStats) {
       const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
       $btnStreamStats.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
 
       // Insert buttons after Stream Settings button
       $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild)
       $btnParent.insertBefore($btnStreamSettings, $btnStreamStats)
-      $btnParent.insertBefore($btnAway, $btnParent.lastElementChild)
+      
     }
 
     // Move the Dots button to the beginning
