@@ -181,9 +181,8 @@ export class CountdownToast {
 
         // Apply the styles directly to avoid needing additional CSS
         this.$wrapper.style.display = 'flex';
-        this.$wrapper.style.height = '5%';
         this.$wrapper.style.position = 'fixed';
-        this.$wrapper.style.bottom = '2%'; // Position above regular toast
+        this.$wrapper.style.bottom = '0'; // Position above regular toast
         this.$wrapper.style.left = '50%';
         this.$wrapper.style.transform = 'translateX(-50%)';
         this.$wrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';

@@ -6,51 +6,54 @@ import type { LoopConfig } from "./types";
  */
 export class LoopManager {
   private intervals: Map<string, number> = new Map();
+  private lastExecutionTime: Map<string, number> = new Map();
 
   /**
-   * Start a loop for a specific mode
+   * Starts a loop for the given mode
    */
-  async startLoop(config: LoopConfig, mode: string): Promise<void> {
-    config.isRunning = true;
+  startLoop(mode: string, config: LoopConfig): void {
+    this.stopLoop(mode);
 
-    const loopFunction = async (): Promise<void> => {
-      if (!config.isRunning) return;
+    // Execute one-time initialization action if provided
+    if (config.initAction) {
+      console.log(`Executing initialization action for ${mode}`);
+      config.initAction().catch(error => {
+        console.error(`Error in initialization action for ${mode}:`, error);
+      });
+    }
 
-      console.log("LoopManager", `Running ${mode} loop`);
-      await config.action();
-      await TimingUtils.delay(config.pauseDuration);
-
-      if (config.isRunning) {
-        this.intervals.set(
-          mode,
-          window.setTimeout(loopFunction, config.actionInterval)
-        );
+    const intervalId = window.setInterval(async () => {
+      try {
+        await config.action();
+        await TimingUtils.delay(config.pauseDuration);
+      } catch (error) {
+        console.error(`Error in loop for ${mode}:`, error);
       }
-    };
+    }, config.actionInterval + config.pauseDuration);
 
-    await loopFunction();
+    this.intervals.set(mode, intervalId);
   }
 
   /**
    * Stop a loop for a specific mode
    */
-  stopLoop(config: LoopConfig, mode: string): void {
+  stopLoop(mode: string): void {
     const intervalId = this.intervals.get(mode);
     if (intervalId) {
-      clearTimeout(intervalId);
+      window.clearTimeout(intervalId);
       this.intervals.delete(mode);
     }
-
-    config.isRunning = false;
+    this.lastExecutionTime.delete(mode);
   }
 
   /**
    * Stop all running loops
    */
   stopAll(): void {
-    for (const [_, intervalId] of this.intervals) {
-      clearTimeout(intervalId);
+    for (const [, intervalId] of this.intervals) {
+      window.clearTimeout(intervalId);
     }
     this.intervals.clear();
+    this.lastExecutionTime.clear();
   }
 }

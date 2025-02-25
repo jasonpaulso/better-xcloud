@@ -48,6 +48,9 @@ export class AutomationManager {
           100
         );
       },
+      initAction: async () => {
+        console.log("Initializing HEAL mode");
+      },
     });
 
     this.modes.set(FO76AutomationModes.PIVOT, {
@@ -57,13 +60,18 @@ export class AutomationManager {
       action: async () => {
         await this.buttonHandler.pressButtonWithRandomDelay(
           GamepadKey.RS_RIGHT,
-          100
+          500
         );
         await TimingUtils.delay(500);
         await this.buttonHandler.pressButtonWithRandomDelay(
           GamepadKey.RS_LEFT,
-          100
+          500
         );
+      },
+      initAction: async () => {
+        console.log("Initializing PIVOT mode");
+        await TimingUtils.delay(500);
+        await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.A, 50);
       },
     });
 
@@ -75,6 +83,9 @@ export class AutomationManager {
         await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.LB, 100);
         await TimingUtils.delay(500);
         await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RT, 100);
+      },
+      initAction: async () => {
+        console.log("Initializing VATS mode");
       },
     });
 
@@ -146,13 +157,37 @@ export class AutomationManager {
     const currentConfig = this.modes.get(mode);
     if (!currentConfig || !this.enabled) return;
 
-    // Update config with provided values
+    // Create a new config object with current values
+    const updatedConfig = {
+      ...currentConfig,
+      actionInterval: currentConfig.actionInterval,
+      pauseDuration: currentConfig.pauseDuration,
+      isRunning: true,
+      action: currentConfig.action,
+      initAction: currentConfig.initAction,
+    };
+
+    // Update config with provided values, ensuring they are numbers
     if (config) {
-      Object.assign(currentConfig, config);
+      if (typeof config.actionInterval === 'number') {
+        updatedConfig.actionInterval = config.actionInterval;
+      }
+      if (typeof config.pauseDuration === 'number') {
+        updatedConfig.pauseDuration = config.pauseDuration;
+      }
+      if (typeof config.isRunning === 'boolean') {
+        updatedConfig.isRunning = config.isRunning;
+      }
+      if (config.initAction) {
+        updatedConfig.initAction = config.initAction;
+      }
     }
 
-    currentConfig.isRunning = true;
-    await this.loopManager.startLoop(currentConfig, mode);
+    // Update the stored config
+    this.modes.set(mode, updatedConfig);
+    
+    // Start the loop
+    this.loopManager.startLoop(mode, updatedConfig);
   }
 
   /**
@@ -162,7 +197,12 @@ export class AutomationManager {
     const config = this.modes.get(mode);
     if (!config) return;
 
-    this.loopManager.stopLoop(config, mode);
+    // Update the config to mark it as not running
+    config.isRunning = false;
+    this.modes.set(mode, config);
+    
+    // Stop the loop
+    this.loopManager.stopLoop(mode);
   }
 
   /**
@@ -211,5 +251,18 @@ export class AutomationManager {
     }
 
     this.notifyObservers();
+  }
+
+  /**
+   * Set a custom initialization action for a mode
+   * This action will run once when the mode is started
+   */
+  setModeInitAction(mode: FO76AutomationModes, initAction: () => Promise<void>): void {
+    const config = this.modes.get(mode);
+    if (!config) return;
+
+    config.initAction = initAction;
+    this.modes.set(mode, config);
+    console.log(`Custom initialization action set for ${mode} mode`);
   }
 }

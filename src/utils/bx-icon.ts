@@ -48,6 +48,12 @@ import iconSuitcase from "@assets/svg/suitcase.svg" with { type: "text" };
 // Pivot
 import iconPivot from "@assets/svg/pivot.svg" with { type: "text" };
 
+// Crosshairs
+import iconCrosshairs from "@assets/svg/crosshairs.svg" with { type: "text" };
+
+// Touch
+import iconTouch from "@assets/svg/touch.svg" with { type: "text" };
+
 export const BxIcon = {
     BETTER_XCLOUD: iconBetterXcloud,
     TRUE_ACHIEVEMENTS: iconTrueAchievements,
@@ -74,6 +80,8 @@ export const BxIcon = {
     SUITCASE: iconSuitcase,
     REMOTE_PLAY: iconRemotePlay,
     PIVOT: iconPivot,
+    CROSSHAIRS: iconCrosshairs,
+    TOUCH: iconTouch,
     // Game Bar
     CARET_LEFT: iconCaretLeft,
     CARET_RIGHT: iconCaretRight,

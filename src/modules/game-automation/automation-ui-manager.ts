@@ -21,6 +21,7 @@ export class AutomationUIManager {
     this.container = document.createElement("div");
     this.container.style.display = "flex";
     this.container.style.flexDirection = "row";
+    this.container.style.alignItems = "center";
     this.container.style.gap = "8px";
     this.animationService = new AnimationService();
   }
@@ -30,10 +31,69 @@ export class AutomationUIManager {
    */
   updateDisplay(
     modes: Map<string, LoopConfig>,
-    onToggle: (mode: string) => void
+    onToggle: (mode: string) => void,
+    isEnabled?: boolean,
+    onMainToggle?: () => void
   ): void {
     this.cleanup();
     this.container.innerHTML = "";
+
+    // Add main control if handler provided
+    if (typeof isEnabled === 'boolean' && onMainToggle) {
+      const mainConfig: LoopConfig = {
+        isRunning: isEnabled,
+        actionInterval: 0,
+        pauseDuration: 0,
+        action: async () => {},
+      };
+      
+      const mainControl = this.createBaseElement("Automation", mainConfig);
+      const { toastIcon } = this.createContentElements(
+        FO76AutomationModes.AUTOMATION,
+        mainConfig
+      );
+
+      if (isEnabled) {
+        const iconElement = toastIcon.querySelector('.bx-toast-icon');
+        if (iconElement instanceof HTMLElement) {
+          this.startAnimation(iconElement, FO76AutomationModes.AUTOMATION);
+        }
+      }
+
+      mainControl.addEventListener("mouseenter", () => {
+        mainControl.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        mainControl.style.opacity = "1";
+      });
+
+      mainControl.addEventListener("mouseleave", () => {
+        mainControl.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+      });
+
+      mainControl.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onMainToggle();
+        mainControl.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        setTimeout(() => {
+          if (mainControl.parentNode) {
+            mainControl.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+          }
+        }, 200);
+      });
+
+      mainControl.appendChild(toastIcon);
+
+      this.container.appendChild(mainControl);
+
+      const divider = document.createElement("div");
+      divider.style.display = "inline-block";
+      divider.style.height = "24px";
+      divider.style.width = "2px";
+      divider.style.backgroundColor = "#fff";
+      divider.style.borderRadius = "4px";
+
+      this.container.appendChild(divider);
+    }
 
     for (const [mode, config] of modes) {
       this.createModeElement(mode, config, onToggle);
@@ -51,19 +111,44 @@ export class AutomationUIManager {
     onToggle: (mode: string) => void
   ): void {
     const countdownElement = this.createBaseElement(mode, config);
-    const { toastIcon, modeLabel, toastText } = this.createContentElements(
+    const { toastIcon, toastText } = this.createContentElements(
       mode,
       config
     );
 
     if (config.isRunning) {
-      this.startAnimation(toastIcon, mode);
+      const iconElement = toastIcon.querySelector('.bx-toast-icon');
+      if (iconElement instanceof HTMLElement) {
+        this.startAnimation(iconElement, mode);
+      }
     }
 
-    this.addEventListeners(countdownElement, mode, onToggle);
+    countdownElement.addEventListener("mouseenter", () => {
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+      countdownElement.style.opacity = "1";
+    });
+
+    countdownElement.addEventListener("mouseleave", () => {
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+      if (!this.activeElements.has(mode)) {
+        countdownElement.style.opacity = "0.7";
+      }
+    });
+
+    countdownElement.addEventListener("click", (event) => {
+      console.log('Mode element clicked:', mode);
+      event.preventDefault();
+      event.stopPropagation();
+      onToggle(mode);
+      countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+      setTimeout(() => {
+        if (countdownElement.parentNode) {
+          countdownElement.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+        }
+      }, 200);
+    });
 
     countdownElement.appendChild(toastIcon);
-    countdownElement.appendChild(modeLabel);
     countdownElement.appendChild(toastText);
 
     if (config.isRunning) {
@@ -84,20 +169,14 @@ export class AutomationUIManager {
       alignItems: "center",
       gap: "10px",
       padding: "4px",
-      borderRadius: "4px",
       backgroundColor: "rgba(0, 0, 0, 0.3)",
       cursor: "pointer",
       transition: "all 0.2s ease",
       opacity: config.isRunning ? "1" : "0.7",
-      minWidth: "120px",
-      borderLeft: config.isRunning
-        ? "3px solid #4CAF50"
-        : "3px solid transparent",
     });
 
-    element.title = `Click to ${
-      config.isRunning ? "stop" : "start"
-    } ${mode} mode`;
+    // Enhanced tooltip with mode name and status
+    element.title = `${mode} (${config.isRunning ? "Running" : "Stopped"})`;
 
     return element;
   }
@@ -113,23 +192,43 @@ export class AutomationUIManager {
     modeLabel: HTMLElement;
     toastText: HTMLElement;
   } {
+    const iconContainer = document.createElement("div");
+    iconContainer.style.width = "24px";
+    iconContainer.style.height = "24px";
+    iconContainer.style.flexShrink = "0";
+    iconContainer.style.display = "flex";
+    iconContainer.style.alignItems = "center";
+    iconContainer.style.justifyContent = "center";
+
     const toastIcon = document.createElement("div");
-    toastIcon.style.display = "inline-block";
+    toastIcon.style.width = "100%";
+    toastIcon.style.height = "100%";
     toastIcon.classList.add("bx-toast-icon");
     toastIcon.innerHTML = this.getIconForMode(mode);
 
-    const modeLabel = document.createElement("div");
-    modeLabel.style.fontWeight = "bold";
-    modeLabel.textContent = mode;
+    // Ensure SVG fills the container
+    const svg = toastIcon.querySelector('svg');
+    if (svg instanceof SVGElement) {
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+    }
+
+    iconContainer.appendChild(toastIcon);
 
     const toastText = document.createElement("div");
     toastText.style.display = "inline-block";
     toastText.style.marginLeft = "auto";
+    toastText.style.width = "40px";
+    toastText.style.textAlign = "right";
+    toastText.style.fontVariantNumeric = "tabular-nums";
     toastText.textContent = config.isRunning
       ? `${(config.actionInterval + config.pauseDuration) / 1000}s`
       : "OFF";
 
-    return { toastIcon, modeLabel, toastText };
+    // Create a dummy modeLabel to maintain interface compatibility
+    const modeLabel = document.createElement("div");
+
+    return { toastIcon: iconContainer, modeLabel, toastText };
   }
 
   /**
@@ -143,57 +242,31 @@ export class AutomationUIManager {
         return BxIcon.HEART_PULSE;
       case FO76AutomationModes.AUTOMATION:
         return BxIcon.SUITCASE;
+      case FO76AutomationModes.VATS:
+        return BxIcon.CROSSHAIRS;
+      case FO76AutomationModes.INTERACT:
+        return BxIcon.TOUCH;
       default:
         return "";
     }
   }
 
   /**
-   * Adds event listeners for hover and click
-   */
-  private addEventListeners(
-    element: HTMLElement,
-    mode: string,
-    onToggle: (mode: string) => void
-  ): void {
-    element.addEventListener("mouseenter", () => {
-      element.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-      element.style.opacity = "1";
-    });
-
-    element.addEventListener("mouseleave", () => {
-      element.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
-      if (!this.activeElements.has(mode)) {
-        element.style.opacity = "0.7";
-      }
-    });
-
-    element.addEventListener("click", (event) => {
-      console.log('Mode element clicked:', mode);
-      event.preventDefault();
-      event.stopPropagation();
-      onToggle(mode);
-      element.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-      setTimeout(() => {
-        if (element.parentNode) {
-          element.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
-        }
-      }, 200);
-    });
-  }
-
-  /**
    * Starts the countdown timer
    */
   private startCountdown(textElement: HTMLElement, config: LoopConfig): number {
-    let countdown = (config.actionInterval + config.pauseDuration) / 1000;
+    const totalDuration = (config.actionInterval || 0) + (config.pauseDuration || 0);
+    let countdown = Math.max(1, totalDuration / 1000);
+
+    // Update immediately with fixed decimal places
+    textElement.textContent = `${countdown.toFixed(1)}s`;
 
     return window.setInterval(() => {
-      countdown--;
-      if (countdown < 0) {
-        countdown = (config.actionInterval + config.pauseDuration) / 1000;
+      countdown = Math.max(0, countdown - 1);
+      if (countdown <= 0) {
+        countdown = Math.max(1, totalDuration / 1000);
       }
-      textElement.textContent = `${countdown}s`;
+      textElement.textContent = `${countdown.toFixed(1)}s`;
     }, 1000);
   }
 
@@ -206,7 +279,12 @@ export class AutomationUIManager {
         this.animationService.startHeartbeat(element);
         break;
       case FO76AutomationModes.AUTOMATION:
-        this.animationService.startSwing(element);
+        break;
+      case FO76AutomationModes.VATS:
+        this.animationService.startVatsPulse(element);
+        break;
+      case FO76AutomationModes.INTERACT:
+        this.animationService.startPress(element);
         break;
       default:
         this.animationService.startRotation(element);

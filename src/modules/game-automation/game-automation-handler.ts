@@ -22,6 +22,31 @@ export const FO76_AUTOMATION_EVENTS = {
 
 /**
  * Handles automation for Fallout 76
+ * 
+ * Example usage of initialization actions:
+ * ```
+ * // Get the automation handler instance
+ * const handler = FO76AutomationHandler.getInstance();
+ * 
+ * // Set a custom initialization action for VATS mode
+ * handler.setModeInitAction(FO76AutomationModes.VATS, async () => {
+ *   console.log("Initializing VATS mode with custom action");
+ *   // Draw weapon if not already drawn
+ *   await someCustomLogic();
+ * });
+ * 
+ * // Set a button sequence for HEAL mode
+ * import { GamepadKey } from "@/enums/mkb";
+ * handler.setModeButtonSequence(
+ *   FO76AutomationModes.HEAL,
+ *   [
+ *     { button: GamepadKey.B, duration: 100 }, // Open Pip-Boy
+ *     { button: GamepadKey.RB, duration: 100 }, // Navigate to Aid tab
+ *     { button: GamepadKey.DOWN, duration: 100 }, // Navigate to Stimpak
+ *   ],
+ *   300 // 300ms between button presses
+ * );
+ * ```
  */
 export class FO76AutomationHandler
   implements FO76AutomationStateObserver, IEventHandler
@@ -41,7 +66,7 @@ export class FO76AutomationHandler
     defaultActionInterval: number = 1000,
     readonly DEFAULT_PAUSE_DURATION: number = 0,
     readonly PIVOT_ACTION_INTERVAL: number = 2500,
-    readonly PIVOT_PAUSE_DURATION: number = 15000,
+    readonly PIVOT_PAUSE_DURATION: number = 1000,
     readonly VATS_PAUSE_DURATION: number = 2000,
     readonly INTERACT_ACTION_INTERVAL: number = 50
   ) {
@@ -51,7 +76,7 @@ export class FO76AutomationHandler
     this.automationManager = new AutomationManager(
       (buttonCode: number, isPressed: boolean) => {
         console.log('Pressing button:', buttonCode, isPressed);
-        pressButton(buttonCode, isPressed);
+        this.pressButton(buttonCode, isPressed);
       },
       defaultActionInterval,
       DEFAULT_PAUSE_DURATION,
@@ -94,13 +119,18 @@ export class FO76AutomationHandler
    * Show all available automation modes
    */
   showAllModes(): void {
-    this.uiManager.updateDisplay(this.automationManager.getModes(), (mode) => {
-      console.log('Mode clicked:', mode);
-      if (!this.isEnabled) {
-        this.setEnabled(true);
-      }
-      this.toggleMode(mode as FO76AutomationModes);
-    });
+    this.uiManager.updateDisplay(
+      this.automationManager.getModes(),
+      (mode) => {
+        console.log('Mode clicked:', mode);
+        if (!this.isEnabled) {
+          this.setEnabled(true);
+        }
+        this.toggleMode(mode as FO76AutomationModes);
+      },
+      this.isEnabled,
+      () => this.toggle()
+    );
   }
 
   /**
@@ -126,7 +156,44 @@ export class FO76AutomationHandler
    * Enable/disable automation
    */
   setEnabled(value: boolean): void {
+    if (value && !this.isEnabled) {
+      this.startFO76Automation();
+    } else if (!value && this.isEnabled) {
+      this.stopFO76Automation();
+    }
     this.automationManager.setEnabled(value);
+  }
+
+  private startFO76Automation() {
+    console.log('Starting FO76 automation');
+    this.startMkbHandler();
+    this.showActivationMessage();
+  }
+
+  private stopFO76Automation() {
+    console.log('Stopping FO76 automation');
+    this.automationManager.stopAllModes();
+    this.stopMkbHandler();
+    this.showDeactivationMessage();
+  }
+
+  private startMkbHandler() {
+    this.mkbHandler.start();
+    this.mkbHandler.onPointerLockExited();
+    this.mkbHandler.hideMessage();
+  }
+
+  private stopMkbHandler() {
+    this.mkbHandler.stop();
+    this.mkbHandler.hideMessage();
+  }
+
+  private showActivationMessage() {
+    Toast.show("Game Automation", "Activated", { instant: true });
+  }
+
+  private showDeactivationMessage() {
+    Toast.show("Game Automation", "Deactivated", { instant: true });
   }
 
   get isEnabled(): boolean {
@@ -140,6 +207,48 @@ export class FO76AutomationHandler
   public toggle(): boolean {
     this.setEnabled(!this.isEnabled);
     return this.isEnabled;
+  }
+
+  /**
+   * Set a custom initialization action for a mode
+   * This action will run once when the mode is started, but not during the loop
+   * @param mode The automation mode to set the initialization action for
+   * @param initAction The action to run when the mode starts
+   */
+  setModeInitAction(mode: FO76AutomationModes, initAction: () => Promise<void>): void {
+    this.automationManager.setModeInitAction(mode, initAction);
+  }
+
+  /**
+   * Set a button press sequence to run when a mode starts
+   * This is a convenience method for common button press sequences
+   * @param mode The automation mode to set the initialization action for
+   * @param buttonSequence Array of button codes and durations to press
+   * @param delayBetweenPresses Delay between button presses in ms
+   */
+  setModeButtonSequence(
+    mode: FO76AutomationModes, 
+    buttonSequence: Array<{button: number, duration: number}>,
+    delayBetweenPresses: number = 300
+  ): void {
+    const initAction = async () => {
+      console.log(`Running button sequence for ${mode} mode`);
+      for (const {button, duration} of buttonSequence) {
+        // Press the button down
+        await this.pressButton(button, true);
+        
+        // Wait for the specified duration
+        await new Promise(resolve => setTimeout(resolve, duration));
+        
+        // Release the button
+        await this.pressButton(button, false);
+        
+        // Wait before the next button press
+        await new Promise(resolve => setTimeout(resolve, delayBetweenPresses));
+      }
+    };
+    
+    this.setModeInitAction(mode, initAction);
   }
 
   /**
@@ -178,7 +287,7 @@ export class FO76AutomationHandler
    * Clean up resources
    */
   dispose(): void {
-    this.automationManager.stopAllModes();
+    this.stopFO76Automation();
     this.automationManager.unsubscribe(this);
     this.uiManager.cleanup();
   }

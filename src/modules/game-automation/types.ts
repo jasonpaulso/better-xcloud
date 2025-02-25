@@ -17,6 +17,7 @@ export interface LoopConfig {
   actionInterval: number;
   pauseDuration: number;
   action: () => Promise<void>;
+  initAction?: () => Promise<void>;
 }
 
 /**
