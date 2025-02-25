@@ -2,11 +2,11 @@ import { GamepadKey } from "@/enums/mkb";
 import { ButtonPressHandler } from "./button-press-handler";
 import { TimingUtils } from "./timing-utils";
 import { LoopManager } from "./loop-manager";
-import  { 
-  type LoopConfig, 
+import {
+  type LoopConfig,
   FO76AutomationModes,
-  type FO76AutomationState, 
-  type FO76AutomationStateObserver
+  type FO76AutomationState,
+  type FO76AutomationStateObserver,
 } from "./types";
 
 /**
@@ -43,8 +43,11 @@ export class AutomationManager {
       actionInterval: this.defaultActionInterval,
       pauseDuration: this.defaultPauseDuration,
       action: async () => {
-        await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RIGHT, 100);
-      }
+        await this.buttonHandler.pressButtonWithRandomDelay(
+          GamepadKey.RIGHT,
+          100
+        );
+      },
     });
 
     this.modes.set(FO76AutomationModes.PIVOT, {
@@ -52,10 +55,16 @@ export class AutomationManager {
       actionInterval: this.pivotActionInterval,
       pauseDuration: this.pivotPauseDuration,
       action: async () => {
-        await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RS_RIGHT, 100);
+        await this.buttonHandler.pressButtonWithRandomDelay(
+          GamepadKey.RS_RIGHT,
+          100
+        );
         await TimingUtils.delay(500);
-        await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RS_LEFT, 100);
-      }
+        await this.buttonHandler.pressButtonWithRandomDelay(
+          GamepadKey.RS_LEFT,
+          100
+        );
+      },
     });
 
     this.modes.set(FO76AutomationModes.VATS, {
@@ -66,7 +75,7 @@ export class AutomationManager {
         await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.LB, 100);
         await TimingUtils.delay(500);
         await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RT, 100);
-      }
+      },
     });
 
     this.modes.set(FO76AutomationModes.INTERACT, {
@@ -75,7 +84,7 @@ export class AutomationManager {
       pauseDuration: 0,
       action: async () => {
         await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.A, 50);
-      }
+      },
     });
   }
 
@@ -99,9 +108,9 @@ export class AutomationManager {
   private notifyObservers(): void {
     const state: FO76AutomationState = {
       enabled: this.enabled,
-      modes: this.modes
+      modes: this.modes,
     };
-    this.observers.forEach(observer => observer.update(state));
+    this.observers.forEach((observer) => observer.update(state));
   }
 
   /**
@@ -130,7 +139,10 @@ export class AutomationManager {
   /**
    * Start a specific automation mode
    */
-  private async startMode(mode: FO76AutomationModes, config?: Partial<LoopConfig>): Promise<void> {
+  private async startMode(
+    mode: FO76AutomationModes,
+    config?: Partial<LoopConfig>
+  ): Promise<void> {
     const currentConfig = this.modes.get(mode);
     if (!currentConfig || !this.enabled) return;
 
@@ -186,7 +198,10 @@ export class AutomationManager {
    */
   updateDefaultInterval(increment?: boolean, decrement?: boolean): void {
     const change = increment ? 1000 : decrement ? -1000 : 0;
-    this.defaultActionInterval = Math.max(1000, Math.min(10000, this.defaultActionInterval + change));
+    this.defaultActionInterval = Math.max(
+      1000,
+      Math.min(10000, this.defaultActionInterval + change)
+    );
 
     // Update all modes using the default interval
     for (const config of this.modes.values()) {
@@ -197,4 +212,4 @@ export class AutomationManager {
 
     this.notifyObservers();
   }
-} 
+}

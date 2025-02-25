@@ -13,7 +13,7 @@ export class AnimationService {
     const MIN_SCALE = 1;
     const MAX_SCALE = 1.4;
     const SCALE_STEP = 0.04;
-    
+
     const animate = () => {
       if (growing) {
         scale += SCALE_STEP;
@@ -22,11 +22,11 @@ export class AnimationService {
         scale -= SCALE_STEP;
         if (scale <= MIN_SCALE) growing = true;
       }
-      
+
       element.style.transform = `scale(${scale})`;
       this.animationFrames.set(element, requestAnimationFrame(animate));
     };
-    
+
     this.stopAnimation(element);
     this.animationFrames.set(element, requestAnimationFrame(animate));
   }
@@ -39,7 +39,7 @@ export class AnimationService {
     let swingRight = true;
     const MAX_ANGLE = 20;
     const ANGLE_STEP = 1;
-    
+
     const animate = () => {
       if (swingRight) {
         angle += ANGLE_STEP;
@@ -48,11 +48,11 @@ export class AnimationService {
         angle -= ANGLE_STEP;
         if (angle <= -MAX_ANGLE) swingRight = true;
       }
-      
+
       element.style.transform = `rotate(${angle}deg)`;
       this.animationFrames.set(element, requestAnimationFrame(animate));
     };
-    
+
     this.stopAnimation(element);
     this.animationFrames.set(element, requestAnimationFrame(animate));
   }
@@ -62,13 +62,13 @@ export class AnimationService {
    */
   startRotation(element: HTMLElement): void {
     let rotation = 0;
-    
+
     const animate = () => {
       rotation = (rotation + 2) % 360;
       element.style.transform = `rotate(${rotation}deg)`;
       this.animationFrames.set(element, requestAnimationFrame(animate));
     };
-    
+
     this.stopAnimation(element);
     this.animationFrames.set(element, requestAnimationFrame(animate));
   }
@@ -93,4 +93,4 @@ export class AnimationService {
     }
     this.animationFrames.clear();
   }
-} 
+}

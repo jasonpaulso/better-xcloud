@@ -53,4 +53,4 @@ export class LoopManager {
     }
     this.intervals.clear();
   }
-} 
+}

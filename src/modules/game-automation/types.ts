@@ -43,4 +43,4 @@ export interface FO76AutomationState {
  */
 export interface FO76AutomationStateObserver {
   update(state: FO76AutomationState): void;
-} 
+}

@@ -9,10 +9,9 @@ import type {
   FO76AutomationStateObserver,
   LoopConfig,
 } from "./types";
-import type { IEventHandler } from "../event-manager";
-import { EventManager } from "../event-manager";
-import { AfkObserver } from "../afk-observer";
-import { IdleHandler } from "../idle-handler";
+import type { IEventHandler } from "./event-manager";
+import { EventManager } from "./event-manager";
+
 import { AutomationUIManager } from "./automation-ui-manager";
 
 export const FO76_AUTOMATION_EVENTS = {
@@ -30,8 +29,7 @@ export class FO76AutomationHandler
   private automationManager: AutomationManager;
   private uiManager: AutomationUIManager;
   private mkbHandler: EmulatedMkbHandler;
-  private afkObserver = new AfkObserver();
-  private idleHandler = new IdleHandler();
+
   public windowFocused: boolean = true;
   private currentActionInterval: number;
 
@@ -84,8 +82,7 @@ export class FO76AutomationHandler
       "Initializing game automation handler"
     );
     this.registerEventListeners();
-    this.afkObserver.startObserving();
-    this.idleHandler.init();
+
     this.showAllModes();
   };
 
@@ -123,6 +120,15 @@ export class FO76AutomationHandler
 
   get isEnabled(): boolean {
     return this.automationManager.isEnabled;
+  }
+
+  /**
+   * Toggle automation on/off
+   * @returns The new automation state
+   */
+  public toggle(): boolean {
+    this.setEnabled(!this.isEnabled);
+    return this.isEnabled;
   }
 
   /**
@@ -164,8 +170,6 @@ export class FO76AutomationHandler
     this.automationManager.stopAllModes();
     this.automationManager.unsubscribe(this);
     this.uiManager.cleanup();
-    this.afkObserver.stopObserving();
-    this.idleHandler.destroy();
   }
 
   // Event handlers

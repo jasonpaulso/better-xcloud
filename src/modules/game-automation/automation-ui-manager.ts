@@ -8,10 +8,13 @@ import { AnimationService } from "./animation-service";
  */
 export class AutomationUIManager {
   private container: HTMLElement;
-  private activeElements: Map<string, {
-    element: HTMLElement;
-    intervalId: number;
-  }> = new Map();
+  private activeElements: Map<
+    string,
+    {
+      element: HTMLElement;
+      intervalId: number;
+    }
+  > = new Map();
   private animationService: AnimationService;
 
   constructor() {
@@ -26,39 +29,49 @@ export class AutomationUIManager {
   /**
    * Updates the display of all automation modes
    */
-  updateDisplay(modes: Map<string, LoopConfig>, onToggle: (mode: string) => void): void {
+  updateDisplay(
+    modes: Map<string, LoopConfig>,
+    onToggle: (mode: string) => void
+  ): void {
     this.cleanup();
-    this.container.innerHTML = '';
-    
+    this.container.innerHTML = "";
+
     for (const [mode, config] of modes) {
       this.createModeElement(mode, config, onToggle);
     }
-    
+
     this.showToast();
   }
 
   /**
    * Creates a UI element for a single mode
    */
-  private createModeElement(mode: string, config: LoopConfig, onToggle: (mode: string) => void): void {
+  private createModeElement(
+    mode: string,
+    config: LoopConfig,
+    onToggle: (mode: string) => void
+  ): void {
     const countdownElement = this.createBaseElement(mode, config);
-    const { toastIcon, modeLabel, toastText } = this.createContentElements(mode, config);
-    
+    const { toastIcon, modeLabel, toastText } = this.createContentElements(
+      mode,
+      config
+    );
+
     if (config.isRunning) {
       this.startAnimation(toastIcon, mode);
     }
-    
+
     this.addEventListeners(countdownElement, mode, onToggle);
-    
+
     countdownElement.appendChild(toastIcon);
     countdownElement.appendChild(modeLabel);
     countdownElement.appendChild(toastText);
-    
+
     if (config.isRunning) {
       const intervalId = this.startCountdown(toastText, config);
       this.activeElements.set(mode, { element: countdownElement, intervalId });
     }
-    
+
     this.container.appendChild(countdownElement);
   }
 
@@ -78,38 +91,45 @@ export class AutomationUIManager {
       transition: "all 0.2s ease",
       opacity: config.isRunning ? "1" : "0.7",
       minWidth: "120px",
-      borderLeft: config.isRunning ? "3px solid #4CAF50" : "3px solid transparent"
+      borderLeft: config.isRunning
+        ? "3px solid #4CAF50"
+        : "3px solid transparent",
     });
-    
-    element.title = `Click to ${config.isRunning ? 'stop' : 'start'} ${mode} mode`;
-    
+
+    element.title = `Click to ${
+      config.isRunning ? "stop" : "start"
+    } ${mode} mode`;
+
     return element;
   }
 
   /**
    * Creates the icon, label, and text elements
    */
-  private createContentElements(mode: string, config: LoopConfig): { 
-    toastIcon: HTMLElement; 
-    modeLabel: HTMLElement; 
-    toastText: HTMLElement; 
+  private createContentElements(
+    mode: string,
+    config: LoopConfig
+  ): {
+    toastIcon: HTMLElement;
+    modeLabel: HTMLElement;
+    toastText: HTMLElement;
   } {
     const toastIcon = document.createElement("div");
     toastIcon.style.display = "inline-block";
     toastIcon.classList.add("bx-toast-icon");
     toastIcon.innerHTML = this.getIconForMode(mode);
-    
+
     const modeLabel = document.createElement("div");
     modeLabel.style.fontWeight = "bold";
     modeLabel.textContent = mode;
-    
+
     const toastText = document.createElement("div");
     toastText.style.display = "inline-block";
     toastText.style.marginLeft = "auto";
-    toastText.textContent = config.isRunning ? 
-      `${(config.actionInterval + config.pauseDuration) / 1000}s` : 
-      "OFF";
-    
+    toastText.textContent = config.isRunning
+      ? `${(config.actionInterval + config.pauseDuration) / 1000}s`
+      : "OFF";
+
     return { toastIcon, modeLabel, toastText };
   }
 
@@ -132,19 +152,23 @@ export class AutomationUIManager {
   /**
    * Adds event listeners for hover and click
    */
-  private addEventListeners(element: HTMLElement, mode: string, onToggle: (mode: string) => void): void {
+  private addEventListeners(
+    element: HTMLElement,
+    mode: string,
+    onToggle: (mode: string) => void
+  ): void {
     element.addEventListener("mouseenter", () => {
       element.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
       element.style.opacity = "1";
     });
-    
+
     element.addEventListener("mouseleave", () => {
       element.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
       if (!this.activeElements.has(mode)) {
         element.style.opacity = "0.7";
       }
     });
-    
+
     element.addEventListener("click", () => {
       onToggle(mode);
       element.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
@@ -161,7 +185,7 @@ export class AutomationUIManager {
    */
   private startCountdown(textElement: HTMLElement, config: LoopConfig): number {
     let countdown = (config.actionInterval + config.pauseDuration) / 1000;
-    
+
     return window.setInterval(() => {
       countdown--;
       if (countdown < 0) {
@@ -203,4 +227,4 @@ export class AutomationUIManager {
     }
     this.activeElements.clear();
   }
-} 
+}

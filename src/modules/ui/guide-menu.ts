@@ -7,7 +7,7 @@ import { t } from "@/utils/translation";
 import { SettingsNavigationDialog } from "./dialog/settings-dialog";
 import { TrueAchievements } from "@/utils/true-achievements";
 import { BxIcon } from "@/utils/bx-icon";
-import { FO76_AUTOMATION_EVENTS, FO76AutomationHandler } from "../game-automation/game-automation-handler";
+import { FO76AutomationHandler } from "../game-automation/game-automation-handler";
 
 export enum GuideMenuTab {
   HOME = 'home',

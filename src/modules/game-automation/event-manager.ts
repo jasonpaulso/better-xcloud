@@ -30,7 +30,10 @@ export class EventManager {
 
     window.addEventListener("blur", handler.handleWindowBlur);
     window.addEventListener("focus", handler.handleWindowFocus);
-    window.addEventListener(BxEvent.STREAM_STOPPED, handler.handleStreamStopped);
+    window.addEventListener(
+      BxEvent.STREAM_STOPPED,
+      handler.handleStreamStopped
+    );
     window.addEventListener("keydown", handler.handleKeyDown);
     window.addEventListener(
       "automation-toggle",
@@ -44,5 +47,16 @@ export class EventManager {
       "automation-change-interval",
       handler.handleIncrementDecrementDefaultInterval
     );
+    window.addEventListener("focus", () => {
+      document.hasFocus = () => true;
+    });
+
+    window.addEventListener("blur", () => {
+      document.hasFocus = () => true;
+    });
+
+    document.hasFocus = function () {
+      return true;
+    };
   }
-} 
+}
