@@ -10,7 +10,7 @@
     "build": "build.ts"
   },
   "scripts": {
-    "build-dev": "bun ./build.ts --version x.x.x"
+    "build-dev": "bun ./build.ts --version x.x.x-dev"
   },
   "devDependencies": {
     "@types/bun": "^1.2.3",
