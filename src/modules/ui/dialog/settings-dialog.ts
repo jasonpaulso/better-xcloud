@@ -29,6 +29,7 @@ import type { RecommendedSettings, SettingDefinition, SuggestedSettingCategory a
 import { FullscreenText } from "../fullscreen-text";
 import { BxLogger } from "@/utils/bx-logger";
 import { updatePollingRate } from "@/utils/gamepad";
+import { PreferencesBackupUI } from "../../../components/preferences-backup";
 
 
 type SettingTabContentItem = Partial<{
@@ -47,7 +48,7 @@ type SettingTabContentItem = Partial<{
 }>
 
 type SettingTabContent = {
-    group: 'general' | 'server' | 'stream' | 'game-bar' | 'co-op' | 'mkb' | 'touch-control' | 'loading-screen' | 'ui' | 'other' | 'advanced' | 'footer' | 'audio' | 'video' | 'controller' | 'native-mkb' | 'stats' | 'controller-shortcuts';
+    group: 'general' | 'server' | 'stream' | 'game-bar' | 'co-op' | 'mkb' | 'touch-control' | 'loading-screen' | 'ui' | 'other' | 'advanced' | 'footer' | 'audio' | 'video' | 'controller' | 'native-mkb' | 'stats' | 'controller-shortcuts' | 'backup';
     label?: string;
     unsupported?: boolean;
     unsupportedNote?: string | Text | null;
@@ -66,7 +67,7 @@ type SettingTab = {
     lazyContent?: boolean;
 };
 
-type SettingTabGroup = 'global' | 'stream' | 'controller' | 'mkb' | 'native-mkb' | 'shortcuts' | 'stats';
+type SettingTabGroup = 'global' | 'stream' | 'controller' | 'mkb' | 'native-mkb' | 'shortcuts' | 'stats' | 'backup';
 
 export class SettingsNavigationDialog extends NavigationDialog {
     private static instance: SettingsNavigationDialog;
@@ -586,6 +587,16 @@ export class SettingsNavigationDialog extends NavigationDialog {
         ],
     }];
 
+    private readonly TAB_BACKUP_ITEMS: Array<SettingTabContent | false> = [{
+        group: 'backup',
+        label: t('preferences-backup'),
+        items: [
+            ($parent: HTMLElement) => {
+                new PreferencesBackupUI($parent);
+            }
+        ]
+    }];
+
     private readonly SETTINGS_UI: Record<SettingTabGroup, SettingTab> = {
         global: {
             group: 'global',
@@ -633,6 +644,12 @@ export class SettingsNavigationDialog extends NavigationDialog {
             group: 'stats',
             icon: BxIcon.STREAM_STATS,
             items: this.TAB_STATS_ITEMS,
+        },
+
+        backup: {
+            group: 'backup',
+            icon: BxIcon.COPY,
+            items: this.TAB_BACKUP_ITEMS,
         },
     };
 
