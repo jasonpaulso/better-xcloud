@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Better xCloud - Away Mode Version - Beta
+// @name         BxC - Fallout 76 Automated
 // @namespace    https://github.com/jasonpaulso/better-xcloud
 // @version      [[VERSION]]
 // ==/UserScript==

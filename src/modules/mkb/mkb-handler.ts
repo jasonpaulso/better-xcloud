@@ -230,6 +230,7 @@ export class EmulatedMkbHandler extends MkbHandler {
     }
 
     #pressButton = (buttonIndex: GamepadKey, pressed: boolean) => {
+        console.log("🚀 ~ EmulatedMkbHandler ~ buttonIndex:", buttonIndex)
         const virtualGamepad = this.#getVirtualGamepad();
 
         if (buttonIndex >= 100) {

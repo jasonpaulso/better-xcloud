@@ -425,8 +425,8 @@ const initializeAwayMode = () => {
     FO76AutomationHandler.getInstance().init()
   })
   window.addEventListener(BxEvent.STREAM_STOPPED, (_e) => {
-    FO76AutomationHandler.getInstance().destroy()
+    FO76AutomationHandler.getInstance().dispose()
   })
 }
 
-initializeAwayMode()
+initializeAwayMode()  
