@@ -139,7 +139,9 @@ export class AutomationUIManager {
     });
 
     countdownElement.appendChild(toastIcon);
-    countdownElement.appendChild(toastText);
+    if (mode !== FO76AutomationModes.RELOAD) {
+      countdownElement.appendChild(toastText);
+    }
 
     if (config.isRunning) {
       const intervalId = this.startCountdown(toastText, config);
@@ -240,6 +242,8 @@ export class AutomationUIManager {
         return BxIcon.CROSSHAIRS;
       case FO76AutomationModes.INTERACT:
         return BxIcon.TOUCH;
+      case FO76AutomationModes.RELOAD:
+        return BxIcon.REFRESH;
       default:
         return "";
     }
