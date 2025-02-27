@@ -39,14 +39,14 @@ export class AutomationUIManager {
     this.container.innerHTML = "";
 
     // Add main control if handler provided
-    if (typeof isEnabled === 'boolean' && onMainToggle) {
+    if (typeof isEnabled === "boolean" && onMainToggle) {
       const mainConfig: LoopConfig = {
         isRunning: isEnabled,
         actionInterval: 0,
         pauseDuration: 0,
         action: async () => {},
       };
-      
+
       const mainControl = this.createBaseElement("Automation", mainConfig);
       const { toastIcon } = this.createContentElements(
         FO76AutomationModes.AUTOMATION,
@@ -54,7 +54,7 @@ export class AutomationUIManager {
       );
 
       if (isEnabled) {
-        const iconElement = toastIcon.querySelector('.bx-toast-icon');
+        const iconElement = toastIcon.querySelector(".bx-toast-icon");
         if (iconElement instanceof HTMLElement) {
           this.startAnimation(iconElement, FO76AutomationModes.AUTOMATION);
         }
@@ -111,13 +111,10 @@ export class AutomationUIManager {
     onToggle: (mode: string) => void
   ): void {
     const countdownElement = this.createBaseElement(mode, config);
-    const { toastIcon, toastText } = this.createContentElements(
-      mode,
-      config
-    );
+    const { toastIcon, toastText } = this.createContentElements(mode, config);
 
     if (config.isRunning) {
-      const iconElement = toastIcon.querySelector('.bx-toast-icon');
+      const iconElement = toastIcon.querySelector(".bx-toast-icon");
       if (iconElement instanceof HTMLElement) {
         this.startAnimation(iconElement, mode);
       }
@@ -136,7 +133,7 @@ export class AutomationUIManager {
     });
 
     countdownElement.addEventListener("click", (event) => {
-      console.log('Mode element clicked:', mode);
+      console.log("Mode element clicked:", mode);
       event.preventDefault();
       event.stopPropagation();
       onToggle(mode);
@@ -193,8 +190,8 @@ export class AutomationUIManager {
     toastText: HTMLElement;
   } {
     const iconContainer = document.createElement("div");
-    iconContainer.style.width = "24px";
-    iconContainer.style.height = "24px";
+    iconContainer.style.width = "16px";
+    iconContainer.style.height = "16px";
     iconContainer.style.flexShrink = "0";
     iconContainer.style.display = "flex";
     iconContainer.style.alignItems = "center";
@@ -207,16 +204,17 @@ export class AutomationUIManager {
     toastIcon.innerHTML = this.getIconForMode(mode);
 
     // Ensure SVG fills the container
-    const svg = toastIcon.querySelector('svg');
+    const svg = toastIcon.querySelector("svg");
     if (svg instanceof SVGElement) {
-      svg.style.width = '100%';
-      svg.style.height = '100%';
+      svg.style.width = "100%";
+      svg.style.height = "100%";
     }
 
     iconContainer.appendChild(toastIcon);
 
     const toastText = document.createElement("div");
-    toastText.style.display = "inline-block";
+    toastText.style.display =
+      window.innerWidth <= 768 ? "none" : "inline-block";
     toastText.style.marginLeft = "auto";
     toastText.style.width = "40px";
     toastText.style.textAlign = "right";
@@ -255,7 +253,8 @@ export class AutomationUIManager {
    * Starts the countdown timer
    */
   private startCountdown(textElement: HTMLElement, config: LoopConfig): number {
-    const totalDuration = (config.actionInterval || 0) + (config.pauseDuration || 0);
+    const totalDuration =
+      (config.actionInterval || 0) + (config.pauseDuration || 0);
     let countdown = Math.max(1, totalDuration / 1000);
 
     // Update immediately with fixed decimal places
