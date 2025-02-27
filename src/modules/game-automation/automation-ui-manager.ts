@@ -216,7 +216,10 @@ export class AutomationUIManager {
     toastText.style.display =
       window.innerWidth <= 768 ? "none" : "inline-block";
     toastText.style.marginLeft = "auto";
-    toastText.style.width = "40px";
+    toastText.style.fontSize = "smaller";
+    toastText.style.lineHeight = "100%";
+    toastText.style.alignSelf = "end";
+    toastText.style.justifySelf = "center";
     toastText.style.textAlign = "right";
     toastText.style.fontVariantNumeric = "tabular-nums";
     toastText.textContent = config.isRunning
