@@ -126,6 +126,35 @@ export class AnimationService {
     this.stopAnimation(element);
     this.animationFrames.set(element, requestAnimationFrame(animate));
   }
+  /**
+   * Starts a recoil animation for RAPID_FIRE mode
+   */
+  startRecoil(element: HTMLElement): void {
+    let translateX = 0;
+    let recoiling = true;
+    const MIN_TRANSLATE = 0;
+    const MAX_TRANSLATE = 4;
+    const TRANSLATE_STEP = 0.8;
+
+    const animate = () => {
+      if (recoiling) {
+        translateX -= TRANSLATE_STEP; // Move left for recoil
+        if (translateX <= -MAX_TRANSLATE) recoiling = false;
+      } else {
+        translateX += TRANSLATE_STEP; // Return to center
+        if (translateX >= MIN_TRANSLATE) {
+          translateX = MIN_TRANSLATE;
+          recoiling = true;
+        }
+      }
+
+      element.style.transform = `translateX(${translateX}px)`;
+      this.animationFrames.set(element, requestAnimationFrame(animate));
+    };
+
+    this.stopAnimation(element);
+    this.animationFrames.set(element, requestAnimationFrame(animate));
+  }
 
   /**
    * Stops any running animation for the element

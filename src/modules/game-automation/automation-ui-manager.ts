@@ -287,6 +287,9 @@ export class AutomationUIManager {
       case FO76AutomationModes.INTERACT:
         this.animationService.startPress(element);
         break;
+      case FO76AutomationModes.RAPID_FIRE_AND_ROTATE:
+        this.animationService.startRecoil(element);
+        break;
       default:
         this.animationService.startRotation(element);
     }
