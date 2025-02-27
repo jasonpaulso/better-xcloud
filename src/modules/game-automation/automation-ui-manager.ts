@@ -22,7 +22,7 @@ export class AutomationUIManager {
     this.container.style.display = "flex";
     this.container.style.flexDirection = "row";
     this.container.style.alignItems = "center";
-    this.container.style.gap = "8px";
+    this.container.style.gap = "4px";
     this.animationService = new AnimationService();
   }
 
@@ -190,9 +190,8 @@ export class AutomationUIManager {
     toastText: HTMLElement;
   } {
     const iconContainer = document.createElement("div");
-    iconContainer.style.width = "16px";
-    iconContainer.style.height = "16px";
-    iconContainer.style.flexShrink = "0";
+    iconContainer.style.width = "100%";
+    iconContainer.style.height = "100%";
     iconContainer.style.display = "flex";
     iconContainer.style.alignItems = "center";
     iconContainer.style.justifyContent = "center";
@@ -206,8 +205,8 @@ export class AutomationUIManager {
     // Ensure SVG fills the container
     const svg = toastIcon.querySelector("svg");
     if (svg instanceof SVGElement) {
-      svg.style.width = "100%";
-      svg.style.height = "100%";
+      svg.style.width = "16px";
+      svg.style.height = "16px";
     }
 
     iconContainer.appendChild(toastIcon);
@@ -216,9 +215,8 @@ export class AutomationUIManager {
     toastText.style.display =
       window.innerWidth <= 768 ? "none" : "inline-block";
     toastText.style.marginLeft = "auto";
-    toastText.style.fontSize = "smaller";
+    toastText.style.fontSize = "x-small";
     toastText.style.lineHeight = "100%";
-    toastText.style.alignSelf = "end";
     toastText.style.justifySelf = "center";
     toastText.style.textAlign = "right";
     toastText.style.fontVariantNumeric = "tabular-nums";
