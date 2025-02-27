@@ -102,18 +102,6 @@ export class AutomationManager {
       },
     });
 
-    this.modes.set(FO76AutomationModes.REFRESH, {
-      isRunning: false,
-      actionInterval: this.reloadActionInterval,
-      pauseDuration: this.reloadPauseDuration,
-      action: async () => {
-        window.location.reload();
-      },
-      initAction: async () => {
-        console.log("Initializing RELOAD mode");
-      },
-    });
-
     this.modes.set(FO76AutomationModes.RAPID_FIRE_AND_ROTATE, {
       isRunning: false,
       actionInterval: this.rapidFireAndRotateActionInterval,
