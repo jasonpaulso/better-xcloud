@@ -167,6 +167,8 @@ export class AutomationUIManager {
       gap: "10px",
       padding: "4px",
       backgroundColor: "rgba(0, 0, 0, 0.3)",
+      borderRadius: "4px",
+      border: "2px solid #fff",
       cursor: "pointer",
       transition: "all 0.2s ease",
       opacity: config.isRunning ? "1" : "0.7",
