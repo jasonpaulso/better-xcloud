@@ -7,6 +7,7 @@ export enum FO76AutomationModes {
   AUTOMATION = "automation",
   VATS = "vats",
   INTERACT = "interact",
+  RELOAD = "reload",
 }
 
 /**

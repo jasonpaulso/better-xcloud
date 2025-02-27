@@ -26,7 +26,9 @@ export class AutomationManager {
     private pivotActionInterval: number,
     private pivotPauseDuration: number,
     private vatsPauseDuration: number,
-    private interactActionInterval: number
+    private interactActionInterval: number,
+    private reloadActionInterval: number,
+    private reloadPauseDuration: number
   ) {
     this.buttonHandler = new ButtonPressHandler(pressButton);
     this.loopManager = new LoopManager();
@@ -95,6 +97,18 @@ export class AutomationManager {
       pauseDuration: 0,
       action: async () => {
         await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.A, 50);
+      },
+    });
+
+    this.modes.set(FO76AutomationModes.RELOAD, {
+      isRunning: false,
+      actionInterval: this.reloadActionInterval,
+      pauseDuration: this.reloadPauseDuration,
+      action: async () => {
+        window.location.reload();
+      },
+      initAction: async () => {
+        console.log("Initializing RELOAD mode");
       },
     });
   }
@@ -169,13 +183,13 @@ export class AutomationManager {
 
     // Update config with provided values, ensuring they are numbers
     if (config) {
-      if (typeof config.actionInterval === 'number') {
+      if (typeof config.actionInterval === "number") {
         updatedConfig.actionInterval = config.actionInterval;
       }
-      if (typeof config.pauseDuration === 'number') {
+      if (typeof config.pauseDuration === "number") {
         updatedConfig.pauseDuration = config.pauseDuration;
       }
-      if (typeof config.isRunning === 'boolean') {
+      if (typeof config.isRunning === "boolean") {
         updatedConfig.isRunning = config.isRunning;
       }
       if (config.initAction) {
@@ -185,7 +199,7 @@ export class AutomationManager {
 
     // Update the stored config
     this.modes.set(mode, updatedConfig);
-    
+
     // Start the loop
     this.loopManager.startLoop(mode, updatedConfig);
   }
@@ -200,7 +214,7 @@ export class AutomationManager {
     // Update the config to mark it as not running
     config.isRunning = false;
     this.modes.set(mode, config);
-    
+
     // Stop the loop
     this.loopManager.stopLoop(mode);
   }
@@ -257,7 +271,10 @@ export class AutomationManager {
    * Set a custom initialization action for a mode
    * This action will run once when the mode is started
    */
-  setModeInitAction(mode: FO76AutomationModes, initAction: () => Promise<void>): void {
+  setModeInitAction(
+    mode: FO76AutomationModes,
+    initAction: () => Promise<void>
+  ): void {
     const config = this.modes.get(mode);
     if (!config) return;
 

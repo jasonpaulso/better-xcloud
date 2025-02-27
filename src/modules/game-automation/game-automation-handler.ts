@@ -22,19 +22,19 @@ export const FO76_AUTOMATION_EVENTS = {
 
 /**
  * Handles automation for Fallout 76
- * 
+ *
  * Example usage of initialization actions:
  * ```
  * // Get the automation handler instance
  * const handler = FO76AutomationHandler.getInstance();
- * 
+ *
  * // Set a custom initialization action for VATS mode
  * handler.setModeInitAction(FO76AutomationModes.VATS, async () => {
  *   console.log("Initializing VATS mode with custom action");
  *   // Draw weapon if not already drawn
  *   await someCustomLogic();
  * });
- * 
+ *
  * // Set a button sequence for HEAL mode
  * import { GamepadKey } from "@/enums/mkb";
  * handler.setModeButtonSequence(
@@ -68,14 +68,19 @@ export class FO76AutomationHandler
     readonly PIVOT_ACTION_INTERVAL: number = 2500,
     readonly PIVOT_PAUSE_DURATION: number = 1000,
     readonly VATS_PAUSE_DURATION: number = 2000,
-    readonly INTERACT_ACTION_INTERVAL: number = 50
+    readonly INTERACT_ACTION_INTERVAL: number = 50,
+    readonly RELOAD_ACTION_INTERVAL: number = 1000,
+    readonly RELOAD_PAUSE_DURATION: number = 1000
   ) {
-    console.log('Initializing FO76AutomationHandler with pressButton:', pressButton);
+    console.log(
+      "Initializing FO76AutomationHandler with pressButton:",
+      pressButton
+    );
     this.currentActionInterval = defaultActionInterval;
     this.mkbHandler = EmulatedMkbHandler.getInstance();
     this.automationManager = new AutomationManager(
       (buttonCode: number, isPressed: boolean) => {
-        console.log('Pressing button:', buttonCode, isPressed);
+        console.log("Pressing button:", buttonCode, isPressed);
         this.pressButton(buttonCode, isPressed);
       },
       defaultActionInterval,
@@ -83,7 +88,9 @@ export class FO76AutomationHandler
       PIVOT_ACTION_INTERVAL,
       PIVOT_PAUSE_DURATION,
       VATS_PAUSE_DURATION,
-      INTERACT_ACTION_INTERVAL
+      INTERACT_ACTION_INTERVAL,
+      RELOAD_ACTION_INTERVAL,
+      RELOAD_PAUSE_DURATION
     );
     this.automationManager.subscribe(this);
     this.uiManager = new AutomationUIManager();
@@ -91,13 +98,17 @@ export class FO76AutomationHandler
 
   static getInstance(): FO76AutomationHandler {
     if (!FO76AutomationHandler.instance) {
-      console.log('Creating new FO76AutomationHandler instance');
-      FO76AutomationHandler.mkbHandlerInstance = EmulatedMkbHandler.getInstance();
-      const boundPressButton = FO76AutomationHandler.mkbHandlerInstance.pressButton.bind(
-        FO76AutomationHandler.mkbHandlerInstance
+      console.log("Creating new FO76AutomationHandler instance");
+      FO76AutomationHandler.mkbHandlerInstance =
+        EmulatedMkbHandler.getInstance();
+      const boundPressButton =
+        FO76AutomationHandler.mkbHandlerInstance.pressButton.bind(
+          FO76AutomationHandler.mkbHandlerInstance
+        );
+      console.log("Created bound pressButton function:", boundPressButton);
+      FO76AutomationHandler.instance = new FO76AutomationHandler(
+        boundPressButton
       );
-      console.log('Created bound pressButton function:', boundPressButton);
-      FO76AutomationHandler.instance = new FO76AutomationHandler(boundPressButton);
     }
     return FO76AutomationHandler.instance;
   }
@@ -122,7 +133,7 @@ export class FO76AutomationHandler
     this.uiManager.updateDisplay(
       this.automationManager.getModes(),
       (mode) => {
-        console.log('Mode clicked:', mode);
+        console.log("Mode clicked:", mode);
         if (!this.isEnabled) {
           this.setEnabled(true);
         }
@@ -140,14 +151,14 @@ export class FO76AutomationHandler
     mode: FO76AutomationModes,
     config?: Partial<FO76AutomationMode>
   ): void {
-    console.log('Toggling mode:', mode, 'with config:', config);
+    console.log("Toggling mode:", mode, "with config:", config);
     const loopConfig: Partial<LoopConfig> = {
       actionInterval: config?.interval,
       pauseDuration: config?.pause,
       isRunning: config?.enabled,
     };
     this.automationManager.toggleMode(mode, loopConfig);
-    console.log('Mode toggle complete');
+    console.log("Mode toggle complete");
     // Update UI after toggle
     this.showAllModes();
   }
@@ -165,13 +176,13 @@ export class FO76AutomationHandler
   }
 
   private startFO76Automation() {
-    console.log('Starting FO76 automation');
+    console.log("Starting FO76 automation");
     this.startMkbHandler();
     this.showActivationMessage();
   }
 
   private stopFO76Automation() {
-    console.log('Stopping FO76 automation');
+    console.log("Stopping FO76 automation");
     this.automationManager.stopAllModes();
     this.stopMkbHandler();
     this.showDeactivationMessage();
@@ -215,7 +226,10 @@ export class FO76AutomationHandler
    * @param mode The automation mode to set the initialization action for
    * @param initAction The action to run when the mode starts
    */
-  setModeInitAction(mode: FO76AutomationModes, initAction: () => Promise<void>): void {
+  setModeInitAction(
+    mode: FO76AutomationModes,
+    initAction: () => Promise<void>
+  ): void {
     this.automationManager.setModeInitAction(mode, initAction);
   }
 
@@ -227,27 +241,29 @@ export class FO76AutomationHandler
    * @param delayBetweenPresses Delay between button presses in ms
    */
   setModeButtonSequence(
-    mode: FO76AutomationModes, 
-    buttonSequence: Array<{button: number, duration: number}>,
+    mode: FO76AutomationModes,
+    buttonSequence: Array<{ button: number; duration: number }>,
     delayBetweenPresses: number = 300
   ): void {
     const initAction = async () => {
       console.log(`Running button sequence for ${mode} mode`);
-      for (const {button, duration} of buttonSequence) {
+      for (const { button, duration } of buttonSequence) {
         // Press the button down
         await this.pressButton(button, true);
-        
+
         // Wait for the specified duration
-        await new Promise(resolve => setTimeout(resolve, duration));
-        
+        await new Promise((resolve) => setTimeout(resolve, duration));
+
         // Release the button
         await this.pressButton(button, false);
-        
+
         // Wait before the next button press
-        await new Promise(resolve => setTimeout(resolve, delayBetweenPresses));
+        await new Promise((resolve) =>
+          setTimeout(resolve, delayBetweenPresses)
+        );
       }
     };
-    
+
     this.setModeInitAction(mode, initAction);
   }
 
