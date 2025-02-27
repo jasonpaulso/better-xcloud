@@ -102,7 +102,7 @@ export class AutomationManager {
       },
     });
 
-    this.modes.set(FO76AutomationModes.RELOAD, {
+    this.modes.set(FO76AutomationModes.REFRESH, {
       isRunning: false,
       actionInterval: this.reloadActionInterval,
       pauseDuration: this.reloadPauseDuration,
@@ -132,6 +132,17 @@ export class AutomationManager {
           GamepadKey.RS_LEFT,
           2000
         );
+      },
+    });
+    this.modes.set(FO76AutomationModes.REFRESH, {
+      isRunning: false,
+      actionInterval: this.reloadActionInterval,
+      pauseDuration: this.reloadPauseDuration,
+      action: async () => {
+        window.location.reload();
+      },
+      initAction: async () => {
+        console.log("Initializing RELOAD mode");
       },
     });
   }

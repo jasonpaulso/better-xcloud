@@ -139,7 +139,7 @@ export class AutomationUIManager {
     });
 
     countdownElement.appendChild(toastIcon);
-    if (mode !== FO76AutomationModes.RELOAD) {
+    if (mode !== FO76AutomationModes.REFRESH) {
       countdownElement.appendChild(toastText);
     }
 
@@ -242,7 +242,7 @@ export class AutomationUIManager {
         return BxIcon.CROSSHAIRS;
       case FO76AutomationModes.INTERACT:
         return BxIcon.TOUCH;
-      case FO76AutomationModes.RELOAD:
+      case FO76AutomationModes.REFRESH:
         return BxIcon.REFRESH;
       case FO76AutomationModes.RAPID_FIRE_AND_ROTATE:
         return BxIcon.PISTOL;
