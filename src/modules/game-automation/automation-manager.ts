@@ -28,7 +28,9 @@ export class AutomationManager {
     private vatsPauseDuration: number,
     private interactActionInterval: number,
     private reloadActionInterval: number,
-    private reloadPauseDuration: number
+    private reloadPauseDuration: number,
+    private rapidFireAndRotateActionInterval: number,
+    private rapidFireAndRotatePauseDuration: number
   ) {
     this.buttonHandler = new ButtonPressHandler(pressButton);
     this.loopManager = new LoopManager();
@@ -109,6 +111,27 @@ export class AutomationManager {
       },
       initAction: async () => {
         console.log("Initializing RELOAD mode");
+      },
+    });
+
+    this.modes.set(FO76AutomationModes.RAPID_FIRE_AND_ROTATE, {
+      isRunning: false,
+      actionInterval: this.rapidFireAndRotateActionInterval,
+      pauseDuration: this.rapidFireAndRotatePauseDuration,
+      action: async () => {
+        await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RT, 100);
+        await TimingUtils.delay(500);
+        await this.buttonHandler.pressButtonWithRandomDelay(GamepadKey.RT, 100);
+        await TimingUtils.delay(500);
+        await this.buttonHandler.pressButtonWithRandomDelay(
+          GamepadKey.RS_RIGHT,
+          2000
+        );
+        await TimingUtils.delay(500);
+        await this.buttonHandler.pressButtonWithRandomDelay(
+          GamepadKey.RS_LEFT,
+          2000
+        );
       },
     });
   }

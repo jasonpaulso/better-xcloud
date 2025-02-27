@@ -54,6 +54,9 @@ import iconCrosshairs from "@assets/svg/crosshairs.svg" with { type: "text" };
 // Touch
 import iconTouch from "@assets/svg/touch.svg" with { type: "text" };
 
+// Pistol
+import iconPistol from "@assets/svg/pistol.svg" with { type: "text" };
+
 export const BxIcon = {
     BETTER_XCLOUD: iconBetterXcloud,
     TRUE_ACHIEVEMENTS: iconTrueAchievements,
@@ -82,6 +85,7 @@ export const BxIcon = {
     PIVOT: iconPivot,
     CROSSHAIRS: iconCrosshairs,
     TOUCH: iconTouch,
+    PISTOL: iconPistol,
     // Game Bar
     CARET_LEFT: iconCaretLeft,
     CARET_RIGHT: iconCaretRight,

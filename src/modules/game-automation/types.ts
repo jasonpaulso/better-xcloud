@@ -8,6 +8,7 @@ export enum FO76AutomationModes {
   VATS = "vats",
   INTERACT = "interact",
   RELOAD = "reload",
+  RAPID_FIRE_AND_ROTATE = "rapid-fire-and-rotate",
 }
 
 /**

@@ -70,7 +70,9 @@ export class FO76AutomationHandler
     readonly VATS_PAUSE_DURATION: number = 2000,
     readonly INTERACT_ACTION_INTERVAL: number = 50,
     readonly RELOAD_ACTION_INTERVAL: number = 1000,
-    readonly RELOAD_PAUSE_DURATION: number = 1000
+    readonly RELOAD_PAUSE_DURATION: number = 1000,
+    readonly RAPID_FIRE_AND_ROTATE_ACTION_INTERVAL: number = 1000,
+    readonly RAPID_FIRE_AND_ROTATE_PAUSE_DURATION: number = 1000
   ) {
     console.log(
       "Initializing FO76AutomationHandler with pressButton:",
@@ -90,7 +92,9 @@ export class FO76AutomationHandler
       VATS_PAUSE_DURATION,
       INTERACT_ACTION_INTERVAL,
       RELOAD_ACTION_INTERVAL,
-      RELOAD_PAUSE_DURATION
+      RELOAD_PAUSE_DURATION,
+      RAPID_FIRE_AND_ROTATE_ACTION_INTERVAL,
+      RAPID_FIRE_AND_ROTATE_PAUSE_DURATION
     );
     this.automationManager.subscribe(this);
     this.uiManager = new AutomationUIManager();

@@ -244,6 +244,8 @@ export class AutomationUIManager {
         return BxIcon.TOUCH;
       case FO76AutomationModes.RELOAD:
         return BxIcon.REFRESH;
+      case FO76AutomationModes.RAPID_FIRE_AND_ROTATE:
+        return BxIcon.PISTOL;
       default:
         return "";
     }
