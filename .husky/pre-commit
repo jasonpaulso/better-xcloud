@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run SVG validator
+echo "Running SVG validator..."
+node scripts/svg-validator.js 
