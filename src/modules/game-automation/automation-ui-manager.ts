@@ -84,19 +84,12 @@ export class AutomationUIManager {
       mainControl.appendChild(toastIcon);
 
       this.container.appendChild(mainControl);
-
-      const divider = this.createDivider();
-
-      this.container.appendChild(divider);
     }
 
     const modesArray = Array.from(modes.entries());
     for (let i = 0; i < modesArray.length; i++) {
       const [mode, config] = modesArray[i];
       this.createModeElement(mode, config, onToggle);
-      if (i < modesArray.length - 1) {
-        this.container.appendChild(this.createDivider());
-      }
     }
 
     this.showToast();
@@ -230,17 +223,6 @@ export class AutomationUIManager {
     const modeLabel = document.createElement("div");
 
     return { toastIcon: iconContainer, modeLabel, toastText };
-  }
-
-  private createDivider(): HTMLElement {
-    const divider = document.createElement("div");
-    divider.style.display = "inline-block";
-    divider.style.height = "24px";
-    divider.style.width = "2px";
-    divider.style.backgroundColor = "#fff";
-    divider.style.borderRadius = "4px";
-
-    return divider;
   }
 
   /**
