@@ -23,6 +23,8 @@ export class FocusDetector {
   private currentFocusState: boolean = true;
   private forceAlwaysFocused: boolean = false;
   private originalPauseMethod: any = null;
+  private originalBlurHandler: any = null;
+  private blurHandlerPatched: boolean = false;
 
   /**
    * Get the singleton instance of FocusDetector
@@ -120,7 +122,62 @@ export class FocusDetector {
     // Listen for stream playback manager initialization
     window.addEventListener(BxEvent.STREAM_STARTED, () => {
       this.patchStreamPlaybackManager();
+      this.patchWindowBlur();
     });
+  }
+
+  /**
+   * Patch the window blur event to prevent the default behavior
+   */
+  private patchWindowBlur(): void {
+    if (this.blurHandlerPatched) {
+      return;
+    }
+
+    try {
+      // Save original addEventListener
+      const originalAddEventListener = window.addEventListener;
+
+      // Override addEventListener to intercept blur events
+      window.addEventListener = function (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+      ) {
+        if (type === "blur") {
+          const focusDetector = FocusDetector.getInstance();
+          if (focusDetector.isForceAlwaysFocused()) {
+            BxLogger.info(LOG_TAG, "Intercepted blur event listener");
+            // Don't add the blur event listener if we're forcing focus
+            return;
+          }
+        }
+
+        // Call original method for other events
+        return originalAddEventListener.call(this, type, listener, options);
+      };
+
+      // Also try to remove existing blur handlers
+      const originalDispatchEvent = window.dispatchEvent;
+      window.dispatchEvent = function (event: Event) {
+        if (event.type === "blur") {
+          const focusDetector = FocusDetector.getInstance();
+          if (focusDetector.isForceAlwaysFocused()) {
+            BxLogger.info(LOG_TAG, "Intercepted blur event dispatch");
+            // Don't dispatch blur events if we're forcing focus
+            return true;
+          }
+        }
+
+        // Call original method for other events
+        return originalDispatchEvent.call(this, event);
+      };
+
+      this.blurHandlerPatched = true;
+      BxLogger.info(LOG_TAG, "Successfully patched window blur handling");
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to patch window blur handling:", e);
+    }
   }
 
   /**
@@ -163,6 +220,21 @@ export class FocusDetector {
             LOG_TAG,
             "Successfully patched StreamPlaybackManager.pause"
           );
+        }
+
+        // Also try to patch the input manager directly
+        const inputManager = (window as any).BX_EXPOSED.inputManager;
+        if (inputManager) {
+          const originalPause = inputManager.pause;
+          inputManager.pause = () => {
+            if (this.forceAlwaysFocused) {
+              BxLogger.info(LOG_TAG, "Preventing input manager pause");
+              return;
+            }
+            return originalPause.call(inputManager);
+          };
+
+          BxLogger.info(LOG_TAG, "Successfully patched InputManager.pause");
         }
       } catch (e) {
         BxLogger.error(LOG_TAG, "Failed to patch StreamPlaybackManager:", e);
@@ -232,6 +304,13 @@ export class FocusDetector {
   }
 
   /**
+   * Check if we're forcing the focus state
+   */
+  public isForceAlwaysFocused(): boolean {
+    return this.forceAlwaysFocused;
+  }
+
+  /**
    * Force the focus state to always be true, regardless of actual focus
    * This is useful for automation that needs to continue even when the game is not focused
    * @param force Whether to force the focus state to always be true
@@ -241,9 +320,10 @@ export class FocusDetector {
       this.forceAlwaysFocused = force;
       BxLogger.info(LOG_TAG, "Force always focused set to:", force);
 
-      // If we're enabling force focus, patch the StreamPlaybackManager
+      // If we're enabling force focus, patch the StreamPlaybackManager and window blur
       if (force) {
         this.patchStreamPlaybackManager();
+        this.patchWindowBlur();
       }
 
       // Update the focus state immediately
