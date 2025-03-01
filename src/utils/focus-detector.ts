@@ -22,6 +22,7 @@ export class FocusDetector {
   private xcloudFocused: boolean = true;
   private currentFocusState: boolean = true;
   private forceAlwaysFocused: boolean = false;
+  private originalPauseMethod: any = null;
 
   /**
    * Get the singleton instance of FocusDetector
@@ -115,6 +116,58 @@ export class FocusDetector {
         }
       });
     });
+
+    // Listen for stream playback manager initialization
+    window.addEventListener(BxEvent.STREAM_STARTED, () => {
+      this.patchStreamPlaybackManager();
+    });
+  }
+
+  /**
+   * Patch the StreamPlaybackManager to prevent pausing when we want to force focus
+   */
+  private patchStreamPlaybackManager(): void {
+    // Wait a bit for the StreamPlaybackManager to be fully initialized
+    setTimeout(() => {
+      try {
+        const streamPlaybackManager = (window as any).BX_EXPOSED
+          .streamPlaybackManager;
+        if (!streamPlaybackManager) {
+          BxLogger.warning(LOG_TAG, "StreamPlaybackManager not found");
+          return;
+        }
+
+        // Save the original pause method
+        if (!this.originalPauseMethod) {
+          this.originalPauseMethod = streamPlaybackManager.pause;
+
+          // Override the pause method
+          streamPlaybackManager.pause = (reason: string) => {
+            // If we're forcing focus and the reason is focus-related, prevent pausing
+            if (
+              this.forceAlwaysFocused &&
+              reason === "Renderer.FocusState:FocusChanged"
+            ) {
+              BxLogger.info(
+                LOG_TAG,
+                "Preventing stream pause due to focus change"
+              );
+              return false;
+            }
+
+            // Otherwise, call the original method
+            return this.originalPauseMethod.call(streamPlaybackManager, reason);
+          };
+
+          BxLogger.info(
+            LOG_TAG,
+            "Successfully patched StreamPlaybackManager.pause"
+          );
+        }
+      } catch (e) {
+        BxLogger.error(LOG_TAG, "Failed to patch StreamPlaybackManager:", e);
+      }
+    }, 1000);
   }
 
   /**
@@ -187,6 +240,11 @@ export class FocusDetector {
     if (this.forceAlwaysFocused !== force) {
       this.forceAlwaysFocused = force;
       BxLogger.info(LOG_TAG, "Force always focused set to:", force);
+
+      // If we're enabling force focus, patch the StreamPlaybackManager
+      if (force) {
+        this.patchStreamPlaybackManager();
+      }
 
       // Update the focus state immediately
       this.updateFocusState();
