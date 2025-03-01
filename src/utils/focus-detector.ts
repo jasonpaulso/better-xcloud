@@ -25,6 +25,7 @@ export class FocusDetector {
   private originalPauseMethod: any = null;
   private originalBlurHandler: any = null;
   private blurHandlerPatched: boolean = false;
+  private dataChannelsPatched: Set<RTCDataChannel> = new Set();
 
   /**
    * Get the singleton instance of FocusDetector
@@ -72,6 +73,9 @@ export class FocusDetector {
 
     // XCloud platform focus
     this.monitorXCloudFocus();
+
+    // Patch data channels to intercept constrain messages
+    this.patchDataChannels();
   }
 
   /**
@@ -123,7 +127,111 @@ export class FocusDetector {
     window.addEventListener(BxEvent.STREAM_STARTED, () => {
       this.patchStreamPlaybackManager();
       this.patchWindowBlur();
+      this.patchStreamClient();
     });
+  }
+
+  /**
+   * Patch data channels to intercept constrain messages
+   */
+  private patchDataChannels(): void {
+    window.addEventListener(BxEvent.DATA_CHANNEL_CREATED, (e: Event) => {
+      const dataChannel = (e as any).dataChannel;
+      if (!dataChannel || this.dataChannelsPatched.has(dataChannel)) {
+        return;
+      }
+
+      // Save the original send method
+      const originalSend = dataChannel.send;
+
+      // Override the send method
+      dataChannel.send = (message: string) => {
+        // Only intercept if we're forcing focus
+        if (this.forceAlwaysFocused) {
+          try {
+            // Check if it's a string message
+            if (typeof message === "string") {
+              // Parse the message to check if it's a constrain message
+              const parsedMessage = JSON.parse(message);
+
+              if (
+                parsedMessage.target === "/streaming/title/constrain" &&
+                JSON.parse(parsedMessage.content).constrain === true
+              ) {
+                BxLogger.info(LOG_TAG, "Blocking constrain message:", message);
+                // Don't forward the message
+                return;
+              }
+            }
+          } catch (e) {
+            // Not JSON or other error, just let it pass through
+          }
+        }
+
+        // Call the original send method for other messages
+        return originalSend.call(dataChannel, message);
+      };
+
+      // Mark this channel as patched
+      this.dataChannelsPatched.add(dataChannel);
+      BxLogger.info(LOG_TAG, "Successfully patched data channel send method");
+    });
+  }
+
+  /**
+   * Attempt to patch the StreamClient directly to prevent constrain messages
+   */
+  private patchStreamClient(): void {
+    setTimeout(() => {
+      try {
+        // Try to find the StreamClient in the global scope
+        const streamClient = (window as any).BX_EXPOSED?.streamClient;
+        if (!streamClient) {
+          BxLogger.warning(LOG_TAG, "StreamClient not found");
+          return;
+        }
+
+        // Look for methods that might send constrain messages
+        if (streamClient.sendMessage) {
+          const originalSendMessage = streamClient.sendMessage;
+          streamClient.sendMessage = (
+            target: string,
+            content: any,
+            ...args: any[]
+          ) => {
+            // Check if this is a constrain message
+            if (
+              this.forceAlwaysFocused &&
+              target === "/streaming/title/constrain" &&
+              content?.constrain === true
+            ) {
+              BxLogger.info(
+                LOG_TAG,
+                "Blocking StreamClient constrain message:",
+                content
+              );
+              // Return a fake success response
+              return Promise.resolve({ success: true });
+            }
+
+            // Call the original method for other messages
+            return originalSendMessage.call(
+              streamClient,
+              target,
+              content,
+              ...args
+            );
+          };
+
+          BxLogger.info(
+            LOG_TAG,
+            "Successfully patched StreamClient.sendMessage"
+          );
+        }
+      } catch (e) {
+        BxLogger.error(LOG_TAG, "Failed to patch StreamClient:", e);
+      }
+    }, 1000);
   }
 
   /**
@@ -188,7 +296,7 @@ export class FocusDetector {
     setTimeout(() => {
       try {
         const streamPlaybackManager = (window as any).BX_EXPOSED
-          .streamPlaybackManager;
+          ?.streamPlaybackManager;
         if (!streamPlaybackManager) {
           BxLogger.warning(LOG_TAG, "StreamPlaybackManager not found");
           return;
@@ -203,11 +311,14 @@ export class FocusDetector {
             // If we're forcing focus and the reason is focus-related, prevent pausing
             if (
               this.forceAlwaysFocused &&
-              reason === "Renderer.FocusState:FocusChanged"
+              (reason === "Renderer.FocusState:FocusChanged" ||
+                reason === "InputManager.Pause" ||
+                reason.includes("Focus"))
             ) {
               BxLogger.info(
                 LOG_TAG,
-                "Preventing stream pause due to focus change"
+                "Preventing stream pause due to focus change, reason:",
+                reason
               );
               return false;
             }
@@ -223,7 +334,7 @@ export class FocusDetector {
         }
 
         // Also try to patch the input manager directly
-        const inputManager = (window as any).BX_EXPOSED.inputManager;
+        const inputManager = (window as any).BX_EXPOSED?.inputManager;
         if (inputManager) {
           const originalPause = inputManager.pause;
           inputManager.pause = () => {
@@ -234,7 +345,17 @@ export class FocusDetector {
             return originalPause.call(inputManager);
           };
 
-          BxLogger.info(LOG_TAG, "Successfully patched InputManager.pause");
+          // Also patch the resume method to ensure it's called
+          const originalResume = inputManager.resume;
+          inputManager.resume = () => {
+            if (this.forceAlwaysFocused) {
+              BxLogger.info(LOG_TAG, "Forcing input manager resume");
+              return originalResume.call(inputManager);
+            }
+            return originalResume.call(inputManager);
+          };
+
+          BxLogger.info(LOG_TAG, "Successfully patched InputManager methods");
         }
       } catch (e) {
         BxLogger.error(LOG_TAG, "Failed to patch StreamPlaybackManager:", e);
@@ -324,6 +445,18 @@ export class FocusDetector {
       if (force) {
         this.patchStreamPlaybackManager();
         this.patchWindowBlur();
+        this.patchStreamClient();
+
+        // Also try to force resume the input manager if it exists
+        try {
+          const inputManager = (window as any).BX_EXPOSED?.inputManager;
+          if (inputManager && inputManager.resume) {
+            inputManager.resume();
+            BxLogger.info(LOG_TAG, "Forced input manager resume");
+          }
+        } catch (e) {
+          BxLogger.error(LOG_TAG, "Failed to force resume input manager:", e);
+        }
       }
 
       // Update the focus state immediately
