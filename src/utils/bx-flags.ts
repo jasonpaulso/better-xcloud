@@ -30,10 +30,10 @@ export type BxFlags = {
 
 // Setup flags
 const DEFAULT_FLAGS: BxFlags = {
-  Debug: false,
+  Debug: true,
 
   CheckForUpdate: true,
-  EnableXcloudLogging: false,
+  EnableXcloudLogging: true,
   SafariWorkaround: true,
 
   ForceNativeMkbTitles: [],
