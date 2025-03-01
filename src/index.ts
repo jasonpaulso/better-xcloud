@@ -42,6 +42,7 @@ import { XboxApi } from "./utils/xbox-api";
 import { StreamStatsCollector } from "./utils/stream-stats-collector";
 import { RootDialogObserver } from "./utils/root-dialog-observer";
 import { FO76AutomationHandler } from '@/modules/game-automation/game-automation-handler';
+import { FocusDetector } from '@/utils/focus-detector';
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
   const nativePushState = window.history['pushState']
@@ -365,51 +366,52 @@ function main() {
     disableAdobeAudienceManager()
   }
 
-    RootDialogObserver.waitForRootDialog();
+  // Initialize focus detector
+  FocusDetector.getInstance();
 
-    // Setup UI
-    addCss();
+  RootDialogObserver.waitForRootDialog();
 
-    GuideMenu.getInstance().addEventListeners();
-    StreamStatsCollector.setupEvents();
-    StreamBadges.setupEvents();
-    StreamStats.setupEvents();
+  // Setup UI
+  addCss();
 
-    if (isFullVersion()) {
-        updatePollingRate();
-        STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
+  GuideMenu.getInstance().addEventListeners();
+  StreamStatsCollector.setupEvents();
+  StreamBadges.setupEvents();
+  StreamStats.setupEvents();
 
-    VibrationManager.initialSetup()
-
-    // Check for Update
-    BX_FLAGS.CheckForUpdate && checkForUpdate()
-
-    Patcher.init()
-    disablePwa()
-
-    // Preload Remote Play
-    if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
-      RemotePlayManager.detect()
-    }
-
-    if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
-      TouchController.setup()
-    }
-
-    // Start PointerProviderServer
-    if (getPref(PrefKey.MKB_ENABLED) && AppInterface) {
-      STATES.pointerServerPort = AppInterface.startPointerServer() || 9269
-      BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString())
-    }
-
-    // Show wait time in game card
-    getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup()
-
-    EmulatedMkbHandler.setupEvents()
-    
-
+  if (isFullVersion()) {
+    updatePollingRate();
+    STATES.userAgent.capabilities.touch && TouchController.updateCustomList();
   }
 
+  VibrationManager.initialSetup()
+
+  // Check for Update
+  BX_FLAGS.CheckForUpdate && checkForUpdate()
+
+  Patcher.init()
+  disablePwa()
+
+  // Preload Remote Play
+  if (getPref(PrefKey.REMOTE_PLAY_ENABLED)) {
+    RemotePlayManager.detect()
+  }
+
+  if (getPref(PrefKey.STREAM_TOUCH_CONTROLLER) === StreamTouchController.ALL) {
+    TouchController.setup()
+  }
+
+  // Start PointerProviderServer
+  if (getPref(PrefKey.MKB_ENABLED) && AppInterface) {
+    STATES.pointerServerPort = AppInterface.startPointerServer() || 9269
+    BxLogger.info('startPointerServer', 'Port', STATES.pointerServerPort.toString())
+  }
+
+  // Show wait time in game card
+  getPref(PrefKey.UI_GAME_CARD_SHOW_WAIT_TIME) && GameTile.setup()
+
+  EmulatedMkbHandler.setupEvents()
+  
   // Show a toast when connecting/disconecting controller
   if (getPref(PrefKey.CONTROLLER_SHOW_CONNECTION_STATUS)) {
     window.addEventListener('gamepadconnected', (e) => showGamepadToast(e.gamepad))

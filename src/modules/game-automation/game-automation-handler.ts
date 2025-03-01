@@ -11,8 +11,10 @@ import type {
 } from "./types";
 import type { IEventHandler } from "./event-manager";
 import { EventManager } from "./event-manager";
-
 import { AutomationUIManager } from "./automation-ui-manager";
+import { FocusDetector } from "@/utils/focus-detector";
+import { BxEvent } from "@/utils/bx-event";
+import { BxLogger } from "@/utils/bx-logger";
 
 export const FO76_AUTOMATION_EVENTS = {
   TOGGLE_AUTOMATION: "automation-toggle",
@@ -125,8 +127,12 @@ export class FO76AutomationHandler
       "FO76AutomationHandler",
       "Initializing game automation handler"
     );
-    this.registerEventListeners();
 
+    // Initialize focus detector
+    const focusDetector = FocusDetector.getInstance();
+    this.windowFocused = focusDetector.isFocused();
+
+    this.registerEventListeners();
     this.showAllModes();
   };
 
@@ -310,6 +316,12 @@ export class FO76AutomationHandler
     this.stopFO76Automation();
     this.automationManager.unsubscribe(this);
     this.uiManager.cleanup();
+
+    // Remove focus state change listener
+    window.removeEventListener(
+      BxEvent.FOCUS_STATE_CHANGED,
+      this.handleFocusStateChange
+    );
   }
 
   // Event handlers
@@ -379,6 +391,27 @@ export class FO76AutomationHandler
     }
   };
 
+  /**
+   * Handle focus state changes from the FocusDetector
+   */
+  private handleFocusStateChange = (e: Event) => {
+    const focused = (e as any).focused;
+    BxLogger.info("FO76AutomationHandler", "Focus state changed:", focused);
+
+    if (focused) {
+      this.windowFocused = true;
+      window.navigator.getGamepads = () => this.mkbHandler.patchedGetGamepads();
+      const prefVolume = SoundShortcut.getPrefVolume();
+      if (prefVolume > 0) {
+        SoundShortcut.unmute();
+      }
+    } else {
+      this.windowFocused = false;
+      window.navigator.getGamepads = () => this.mkbHandler.getVirtualGamepads();
+      SoundShortcut.mute(true);
+    }
+  };
+
   public handleStreamStopped = () => {
     this.setEnabled(false);
   };
@@ -391,6 +424,12 @@ export class FO76AutomationHandler
 
   private registerEventListeners(): void {
     EventManager.registerEventListeners(this);
+
+    // Listen for focus state changes from the FocusDetector
+    window.addEventListener(
+      BxEvent.FOCUS_STATE_CHANGED,
+      this.handleFocusStateChange
+    );
   }
 }
 
