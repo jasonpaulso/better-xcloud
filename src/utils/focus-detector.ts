@@ -26,6 +26,8 @@ export class FocusDetector {
   private originalBlurHandler: any = null;
   private blurHandlerPatched: boolean = false;
   private dataChannelsPatched: Set<RTCDataChannel> = new Set();
+  private inputManagerPatched: boolean = false;
+  private gameStreamPatched: boolean = false;
 
   /**
    * Get the singleton instance of FocusDetector
@@ -76,6 +78,23 @@ export class FocusDetector {
 
     // Patch data channels to intercept constrain messages
     this.patchDataChannels();
+
+    // Apply patches immediately and periodically
+    this.applyAllPatches();
+    setInterval(() => this.applyAllPatches(), 2000);
+  }
+
+  /**
+   * Apply all patches to ensure focus is maintained
+   */
+  private applyAllPatches(): void {
+    if (this.forceAlwaysFocused) {
+      this.patchStreamPlaybackManager();
+      this.patchWindowBlur();
+      this.patchStreamClient();
+      this.patchInputManager();
+      this.patchGameStream();
+    }
   }
 
   /**
@@ -125,9 +144,7 @@ export class FocusDetector {
 
     // Listen for stream playback manager initialization
     window.addEventListener(BxEvent.STREAM_STARTED, () => {
-      this.patchStreamPlaybackManager();
-      this.patchWindowBlur();
-      this.patchStreamClient();
+      this.applyAllPatches();
     });
   }
 
@@ -182,56 +199,183 @@ export class FocusDetector {
    * Attempt to patch the StreamClient directly to prevent constrain messages
    */
   private patchStreamClient(): void {
-    setTimeout(() => {
-      try {
-        // Try to find the StreamClient in the global scope
-        const streamClient = (window as any).BX_EXPOSED?.streamClient;
-        if (!streamClient) {
-          BxLogger.warning(LOG_TAG, "StreamClient not found");
-          return;
-        }
-
-        // Look for methods that might send constrain messages
-        if (streamClient.sendMessage) {
-          const originalSendMessage = streamClient.sendMessage;
-          streamClient.sendMessage = (
-            target: string,
-            content: any,
-            ...args: any[]
-          ) => {
-            // Check if this is a constrain message
-            if (
-              this.forceAlwaysFocused &&
-              target === "/streaming/title/constrain" &&
-              content?.constrain === true
-            ) {
-              BxLogger.info(
-                LOG_TAG,
-                "Blocking StreamClient constrain message:",
-                content
-              );
-              // Return a fake success response
-              return Promise.resolve({ success: true });
-            }
-
-            // Call the original method for other messages
-            return originalSendMessage.call(
-              streamClient,
-              target,
-              content,
-              ...args
-            );
-          };
-
-          BxLogger.info(
-            LOG_TAG,
-            "Successfully patched StreamClient.sendMessage"
-          );
-        }
-      } catch (e) {
-        BxLogger.error(LOG_TAG, "Failed to patch StreamClient:", e);
+    try {
+      // Try to find the StreamClient in the global scope
+      const streamClient = (window as any).BX_EXPOSED?.streamClient;
+      if (!streamClient) {
+        BxLogger.warning(LOG_TAG, "StreamClient not found");
+        return;
       }
-    }, 1000);
+
+      // Look for methods that might send constrain messages
+      if (streamClient.sendMessage) {
+        const originalSendMessage = streamClient.sendMessage;
+        streamClient.sendMessage = (
+          target: string,
+          content: any,
+          ...args: any[]
+        ) => {
+          // Check if this is a constrain message
+          if (
+            this.forceAlwaysFocused &&
+            target === "/streaming/title/constrain" &&
+            content?.constrain === true
+          ) {
+            BxLogger.info(
+              LOG_TAG,
+              "Blocking StreamClient constrain message:",
+              content
+            );
+            // Return a fake success response
+            return Promise.resolve({ success: true });
+          }
+
+          // Call the original method for other messages
+          return originalSendMessage.call(
+            streamClient,
+            target,
+            content,
+            ...args
+          );
+        };
+
+        BxLogger.info(LOG_TAG, "Successfully patched StreamClient.sendMessage");
+      }
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to patch StreamClient:", e);
+    }
+  }
+
+  /**
+   * Patch the GameStream object to prevent pausing
+   */
+  private patchGameStream(): void {
+    if (this.gameStreamPatched) {
+      return;
+    }
+
+    try {
+      // Find the GameStream object
+      const gameStream = (window as any).BX_EXPOSED?.gameStream;
+      if (!gameStream) {
+        BxLogger.warning(LOG_TAG, "GameStream not found");
+        return;
+      }
+
+      // Override the pause method
+      if (gameStream.pause) {
+        const originalPause = gameStream.pause;
+        gameStream.pause = (...args: any[]) => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Preventing GameStream pause");
+            return Promise.resolve();
+          }
+          return originalPause.apply(gameStream, args);
+        };
+      }
+
+      // Override the pauseStreamPlayback method if it exists
+      if (gameStream.pauseStreamPlayback) {
+        const originalPauseStreamPlayback = gameStream.pauseStreamPlayback;
+        gameStream.pauseStreamPlayback = (...args: any[]) => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Preventing GameStream pauseStreamPlayback");
+            return Promise.resolve();
+          }
+          return originalPauseStreamPlayback.apply(gameStream, args);
+        };
+      }
+
+      this.gameStreamPatched = true;
+      BxLogger.info(LOG_TAG, "Successfully patched GameStream methods");
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to patch GameStream:", e);
+    }
+  }
+
+  /**
+   * Patch the InputManager more aggressively
+   */
+  private patchInputManager(): void {
+    if (this.inputManagerPatched) {
+      return;
+    }
+
+    try {
+      // Find the InputManager
+      const inputManager = (window as any).BX_EXPOSED?.inputManager;
+      if (!inputManager) {
+        BxLogger.warning(LOG_TAG, "InputManager not found");
+        return;
+      }
+
+      // Override the pause method
+      if (inputManager.pause) {
+        const originalPause = inputManager.pause;
+        inputManager.pause = (...args: any[]) => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Preventing InputManager pause");
+            // Don't call the original method
+            return;
+          }
+          return originalPause.apply(inputManager, args);
+        };
+      }
+
+      // Force the input manager to resume if it's paused
+      if (inputManager.resume) {
+        const originalResume = inputManager.resume;
+
+        // Create a wrapper that ensures resume is called
+        inputManager.resume = (...args: any[]) => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Forcing InputManager resume");
+            return originalResume.apply(inputManager, args);
+          }
+          return originalResume.apply(inputManager, args);
+        };
+
+        // Force resume now if we're forcing focus
+        if (this.forceAlwaysFocused) {
+          inputManager.resume();
+        }
+      }
+
+      // Also try to find and patch the isPaused property or method
+      if (inputManager.hasOwnProperty("isPaused")) {
+        // If it's a property, override its getter
+        const descriptor = Object.getOwnPropertyDescriptor(
+          inputManager,
+          "isPaused"
+        );
+        if (descriptor && descriptor.get) {
+          Object.defineProperty(inputManager, "isPaused", {
+            get: function () {
+              const focusDetector = FocusDetector.getInstance();
+              if (focusDetector.isForceAlwaysFocused()) {
+                return false;
+              }
+              // Only call the original getter if it exists
+              return descriptor.get && descriptor.get.call(inputManager);
+            },
+          });
+        } else if (typeof inputManager.isPaused === "function") {
+          // If it's a method, override it
+          const originalIsPaused = inputManager.isPaused;
+          inputManager.isPaused = (...args: any[]) => {
+            if (this.forceAlwaysFocused) {
+              return false;
+            }
+            return originalIsPaused.apply(inputManager, args);
+          };
+        }
+      }
+
+      this.inputManagerPatched = true;
+      BxLogger.info(LOG_TAG, "Successfully patched InputManager");
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to patch InputManager:", e);
+    }
   }
 
   /**
@@ -281,6 +425,16 @@ export class FocusDetector {
         return originalDispatchEvent.call(this, event);
       };
 
+      // Also override document.hasFocus to always return true when forcing focus
+      const originalHasFocus = document.hasFocus;
+      document.hasFocus = function () {
+        const focusDetector = FocusDetector.getInstance();
+        if (focusDetector.isForceAlwaysFocused()) {
+          return true;
+        }
+        return originalHasFocus.call(document);
+      };
+
       this.blurHandlerPatched = true;
       BxLogger.info(LOG_TAG, "Successfully patched window blur handling");
     } catch (e) {
@@ -292,75 +446,95 @@ export class FocusDetector {
    * Patch the StreamPlaybackManager to prevent pausing when we want to force focus
    */
   private patchStreamPlaybackManager(): void {
-    // Wait a bit for the StreamPlaybackManager to be fully initialized
-    setTimeout(() => {
-      try {
-        const streamPlaybackManager = (window as any).BX_EXPOSED
-          ?.streamPlaybackManager;
-        if (!streamPlaybackManager) {
-          BxLogger.warning(LOG_TAG, "StreamPlaybackManager not found");
-          return;
-        }
+    try {
+      const streamPlaybackManager = (window as any).BX_EXPOSED
+        ?.streamPlaybackManager;
+      if (!streamPlaybackManager) {
+        BxLogger.warning(LOG_TAG, "StreamPlaybackManager not found");
+        return;
+      }
 
-        // Save the original pause method
-        if (!this.originalPauseMethod) {
-          this.originalPauseMethod = streamPlaybackManager.pause;
+      // Save the original pause method
+      if (!this.originalPauseMethod) {
+        this.originalPauseMethod = streamPlaybackManager.pause;
 
-          // Override the pause method
-          streamPlaybackManager.pause = (reason: string) => {
-            // If we're forcing focus and the reason is focus-related, prevent pausing
-            if (
-              this.forceAlwaysFocused &&
-              (reason === "Renderer.FocusState:FocusChanged" ||
-                reason === "InputManager.Pause" ||
-                reason.includes("Focus"))
-            ) {
-              BxLogger.info(
-                LOG_TAG,
-                "Preventing stream pause due to focus change, reason:",
-                reason
+        // Override the pause method
+        streamPlaybackManager.pause = (reason: string) => {
+          // If we're forcing focus and the reason is focus-related, prevent pausing
+          if (
+            this.forceAlwaysFocused &&
+            (reason === "Renderer.FocusState:FocusChanged" ||
+              reason === "InputManager.Pause" ||
+              reason.includes("Focus"))
+          ) {
+            BxLogger.info(
+              LOG_TAG,
+              "Preventing stream pause due to focus change, reason:",
+              reason
+            );
+            return false;
+          }
+
+          // Otherwise, call the original method
+          return this.originalPauseMethod.call(streamPlaybackManager, reason);
+        };
+
+        BxLogger.info(
+          LOG_TAG,
+          "Successfully patched StreamPlaybackManager.pause"
+        );
+      }
+
+      // Also try to override the isPaused property or method
+      if (streamPlaybackManager.hasOwnProperty("isPaused")) {
+        // If it's a property, override its getter
+        const descriptor = Object.getOwnPropertyDescriptor(
+          streamPlaybackManager,
+          "isPaused"
+        );
+        if (descriptor && descriptor.get) {
+          Object.defineProperty(streamPlaybackManager, "isPaused", {
+            get: function () {
+              const focusDetector = FocusDetector.getInstance();
+              if (focusDetector.isForceAlwaysFocused()) {
+                return false;
+              }
+              // Only call the original getter if it exists
+              return (
+                descriptor.get && descriptor.get.call(streamPlaybackManager)
               );
+            },
+          });
+        } else if (typeof streamPlaybackManager.isPaused === "function") {
+          // If it's a method, override it
+          const originalIsPaused = streamPlaybackManager.isPaused;
+          streamPlaybackManager.isPaused = (...args: any[]) => {
+            if (this.forceAlwaysFocused) {
               return false;
             }
-
-            // Otherwise, call the original method
-            return this.originalPauseMethod.call(streamPlaybackManager, reason);
+            return originalIsPaused.apply(streamPlaybackManager, args);
           };
-
-          BxLogger.info(
-            LOG_TAG,
-            "Successfully patched StreamPlaybackManager.pause"
-          );
         }
-
-        // Also try to patch the input manager directly
-        const inputManager = (window as any).BX_EXPOSED?.inputManager;
-        if (inputManager) {
-          const originalPause = inputManager.pause;
-          inputManager.pause = () => {
-            if (this.forceAlwaysFocused) {
-              BxLogger.info(LOG_TAG, "Preventing input manager pause");
-              return;
-            }
-            return originalPause.call(inputManager);
-          };
-
-          // Also patch the resume method to ensure it's called
-          const originalResume = inputManager.resume;
-          inputManager.resume = () => {
-            if (this.forceAlwaysFocused) {
-              BxLogger.info(LOG_TAG, "Forcing input manager resume");
-              return originalResume.call(inputManager);
-            }
-            return originalResume.call(inputManager);
-          };
-
-          BxLogger.info(LOG_TAG, "Successfully patched InputManager methods");
-        }
-      } catch (e) {
-        BxLogger.error(LOG_TAG, "Failed to patch StreamPlaybackManager:", e);
       }
-    }, 1000);
+
+      // If there's a resume method, make sure it's called when we force focus
+      if (streamPlaybackManager.resume) {
+        const originalResume = streamPlaybackManager.resume;
+        streamPlaybackManager.resume = (...args: any[]) => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Forcing StreamPlaybackManager resume");
+          }
+          return originalResume.apply(streamPlaybackManager, args);
+        };
+
+        // Force resume now if we're forcing focus
+        if (this.forceAlwaysFocused) {
+          streamPlaybackManager.resume();
+        }
+      }
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to patch StreamPlaybackManager:", e);
+    }
   }
 
   /**
@@ -441,22 +615,9 @@ export class FocusDetector {
       this.forceAlwaysFocused = force;
       BxLogger.info(LOG_TAG, "Force always focused set to:", force);
 
-      // If we're enabling force focus, patch the StreamPlaybackManager and window blur
+      // If we're enabling force focus, apply all patches
       if (force) {
-        this.patchStreamPlaybackManager();
-        this.patchWindowBlur();
-        this.patchStreamClient();
-
-        // Also try to force resume the input manager if it exists
-        try {
-          const inputManager = (window as any).BX_EXPOSED?.inputManager;
-          if (inputManager && inputManager.resume) {
-            inputManager.resume();
-            BxLogger.info(LOG_TAG, "Forced input manager resume");
-          }
-        } catch (e) {
-          BxLogger.error(LOG_TAG, "Failed to force resume input manager:", e);
-        }
+        this.applyAllPatches();
       }
 
       // Update the focus state immediately
