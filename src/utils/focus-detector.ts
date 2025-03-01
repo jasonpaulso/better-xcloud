@@ -28,6 +28,8 @@ export class FocusDetector {
   private dataChannelsPatched: Set<RTCDataChannel> = new Set();
   private inputManagerPatched: boolean = false;
   private gameStreamPatched: boolean = false;
+  private gamepadPollingPatched: boolean = false;
+  private originalStopGamepadPolling: any = null;
 
   /**
    * Get the singleton instance of FocusDetector
@@ -82,6 +84,55 @@ export class FocusDetector {
     // Apply patches immediately and periodically
     this.applyAllPatches();
     setInterval(() => this.applyAllPatches(), 2000);
+
+    // Expose BX_EXPOSED globally if it doesn't exist
+    this.ensureBxExposed();
+  }
+
+  /**
+   * Ensure BX_EXPOSED is available globally
+   */
+  private ensureBxExposed(): void {
+    if (!(window as any).BX_EXPOSED) {
+      (window as any).BX_EXPOSED = {};
+
+      // Try to find GameStreamingSDK
+      const gameStreamingSDK = this.findGameStreamingSDK();
+      if (gameStreamingSDK) {
+        (window as any).BX_EXPOSED.gameStreamingSDK = gameStreamingSDK;
+        BxLogger.info(LOG_TAG, "Exposed GameStreamingSDK globally");
+      }
+    }
+  }
+
+  /**
+   * Find the GameStreamingSDK object in the global scope
+   */
+  private findGameStreamingSDK(): any {
+    // Look for common properties that might contain the SDK
+    for (const prop of Object.getOwnPropertyNames(window)) {
+      try {
+        const obj = (window as any)[prop];
+        if (obj && typeof obj === "object") {
+          // Check if this object has GameStreamingSDK properties
+          if (
+            obj.Input ||
+            obj.StreamClient ||
+            obj.StreamSession ||
+            (obj.startGamepadPolling && obj.stopGamepadPolling)
+          ) {
+            BxLogger.info(
+              LOG_TAG,
+              "Found potential GameStreamingSDK at window." + prop
+            );
+            return obj;
+          }
+        }
+      } catch (e) {
+        // Ignore errors when accessing properties
+      }
+    }
+    return null;
   }
 
   /**
@@ -94,7 +145,178 @@ export class FocusDetector {
       this.patchStreamClient();
       this.patchInputManager();
       this.patchGameStream();
+      this.patchGamepadPolling();
+      this.patchGlobalObjects();
     }
+  }
+
+  /**
+   * Patch global objects that might be used for focus detection
+   */
+  private patchGlobalObjects(): void {
+    // Try to find and patch any objects in the global scope
+    const win = window as any;
+
+    // Look for GameStreamingSDK
+    if (win.GameStreamingSDK) {
+      this.patchGameStreamingSDK(win.GameStreamingSDK);
+    }
+
+    // Look for objects with Input property
+    for (const prop of Object.getOwnPropertyNames(window)) {
+      try {
+        const obj = win[prop];
+        if (obj && typeof obj === "object" && obj.Input) {
+          this.patchGameStreamingSDK(obj);
+        }
+      } catch (e) {
+        // Ignore errors when accessing properties
+      }
+    }
+  }
+
+  /**
+   * Patch the GameStreamingSDK object
+   */
+  private patchGameStreamingSDK(sdk: any): void {
+    if (!sdk) return;
+
+    // Patch Input manager if it exists
+    if (sdk.Input && sdk.Input.manager) {
+      const inputManager = sdk.Input.manager;
+
+      // Patch pause method
+      if (inputManager.pause) {
+        const originalPause = inputManager.pause;
+        inputManager.pause = () => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Preventing SDK Input manager pause");
+            return;
+          }
+          return originalPause.call(inputManager);
+        };
+      }
+
+      // Patch resume method
+      if (inputManager.resume) {
+        const originalResume = inputManager.resume;
+        inputManager.resume = () => {
+          if (this.forceAlwaysFocused) {
+            BxLogger.info(LOG_TAG, "Forcing SDK Input manager resume");
+          }
+          return originalResume.call(inputManager);
+        };
+      }
+
+      BxLogger.info(
+        LOG_TAG,
+        "Successfully patched GameStreamingSDK.Input.manager"
+      );
+    }
+
+    // Patch gamepad polling methods
+    if (sdk.startGamepadPolling && sdk.stopGamepadPolling) {
+      const originalStopPolling = sdk.stopGamepadPolling;
+      sdk.stopGamepadPolling = () => {
+        if (this.forceAlwaysFocused) {
+          BxLogger.info(LOG_TAG, "Preventing SDK stopGamepadPolling");
+          return;
+        }
+        return originalStopPolling.call(sdk);
+      };
+
+      BxLogger.info(
+        LOG_TAG,
+        "Successfully patched GameStreamingSDK gamepad polling"
+      );
+    }
+  }
+
+  /**
+   * Patch the gamepad polling mechanism to prevent it from stopping
+   */
+  private patchGamepadPolling(): void {
+    if (this.gamepadPollingPatched) {
+      return;
+    }
+
+    try {
+      // Try to find the GameStreamingSDK object
+      const gameStreamingSDK =
+        (window as any).GameStreamingSDK ||
+        (window as any).BX_EXPOSED?.gameStreamingSDK;
+
+      if (!gameStreamingSDK) {
+        // Try to find it by looking for specific methods
+        for (const prop of Object.getOwnPropertyNames(window)) {
+          try {
+            const obj = (window as any)[prop];
+            if (
+              obj &&
+              typeof obj === "object" &&
+              typeof obj.startGamepadPolling === "function" &&
+              typeof obj.stopGamepadPolling === "function"
+            ) {
+              // Found the object with gamepad polling methods
+              this.patchGamepadPollingObject(obj);
+              this.gamepadPollingPatched = true;
+              BxLogger.info(
+                LOG_TAG,
+                "Found and patched gamepad polling at window." + prop
+              );
+              break;
+            }
+          } catch (e) {
+            // Ignore errors when accessing properties
+          }
+        }
+
+        if (!this.gamepadPollingPatched) {
+          BxLogger.warning(LOG_TAG, "Could not find gamepad polling methods");
+        }
+        return;
+      }
+
+      this.patchGamepadPollingObject(gameStreamingSDK);
+      this.gamepadPollingPatched = true;
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to patch gamepad polling:", e);
+    }
+  }
+
+  /**
+   * Patch a specific object that has gamepad polling methods
+   */
+  private patchGamepadPollingObject(obj: any): void {
+    if (!obj) return;
+
+    // Save the original stopGamepadPolling method
+    this.originalStopGamepadPolling = obj.stopGamepadPolling;
+
+    // Override the stopGamepadPolling method
+    obj.stopGamepadPolling = () => {
+      if (this.forceAlwaysFocused) {
+        BxLogger.info(LOG_TAG, "Preventing stopGamepadPolling");
+        return;
+      }
+
+      // Call the original method if we're not forcing focus
+      if (this.originalStopGamepadPolling) {
+        return this.originalStopGamepadPolling.call(obj);
+      }
+    };
+
+    // Also ensure startGamepadPolling is called when we force focus
+    if (obj.startGamepadPolling && this.forceAlwaysFocused) {
+      try {
+        obj.startGamepadPolling();
+        BxLogger.info(LOG_TAG, "Forced startGamepadPolling");
+      } catch (e) {
+        BxLogger.error(LOG_TAG, "Failed to force startGamepadPolling:", e);
+      }
+    }
+
+    BxLogger.info(LOG_TAG, "Successfully patched gamepad polling methods");
   }
 
   /**
