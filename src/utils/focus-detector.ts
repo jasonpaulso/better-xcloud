@@ -21,6 +21,7 @@ export class FocusDetector {
   private pageVisible: boolean = !document.hidden;
   private xcloudFocused: boolean = true;
   private currentFocusState: boolean = true;
+  private forceAlwaysFocused: boolean = false;
 
   /**
    * Get the singleton instance of FocusDetector
@@ -100,6 +101,12 @@ export class FocusDetector {
                 "XCloud focus changed:",
                 this.xcloudFocused
               );
+
+              // If we're forcing focus, override the message
+              if (this.forceAlwaysFocused && !this.xcloudFocused) {
+                this.overrideFocusState(dataChannel);
+              }
+
               this.updateFocusState();
             }
           }
@@ -108,6 +115,31 @@ export class FocusDetector {
         }
       });
     });
+  }
+
+  /**
+   * Override the focus state by sending a modified message back to the platform
+   */
+  private overrideFocusState(dataChannel: RTCDataChannel): void {
+    try {
+      // Create a message that mimics the platform's message but with focused=true
+      const message = JSON.stringify({
+        target: "/streaming/properties/titleinfo",
+        content: JSON.stringify({
+          focused: true,
+          // We don't know other properties, but focused is what matters
+        }),
+      });
+
+      // Send the override message
+      dataChannel.send(message);
+      BxLogger.info(
+        LOG_TAG,
+        "Sent focus override message to keep game focused"
+      );
+    } catch (e) {
+      BxLogger.error(LOG_TAG, "Failed to override focus state:", e);
+    }
   }
 
   /**
@@ -129,6 +161,11 @@ export class FocusDetector {
    * Calculate the current focus state based on all sources
    */
   private calculateFocusState(): boolean {
+    // If we're forcing focus, always return true
+    if (this.forceAlwaysFocused) {
+      return true;
+    }
+
     // Primary focus indicator is the XCloud platform's focus state
     // Secondary indicators are window focus and page visibility
     return this.xcloudFocused && (this.windowFocused || this.pageVisible);
@@ -142,6 +179,21 @@ export class FocusDetector {
   }
 
   /**
+   * Force the focus state to always be true, regardless of actual focus
+   * This is useful for automation that needs to continue even when the game is not focused
+   * @param force Whether to force the focus state to always be true
+   */
+  public forceAlwaysFocus(force: boolean = true): void {
+    if (this.forceAlwaysFocused !== force) {
+      this.forceAlwaysFocused = force;
+      BxLogger.info(LOG_TAG, "Force always focused set to:", force);
+
+      // Update the focus state immediately
+      this.updateFocusState();
+    }
+  }
+
+  /**
    * Get detailed focus state information
    */
   public getFocusInfo(): {
@@ -149,12 +201,14 @@ export class FocusDetector {
     pageVisible: boolean;
     xcloudFocused: boolean;
     isFocused: boolean;
+    forceAlwaysFocused: boolean;
   } {
     return {
       windowFocused: this.windowFocused,
       pageVisible: this.pageVisible,
       xcloudFocused: this.xcloudFocused,
       isFocused: this.currentFocusState,
+      forceAlwaysFocused: this.forceAlwaysFocused,
     };
   }
 }

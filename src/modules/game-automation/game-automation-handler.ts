@@ -188,6 +188,10 @@ export class FO76AutomationHandler
   private startFO76Automation() {
     console.log("Starting FO76 automation");
     this.startMkbHandler();
+
+    // Force the focus state to always be true
+    FocusDetector.getInstance().forceAlwaysFocus(true);
+
     this.showActivationMessage();
   }
 
@@ -195,6 +199,10 @@ export class FO76AutomationHandler
     console.log("Stopping FO76 automation");
     this.automationManager.stopAllModes();
     this.stopMkbHandler();
+
+    // Stop forcing the focus state
+    FocusDetector.getInstance().forceAlwaysFocus(false);
+
     this.showDeactivationMessage();
   }
 
@@ -396,7 +404,16 @@ export class FO76AutomationHandler
    */
   private handleFocusStateChange = (e: Event) => {
     const focused = (e as any).focused;
-    BxLogger.info("FO76AutomationHandler", "Focus state changed:", focused);
+    const focusDetector = FocusDetector.getInstance();
+    const focusInfo = focusDetector.getFocusInfo();
+
+    BxLogger.info(
+      "FO76AutomationHandler",
+      "Focus state changed:",
+      focused,
+      "Force always focused:",
+      focusInfo.forceAlwaysFocused
+    );
 
     if (focused) {
       this.windowFocused = true;
@@ -407,8 +424,20 @@ export class FO76AutomationHandler
       }
     } else {
       this.windowFocused = false;
-      window.navigator.getGamepads = () => this.mkbHandler.getVirtualGamepads();
-      SoundShortcut.mute(true);
+
+      // If we're forcing focus, we still want to use the patched getGamepads
+      if (focusInfo.forceAlwaysFocused) {
+        window.navigator.getGamepads = () =>
+          this.mkbHandler.patchedGetGamepads();
+        BxLogger.info(
+          "FO76AutomationHandler",
+          "Using patched getGamepads despite focus loss (force always focused)"
+        );
+      } else {
+        window.navigator.getGamepads = () =>
+          this.mkbHandler.getVirtualGamepads();
+        SoundShortcut.mute(true);
+      }
     }
   };
 
