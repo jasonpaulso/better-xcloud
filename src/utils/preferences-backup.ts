@@ -1,5 +1,8 @@
 import { StorageKey } from "@/enums/pref-keys";
 import { PreferencesDb } from "@/utils/local-db/preferences-db";
+import { FolderPreferences } from "@/utils/folder-preferences";
+import { getPref } from "@/utils/settings-storages/global-settings-storage";
+import { PrefKey } from "@/enums/pref-keys";
 
 // Define the structure of our backup data
 export interface PreferencesBackup {
@@ -98,6 +101,12 @@ export class PreferencesBackup {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 0);
+
+    // Also save to folder if enabled
+    const folderEnabled = getPref(PrefKey.PREFERENCES_FOLDER_ENABLED);
+    if (folderEnabled) {
+      await FolderPreferences.savePreferencesToFolder();
+    }
   }
 
   /**
@@ -173,6 +182,12 @@ export class PreferencesBackup {
             }
           }
         }
+      }
+
+      // Also save to folder if enabled
+      const folderEnabled = getPref(PrefKey.PREFERENCES_FOLDER_ENABLED);
+      if (folderEnabled) {
+        await FolderPreferences.savePreferencesToFolder();
       }
 
       return { success: true, message: "Preferences restored successfully" };

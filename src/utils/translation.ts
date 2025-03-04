@@ -387,6 +387,15 @@ const Texts = {
   wallpaper: "Wallpaper",
   webgl2: "WebGL2",
   "preferences-backup": "Preferences Backup",
+  "preferences-folder-path": "Preferences Folder Path",
+  "preferences-folder-path-note": "Select a folder to store your preferences",
+  "preferences-folder-enabled": "Enable Folder Preferences",
+  "preferences-folder-enabled-note":
+    "When enabled, preferences will be read from and saved to the selected folder",
+  "preferences-folder-select": "Select Folder",
+  "preferences-folder-selected": "Folder selected: {0}",
+  "preferences-folder-error": "Error accessing folder: {0}",
+  "preferences-folder-success": "Successfully saved preferences to folder",
 };
 
 export class Translations {

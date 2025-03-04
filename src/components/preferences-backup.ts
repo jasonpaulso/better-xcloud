@@ -1,4 +1,11 @@
 import { PreferencesBackup } from "../utils/preferences-backup";
+import { FolderPreferences } from "../utils/folder-preferences";
+import {
+  getPref,
+  setPref,
+} from "../utils/settings-storages/global-settings-storage";
+import { PrefKey } from "@/enums/pref-keys";
+import { t } from "@/utils/translation";
 
 export class PreferencesBackupUI {
   private container: HTMLElement;
@@ -103,7 +110,118 @@ export class PreferencesBackupUI {
 
     backupSection.appendChild(restoreContainer);
 
+    // Folder Preferences section
+    const folderSection = document.createElement("div");
+    folderSection.className = "bx-settings-section";
+    folderSection.style.marginTop = "20px";
+
+    const folderHeader = document.createElement("h3");
+    folderHeader.textContent = t("preferences-folder-path");
+    folderSection.appendChild(folderHeader);
+
+    const folderDescription = document.createElement("p");
+    folderDescription.textContent = t("preferences-folder-path-note");
+    folderSection.appendChild(folderDescription);
+
+    // Folder path display
+    const folderPathDisplay = document.createElement("div");
+    folderPathDisplay.className = "bx-folder-path";
+    folderPathDisplay.style.marginBottom = "10px";
+    folderPathDisplay.style.fontStyle = "italic";
+
+    const updateFolderPathDisplay = () => {
+      const folderPath = getPref(PrefKey.PREFERENCES_FOLDER_PATH);
+      if (folderPath) {
+        folderPathDisplay.textContent = t(
+          "preferences-folder-selected"
+        ).replace("{0}", folderPath);
+      } else {
+        folderPathDisplay.textContent = "No folder selected";
+      }
+    };
+
+    updateFolderPathDisplay();
+    folderSection.appendChild(folderPathDisplay);
+
+    // Select folder button
+    const selectFolderButton = document.createElement("button");
+    selectFolderButton.className = "bx-button";
+    selectFolderButton.textContent = t("preferences-folder-select");
+    selectFolderButton.addEventListener("click", async () => {
+      console.log("selectFolderButton clicked");
+      const folderPath = await FolderPreferences.selectFolder();
+      if (folderPath) {
+        updateFolderPathDisplay();
+        folderStatusMessage.textContent = t(
+          "preferences-folder-selected"
+        ).replace("{0}", folderPath);
+        folderStatusMessage.style.color = "green";
+      } else {
+        folderStatusMessage.textContent = t("preferences-folder-error").replace(
+          "{0}",
+          "Could not access folder"
+        );
+        folderStatusMessage.style.color = "red";
+      }
+    });
+    folderSection.appendChild(selectFolderButton);
+
+    // Enable folder preferences checkbox
+    const folderEnabledContainer = document.createElement("div");
+    folderEnabledContainer.style.marginTop = "15px";
+
+    const folderEnabledCheckbox = document.createElement("input");
+    folderEnabledCheckbox.type = "checkbox";
+    folderEnabledCheckbox.id = "bx-folder-enabled";
+    folderEnabledCheckbox.checked = getPref(PrefKey.PREFERENCES_FOLDER_ENABLED);
+
+    const folderEnabledLabel = document.createElement("label");
+    folderEnabledLabel.htmlFor = "bx-folder-enabled";
+    folderEnabledLabel.textContent = t("preferences-folder-enabled");
+    folderEnabledLabel.style.marginLeft = "5px";
+
+    folderEnabledCheckbox.addEventListener("change", () => {
+      setPref(
+        PrefKey.PREFERENCES_FOLDER_ENABLED,
+        folderEnabledCheckbox.checked,
+        true
+      );
+
+      if (folderEnabledCheckbox.checked) {
+        // Save preferences to folder immediately when enabled
+        FolderPreferences.savePreferencesToFolder().then((success) => {
+          if (success) {
+            folderStatusMessage.textContent = t("preferences-folder-success");
+            folderStatusMessage.style.color = "green";
+          } else {
+            folderStatusMessage.textContent = t(
+              "preferences-folder-error"
+            ).replace("{0}", "Could not save to folder");
+            folderStatusMessage.style.color = "red";
+          }
+        });
+      }
+    });
+
+    folderEnabledContainer.appendChild(folderEnabledCheckbox);
+    folderEnabledContainer.appendChild(folderEnabledLabel);
+    folderSection.appendChild(folderEnabledContainer);
+
+    const folderEnabledNote = document.createElement("p");
+    folderEnabledNote.textContent = t("preferences-folder-enabled-note");
+    folderEnabledNote.style.fontSize = "0.9em";
+    folderEnabledNote.style.opacity = "0.8";
+    folderEnabledNote.style.marginTop = "5px";
+    folderSection.appendChild(folderEnabledNote);
+
+    // Folder status message
+    const folderStatusMessage = document.createElement("div");
+    folderStatusMessage.className = "bx-folder-status";
+    folderStatusMessage.style.marginTop = "10px";
+    folderSection.appendChild(folderStatusMessage);
+
     // Add to container
     this.container.appendChild(backupSection);
+    this.container.appendChild(folderSection);
   }
 }

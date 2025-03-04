@@ -101,4 +101,7 @@ export enum PrefKey {
 
   GAME_FORTNITE_FORCE_CONSOLE = "game_fortnite_force_console",
   GAME_MSFS2020_FORCE_NATIVE_MKB = "game_msfs2020_force_native_mkb",
+
+  PREFERENCES_FOLDER_PATH = "preferences_folder_path",
+  PREFERENCES_FOLDER_ENABLED = "preferences_folder_enabled",
 }

@@ -42,6 +42,7 @@ import { XboxApi } from "./utils/xbox-api";
 import { StreamStatsCollector } from "./utils/stream-stats-collector";
 import { RootDialogObserver } from "./utils/root-dialog-observer";
 import { FO76AutomationHandler } from '@/modules/game-automation/game-automation-handler';
+import { FolderPreferences } from '@/utils/folder-preferences';
 // Handle login page
 if (window.location.pathname.includes('/auth/msa')) {
   const nativePushState = window.history['pushState']
@@ -349,6 +350,9 @@ function main() {
   if (getPref(PrefKey.GAME_MSFS2020_FORCE_NATIVE_MKB)) {
     BX_FLAGS.ForceNativeMkbTitles.push('9PMQDM08SNK9')
   }
+
+  // Initialize folder preferences
+  FolderPreferences.initialize();
 
   // Monkey patches
   patchRtcPeerConnection()

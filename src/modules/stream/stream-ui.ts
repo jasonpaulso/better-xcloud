@@ -1,18 +1,19 @@
-import { BxEvent } from '@utils/bx-event.ts'
-import { BxIcon } from '@utils/bx-icon'
-import { STATES } from '@utils/global.ts'
-import { createSvgIcon } from '@utils/html.ts'
-import { t } from '@utils/translation.ts'
-import { SettingsNavigationDialog } from '../ui/dialog/settings-dialog.ts'
-import { StreamBadges } from './stream-badges.ts'
-import { StreamStats } from './stream-stats.ts'
+import { BxEvent } from "@utils/bx-event.ts";
+import { BxIcon } from "@utils/bx-icon";
+import { STATES } from "@utils/global.ts";
+import { createSvgIcon } from "@utils/html.ts";
+import { t } from "@utils/translation.ts";
+import { SettingsNavigationDialog } from "../ui/dialog/settings-dialog.ts";
+import { StreamBadges } from "./stream-badges.ts";
+import { StreamStats } from "./stream-stats.ts";
 
 export class StreamUiHandler {
-  private static $btnStreamSettings: HTMLElement | null | undefined
-  private static $btnStreamStats: HTMLElement | null | undefined
-  private static $btnRefresh: HTMLElement | null | undefined
-  private static $btnHome: HTMLElement | null | undefined
-  private static observer: MutationObserver | undefined
+  private static $btnStreamSettings: HTMLElement | null | undefined;
+  private static $btnStreamStats: HTMLElement | null | undefined;
+  private static $btnRefresh: HTMLElement | null | undefined;
+  private static $btnHome: HTMLElement | null | undefined;
+  private static $btnNotify: HTMLElement | null | undefined;
+  private static observer: MutationObserver | undefined;
 
   private static cloneStreamHudButton(
     $btnOrg: HTMLElement,
@@ -20,65 +21,67 @@ export class StreamUiHandler {
     svgIcon: typeof BxIcon
   ): HTMLElement | null {
     if (!$btnOrg) {
-      return null
+      return null;
     }
 
-    const $container = $btnOrg.cloneNode(true) as HTMLElement
-    let timeout: number | null
+    const $container = $btnOrg.cloneNode(true) as HTMLElement;
+    let timeout: number | null;
 
     // Prevent touching other button while the bar is showing/hiding
     if (STATES.browser.capabilities.touch) {
       const onTransitionStart = (e: TransitionEvent) => {
-        if (e.propertyName !== 'opacity') {
-          return
+        if (e.propertyName !== "opacity") {
+          return;
         }
 
-        timeout && clearTimeout(timeout)
-        ;(e.target as HTMLElement).style.pointerEvents = 'none'
-      }
+        timeout && clearTimeout(timeout);
+        (e.target as HTMLElement).style.pointerEvents = "none";
+      };
 
       const onTransitionEnd = (e: TransitionEvent) => {
-        if (e.propertyName !== 'opacity') {
-          return
+        if (e.propertyName !== "opacity") {
+          return;
         }
 
-        const $streamHud = (e.target as HTMLElement).closest<HTMLElement>('#StreamHud')
+        const $streamHud = (e.target as HTMLElement).closest<HTMLElement>(
+          "#StreamHud"
+        );
         if (!$streamHud) {
-          return
+          return;
         }
 
-        const left = $streamHud.style.left
-        if (left === '0px') {
-          const $target = e.target as HTMLElement
-          timeout && clearTimeout(timeout)
+        const left = $streamHud.style.left;
+        if (left === "0px") {
+          const $target = e.target as HTMLElement;
+          timeout && clearTimeout(timeout);
           timeout = window.setTimeout(() => {
-            $target.style.pointerEvents = 'auto'
-          }, 100)
+            $target.style.pointerEvents = "auto";
+          }, 100);
         }
-      }
+      };
 
-      $container.addEventListener('transitionstart', onTransitionStart)
-      $container.addEventListener('transitionend', onTransitionEnd)
+      $container.addEventListener("transitionstart", onTransitionStart);
+      $container.addEventListener("transitionend", onTransitionEnd);
     }
 
-    const $button = $container.querySelector<HTMLButtonElement>('button')
+    const $button = $container.querySelector<HTMLButtonElement>("button");
     if (!$button) {
-      return null
+      return null;
     }
-    $button.setAttribute('title', label)
+    $button.setAttribute("title", label);
 
-    const $orgSvg = $button.querySelector<SVGElement>('svg')
+    const $orgSvg = $button.querySelector<SVGElement>("svg");
     if (!$orgSvg) {
-      return null
+      return null;
     }
 
-    const $svg = createSvgIcon(svgIcon)
-    $svg.style.fill = 'none'
-    $svg.setAttribute('class', $orgSvg.getAttribute('class') || '')
-    $svg.ariaHidden = 'true'
+    const $svg = createSvgIcon(svgIcon);
+    $svg.style.fill = "none";
+    $svg.setAttribute("class", $orgSvg.getAttribute("class") || "");
+    $svg.ariaHidden = "true";
 
-    $orgSvg.replaceWith($svg)
-    return $container
+    $orgSvg.replaceWith($svg);
+    return $container;
   }
 
   private static cloneCloseButton(
@@ -88,223 +91,300 @@ export class StreamUiHandler {
     onChange: any
   ): HTMLElement | null {
     if (!$btnOrg) {
-      return null
+      return null;
     }
     // Create button from the Close button
-    const $btn = $btnOrg.cloneNode(true) as HTMLElement
+    const $btn = $btnOrg.cloneNode(true) as HTMLElement;
 
-    const $svg = createSvgIcon(icon)
+    const $svg = createSvgIcon(icon);
     // Copy classes
-    $svg.setAttribute('class', $btn.firstElementChild!.getAttribute('class') || '')
-    $svg.style.fill = 'none'
+    $svg.setAttribute(
+      "class",
+      $btn.firstElementChild!.getAttribute("class") || ""
+    );
+    $svg.style.fill = "none";
 
-    $btn.classList.add(className)
+    $btn.classList.add(className);
     // Remove icon
-    $btn.removeChild($btn.firstElementChild!)
+    $btn.removeChild($btn.firstElementChild!);
     // Add icon
-    $btn.appendChild($svg)
+    $btn.appendChild($svg);
     // Add "click" event listener
-    $btn.addEventListener('click', onChange)
+    $btn.addEventListener("click", onChange);
 
-    return $btn
+    return $btn;
   }
 
   private static async handleStreamMenu() {
     const $btnCloseHud = document.querySelector<HTMLElement>(
-      'button[class*=StreamMenu-module__backButton]'
-    )
+      "button[class*=StreamMenu-module__backButton]"
+    );
     if (!$btnCloseHud) {
-      return
+      return;
     }
 
-    let $btnRefresh = StreamUiHandler.$btnRefresh
-    let $btnHome = StreamUiHandler.$btnHome
+    let $btnRefresh = StreamUiHandler.$btnRefresh;
+    let $btnHome = StreamUiHandler.$btnHome;
+    let $btnNotify = StreamUiHandler.$btnNotify;
 
     // Create Refresh button from the Close button
-    if (typeof $btnRefresh === 'undefined') {
+    if (typeof $btnRefresh === "undefined") {
       $btnRefresh = StreamUiHandler.cloneCloseButton(
         $btnCloseHud,
         BxIcon.REFRESH,
-        'bx-stream-refresh-button',
+        "bx-stream-refresh-button",
         () => {
-          confirm(t('confirm-reload-stream')) && window.location.reload()
+          confirm(t("confirm-reload-stream")) && window.location.reload();
         }
-      )
+      );
     }
 
-    if (typeof $btnHome === 'undefined') {
+    if (typeof $btnHome === "undefined") {
       $btnHome = StreamUiHandler.cloneCloseButton(
         $btnCloseHud,
         BxIcon.HOME,
-        'bx-stream-home-button',
+        "bx-stream-home-button",
         () => {
-          confirm(t('back-to-home-confirm')) &&
-            (window.location.href = window.location.href.substring(0, 31))
+          confirm(t("back-to-home-confirm")) &&
+            (window.location.href = window.location.href.substring(0, 31));
         }
-      )
+      );
+    }
+
+    if (typeof $btnNotify === "undefined") {
+      $btnNotify = StreamUiHandler.cloneCloseButton(
+        $btnCloseHud,
+        BxIcon.EYE,
+        "bx-stream-notify-button",
+        () => {
+          setupButtonNotifications().then(() => {
+            console.log("Notification setup complete");
+          });
+        }
+      );
     }
 
     // Add to website
-    if ($btnRefresh && $btnHome) {
-      $btnCloseHud.insertAdjacentElement('afterend', $btnRefresh)
-      $btnRefresh.insertAdjacentElement('afterend', $btnHome)
+    if ($btnRefresh && $btnHome && $btnNotify) {
+      $btnCloseHud.insertAdjacentElement("afterend", $btnRefresh);
+      $btnRefresh.insertAdjacentElement("afterend", $btnHome);
+      $btnHome.insertAdjacentElement("afterend", $btnNotify);
     }
 
     // Render stream badges
     const $menu = document.querySelector(
-      'div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]'
-    )
-    $menu?.appendChild(await StreamBadges.getInstance().render())
+      "div[class*=StreamMenu-module__menuContainer] > div[class*=Menu-module]"
+    );
+    $menu?.appendChild(await StreamBadges.getInstance().render());
   }
 
   private static handleSystemMenu($streamHud: HTMLElement) {
     // Get the last button
-    const $orgButton = $streamHud.querySelector<HTMLElement>('div[class^=HUDButton]')
+    const $orgButton = $streamHud.querySelector<HTMLElement>(
+      "div[class^=HUDButton]"
+    );
     if (!$orgButton) {
-      return
+      return;
     }
 
     const hideGripHandle = () => {
       // Grip handle
       const $gripHandle = document.querySelector<HTMLElement>(
-        '#StreamHud button[class^=GripHandle]'
-      )
-      if ($gripHandle && $gripHandle.ariaExpanded === 'true') {
-        $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
-        $gripHandle.click()
-        $gripHandle.dispatchEvent(new PointerEvent('pointerdown'))
-        $gripHandle.click()
+        "#StreamHud button[class^=GripHandle]"
+      );
+      if ($gripHandle && $gripHandle.ariaExpanded === "true") {
+        $gripHandle.dispatchEvent(new PointerEvent("pointerdown"));
+        $gripHandle.click();
+        $gripHandle.dispatchEvent(new PointerEvent("pointerdown"));
+        $gripHandle.click();
       }
-    }
+    };
 
     // Create Stream Settings button
-    let $btnStreamSettings = StreamUiHandler.$btnStreamSettings
-    if (typeof $btnStreamSettings === 'undefined') {
+    let $btnStreamSettings = StreamUiHandler.$btnStreamSettings;
+    if (typeof $btnStreamSettings === "undefined") {
       $btnStreamSettings = StreamUiHandler.cloneStreamHudButton(
         $orgButton,
-        t('better-xcloud'),
+        t("better-xcloud"),
         BxIcon.BETTER_XCLOUD
-      )
-      $btnStreamSettings?.addEventListener('click', (e) => {
-        hideGripHandle()
-        e.preventDefault()
+      );
+      $btnStreamSettings?.addEventListener("click", (e) => {
+        hideGripHandle();
+        e.preventDefault();
 
         // Show Stream Settings dialog
-        SettingsNavigationDialog.getInstance().show()
-      })
+        SettingsNavigationDialog.getInstance().show();
+      });
 
-      StreamUiHandler.$btnStreamSettings = $btnStreamSettings
+      StreamUiHandler.$btnStreamSettings = $btnStreamSettings;
     }
 
     // Create Stream Stats button
-    const streamStats = StreamStats.getInstance()
-    let $btnStreamStats = StreamUiHandler.$btnStreamStats
-    if (typeof $btnStreamStats === 'undefined') {
+    const streamStats = StreamStats.getInstance();
+    let $btnStreamStats = StreamUiHandler.$btnStreamStats;
+    if (typeof $btnStreamStats === "undefined") {
       $btnStreamStats = StreamUiHandler.cloneStreamHudButton(
         $orgButton,
-        t('stream-stats'),
+        t("stream-stats"),
         BxIcon.STREAM_STATS
-      )
-      $btnStreamStats?.addEventListener('click', async (e) => {
-        hideGripHandle()
-        e.preventDefault()
+      );
+      $btnStreamStats?.addEventListener("click", async (e) => {
+        hideGripHandle();
+        e.preventDefault();
 
         // Toggle Stream Stats
-        await streamStats.toggle()
+        await streamStats.toggle();
 
-        const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
-        $btnStreamStats!.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
-      })
+        const btnStreamStatsOn =
+          !streamStats.isHidden() && !streamStats.isGlancing();
+        $btnStreamStats!.classList.toggle(
+          "bx-stream-menu-button-on",
+          btnStreamStatsOn
+        );
+      });
 
-      StreamUiHandler.$btnStreamStats = $btnStreamStats
+      StreamUiHandler.$btnStreamStats = $btnStreamStats;
     }
 
-    const $btnParent = $orgButton.parentElement!
+    const $btnParent = $orgButton.parentElement!;
 
     if ($btnStreamSettings && $btnStreamStats) {
-      const btnStreamStatsOn = !streamStats.isHidden() && !streamStats.isGlancing()
-      $btnStreamStats.classList.toggle('bx-stream-menu-button-on', btnStreamStatsOn)
+      const btnStreamStatsOn =
+        !streamStats.isHidden() && !streamStats.isGlancing();
+      $btnStreamStats.classList.toggle(
+        "bx-stream-menu-button-on",
+        btnStreamStatsOn
+      );
 
       // Insert buttons after Stream Settings button
-      $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild)
-      $btnParent.insertBefore($btnStreamSettings, $btnStreamStats)
-      
+      $btnParent.insertBefore($btnStreamStats, $btnParent.lastElementChild);
+      $btnParent.insertBefore($btnStreamSettings, $btnStreamStats);
     }
 
     // Move the Dots button to the beginning
-    const $dotsButton = $btnParent.lastElementChild!
+    const $dotsButton = $btnParent.lastElementChild!;
     $dotsButton.parentElement!.insertBefore(
       $dotsButton,
       $dotsButton.parentElement!.firstElementChild
-    )
+    );
   }
 
   static reset() {
-    StreamUiHandler.$btnStreamSettings = undefined
-    StreamUiHandler.$btnStreamStats = undefined
-    StreamUiHandler.$btnRefresh = undefined
-    StreamUiHandler.$btnHome = undefined
+    StreamUiHandler.$btnStreamSettings = undefined;
+    StreamUiHandler.$btnStreamStats = undefined;
+    StreamUiHandler.$btnRefresh = undefined;
+    StreamUiHandler.$btnHome = undefined;
+    StreamUiHandler.$btnNotify = undefined;
 
-    StreamUiHandler.observer && StreamUiHandler.observer.disconnect()
-    StreamUiHandler.observer = undefined
+    StreamUiHandler.observer && StreamUiHandler.observer.disconnect();
+    StreamUiHandler.observer = undefined;
   }
 
   static observe() {
-    StreamUiHandler.reset()
+    StreamUiHandler.reset();
 
-    const $screen = document.querySelector('#PageContent section[class*=PureScreens]')
+    const $screen = document.querySelector(
+      "#PageContent section[class*=PureScreens]"
+    );
     if (!$screen) {
-      return
+      return;
     }
 
     const observer = new MutationObserver((mutationList) => {
-      let item: MutationRecord
+      let item: MutationRecord;
       for (item of mutationList) {
-        if (item.type !== 'childList') {
-          continue
+        if (item.type !== "childList") {
+          continue;
         }
 
         item.addedNodes.forEach(async ($node) => {
           if (!$node || $node.nodeType !== Node.ELEMENT_NODE) {
-            return
+            return;
           }
 
-          let $elm: HTMLElement | null = $node as HTMLElement
+          let $elm: HTMLElement | null = $node as HTMLElement;
 
           // Ignore non-HTML elements
           if (!($elm instanceof HTMLElement)) {
-            return
+            return;
           }
 
-          const className = $elm.className || ''
+          const className = $elm.className || "";
 
           // Error Page: .PureErrorPage.ErrorScreen
-          if (className.includes('PureErrorPage')) {
-            BxEvent.dispatch(window, BxEvent.STREAM_ERROR_PAGE)
-            return
+          if (className.includes("PureErrorPage")) {
+            BxEvent.dispatch(window, BxEvent.STREAM_ERROR_PAGE);
+            return;
           }
 
           // Render badges
-          if (className.startsWith('StreamMenu-module__container')) {
-            StreamUiHandler.handleStreamMenu()
-            return
+          if (className.startsWith("StreamMenu-module__container")) {
+            StreamUiHandler.handleStreamMenu();
+            return;
           }
 
-          if (className.startsWith('Overlay-module_') || className.startsWith('InProgressScreen')) {
-            $elm = $elm.querySelector('#StreamHud')
+          if (
+            className.startsWith("Overlay-module_") ||
+            className.startsWith("InProgressScreen")
+          ) {
+            $elm = $elm.querySelector("#StreamHud");
           }
 
-          if (!$elm || ($elm.id || '') !== 'StreamHud') {
-            return
+          if (!$elm || ($elm.id || "") !== "StreamHud") {
+            return;
           }
 
           // Handle System Menu bar
-          StreamUiHandler.handleSystemMenu($elm)
-        })
+          StreamUiHandler.handleSystemMenu($elm);
+        });
       }
-    })
+    });
 
-    observer.observe($screen, { subtree: true, childList: true })
-    StreamUiHandler.observer = observer
+    observer.observe($screen, { subtree: true, childList: true });
+    StreamUiHandler.observer = observer;
   }
+}
+
+async function setupButtonNotifications() {
+  // Request notification permissions
+  if (Notification.permission !== "granted") {
+    await Notification.requestPermission();
+  }
+
+  const observer = new MutationObserver(() => {
+    // Look for an element containing the text
+    const promptEl = Array.from(document.querySelectorAll("*")).find((el) =>
+      el?.textContent?.includes("Are you still here?")
+    );
+
+    if (promptEl) {
+      // Example: find a button within that prompt
+      const button = promptEl.querySelector("button");
+      if (button) {
+        const notificaction = new Notification("Action Required", {
+          body: "The 'Are you still here?' prompt has appeared",
+          icon: "/favicon.ico", // Optional: add your own icon
+        });
+
+        notificaction.onclick = () => {
+          button.click();
+        };
+
+        // Send notification
+        // new Notification("Action Required", {
+        //   body: "The 'Are you still here?' prompt has appeared",
+        //   icon: "/favicon.ico", // Optional: add your own icon
+        // });
+
+        // Optionally stop observing if this is one-time
+        // observer.disconnect();
+      }
+    }
+  });
+
+  // Observe the document for new elements
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 }
